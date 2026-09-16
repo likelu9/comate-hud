@@ -30,7 +30,8 @@ final class NotchPanel: NSPanel {
     }
 
     let notch: NotchGeometry
-    let collapsedWidth: CGFloat = 80
+    /// 收起态宽度：90pt（图标 20 + 间距 + 图标 14 + 边距）
+    let collapsedWidth: CGFloat = 90
     let expandedWidth: CGFloat = 340
     let expandedHeight: CGFloat = 320
     private let anchorTopY: CGFloat
@@ -57,14 +58,20 @@ final class NotchPanel: NSPanel {
         self.titleVisibility = .hidden
         self.title = ""
         self.isReleasedWhenClosed = false
+        // 设置内容视图的圆角
+        self.contentView?.wantsLayer = true
+        self.contentView?.layer?.cornerRadius = 10
+        self.contentView?.layer?.masksToBounds = true
     }
 
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
     func expandedFrame() -> NSRect {
-        NSRect(x: notch.centerX - expandedWidth / 2,
-               y: anchorTopY, width: expandedWidth, height: expandedHeight)
+        let screen = NSScreen.screens.first ?? NSScreen.main!
+        let expandedY = screen.frame.maxY - expandedHeight
+        return NSRect(x: notch.centerX - expandedWidth / 2,
+                      y: expandedY, width: expandedWidth, height: expandedHeight)
     }
 
     func animateToCollapsed() {

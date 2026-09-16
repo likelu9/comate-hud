@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comate Notch HUD 设计稿 v2</title>
+<style>
+  :root {
+    --gray: #8E8E93;
+    --yellow: #FFB800;
+    --red: #FF3B30;
+    --green: #34C759;
+    --bg: #1C1C1E;
+    --card-bg: #2C2C2E;
+    --text: #FFFFFF;
+    --text-dim: rgba(255,255,255,0.5);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .subtitle { font-size: 14px; color: var(--text-dim); margin-bottom: 40px; }
+  h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: var(--yellow); }
+  h3 { font-size: 14px; font-weight: 600; margin: 24px 0 12px; color: var(--text-dim); }
+
+  /* 笔记本外壳 */
+  .laptop-frame {
+    position: relative;
+    background: #3A3A3C;
+    border-radius: 12px 12px 0 0;
+    padding: 4px 4px 0;
+    margin: 0 auto 24px;
+  }
+  .laptop-screen {
+    background: #000;
+    border-radius: 8px 8px 0 0;
+    position: relative;
+    overflow: visible;
+  }
+  .laptop-base {
+    background: #3A3A3C;
+    height: 8px;
+    border-radius: 0 0 4px 4px;
+  }
+  /* 刘海 */
+  .laptop-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    border-radius: 0 0 10px 10px;
+    z-index: 5;
+  }
+  /* HUD 悬浮窗 - 收起态（带顶部圆角） */
+  .hud-collapsed {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.88);
+    /* 关键：顶部圆角，与刘海边缘自然过渡 */
+    border-radius: 10px 10px 10px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 20;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  /* Comate 图标 + 状态灯组合 */
+  .icon-light-group {
+    position: relative;
+    flex-shrink: 0;
+  }
+  .comate-icon-svg {
+    display: block;
+  }
+  .status-light {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid rgba(0,0,0,0.5);
+  }
+  .status-light.gray { background: var(--gray); }
+  .status-light.yellow {
+    background: var(--yellow);
+    box-shadow: 0 0 8px var(--yellow), 0 0 16px rgba(255,184,0,0.4);
+  }
+  .status-light.red {
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red), 0 0 16px rgba(255,59,48,0.4);
+    animation: pulse-red 2s infinite;
+  }
+  .status-light.green {
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green), 0 0 16px rgba(52,199,89,0.4);
+  }
+  @keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  /* 右侧 + 按钮 */
+  .create-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .create-btn:hover { opacity: 0.9; }
+
+  /* 状态展示卡片 */
+  .states-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin: 20px 0 40px;
+  }
+  .state-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .state-card .label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 12px;
+  }
+  .state-card .desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+  /* 状态灯大图 */
+  .light-demo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin: 0 auto;
+  }
+  .light-demo.gray { background: var(--gray); }
+  .light-demo.yellow {
+    background: var(--yellow);
+    box-shadow: 0 0 12px var(--yellow), 0 0 24px rgba(255,184,0,0.3);
+  }
+  .light-demo.red {
+    background: var(--red);
+    box-shadow: 0 0 12px var(--red), 0 0 24px rgba(255,59,48,0.3);
+    animation: pulse-red 2s infinite;
+  }
+  .light-demo.green {
+    background: var(--green);
+    box-shadow: 0 0 12px var(--green), 0 0 24px rgba(52,199,89,0.3);
+  }
+
+  /* 尺寸标注 */
+  .dimension-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: 8px;
+  }
+  .dimension-item {
+    flex: 1;
+    text-align: center;
+  }
+  .dimension-item .name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .dimension-item .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--yellow);
+  }
+  .dimension-item .unit {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .vs {
+    font-size: 14px;
+    color: var(--text-dim);
+    padding: 0 12px;
+  }
+
+  /* 设计说明 */
+  .design-notes {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+  .design-notes ul {
+    list-style: none;
+    padding: 0;
+  }
+  .design-notes li {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .design-notes li:last-child { border-bottom: none; }
+  .design-notes .tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255,184,0,0.15);
+    color: var(--yellow);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* 展开态 */
+  .expanded-panel {
+    background: rgba(0,0,0,0.92);
+    border-radius: 16px;
+    padding: 16px;
+    width: 320px;
+    margin: 20px auto;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .expanded-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .expanded-header .title {
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1;
+  }
+  .expanded-header .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+  .badge.yellow { background: rgba(255,184,0,0.2); color: var(--yellow); }
+  .badge.green { background: rgba(52,199,89,0.2); color: var(--green); }
+  .badge.gray { background: rgba(142,142,147,0.2); color: var(--gray); }
+
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .task-item {
+    background: rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .task-item:hover {
+    background: rgba(255,255,255,0.1);
+  }
+  .task-light {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .task-light.gray { background: var(--gray); }
+  .task-light.yellow {
+    background: var(--yellow);
+    box-shadow: 0 0 6px var(--yellow);
+  }
+  .task-light.green {
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+  .task-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .task-title {
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .task-meta {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .task-arrow {
+    font-size: 10px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .expanded-footer {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .expanded-footer .sync-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+
+  /* 交互说明 */
+  .interaction-flow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+  }
+  .flow-step {
+    flex: 1;
+    text-align: center;
+  }
+  .flow-step .step-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255,184,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-size: 20px;
+  }
+  .flow-step .step-label {
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .flow-step .step-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+  .flow-arrow {
+    font-size: 20px;
+    color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+
+<h1>Comate Notch HUD 设计稿 v2</h1>
+<p class="subtitle">收起态 UI 重构 — 状态灯+图标结合 · 圆角过渡 · 展开态设计</p>
+
+<!-- ============ 状态灯设计 ============ -->
+<h2>一、状态指示灯（与 Comate 图标结合）</h2>
+<div class="states-grid">
+  <div class="state-card">
+    <div class="light-demo gray"></div>
+    <div class="label">空闲</div>
+    <div class="desc">无活跃任务</div>
+  </div>
+  <div class="state-card">
+    <div class="light-demo yellow"></div>
+    <div class="label">进行中</div>
+    <div class="desc">任务运行 / 思考中</div>
+  </div>
+  <div class="state-card">
+    <div class="light-demo red"></div>
+    <div class="label">等待中</div>
+    <div class="desc">需授权 / 回复 / 确认 / 异常</div>
+  </div>
+  <div class="state-card">
+    <div class="light-demo green"></div>
+    <div class="label">已完成</div>
+    <div class="desc">任务完成</div>
+  </div>
+</div>
+
+<!-- ============ 收起态布局 ============ -->
+<h2>二、收起态布局（带圆角过渡）</h2>
+
+<h3>关键改进：顶部四角圆角 + 图标灯组合</h3>
+<div style="text-align:center; margin: 20px 0;">
+  <!-- 收起态示意 -->
+  <div style="position:relative; width:200px; height:50px; margin:0 auto;">
+    <!-- 刘海背景 -->
+    <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:80px; height:34px; background:#000; border-radius:0 0 10px 10px; z-index:1;"></div>
+    <!-- HUD 悬浮窗 -->
+    <div class="hud-collapsed" style="width:90px; height:34px; padding:0 10px; z-index:2;">
+      <!-- 左侧：Comate 图标 + 状态灯 -->
+      <div class="icon-light-group" style="width:20px; height:20px;">
+        <svg class="comate-icon-svg" viewBox="0 0 68 68" fill="none" width="20" height="20">
+          <g clip-path="url(#c1)">
+            <path d="M23.16 6.13L39.25 7.47C43.21 10.12 45.46 11.63 46.01 12L46.18 12.11C46.39 12.24 47.79 13.08 49.21 13.93L49.69 14.22C51.02 15.01 52.24 15.74 52.38 15.82L52.39 15.83C56.05 17.84 57.34 21.37 57.34 21.37C58.15 23.56 56.63 29.75 55.37 34.48L55.25 34.94C54.52 37.62 53.91 39.76 53.91 40.27C53.91 40.91 53.65 42.88 53.28 44.85L53.23 45.13C52.79 47.42 52.22 49.62 51.75 49.63C50.87 49.63 48.48 49.63 47.88 49.63C46.81 49.63 45.35 49.63 44.48 48.14C48.76 43.62 49.76 36.68 46.49 31.02C42.51 24.13 33.69 21.77 26.79 25.75C19.89 29.73 17.53 38.54 21.51 45.44C22.19 46.61 23.41 47.95 25.18 49.45C25.98 50.13 26.15 51.31 25.58 52.19L17.22 65.05C16.59 66.02 15.29 66.3 14.31 65.67C8.76 61.68 6.26 58.16 4.56 55.21C-4.83 38.97 0.74 18.19 17 8.81L23.16 6.13Z" fill="url(#g1)"/>
+            <path d="M63.44 21.24C72.3 36.58 67.83 55.97 53.62 65.98C52.91 66.48 51.93 66.31 51.42 65.59L42.45 51.31C42.08 50.72 42.21 49.96 42.75 49.52C44.15 48.4 45.13 47.44 45.71 46.64C51.81 39.33 52.87 28.33 47.57 19.16C41.16 8.07 27.77 3.68 17.06 8.9L17 8.81C33.27 -0.57 54.05 4.99 63.44 21.24Z" fill="url(#g2)"/>
+          </g>
+          <defs>
+            <linearGradient id="g1" x1="12.62" y1="65.88" x2="33.63" y2="9.42" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#937EE6"/><stop offset="1" stop-color="#4526BF"/>
+            </linearGradient>
+            <linearGradient id="g2" x1="59.58" y1="12.65" x2="22.13" y2="28.65" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FF9999"/><stop offset="1" stop-color="#D921B6"/>
+            </linearGradient>
+            <clipPath id="c1"><rect width="68" height="68" fill="white"/></clipPath>
+          </defs>
+        </svg>
+        <!-- 状态灯 - 叠加在图标右下角 -->
+        <div class="status-light yellow" style="width:10px; height:10px; bottom:-2px; right:-3px;"></div>
+      </div>
+      <!-- 右侧：+ 按钮 -->
+      <div class="create-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" width="14" height="14">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:16px; font-size:12px; color:var(--text-dim);">
+    <strong>90 × 34 pt</strong> · 居中于刘海 · 左侧图标+灯组合 · 中间留白 · 右侧 +
+  </div>
+</div>
+
+<!-- ============ 尺寸对比 ============ -->
+<h2>三、尺寸关系（刘海 vs HUD）</h2>
+<div class="dimension-row">
+  <div class="dimension-item">
+    <div class="name">刘海宽度</div>
+    <div class="value">~200</div>
+    <div class="unit">pt（所有 notch 机型一致）</div>
+  </div>
+  <div class="vs">vs</div>
+  <div class="dimension-item">
+    <div class="name">HUD 宽度</div>
+    <div class="value">90</div>
+    <div class="unit">pt（刘海内居中）</div>
+  </div>
+  <div class="vs">→</div>
+  <div class="dimension-item">
+    <div class="name">两侧留白</div>
+    <div class="value">~55</div>
+    <div class="unit">pt × 2（刘海自然露出）</div>
+  </div>
+</div>
+<div style="text-align:center; font-size:12px; color:var(--text-dim); margin:12px 0 30px;">
+  HUD 宽度 90pt 远小于刘海 200pt，左右各留 ~55pt，刘海两侧自然露出，不会被遮挡。
+</div>
+
+<!-- ============ 展开态设计 ============ -->
+<h2>四、展开态设计（Hover 触发）</h2>
+<h3>交互流程</h3>
+<div class="interaction-flow">
+  <div class="flow-step">
+    <div class="step-icon">🖱️</div>
+    <div class="step-label">悬停 0.3s</div>
+    <div class="step-desc">鼠标移入 HUD 区域</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-icon">📥</div>
+    <div class="step-label">向下展开</div>
+    <div class="step-desc">spring 动画 0.35s</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-icon">📋</div>
+    <div class="step-label">任务列表</div>
+    <div class="step-desc">显示最近 6 个任务</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-icon">👆</div>
+    <div class="step-label">点击打开</div>
+    <div class="step-desc">跳转对应会话</div>
+  </div>
+</div>
+
+<h3>展开态 UI 预览（340 × 320 pt）</h3>
+<div class="expanded-panel">
+  <!-- Header -->
+  <div class="expanded-header">
+    <div class="icon-light-group" style="width:18px; height:18px;">
+      <svg viewBox="0 0 68 68" fill="none" width="18" height="18">
+        <g clip-path="url(#c2)">
+          <path d="M23.16 6.13L39.25 7.47C43.21 10.12 45.46 11.63 46.01 12L46.18 12.11C46.39 12.24 47.79 13.08 49.21 13.93L49.69 14.22C51.02 15.01 52.24 15.74 52.38 15.82L52.39 15.83C56.05 17.84 57.34 21.37 57.34 21.37C58.15 23.56 56.63 29.75 55.37 34.48L55.25 34.94C54.52 37.62 53.91 39.76 53.91 40.27C53.91 40.91 53.65 42.88 53.28 44.85L53.23 45.13C52.79 47.42 52.22 49.62 51.75 49.63C50.87 49.63 48.48 49.63 47.88 49.63C46.81 49.63 45.35 49.63 44.48 48.14C48.76 43.62 49.76 36.68 46.49 31.02C42.51 24.13 33.69 21.77 26.79 25.75C19.89 29.73 17.53 38.54 21.51 45.44C22.19 46.61 23.41 47.95 25.18 49.45C25.98 50.13 26.15 51.31 25.58 52.19L17.22 65.05C16.59 66.02 15.29 66.3 14.31 65.67C8.76 61.68 6.26 58.16 4.56 55.21C-4.83 38.97 0.74 18.19 17 8.81L23.16 6.13Z" fill="url(#g3)"/>
+          <path d="M63.44 21.24C72.3 36.58 67.83 55.97 53.62 65.98C52.91 66.48 51.93 66.31 51.42 65.59L42.45 51.31C42.08 50.72 42.21 49.96 42.75 49.52C44.15 48.4 45.13 47.44 45.71 46.64C51.81 39.33 52.87 28.33 47.57 19.16C41.16 8.07 27.77 3.68 17.06 8.9L17 8.81C33.27 -0.57 54.05 4.99 63.44 21.24Z" fill="url(#g4)"/>
+        </g>
+        <defs>
+          <linearGradient id="g3" x1="12.62" y1="65.88" x2="33.63" y2="9.42" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#937EE6"/><stop offset="1" stop-color="#4526BF"/>
+          </linearGradient>
+          <linearGradient id="g4" x1="59.58" y1="12.65" x2="22.13" y2="28.65" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF9999"/><stop offset="1" stop-color="#D921B6"/>
+          </linearGradient>
+          <clipPath id="c2"><rect width="68" height="68" fill="white"/></clipPath>
+        </defs>
+      </svg>
+    </div>
+    <div class="title">Comate 任务</div>
+    <div class="badge yellow">1 运行中</div>
+  </div>
+  <!-- 任务列表 -->
+  <div class="task-list">
+    <div class="task-item">
+      <div class="task-light yellow"></div>
+      <div class="task-info">
+        <div class="task-title">Comate Notch 悬浮窗开发</div>
+        <div class="task-meta">进行中 · 12 条消息 · 刚刚</div>
+      </div>
+      <div class="task-arrow">↗</div>
+    </div>
+    <div class="task-item">
+      <div class="task-light green"></div>
+      <div class="task-info">
+        <div class="task-title">AI 培训管理平台</div>
+        <div class="task-meta">已完成 · 66 条消息 · 8 分钟前</div>
+      </div>
+      <div class="task-arrow">↗</div>
+    </div>
+    <div class="task-item">
+      <div class="task-light gray"></div>
+      <div class="task-info">
+        <div class="task-title">移动端信创设备兼容性测试</div>
+        <div class="task-meta">空闲 · 4 条消息 · 5 小时前</div>
+      </div>
+      <div class="task-arrow">↗</div>
+    </div>
+  </div>
+  <!-- Footer -->
+  <div class="expanded-footer">
+    <div class="sync-dot"></div>
+    <span>实时同步 · 16:30:00</span>
+    <span style="flex:1"></span>
+    <span style="cursor:pointer; opacity:0.5;">↗ 打开 Comate</span>
+  </div>
+</div>
+
+<!-- ============ 设计说明 ============ -->
+<h2>五、设计要点汇总</h2>
+<div class="design-notes">
+  <ul>
+    <li><span class="tag">圆角</span> 收起态顶部四角圆角（10pt），与刘海边缘自然过渡，消除生硬边界</li>
+    <li><span class="tag">尺寸</span> 收起态固定 90×34pt，与刘海等高，不向下突出</li>
+    <li><span class="tag">居中</span> 通过 auxiliaryTopLeftArea/RightArea 精确计算刘海中心，窗口严格居中</li>
+    <li><span class="tag">融合</span> 中间留白让刘海自然露出（左右各 ~55pt），HUD 仅作为装饰</li>
+    <li><span class="tag">图标灯</span> Comate 图标（20×20pt）+ 状态灯（10×10pt）叠加在右下角，形成组合</li>
+    <li><span class="tag">优先级</span> 红 > 黄 > 绿 > 灰，有异常优先显示</li>
+    <li><span class="tag">展开</span> hover 0.3s 后向下展开任务列表（340×320pt），spring 动画</li>
+    <li><span class="tag">交互</span> 任务行可点击，通过 URL scheme 打开对应会话</li>
+    <li><span class="tag">适配</span> 固定尺寸 + 刘海居中，天然适配所有 notch 机型</li>
+  </ul>
+</div>
+
+</body>
+</html>

@@ -3,13 +3,11 @@ import AppKit
 
 // MARK: - Comate Logo（从 SVG 路径数据还原）
 
-/// Comate logo 两个渐变路径（紫色 + 粉色），缩放到指定尺寸
 struct ComateLogo: View {
     var size: CGFloat = 20
 
     var body: some View {
         ZStack {
-            // 路径 1：紫色渐变（主体 W 左半）
             ComatePath1()
                 .fill(
                     LinearGradient(
@@ -18,7 +16,6 @@ struct ComateLogo: View {
                         endPoint: .init(x: 0.50, y: 0.14)
                     )
                 )
-            // 路径 2：粉色渐变（主体 W 右半）
             ComatePath2()
                 .fill(
                     LinearGradient(
@@ -32,7 +29,6 @@ struct ComateLogo: View {
     }
 }
 
-/// SVG Path 1（左半 W 形状，68x68 viewBox）
 struct ComatePath1: Shape {
     func path(in rect: CGRect) -> Path {
         var p = Path()
@@ -105,7 +101,6 @@ struct ComatePath1: Shape {
     }
 }
 
-/// SVG Path 2（右半 W 形状）
 struct ComatePath2: Shape {
     func path(in rect: CGRect) -> Path {
         var p = Path()
@@ -162,34 +157,37 @@ struct NotchRootView: View {
     var onExpandChange: ((Bool) -> Void)?
 
     @State private var hovering = false
+    @State private var expandTimer: Timer?
     private let forceExpanded = CommandLine.arguments.contains("--expanded")
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            // 背板
-            RoundedRectangle(cornerRadius: expanded ? 18 : 16, style: .continuous)
-                .fill(Color.black)
-                .shadow(color: .black.opacity(0.5), radius: expanded ? 16 : 4, y: expanded ? 8 : 2)
-
-            content
-                .padding(.horizontal, expanded ? 16 : 10)
-                .padding(.top, expanded ? 14 : 8)
-                .padding(.bottom, expanded ? 12 : 8)
+        ZStack(alignment: .top) {
+            if expanded {
+                expandedView
+            } else {
+                collapsedView
+            }
         }
-        .frame(width: expanded ? 340 : 80, height: expanded ? 320 : 34)
         .animation(.spring(response: 0.28, dampingFraction: 0.85), value: expanded)
         .onHover { isHovering in
             hovering = isHovering
             if forceExpanded { return }
             if isHovering {
+                expandTimer?.invalidate()
                 expandTimer = Timer.scheduledTimer(withTimeInterval: 0.30, repeats: false) { _ in
-                    withAnimation { expanded = true }
-                    onExpandChange?(true)
+                    DispatchQueue.main.async {
+                        withAnimation { expanded = true }
+                        onExpandChange?(true)
+                    }
                 }
             } else {
                 expandTimer?.invalidate()
-                withAnimation { expanded = false }
-                onExpandChange?(false)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    if !hovering {
+                        withAnimation { expanded = false }
+                        onExpandChange?(false)
+                    }
+                }
             }
         }
         .onAppear {
@@ -197,25 +195,47 @@ struct NotchRootView: View {
         }
     }
 
-    @ViewBuilder private var content: some View {
-        if expanded { expandedView } else { collapsedView }
-    }
-
-    // MARK: - 收起态：Logo + 状态灯
+    // MARK: - 收起态
 
     private var collapsedView: some View {
-        HStack(spacing: 8) {
-            ComateLogo(size: 18)
-            StatusLight(color: store.primaryLight.color)
+        HStack(spacing: 0) {
+            ZStack(alignment: .bottomTrailing) {
+                ComateLogo(size: 18)
+                Circle()
+                    .fill(Color(hex: store.primaryLight.color))
+                    .frame(width: 10, height: 10)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.black.opacity(0.5), lineWidth: 1.5)
+                    )
+                    .shadow(color: Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.8 : 0.4),
+                            radius: store.primaryLight == .red ? 6 : 4)
+            }
+            .frame(width: 20, height: 20)
+
+            Spacer(minLength: 0)
+
+            Button(action: { store.launchNewSession() }) {
+                Image(systemName: "plus")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            .buttonStyle(.plain)
+            .frame(width: 16, height: 16)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(width: 90, height: 34)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.black)
+                .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+        )
+        .contentShape(Rectangle())
     }
 
     // MARK: - 展开态
 
     private var expandedView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Header
             HStack(spacing: 8) {
                 ComateLogo(size: 16)
                 Text("Comate 任务")
@@ -238,7 +258,6 @@ struct NotchRootView: View {
 
             Divider().background(Color.white.opacity(0.10))
 
-            // 任务列表
             if store.recentTasks.isEmpty {
                 Text("暂无任务")
                     .font(.system(size: 12, design: .rounded))
@@ -258,7 +277,6 @@ struct NotchRootView: View {
                 }
             }
 
-            // Footer
             HStack(spacing: 4) {
                 StatusLight(color: store.primaryLight.color, size: 5)
                 Text("实时同步 · \(timeStr(store.lastRefreshed))")
@@ -274,7 +292,13 @@ struct NotchRootView: View {
                 .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .frame(width: 340, height: 320)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.black)
+                .shadow(color: .black.opacity(0.5), radius: 16, y: 8)
+        )
     }
 
     private func taskRow(_ t: ComateTask) -> some View {
@@ -307,13 +331,10 @@ struct NotchRootView: View {
         .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
     }
 
-    // MARK: - 工具
-
-    @State private var expandTimer: Timer?
-
     private func timeStr(_ d: Date) -> String {
         let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f.string(from: d)
     }
+
     private func relTime(_ d: Date) -> String {
         let s = Int(Date().timeIntervalSince(d))
         if s < 60 { return "\(s)秒前" }

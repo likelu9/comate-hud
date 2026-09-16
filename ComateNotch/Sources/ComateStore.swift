@@ -57,9 +57,16 @@ final class ComateStore: ObservableObject {
     @Published private(set) var lastRefreshed: Date = .now
 
     /// 当前最优先的状态灯（用于收起态显示）
+    /// 优先级：红 > 黄 > 绿 > 灰
     var primaryLight: TaskLight {
+        // 1. 红色：有等待用户授权/回复/确认的任务，或异常/错误
+        if recentTasks.contains(where: { $0.light == .red }) { return .red }
+        // 2. 黄色：有运行中/思考中的任务
         if let t = runningTasks.first { return t.light }
-        if recentTasks.contains(where: { $0.isCompleted }) { return .green }
+        // 3. 绿色：有已完成的任务（最近 5 分钟内）
+        let fiveMinAgo = Date().addingTimeInterval(-300)
+        if recentTasks.contains(where: { $0.isCompleted && $0.updatedAt > fiveMinAgo }) { return .green }
+        // 4. 灰色：全部空闲
         return .gray
     }
 
