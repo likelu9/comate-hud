@@ -30,8 +30,11 @@ final class NotchPanel: NSPanel {
     }
 
     let notch: NotchGeometry
-    /// 收起态宽度：90pt（图标 20 + 间距 + 图标 14 + 边距）
-    let collapsedWidth: CGFloat = 90
+    /// 收起态左右翼宽度：刘海两侧可显示区域的宽度
+    /// HUD 总宽 = 刘海宽 + 左翼 + 右翼，中间段被刘海硬件遮挡，纯黑融合
+    let wingWidth: CGFloat = 68
+    /// 收起态总宽（动态）：必须 > 刘海宽，否则整个 HUD 被刘海盖住
+    var collapsedWidth: CGFloat { (notch.notchRight - notch.notchLeft) + wingWidth * 2 }
     let expandedWidth: CGFloat = 340
     let expandedHeight: CGFloat = 320
     private let anchorTopY: CGFloat
@@ -41,8 +44,10 @@ final class NotchPanel: NSPanel {
         self.notch = NotchPanel.notchGeometry(for: screen)
         self.anchorTopY = screen.frame.maxY - notch.notchHeight
 
-        let frame = NSRect(x: notch.centerX - collapsedWidth / 2,
-                           y: anchorTopY, width: collapsedWidth, height: notch.notchHeight)
+        // super.init 之前不能用 self 的计算属性，直接用已初始化的存储属性计算
+        let collapsedW = (notch.notchRight - notch.notchLeft) + wingWidth * 2
+        let frame = NSRect(x: notch.centerX - collapsedW / 2,
+                           y: anchorTopY, width: collapsedW, height: notch.notchHeight)
         let styleMask: NSWindow.StyleMask = [.borderless, .fullSizeContentView, .nonactivatingPanel]
         super.init(contentRect: frame, styleMask: styleMask, backing: .buffered, defer: false)
         self.isFloatingPanel = true

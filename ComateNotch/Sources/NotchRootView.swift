@@ -156,6 +156,13 @@ struct NotchRootView: View {
     @Binding var expanded: Bool
     var onExpandChange: ((Bool) -> Void)?
 
+    // 刘海几何：HUD 总宽必须大于刘海宽，内容仅在左右两翼显示
+    var notchWidth: CGFloat
+    var wingWidth: CGFloat = 68
+    var notchHeight: CGFloat
+
+    private var collapsedTotalWidth: CGFloat { notchWidth + wingWidth * 2 }
+
     @State private var hovering = false
     @State private var expandTimer: Timer?
     private let forceExpanded = CommandLine.arguments.contains("--expanded")
@@ -196,40 +203,49 @@ struct NotchRootView: View {
     }
 
     // MARK: - 收起态
-
+    /// 布局：[左翼: 图标+状态灯] [中段: 纯黑与刘海融合] [右翼: 新建按钮]
     private var collapsedView: some View {
         HStack(spacing: 0) {
+            // 左翼：Comate 图标 + 状态灯（灯叠在图标右下角）
             ZStack(alignment: .bottomTrailing) {
                 ComateLogo(size: 18)
                 Circle()
                     .fill(Color(hex: store.primaryLight.color))
-                    .frame(width: 10, height: 10)
+                    .frame(width: 9, height: 9)
                     .overlay(
                         Circle()
-                            .stroke(Color.black.opacity(0.5), lineWidth: 1.5)
+                            .stroke(Color.black.opacity(0.6), lineWidth: 1.2)
                     )
                     .shadow(color: Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.8 : 0.4),
                             radius: store.primaryLight == .red ? 6 : 4)
             }
-            .frame(width: 20, height: 20)
+            .frame(width: wingWidth, height: notchHeight)
 
-            Spacer(minLength: 0)
+            // 中段：被系统刘海物理遮挡，纯黑自然融合
+            Color.black
+                .frame(width: notchWidth)
 
+            // 右翼：快速新建任务（仅图标）
             Button(action: { store.launchNewSession() }) {
                 Image(systemName: "plus")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(.white.opacity(0.45))
             }
             .buttonStyle(.plain)
-            .frame(width: 16, height: 16)
+            .frame(width: wingWidth, height: notchHeight)
         }
-        .frame(width: 90, height: 34)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.black)
-                .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
-        )
+        .frame(width: collapsedTotalWidth, height: notchHeight)
+        .background(bottomCornersBlack)
         .contentShape(Rectangle())
+    }
+
+    /// 仅底部两角 8pt 圆角；顶部平直与屏幕上缘、中段与刘海无缝贴合
+    /// 兼容 macOS 12：用 clipShape 包住圆角矩形，只露出下半部分圆角
+    private var bottomCornersBlack: some View {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .fill(Color.black)
+            .padding(.top, -8) // 顶部上移，使顶部圆角被屏幕边缘裁掉，等效仅下方圆角
+            .clipped()
     }
 
     // MARK: - 展开态

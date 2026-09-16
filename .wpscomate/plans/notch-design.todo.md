@@ -7,4 +7,4 @@
 5. [x] 重建 NotchRootView.swift
 6. [x] 更新 NotchPanel.swift（固定宽度 80pt）
 7. [x] 更新 ComateStore.swift（状态灯优先级）
-8. [-] 编译并截图验证
+8. [x] 编译并截图验证

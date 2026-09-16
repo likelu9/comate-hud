@@ -16,10 +16,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             set: { [weak self] val in self?.expanded = val }
         )
 
-        let view = NotchRootView(store: store, expanded: binding) { [weak panel] isExpanded in
-            if isExpanded { panel?.animateToExpanded() }
-            else { panel?.animateToCollapsed() }
-        }
+        let geo = panel.notch
+        let view = NotchRootView(
+            store: store,
+            expanded: binding,
+            onExpandChange: { [weak panel] isExpanded in
+                if isExpanded { panel?.animateToExpanded() }
+                else { panel?.animateToCollapsed() }
+            },
+            notchWidth: geo.notchRight - geo.notchLeft,
+            wingWidth: panel.wingWidth,
+            notchHeight: geo.notchHeight
+        )
         let hosting = NSHostingView(rootView: view)
         panel.contentView = hosting
         panel.orderFrontRegardless()
