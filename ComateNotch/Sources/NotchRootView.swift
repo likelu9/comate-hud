@@ -158,19 +158,19 @@ struct NotchShape: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width
         let h = rect.height
-        let tf = topFlare  // 凹弧深度（顶部两侧向内收缩多少pt）
+        let tf = topFlare  // 顶部凸弧高度
         let br = bottomRadius  // 底部凸弧半径
         var p = Path()
 
-        // 顶部：直线（屏幕边缘，比机身宽 tf*2）
+        // 顶部：直线（屏幕边缘）
         p.move(to: CGPoint(x: 0, y: 0))
         p.addLine(to: CGPoint(x: w, y: 0))
-        // 右侧凹弧：从 (w,0) 曲线收缩到 (w-tf, tf)
+        // 右上凸弧：从屏幕边缘向右下凸出，再收回机身
         p.addQuadCurve(to: CGPoint(x: w - tf, y: tf),
                        control: CGPoint(x: w, y: tf))
-        // 右侧机身（比顶部窄 tf）
+        // 右侧机身
         p.addLine(to: CGPoint(x: w - tf, y: h - br))
-        // 右下凸弧（标准圆角收口）
+        // 右下凸弧
         p.addQuadCurve(to: CGPoint(x: w - tf - br, y: h),
                        control: CGPoint(x: w - tf, y: h))
         // 底部
@@ -180,7 +180,7 @@ struct NotchShape: Shape {
                        control: CGPoint(x: tf, y: h))
         // 左侧机身
         p.addLine(to: CGPoint(x: tf, y: tf))
-        // 左侧凹弧：从 (tf, tf) 曲线扩展到 (0, 0)
+        // 左上凸弧：从机身向左上凸出，再回到屏幕边缘
         p.addQuadCurve(to: CGPoint(x: 0, y: 0),
                        control: CGPoint(x: 0, y: tf))
 
