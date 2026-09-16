@@ -81,16 +81,16 @@
     /* 顶部被屏幕边缘切掉，只露出下半部分 */
   }
 
-  /* 方案B v2: 顶部凹弧圆角 + 底部凸弧圆角（同半径） */
+  /* 方案B v2: 刘海呼吸胶囊 */
   .hud-b {
     position: absolute;
-    top: 0;
+    top: 16px;
     left: 50%;
     transform: translateX(-50%);
-    width: 180px;
-    height: 50px;
+    width: 160px;
+    height: 40px;
     background: #000;
-    clip-path: path('M 0 0 L 180 0 Q 160 0, 180 20 L 180 30 Q 180 50, 160 50 L 20 50 Q 0 50, 0 30 L 0 20 Q 20 0, 0 0 Z');
+    border-radius: 0 0 20px 20px;
   }
 
   /* 方案C: 顶部小圆角 + 侧面 + 底部大圆角 */
@@ -228,22 +228,28 @@
 
 <!-- ==================== 方案B v2 ==================== -->
 <div class="section">
-  <h2>方案 B v2：顶部凹弧圆角 + 底部凸弧圆角（同半径）</h2>
-  <p class="desc">顶部和底部使用相同半径的圆角，但顶部是凹弧（向内收缩），底部是凸弧（向外扩展）。像一个对称的沙漏形胶囊。</p>
+  <h2>方案 B v2：刘海呼吸胶囊 ⭐ 推荐</h2>
+  <p class="desc">黑色胶囊直接从刘海底部向下延伸，顶部平直与刘海同色无缝融合，底部圆角收口。像刘海本身在"呼吸"。</p>
 
   <div class="demo-area">
     <div class="screen-line"></div>
-    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:50px;background:#000;clip-path:path('M 0 0 L 180 0 Q 160 0, 180 20 L 180 30 Q 180 50, 160 50 L 20 50 Q 0 50, 0 30 L 0 20 Q 20 0, 0 0 Z');"></div>
+    <!-- 刘海（黑色矩形） -->
+    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:140px;height:18px;background:#000;border-radius:0 0 4px 4px;"></div>
+    <!-- 悬浮胶囊：从刘海底部向下延伸 -->
+    <div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);width:160px;height:40px;background:#000;border-radius:0 0 20px 20px;"></div>
   </div>
 
   <div class="cross-section">
     <pre>
   屏幕边缘
   ═══════════════════════════
-     ╲                    ╱    <span class="highlight">← 顶部：凹弧圆角（半径 r），向内收缩</span>
-      │                  │      <span class="note">← 两侧：垂直边</span>
-      │                  │
-       ╰────────────────╯      <span class="highlight">← 底部：凸弧圆角（半径 r），向外扩展</span>
+  ████████████████████        <span class="highlight">← 刘海（黑色，与 HUD 同色）</span>
+  ████████████████████
+  │                    │     <span class="note">← 顶部：平直，与刘海无缝融合</span>
+  │                    │       两侧：垂直边
+  │      HUD 内容       │
+  │                    │
+   ╰──────────────────╯     <span class="highlight">← 底部：圆角收口（凸弧）</span>
     </pre>
   </div>
 </div>
@@ -259,11 +265,14 @@
       <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:200px;height:50px;background:#000;border-radius:25px;"></div>
     </div>
 
-    <!-- B: 顶部凹弧圆角 = 底部凸弧圆角 -->
+    <!-- B: 刘海呼吸胶囊 -->
     <div class="compare-item">
-      <span class="tag">B v2: 顶凹弧 = 底凸弧（同半径）</span>
+      <span class="tag">B v2: 刘海呼吸胶囊 ⭐</span>
       <div class="screen-line"></div>
-      <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:50px;background:#000;clip-path:path('M 0 0 L 180 0 Q 160 0, 180 20 L 180 30 Q 180 50, 160 50 L 20 50 Q 0 50, 0 30 L 0 20 Q 20 0, 0 0 Z');"></div>
+      <!-- 刘海 -->
+      <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:100px;height:14px;background:#000;border-radius:0 0 4px 4px;"></div>
+      <!-- 胶囊 -->
+      <div style="position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:36px;background:#000;border-radius:0 0 18px 18px;"></div>
     </div>
 
     <!-- C: 顶部小圆角 + 底部大圆角 -->

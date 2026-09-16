@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>HUD 形状画板</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    font-family: -apple-system, sans-serif;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 20px; margin-bottom: 6px; }
+  .hint { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+  .canvas-wrap {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #333;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  /* 模拟屏幕顶部 */
+  .screen-top {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 28px;
+    background: #1a1a2e;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #555;
+  }
+  /* 模拟刘海 */
+  .notch {
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 22px;
+    background: #000;
+    border-radius: 0 0 10px 10px;
+    z-index: 21;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .toolbar button {
+    padding: 8px 20px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background: #222;
+    color: #ccc;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .toolbar button:hover { background: #333; border-color: #4fc3f7; color: #fff; }
+  .toolbar button.active { background: #4fc3f7; color: #000; border-color: #4fc3f7; }
+
+  .info {
+    margin-top: 16px;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>✏️ 在画板上画出你想要的 HUD 走向</h1>
+<p class="hint">在黑色刘海下方区域，用鼠标画出悬浮窗的轮廓线条。可以画多条线。</p>
+
+<div class="toolbar">
+  <button id="btnDraw" class="active" onclick="setMode('draw')">画线</button>
+  <button id="btnEraser" onclick="setMode('erase')">橡皮擦</button>
+  <button id="btnUndo" onclick="undo()">撤销</button>
+  <button id="btnClear" onclick="clearAll()">清空</button>
+  <button onclick="savePNG()">保存图片</button>
+</div>
+
+<div class="canvas-wrap">
+  <div class="screen-top">⬆ 屏幕顶部边缘 — 黑色区域是刘海</div>
+  <div class="notch"></div>
+  <canvas id="canvas" width="600" height="500"></canvas>
+</div>
+
+<div class="info">画完后点「保存图片」，然后把截图发给我</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let mode = 'draw';
+let lines = [];      // 所有线条
+let currentLine = null;
+
+// 背景
+function drawBg() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 网格参考线
+  ctx.strokeStyle = '#1a2030';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x < canvas.width; x += 20) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for (let y = 0; y < canvas.height; y += 20) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+
+  // 中线参考
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 2, 0);
+  ctx.lineTo(canvas.width / 2, canvas.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function redraw() {
+  drawBg();
+  for (const line of lines) {
+    if (line.points.length < 2) continue;
+    ctx.beginPath();
+    ctx.strokeStyle = line.color;
+    ctx.lineWidth = line.width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = line.alpha;
+    ctx.moveTo(line.points[0].x, line.points[0].y);
+    for (let i = 1; i < line.points.length; i++) {
+      const prev = line.points[i - 1];
+      const curr = line.points[i];
+      const mx = (prev.x + curr.x) / 2;
+      const my = (prev.y + curr.y) / 2;
+      ctx.quadraticCurveTo(prev.x, prev.y, mx, my);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * (canvas.width / rect.width),
+    y: (e.clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  const pos = getPos(e);
+  drawing = true;
+  currentLine = {
+    points: [pos],
+    color: mode === 'erase' ? '#0d1117' : '#4fc3f7',
+    width: mode === 'erase' ? 20 : 3,
+    alpha: 1
+  };
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!drawing) return;
+  currentLine.points.push(getPos(e));
+  redraw();
+  // 实时画当前线
+  const line = currentLine;
+  ctx.beginPath();
+  ctx.strokeStyle = line.color;
+  ctx.lineWidth = line.width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.moveTo(line.points[0].x, line.points[0].y);
+  for (let i = 1; i < line.points.length; i++) {
+    const prev = line.points[i - 1];
+    const curr = line.points[i];
+    const mx = (prev.x + curr.x) / 2;
+    const my = (prev.y + curr.y) / 2;
+    ctx.quadraticCurveTo(prev.x, prev.y, mx, my);
+  }
+  ctx.stroke();
+});
+
+canvas.addEventListener('mouseup', () => {
+  if (drawing && currentLine) {
+    lines.push(currentLine);
+    currentLine = null;
+  }
+  drawing = false;
+  redraw();
+});
+
+canvas.addEventListener('mouseleave', () => {
+  if (drawing && currentLine) {
+    lines.push(currentLine);
+    currentLine = null;
+  }
+  drawing = false;
+  redraw();
+});
+
+// 触控支持
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const pos = {
+    x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+    y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+  };
+  drawing = true;
+  currentLine = { points: [pos], color: mode === 'erase' ? '#0d1117' : '#4fc3f7', width: mode === 'erase' ? 20 : 3, alpha: 1 };
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (!drawing) return;
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  currentLine.points.push({
+    x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+    y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+  });
+  redraw();
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => {
+  if (drawing && currentLine) { lines.push(currentLine); currentLine = null; }
+  drawing = false; redraw();
+});
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btnDraw').classList.toggle('active', m === 'draw');
+  document.getElementById('btnEraser').classList.toggle('active', m === 'erase');
+  canvas.style.cursor = m === 'erase' ? 'crosshair' : 'crosshair';
+}
+
+function undo() {
+  if (lines.length > 0) { lines.pop(); redraw(); }
+}
+
+function clearAll() {
+  lines = [];
+  redraw();
+}
+
+function savePNG() {
+  const link = document.createElement('a');
+  link.download = 'hud_shape.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// 初始化
+drawBg();
+</script>
+</body>
+</html>
