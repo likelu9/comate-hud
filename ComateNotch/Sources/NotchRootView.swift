@@ -149,6 +149,46 @@ struct StatusLight: View {
     }
 }
 
+// MARK: - 刘海形状（顶部外圆角/凹弧 + 底部凸圆角）
+
+struct NotchShape: Shape {
+    var topFlare: CGFloat = 10
+    var bottomRadius: CGFloat = 10
+
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        let tf = topFlare
+        let br = bottomRadius
+        var p = Path()
+
+        // 从左上角开始
+        p.move(to: CGPoint(x: 0, y: 0))
+        // 顶边
+        p.addLine(to: CGPoint(x: w, y: 0))
+        // 右上凹弧（外圆角）：从 (w, 0) 到 (w-tf, tf)，控制点 (w, tf)
+        p.addQuadCurve(to: CGPoint(x: w - tf, y: tf),
+                       control: CGPoint(x: w, y: tf))
+        // 右侧边
+        p.addLine(to: CGPoint(x: w - tf, y: h - br))
+        // 右下凸圆角
+        p.addQuadCurve(to: CGPoint(x: w - tf - br, y: h),
+                       control: CGPoint(x: w - tf, y: h))
+        // 底边
+        p.addLine(to: CGPoint(x: tf + br, y: h))
+        // 左下凸圆角
+        p.addQuadCurve(to: CGPoint(x: tf, y: h - br),
+                       control: CGPoint(x: tf, y: h))
+        // 左侧边
+        p.addLine(to: CGPoint(x: tf, y: tf))
+        // 左上凹弧（外圆角）：从 (tf, tf) 到 (0, 0)，控制点 (0, tf)
+        p.addQuadCurve(to: CGPoint(x: 0, y: 0),
+                       control: CGPoint(x: 0, y: tf))
+
+        return p
+    }
+}
+
 // MARK: - 主视图
 
 struct NotchRootView: View {
@@ -235,17 +275,12 @@ struct NotchRootView: View {
             .frame(width: wingWidth, height: notchHeight)
         }
         .frame(width: collapsedTotalWidth, height: notchHeight)
-        .background(bottomCornersBlack)
-        .contentShape(Rectangle())
-    }
-
-    /// 仅底部两角 8pt 圆角；顶部平直与屏幕上缘、中段与刘海无缝贴合
-    /// 兼容 macOS 12：用 clipShape 包住圆角矩形，只露出下半部分圆角
-    private var bottomCornersBlack: some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(Color.black)
-            .padding(.top, -8) // 顶部上移，使顶部圆角被屏幕边缘裁掉，等效仅下方圆角
-            .clipped()
+        .background(
+            NotchShape(topFlare: 10, bottomRadius: 10)
+                .fill(Color.black)
+        )
+        .clipShape(NotchShape(topFlare: 10, bottomRadius: 10))
+        .contentShape(NotchShape(topFlare: 10, bottomRadius: 10))
     }
 
     // MARK: - 展开态
@@ -311,10 +346,11 @@ struct NotchRootView: View {
         .padding(16)
         .frame(width: 340, height: 320)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            NotchShape(topFlare: 12, bottomRadius: 18)
                 .fill(Color.black)
                 .shadow(color: .black.opacity(0.5), radius: 16, y: 8)
         )
+        .clipShape(NotchShape(topFlare: 12, bottomRadius: 18))
     }
 
     private func taskRow(_ t: ComateTask) -> some View {
