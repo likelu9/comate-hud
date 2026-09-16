@@ -150,7 +150,8 @@ final class ComateStore: ObservableObject {
             self.lastRefreshed = .now
             // 调试：打印第一条任务的状态灯
             if let first = recent.first {
-                print("[ComateStore] #1 \(first.title.prefix(15)) status=\(first.status) role=\(first.lastMessageRole) light=\(first.light)")
+                let msg = "[ComateStore] #1 \(first.title.prefix(15)) status=\(first.status) role=\(first.lastMessageRole) light=\(first.light)\n"
+                FileHandle.standardError.write(Data(msg.utf8))
             }
         }
     }
