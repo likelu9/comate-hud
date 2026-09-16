@@ -197,4 +197,11 @@ final class ComateStore: ObservableObject {
             NSWorkspace.shared.open(url)
         }
     }
+
+    /// 打开 Comate 新建本地任务页面
+    func openNewTask() {
+        if let url = URL(string: "wpscomate://chat.comate/local") {
+            NSWorkspace.shared.open(url)
+        }
+    }
 }

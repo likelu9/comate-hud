@@ -271,21 +271,13 @@ struct NotchRootView: View {
             }
             // 叠加层：消息中心徽章（右翼）
             .overlay(alignment: .topTrailing) {
-                Button(action: { store.launchComate() }) {
-                    HStack(spacing: 3) {
-                        Image(systemName: "bell")
-                            .font(.system(size: 9))
-                        let count = store.totalMessageCount
-                        if count > 0 {
-                            Text("\(count)")
-                                .font(.system(size: 8, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white.opacity(0.7))
-                        }
-                    }
-                    .foregroundColor(.white.opacity(0.5))
+                Button(action: { store.openNewTask() }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .light))
+                        .foregroundColor(.white.opacity(0.55))
                 }
                 .buttonStyle(.plain)
-                .padding(.trailing, wingWidth / 2 - 4)
+                .padding(.trailing, wingWidth / 2 - 2)
                 .padding(.top, (notchHeight - 18) / 2)
                 .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
             }
@@ -338,23 +330,6 @@ struct NotchRootView: View {
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Spacer()
-                let count = store.runningTasks.count
-                if count > 0 {
-                    Text("\(count) 运行中")
-                        .font(.system(size: 9, weight: .semibold, design: .rounded))
-                        .padding(.horizontal, 6).padding(.vertical, 1.5)
-                        .background(Color(hex: "#FFB800").opacity(0.22), in: Capsule())
-                        .foregroundStyle(Color(hex: "#FFB800"))
-                } else {
-                    Text("空闲")
-                        .font(.system(size: 9, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.4))
-                }
-            }
-
-            Divider().background(Color.white.opacity(0.10))
 
             if store.recentTasks.isEmpty {
                 Text("暂无任务")
