@@ -244,16 +244,16 @@ struct NotchRootView: View {
         HStack(spacing: 0) {
             // 左翼：Comate 图标 + 状态灯（灯叠在图标右下角）
             ZStack(alignment: .bottomTrailing) {
-                ComateLogo(size: 18)
+                ComateLogo(size: 14)  // 从 18 缩小到 14
                 Circle()
                     .fill(Color(hex: store.primaryLight.color))
-                    .frame(width: 9, height: 9)
+                    .frame(width: 7, height: 7)  // 从 9 缩小到 7
                     .overlay(
                         Circle()
-                            .stroke(Color.black.opacity(0.6), lineWidth: 1.2)
+                            .stroke(Color.black.opacity(0.6), lineWidth: 1)
                     )
                     .shadow(color: Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.8 : 0.4),
-                            radius: store.primaryLight == .red ? 6 : 4)
+                            radius: store.primaryLight == .red ? 5 : 3)
             }
             .frame(width: wingWidth, height: notchHeight)
 
@@ -264,7 +264,7 @@ struct NotchRootView: View {
             // 右翼：快速新建任务（仅图标）
             Button(action: { store.launchNewSession() }) {
                 Image(systemName: "plus")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))  // 从 12 缩小到 11
                     .foregroundColor(.white.opacity(0.45))
             }
             .buttonStyle(.plain)
