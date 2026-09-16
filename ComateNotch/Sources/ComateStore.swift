@@ -153,31 +153,34 @@ final class ComateStore: ObservableObject {
 
     // MARK: - 交互
 
-    /// 打开指定会话：拉起 Comate 到前台
-    /// Comate 1.5.28 的 deeplink URL 格式未公开且前端未完整实现，
-    /// 因此采用可靠方案：用 wpscomate:// scheme 拉起应用 + AppleScript 激活到前台。
+    /// 打开指定会话：通过 deeplink 跳转到对应会话
+    /// 格式：wpscomate://chat.comate/jointtask?id=<session_id>&ckp=<base64({})>
+    /// id 为会话 ID，ckp 为 base64 编码的参数对象（空对象即可）
     func openSession(_ task: ComateTask) {
-        launchComate()
+        // ckp 参数：base64 编码的空 JSON 对象
+        let ckp = Data("{}".utf8).base64EncodedString()
+        let urlString = "wpscomate://chat.comate/jointtask?id=\(task.id)&ckp=\(ckp)"
+        if let url = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let deepLink = URL(string: url) {
+            NSWorkspace.shared.open(deepLink)
+        }
     }
 
-    /// 快速新建任务：拉起 Comate 到前台
+    /// 快速新建任务：通过 deeplink 跳转到新建会话
+    /// 不带 id 参数，跳转到云端首页新建任务
     func launchNewSession() {
-        launchComate()
+        let ckp = Data("{}".utf8).base64EncodedString()
+        let urlString = "wpscomate://chat.comate/jointtask?ckp=\(ckp)"
+        if let url = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let deepLink = URL(string: url) {
+            NSWorkspace.shared.open(deepLink)
+        }
     }
 
-    /// 拉起 Comate 应用并激活到前台
+    /// 拉起 Comate 应用并激活到前台（fallback）
     func launchComate() {
-        // 1. 先用 URL scheme 唤起（确保应用启动）
         if let url = URL(string: "wpscomate://") {
             NSWorkspace.shared.open(url)
-        }
-        // 2. 延迟激活到前台（等应用启动/恢复窗口）
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            let script = "tell application \"WPS Comate\" to activate"
-            if let appleScript = NSAppleScript(source: script) {
-                var err: NSDictionary?
-                appleScript.executeAndReturnError(&err)
-            }
         }
     }
 }
