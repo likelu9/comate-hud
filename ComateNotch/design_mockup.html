@@ -81,7 +81,7 @@
     /* 顶部被屏幕边缘切掉，只露出下半部分 */
   }
 
-  /* 方案B: 顶部直角 + 凹弧过渡 + 底部圆角 */
+  /* 方案B v2: 顶部凹弧圆角 + 底部凸弧圆角（同半径） */
   .hud-b {
     position: absolute;
     top: 0;
@@ -90,7 +90,7 @@
     width: 180px;
     height: 50px;
     background: #000;
-    clip-path: path('M 0 8 Q 0 0, 8 0 L 172 0 Q 180 0, 180 8 L 180 32 Q 180 50, 162 50 L 18 50 Q 0 50, 0 32 Z');
+    clip-path: path('M 0 0 L 180 0 Q 160 0, 180 20 L 180 30 Q 180 50, 160 50 L 20 50 Q 0 50, 0 30 L 0 20 Q 20 0, 0 0 Z');
   }
 
   /* 方案C: 顶部小圆角 + 侧面 + 底部大圆角 */
@@ -226,24 +226,24 @@
   </div>
 </div>
 
-<!-- ==================== 方案B ==================== -->
+<!-- ==================== 方案B v2 ==================== -->
 <div class="section">
-  <h2>方案 B：顶部微凹弧 + 底部圆角</h2>
-  <p class="desc">顶部两侧有微小的凹弧过渡（从屏幕边缘向内收缩），底部标准圆角。形状像一个底部圆润的梯形。</p>
+  <h2>方案 B v2：顶部凹弧圆角 + 底部凸弧圆角（同半径）</h2>
+  <p class="desc">顶部和底部使用相同半径的圆角，但顶部是凹弧（向内收缩），底部是凸弧（向外扩展）。像一个对称的沙漏形胶囊。</p>
 
   <div class="demo-area">
     <div class="screen-line"></div>
-    <div class="hud-b"></div>
+    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:50px;background:#000;clip-path:path('M 0 0 L 180 0 Q 160 0, 180 20 L 180 30 Q 180 50, 160 50 L 20 50 Q 0 50, 0 30 L 0 20 Q 20 0, 0 0 Z');"></div>
   </div>
 
   <div class="cross-section">
     <pre>
   屏幕边缘
   ═══════════════════════════
-     ╲                    ╱    <span class="note">← 顶部：两侧微凹弧，从屏幕边缘向内收缩</span>
+     ╲                    ╱    <span class="highlight">← 顶部：凹弧圆角（半径 r），向内收缩</span>
       │                  │      <span class="note">← 两侧：垂直边</span>
       │                  │
-       ╰────────────────╯      <span class="highlight">← 底部：标准圆角</span>
+       ╰────────────────╯      <span class="highlight">← 底部：凸弧圆角（半径 r），向外扩展</span>
     </pre>
   </div>
 </div>
@@ -259,11 +259,11 @@
       <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:200px;height:50px;background:#000;border-radius:25px;"></div>
     </div>
 
-    <!-- B: 顶部凹弧 -->
+    <!-- B: 顶部凹弧圆角 = 底部凸弧圆角 -->
     <div class="compare-item">
-      <span class="tag">B: 顶部凹弧</span>
+      <span class="tag">B v2: 顶凹弧 = 底凸弧（同半径）</span>
       <div class="screen-line"></div>
-      <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:50px;background:#000;clip-path:path('M 0 8 Q 0 0, 8 0 L 172 0 Q 180 0, 180 8 L 180 32 Q 180 50, 162 50 L 18 50 Q 0 50, 0 32 Z');"></div>
+      <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:50px;background:#000;clip-path:path('M 0 0 L 180 0 Q 160 0, 180 20 L 180 30 Q 180 50, 160 50 L 20 50 Q 0 50, 0 30 L 0 20 Q 20 0, 0 0 Z');"></div>
     </div>
 
     <!-- C: 顶部小圆角 + 底部大圆角 -->
