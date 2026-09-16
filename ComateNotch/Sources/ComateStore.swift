@@ -74,6 +74,11 @@ final class ComateStore: ObservableObject {
     @Published private(set) var lastError: String?
     @Published private(set) var lastRefreshed: Date = .now
 
+    /// 所有任务的总消息数（用于右侧徽章显示）
+    var totalMessageCount: Int {
+        recentTasks.reduce(0) { $0 + $1.messageCount }
+    }
+
     /// 当前最优先的状态灯（用于收起态显示）
     /// 优先级：红 > 黄 > 绿 > 灰
     /// 与展开态每个任务的 light 使用同一套逻辑，保证一致
@@ -180,17 +185,6 @@ final class ComateStore: ObservableObject {
         let ckp = Data("{}".utf8).base64EncodedString()
         let urlString = "wpscomate://chat.comate/jointtask?id=\(uuid)&ckp=\(ckp)"
         print("[ComateNotch] 打开会话: uuid=\(uuid), url=\(urlString)")
-        if let url = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let deepLink = URL(string: url) {
-            NSWorkspace.shared.open(deepLink)
-        }
-    }
-
-    /// 快速新建任务：通过 deeplink 跳转到新建会话
-    /// 不带 id 参数，跳转到云端首页新建任务
-    func launchNewSession() {
-        let ckp = Data("{}".utf8).base64EncodedString()
-        let urlString = "wpscomate://chat.comate/jointtask?ckp=\(ckp)"
         if let url = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let deepLink = URL(string: url) {
             NSWorkspace.shared.open(deepLink)

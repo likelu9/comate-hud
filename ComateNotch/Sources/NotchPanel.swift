@@ -32,10 +32,10 @@ final class NotchPanel: NSPanel {
     let notch: NotchGeometry
     /// 收起态左右翼宽度：刘海两侧可显示区域的宽度
     /// HUD 总宽 = 刘海宽 + 左翼 + 右翼，中间段被刘海硬件遮挡，纯黑融合
-    let wingWidth: CGFloat = 48  // 从 68 缩小到 48，更紧凑
+    let wingWidth: CGFloat = 36  // 收窄到 36
     /// 收起态总宽（动态）：必须 > 刘海宽，否则整个 HUD 被刘海盖住
     var collapsedWidth: CGFloat { (notch.notchRight - notch.notchLeft) + wingWidth * 2 }
-    let expandedWidth: CGFloat = 320  // 从 340 缩小到 320
+    let expandedWidth: CGFloat = 280  // 收窄到 280
     let expandedHeight: CGFloat = 280  // 从 320 缩小到 280
     private let anchorTopY: CGFloat
 

@@ -231,9 +231,9 @@ struct NotchRootView: View {
 
     // 刘海几何：HUD 总宽必须大于刘海宽，内容仅在左右两翼显示
     var notchWidth: CGFloat
-    var wingWidth: CGFloat = 48  // 从 68 缩小到 48
+    var wingWidth: CGFloat = 36  // 收窄到 36
     var notchHeight: CGFloat
-    var expandedWidth: CGFloat = 320  // 新增：展开宽度
+    var expandedWidth: CGFloat = 280  // 收窄到 280
     var expandedHeight: CGFloat = 280  // 新增：展开高度
 
     private var collapsedTotalWidth: CGFloat { notchWidth + wingWidth * 2 }
@@ -269,18 +269,29 @@ struct NotchRootView: View {
                 y: notchHeight / 2
             )
 
-            // 层 3：plus 按钮（展开时淡出）
-            Button(action: { store.launchNewSession() }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.45))
+            // 层 3：消息中心徽章（始终可见）
+            Button(action: { store.launchComate() }) {
+                HStack(spacing: 3) {
+                    Image(systemName: "bell")
+                        .font(.system(size: 9))
+                    let count = store.totalMessageCount
+                    if count > 0 {
+                        Text("\(count)")
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1.5)
+                            .background(Color(hex: "#FF4444"), in: Capsule())
+                    }
+                }
+                .foregroundColor(.white.opacity(0.5))
             }
             .buttonStyle(.plain)
             .position(
                 x: collapsedTotalWidth - wingWidth / 2,
                 y: notchHeight / 2
             )
-            .opacity(expanded ? 0 : 1)
+            .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
 
             // 层 4：展开内容（收起时淡出）
             expandedContent
@@ -385,13 +396,12 @@ struct NotchRootView: View {
                     .font(.system(size: 8, design: .rounded))
                     .foregroundStyle(.white.opacity(0.35))
                 Spacer()
-                Button(action: { store.launchComate() }) {
-                    Image(systemName: "arrow.up.right.square")
-                        .font(.system(size: 9))
+                // 消息数提示
+                if store.totalMessageCount > 0 {
+                    Text("\(store.totalMessageCount) 条消息")
+                        .font(.system(size: 8, weight: .medium, design: .rounded))
                         .foregroundStyle(.white.opacity(0.35))
                 }
-                .buttonStyle(.plain)
-                .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
             }
         }
         .padding(.horizontal, 12)
