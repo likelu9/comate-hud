@@ -2,11 +2,8 @@ import SwiftUI
 
 @main
 struct ComateNotchApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
     var body: some Scene {
-        Settings {
-            EmptyView()
-        }
+        Settings { EmptyView() }
     }
 }

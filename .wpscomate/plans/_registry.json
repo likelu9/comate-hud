@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "plans": [
+    {
+      "planId": "comate-notch-v3",
+      "suffix": "comate-notch-v3",
+      "title": "Comate Notch HUD 优化 v3",
+      "status": "active",
+      "createdAt": 1789547581155,
+      "updatedAt": 1789547581155,
+      "completedAt": null
+    },
+    {
+      "planId": "notch-design",
+      "suffix": "notch-design",
+      "title": "Comate Notch 收起态 UI 设计",
+      "status": "active",
+      "createdAt": 1789547720800,
+      "updatedAt": 1789547720800,
+      "completedAt": null
+    }
+  ]
+}

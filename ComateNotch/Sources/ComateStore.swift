@@ -1,24 +1,45 @@
 import Foundation
-import Combine
 import SQLite3
 import AppKit
 
-/// 一条 Comate 任务（会话）快照
+/// 任务状态灯颜色
+enum TaskLight: String {
+    case gray    // 空闲
+    case yellow  // 运行中 / 思考中
+    case red     // 等待用户 / 异常 / 错误
+    case green   // 已完成
+
+    var color: String {
+        switch self {
+        case .gray:   return "#8E8E93"
+        case .yellow: return "#FFB800"
+        case .red:    return "#FF3B30"
+        case .green:  return "#34C759"
+        }
+    }
+}
+
 struct ComateTask: Identifiable, Equatable {
     let id: String
     let title: String
-    let status: String          // running / idle / done
+    let status: String
     let messageCount: Int
     let updatedAt: Date
-    let sessionFile: String?    // 可用于打开会话的本地文件路径
+    let sessionFile: String?
 
-    var statusColor: String {
+    /// 根据 status 映射状态灯
+    var light: TaskLight {
         switch status {
-        case "running": return "#FF8A3D"
-        case "done":    return "#3DDC84"
-        default:        return "#8E8E93"
+        case "running": return .yellow
+        case "done":    return .green
+        case "idle":    return .gray
+        default:        return .gray
         }
     }
+
+    var isRunning: Bool { status == "running" }
+    var isCompleted: Bool { status == "done" }
+
     var statusLabel: String {
         switch status {
         case "running": return "运行中"
@@ -27,16 +48,20 @@ struct ComateTask: Identifiable, Equatable {
         default:        return status
         }
     }
-    var isRunning: Bool { status == "running" }
 }
 
-/// 任务进度数据源：读取 ~/.wpscomate/data/chat_history.db
 final class ComateStore: ObservableObject {
-
     @Published private(set) var runningTasks: [ComateTask] = []
     @Published private(set) var recentTasks: [ComateTask] = []
     @Published private(set) var lastError: String?
     @Published private(set) var lastRefreshed: Date = .now
+
+    /// 当前最优先的状态灯（用于收起态显示）
+    var primaryLight: TaskLight {
+        if let t = runningTasks.first { return t.light }
+        if recentTasks.contains(where: { $0.isCompleted }) { return .green }
+        return .gray
+    }
 
     private var timer: Timer?
     private let dbPath: String
@@ -57,10 +82,7 @@ final class ComateStore: ObservableObject {
         }
     }
 
-    func stop() {
-        timer?.invalidate()
-        timer = nil
-    }
+    func stop() { timer?.invalidate(); timer = nil }
 
     func refresh() {
         guard FileManager.default.fileExists(atPath: dbPath) else {
@@ -80,9 +102,7 @@ final class ComateStore: ObservableObject {
 
             let sql = """
             SELECT id, title, status, message_count, updated_at_ms, session_file
-            FROM chat_sessions
-            ORDER BY updated_at_ms DESC
-            LIMIT 12;
+            FROM chat_sessions ORDER BY updated_at_ms DESC LIMIT 12;
             """
             var stmt: OpaquePointer?
             guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -91,18 +111,16 @@ final class ComateStore: ObservableObject {
             defer { sqlite3_finalize(stmt) }
 
             while sqlite3_step(stmt) == SQLITE_ROW {
-                let id       = String(cString: sqlite3_column_text(stmt, 0))
-                let title    = String(cString: sqlite3_column_text(stmt, 1))
-                let status   = String(cString: sqlite3_column_text(stmt, 2))
-                let count    = sqlite3_column_int(stmt, 3)
-                let ms       = sqlite3_column_int64(stmt, 4)
-                let sessionF = sqlite3_column_text(stmt, 5)
-                let date     = ms > 0 ? Date(timeIntervalSince1970: TimeInterval(ms) / 1000.0) : Date()
-                let task = ComateTask(
-                    id: id, title: title, status: status,
-                    messageCount: Int(count), updatedAt: date,
-                    sessionFile: sessionF != nil ? String(cString: sessionF!) : nil
-                )
+                let id     = String(cString: sqlite3_column_text(stmt, 0))
+                let title  = String(cString: sqlite3_column_text(stmt, 1))
+                let status = String(cString: sqlite3_column_text(stmt, 2))
+                let count  = Int(sqlite3_column_int(stmt, 3))
+                let ms     = sqlite3_column_int64(stmt, 4)
+                let sf     = sqlite3_column_text(stmt, 5)
+                let date   = ms > 0 ? Date(timeIntervalSince1970: TimeInterval(ms) / 1000.0) : Date()
+                let task = ComateTask(id: id, title: title, status: status,
+                                       messageCount: count, updatedAt: date,
+                                       sessionFile: sf != nil ? String(cString: sf!) : nil)
                 if task.isRunning { running.append(task) }
                 recent.append(task)
             }
@@ -116,33 +134,26 @@ final class ComateStore: ObservableObject {
         }
     }
 
-    // MARK: - 打开会话
+    // MARK: - 交互
 
-    /// 通过 wpscomate:// URL scheme 打开指定会话
     func openSession(_ task: ComateTask) {
-        // 优先尝试 URL scheme
         if let url = URL(string: "wpscomate://open?session=\(task.id)") {
             NSWorkspace.shared.open(url, configuration: .init()) { _, _ in }
-            return
+        } else {
+            launchComate()
         }
-        // 降级：启动 Comate 应用
-        launchComate()
     }
 
-    /// 打开 Comate 新建会话
     func launchNewSession() {
         if let url = URL(string: "wpscomate://") {
             NSWorkspace.shared.open(url, configuration: .init()) { _, _ in }
         }
     }
 
-    /// 启动 Comate 应用（如果未运行）
     func launchComate() {
         let bundleID = "cn.wpscomate.comate-agent"
         if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            let config = NSWorkspace.OpenConfiguration()
-            config.activates = true
-            NSWorkspace.shared.openApplication(at: url, configuration: config)
+            NSWorkspace.shared.openApplication(at: url, configuration: .init())
         }
     }
 }

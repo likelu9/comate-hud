@@ -16,11 +16,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         let view = NotchRootView(store: store, expanded: binding) { [weak panel] isExpanded in
-            if isExpanded {
-                panel?.animateToExpanded()
-            } else {
-                panel?.animateToCollapsed()
-            }
+            if isExpanded { panel?.animateToExpanded() }
+            else { panel?.animateToCollapsed() }
         }
         let hosting = NSHostingView(rootView: view)
         panel.contentView = hosting
