@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>Dynamic Island Shape — v2</title>
+<title>Dynamic Island Shape — v4</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -12,17 +12,15 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 50px;
+    gap: 44px;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   }
-  .label {
-    color: white; font-size: 13px; opacity: 0.7;
-    margin-bottom: 8px; text-align: center;
-  }
+  .label { color: white; font-size: 13px; opacity: 0.7; margin-bottom: 6px; text-align: center; }
+
+  /* ═══ 统一 clip-path ═══ */
   .island-clip {
-    height: 60px;
-    clip-path: url(#islandV2);
-    background: rgba(0,0,0,0.88);
+    clip-path: url(#islandV4);
+    background: rgba(0,0,0,0.90);
     backdrop-filter: blur(40px);
     display: flex; align-items: center;
     justify-content: space-between;
@@ -38,67 +36,117 @@
 
 <svg style="position:absolute;width:0;height:0" xmlns="http://www.w3.org/2000/svg">
 <defs>
-  <clipPath id="islandV2" clipPathUnits="objectBoundingBox">
+  <clipPath id="islandV4" clipPathUnits="objectBoundingBox">
+    <!--
+      真实 Dynamic Island 分析:
+      - 顶部完全平直
+      - 顶角→侧边：极其柔和的过渡弧（几乎看不到凹）
+      - 侧边：近乎垂直，仅有极微弱内凹
+      - 底角：大圆角 r≈18px，标准凸圆角
+
+      380×60 基准 → objectBoundingBox
+
+      关键 px 坐标:
+      顶边: (0,0) → (380,0)
+
+      右顶角过渡（柔和三次贝塞尔）:
+        起 (380, 0)
+        CP1 (380, 0.5)  — 从顶边水平出，几乎不变向
+        CP2 (372, 3)    — 极轻微向内
+        终 (370, 10)    — 过渡结束，开始进入侧边
+        → 10px 高度内只收了 10px，弧度非常平缓
+
+      右侧边（微凹三次贝塞尔）:
+        起 (370, 10)
+        CP1 (368, 20)   — 微微内收
+        CP2 (368, 35)   — 微微内收
+        终 (370, 42)    — 底部前微外扩
+        → 32px 高度内只收了 2px，几乎垂直
+
+      右底角（凸圆角 r=18）:
+        起 (370, 42)
+        CP1 (370, 54)
+        CP2 (380, 54)
+        终 (380, 60)
+
+      底边: (380, 60) → (0, 60)
+
+      左对称...
+
+      换算 0-1:
+      370/380=0.974, 10/60=0.167, 42/60=0.70, 54/60=0.90
+      368/380=0.968, 20/60=0.333, 35/60=0.583
+      380/380=1.0, 18/380=0.047, 18/60=0.30
+      10/380=0.026, 2/380=0.005
+    -->
     <path d="
       M 0 0
       L 1 0
-      C 0.95 0.04, 0.90 0.20, 0.90 0.35
-      C 0.90 0.65, 0.947 0.65, 0.947 1
-      L 0.053 1
-      C 0.053 0.65, 0.10 0.65, 0.10 0.35
-      C 0.10 0.20, 0.05 0.04, 0 0
+      C 1 0, 0.974 0, 0.974 0.167
+      C 0.968 0.333, 0.968 0.583, 0.974 0.70
+      C 0.974 0.90, 1 0.90, 1 1
+      L 0 1
+      C 0 0.90, 0.026 0.90, 0.026 0.70
+      C 0.032 0.583, 0.032 0.333, 0.026 0.167
+      C 0.026 0, 0 0, 0 0
       Z
     "/>
   </clipPath>
 </defs>
 </svg>
 
-<!-- 效果 1: 380×60 基础 -->
+<!-- 380×60 基础 -->
 <div>
-  <div class="label">基础 380×60 — 凹弧侧边 + 底部凸圆角 r=20</div>
-  <div class="island-clip" style="width:380px">
+  <div class="label">380×60 — 极柔和凹弧 + 底部大圆角 r=18</div>
+  <div class="island-clip" style="width:380px;height:60px">
     <div class="left"><div class="dot"></div><span>Comate</span></div>
     <div class="right">＋</div>
   </div>
 </div>
 
-<!-- 效果 2: 460×56 -->
+<!-- 460×54 宽屏 -->
 <div>
-  <div class="label">宽屏 460×56</div>
-  <div class="island-clip" style="width:460px; height:56px">
+  <div class="label">460×54 宽屏变体</div>
+  <div class="island-clip" style="width:460px;height:54px">
     <div class="left"><div class="dot"></div><span>Comate</span></div>
     <div class="right">＋</div>
   </div>
 </div>
 
-<!-- 路径轮廓可视化 -->
+<!-- 轮廓可视化 -->
 <div>
-  <div class="label">路径轮廓可视化（380×60 原始坐标）</div>
+  <div class="label">路径轮廓 (380×60)</div>
   <svg width="380" height="60" viewBox="0 0 380 60" xmlns="http://www.w3.org/2000/svg" style="background:rgba(255,255,255,0.08);border-radius:8px">
     <path d="
       M 0 0
       L 380 0
-      C 361 2.4, 342 12, 342 21
-      C 342 39, 360 39, 360 60
-      L 20 60
-      C 20 39, 38 39, 38 21
-      C 38 12, 19 2.4, 0 0
+      C 380 0, 370 0, 370 10
+      C 368 20, 368 35, 370 42
+      C 370 54, 380 54, 380 60
+      L 0 60
+      C 0 54, 10 54, 10 42
+      C 12 35, 12 20, 10 10
+      C 10 0, 0 0, 0 0
       Z
     " fill="rgba(0,0,0,0.6)"/>
     <path d="
       M 0 0
       L 380 0
-      C 361 2.4, 342 12, 342 21
-      C 342 39, 360 39, 360 60
-      L 20 60
-      C 20 39, 38 39, 38 21
-      C 38 12, 19 2.4, 0 0
+      C 380 0, 370 0, 370 10
+      C 368 20, 368 35, 370 42
+      C 370 54, 380 54, 380 60
+      L 0 60
+      C 0 54, 10 54, 10 42
+      C 12 35, 12 20, 10 10
+      C 10 0, 0 0, 0 0
       Z
     " fill="none" stroke="#ff3b30" stroke-width="1.5"/>
-    <circle cx="342" cy="21" r="3" fill="#ffcc00"/>
-    <circle cx="360" cy="60" r="3" fill="#34c759"/>
-    <circle cx="38" cy="21" r="3" fill="#ffcc00"/>
-    <circle cx="20" cy="60" r="3" fill="#34c759"/>
+    <circle cx="370" cy="10" r="2.5" fill="#ffcc00"/>
+    <circle cx="368" cy="28" r="2.5" fill="#ff6b6b"/>
+    <circle cx="370" cy="42" r="2.5" fill="#ffcc00"/>
+    <circle cx="10" cy="10" r="2.5" fill="#ffcc00"/>
+    <circle cx="12" cy="28" r="2.5" fill="#ff6b6b"/>
+    <circle cx="10" cy="42" r="2.5" fill="#ffcc00"/>
   </svg>
 </div>
 
