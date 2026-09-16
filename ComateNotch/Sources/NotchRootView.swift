@@ -196,14 +196,34 @@ struct NotchRootView: View {
     @State private var isAnimating = false  // 动画期间标记，避免刷新干扰
     private let forceExpanded = CommandLine.arguments.contains("--expanded")
 
+    // logo 在整个窗口中的固定坐标（收起/展开态一致）
+    private var logoPosition: CGPoint {
+        CGPoint(x: wingWidth / 2, y: notchHeight / 2)
+    }
+
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack {
+            // 层 1：背景形状（收起/展开切换）
             if expanded {
-                expandedView
+                expandedBackground
             } else {
-                collapsedView
+                collapsedBackground
+            }
+            // 层 2：固定位置的 logo + 状态灯（位置不变，只变颜色）
+            logoOverlay
+            // 层 3：右翼内容（收起态 = plus 按钮，展开态 = 任务列表）
+            if expanded {
+                expandedContent
+                    .transition(.opacity)
+            } else {
+                collapsedRightWing
+                    .transition(.opacity)
             }
         }
+        .frame(
+            width: expanded ? expandedWidth : collapsedTotalWidth,
+            height: expanded ? expandedHeight : notchHeight
+        )
         .animation(.spring(response: 0.22, dampingFraction: 0.9), value: expanded)
         .onHover { isHovering in
             hovering = isHovering
@@ -244,67 +264,67 @@ struct NotchRootView: View {
         }
     }
 
-    // MARK: - 收起态
-    /// 布局：[左翼: 图标+状态灯] [中段: 纯黑与刘海融合] [右翼: 新建按钮]
-    private var collapsedView: some View {
+    // MARK: - 收起态背景
+    private var collapsedBackground: some View {
         HStack(spacing: 0) {
-            // 左翼：Comate 图标（白色镂空） + 状态灯（灯叠在图标右下角）
-            ZStack(alignment: .bottomTrailing) {
-                ComateLogo(size: 18, colorful: false)  // 收起态：白色镂空
-                // 状态灯：缩小为 4pt，点亮时带光晕
-                Circle()
-                    .fill(Color(hex: store.primaryLight.color))
-                    .frame(width: 4, height: 4)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.black.opacity(0.5), lineWidth: 0.6)
-                    )
-                    // 点亮状态（非灰色）时显示光晕
-                    .shadow(color: store.primaryLight != .gray ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65) : .clear, radius: store.primaryLight != .gray ? 4 : 0)
-            }
-            .frame(width: wingWidth, height: notchHeight)
-
-            // 中段：被系统刘海物理遮挡，纯黑自然融合
-            Color.black
-                .frame(width: notchWidth)
-
-            // 右翼：快速新建任务（仅图标）
-            Button(action: { store.launchNewSession() }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .medium))  // 从 12 缩小到 11
-                    .foregroundColor(.white.opacity(0.45))
-            }
-            .buttonStyle(.plain)
-            .frame(width: wingWidth, height: notchHeight)
+            Color.black.frame(width: wingWidth)       // 左翼底色
+            Color.black.frame(width: notchWidth)       // 中段（刘海遮挡）
+            Color.black.frame(width: wingWidth)       // 右翼底色
         }
         .frame(width: collapsedTotalWidth, height: notchHeight)
-        .background(
-            NotchShape(cornerRadius: 14)  // PDF: compact r=14
-                .fill(Color.black)
-        )
+        .background(NotchShape(cornerRadius: 14).fill(Color.black))
         .clipShape(NotchShape(cornerRadius: 14))
         .contentShape(NotchShape(cornerRadius: 14))
-        .drawingGroup()  // 预渲染复杂 SVG 到位图，减少动画期间重算
+        .drawingGroup()
     }
 
-    // MARK: - 展开态
+    // MARK: - 展开态背景
+    private var expandedBackground: some View {
+        NotchShape(cornerRadius: 16)
+            .fill(Color.black)
+            .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
+            .frame(width: expandedWidth, height: expandedHeight)
+            .clipShape(NotchShape(cornerRadius: 16))
+    }
 
-    private var expandedView: some View {
+    // MARK: - 固定位置 logo + 状态灯
+    /// 始终锚定在收起态左翼的同一坐标，展开/收起只切换颜色
+    private var logoOverlay: some View {
+        ZStack(alignment: .bottomTrailing) {
+            ComateLogo(size: 18, colorful: expanded)  // 收起=白，展开=彩色
+            Circle()
+                .fill(Color(hex: store.primaryLight.color))
+                .frame(width: 4, height: 4)
+                .overlay(Circle().stroke(Color.black.opacity(0.5), lineWidth: 0.6))
+                .shadow(
+                    color: store.primaryLight != .gray
+                        ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65)
+                        : .clear,
+                    radius: store.primaryLight != .gray ? 4 : 0
+                )
+        }
+        .position(x: logoPosition.x, y: logoPosition.y)
+    }
+
+    // MARK: - 收起态右翼（plus 按钮）
+    private var collapsedRightWing: some View {
+        Button(action: { store.launchNewSession() }) {
+            Image(systemName: "plus")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white.opacity(0.45))
+        }
+        .buttonStyle(.plain)
+        .position(
+            x: collapsedTotalWidth - wingWidth / 2,
+            y: notchHeight / 2
+        )
+    }
+
+    // MARK: - 展开态内容（任务列表）
+    private var expandedContent: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // 顶部栏：左侧 logo + 状态灯，右侧状态标签
-            HStack(spacing: 6) {
-                // 左侧：彩色 Comate Logo + 状态灯
-                ZStack(alignment: .bottomTrailing) {
-                    ComateLogo(size: 18, colorful: true)  // 展开态：彩色
-                    Circle()
-                        .fill(Color(hex: store.primaryLight.color))
-                        .frame(width: 4, height: 4)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.black.opacity(0.4), lineWidth: 0.6)
-                        )
-                        .shadow(color: store.primaryLight != .gray ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65) : .clear, radius: store.primaryLight != .gray ? 4 : 0)
-                }
+            // 顶部留出 logo 区域 + 状态标签
+            HStack {
                 Spacer()
                 let count = store.runningTasks.count
                 if count > 0 {
@@ -342,11 +362,15 @@ struct NotchRootView: View {
             }
 
             HStack(spacing: 3) {
-                // 底部状态灯同样带光晕
                 Circle()
                     .fill(Color(hex: store.primaryLight.color))
                     .frame(width: 4, height: 4)
-                    .shadow(color: store.primaryLight != .gray ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65) : .clear, radius: store.primaryLight != .gray ? 4 : 0)
+                    .shadow(
+                        color: store.primaryLight != .gray
+                            ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65)
+                            : .clear,
+                        radius: store.primaryLight != .gray ? 4 : 0
+                    )
                 Text("实时同步 · \(timeStr(store.lastRefreshed))")
                     .font(.system(size: 8, design: .rounded))
                     .foregroundStyle(.white.opacity(0.35))
@@ -361,16 +385,10 @@ struct NotchRootView: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.top, 32)  // 避开刘海区域
+        // 顶部 padding：避开刘海 + 给 logo 留空间（logo 在 y=notchHeight/2）
+        .padding(.top, notchHeight / 2 + 12)
         .padding(.bottom, 12)
         .frame(width: expandedWidth, height: expandedHeight)
-        .background(
-            NotchShape(cornerRadius: 16)  // PDF: expanded r=16
-                .fill(Color.black)
-                // 用固定 shadow 替代动态 shadow，减少动画期间 GPU 开销
-                .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
-        )
-        .clipShape(NotchShape(cornerRadius: 16))
     }
 
     private func taskRow(_ t: ComateTask) -> some View {
