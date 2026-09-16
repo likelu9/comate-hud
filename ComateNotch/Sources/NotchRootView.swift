@@ -160,20 +160,26 @@ struct NotchShape: Shape {
         let r = min(cornerRadius, w / 2, h / 2)  // 确保圆角不超过尺寸的一半
         var p = Path()
 
-        // 标准圆角矩形（PDF 素材精确还原）
-        p.move(to: CGPoint(x: r, y: 0))
-        p.addLine(to: CGPoint(x: w - r, y: 0))
-        p.addArc(center: CGPoint(x: w - r, y: r), radius: r,
-                 startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
+        // 顶部：平直（与屏幕边缘齐平，无圆角）
+        p.move(to: CGPoint(x: 0, y: 0))
+        p.addLine(to: CGPoint(x: w, y: 0))
+        
+        // 右侧：垂直向下到底部圆角起点
         p.addLine(to: CGPoint(x: w, y: h - r))
+        
+        // 右下角：标准圆角
         p.addArc(center: CGPoint(x: w - r, y: h - r), radius: r,
                  startAngle: .degrees(0), endAngle: .degrees(90), clockwise: false)
+        
+        // 底部：水平向左
         p.addLine(to: CGPoint(x: r, y: h))
+        
+        // 左下角：标准圆角
         p.addArc(center: CGPoint(x: r, y: h - r), radius: r,
                  startAngle: .degrees(90), endAngle: .degrees(180), clockwise: false)
-        p.addLine(to: CGPoint(x: 0, y: r))
-        p.addArc(center: CGPoint(x: r, y: r), radius: r,
-                 startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
+        
+        // 左侧：垂直向上回到起点
+        p.addLine(to: CGPoint(x: 0, y: 0))
 
         return p
     }
