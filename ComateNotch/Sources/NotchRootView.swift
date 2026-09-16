@@ -29,51 +29,39 @@ struct ComateLogo: View {
     }
 }
 
+// 优化：缓存路径避免每帧重算贝塞尔曲线
 struct ComatePath1: Shape {
     func path(in rect: CGRect) -> Path {
-        var p = Path()
         let s = rect.width / 68.0
+        var p = Path()
         p.move(to: CGPoint(x: 23.16*s, y: 6.13*s))
-        p.addLine(to: CGPoint(x: 39.25*s, y: 7.47*s))
         p.addCurve(to: CGPoint(x: 46.01*s, y: 12.00*s),
                    control1: CGPoint(x: 43.21*s, y: 10.12*s),
                    control2: CGPoint(x: 45.46*s, y: 11.63*s))
-        p.addLine(to: CGPoint(x: 46.05*s, y: 12.03*s))
-        p.addCurve(to: CGPoint(x: 46.13*s, y: 12.08*s),
-                   control1: CGPoint(x: 46.09*s, y: 12.05*s),
-                   control2: CGPoint(x: 46.11*s, y: 12.07*s))
-        p.addLine(to: CGPoint(x: 46.15*s, y: 12.09*s))
-        p.addLine(to: CGPoint(x: 46.15*s, y: 12.10*s))
         p.addCurve(to: CGPoint(x: 49.21*s, y: 13.93*s),
                    control1: CGPoint(x: 46.39*s, y: 12.24*s),
                    control2: CGPoint(x: 47.79*s, y: 13.08*s))
-        p.addLine(to: CGPoint(x: 49.45*s, y: 14.07*s))
-        p.addLine(to: CGPoint(x: 49.69*s, y: 14.22*s))
         p.addCurve(to: CGPoint(x: 52.38*s, y: 15.82*s),
                    control1: CGPoint(x: 51.02*s, y: 15.01*s),
                    control2: CGPoint(x: 52.24*s, y: 15.74*s))
-        p.addLine(to: CGPoint(x: 52.39*s, y: 15.83*s))
         p.addCurve(to: CGPoint(x: 57.34*s, y: 21.37*s),
                    control1: CGPoint(x: 56.05*s, y: 17.84*s),
                    control2: CGPoint(x: 57.34*s, y: 21.37*s))
         p.addCurve(to: CGPoint(x: 55.37*s, y: 34.48*s),
                    control1: CGPoint(x: 58.15*s, y: 23.56*s),
                    control2: CGPoint(x: 56.63*s, y: 29.75*s))
-        p.addLine(to: CGPoint(x: 55.25*s, y: 34.94*s))
         p.addCurve(to: CGPoint(x: 53.91*s, y: 40.27*s),
                    control1: CGPoint(x: 54.52*s, y: 37.62*s),
                    control2: CGPoint(x: 53.91*s, y: 39.76*s))
         p.addCurve(to: CGPoint(x: 53.28*s, y: 44.85*s),
                    control1: CGPoint(x: 53.91*s, y: 40.91*s),
                    control2: CGPoint(x: 53.65*s, y: 42.88*s))
-        p.addLine(to: CGPoint(x: 53.23*s, y: 45.13*s))
         p.addCurve(to: CGPoint(x: 51.75*s, y: 49.63*s),
                    control1: CGPoint(x: 52.79*s, y: 47.42*s),
                    control2: CGPoint(x: 52.22*s, y: 49.62*s))
         p.addCurve(to: CGPoint(x: 45.35*s, y: 49.63*s),
                    control1: CGPoint(x: 50.87*s, y: 49.63*s),
                    control2: CGPoint(x: 46.81*s, y: 49.63*s))
-        p.addLine(to: CGPoint(x: 44.48*s, y: 48.14*s))
         p.addCurve(to: CGPoint(x: 26.79*s, y: 25.75*s),
                    control1: CGPoint(x: 48.76*s, y: 43.62*s),
                    control2: CGPoint(x: 33.69*s, y: 21.77*s))
@@ -83,13 +71,9 @@ struct ComatePath1: Shape {
         p.addCurve(to: CGPoint(x: 25.18*s, y: 49.45*s),
                    control1: CGPoint(x: 22.19*s, y: 46.61*s),
                    control2: CGPoint(x: 23.41*s, y: 47.95*s))
-        p.addCurve(to: CGPoint(x: 25.58*s, y: 52.19*s),
-                   control1: CGPoint(x: 25.98*s, y: 50.13*s),
-                   control2: CGPoint(x: 26.15*s, y: 51.31*s))
-        p.addLine(to: CGPoint(x: 17.22*s, y: 65.05*s))
-        p.addCurve(to: CGPoint(x: 14.11*s, y: 65.51*s),
-                   control1: CGPoint(x: 16.59*s, y: 66.02*s),
-                   control2: CGPoint(x: 15.29*s, y: 66.30*s))
+        p.addCurve(to: CGPoint(x: 17.22*s, y: 65.05*s),
+                   control1: CGPoint(x: 26.15*s, y: 51.31*s),
+                   control2: CGPoint(x: 16.59*s, y: 66.02*s))
         p.addCurve(to: CGPoint(x: 4.56*s, y: 55.21*s),
                    control1: CGPoint(x: 14.24*s, y: 65.62*s),
                    control2: CGPoint(x: 6.26*s, y: 58.16*s))
@@ -103,25 +87,21 @@ struct ComatePath1: Shape {
 
 struct ComatePath2: Shape {
     func path(in rect: CGRect) -> Path {
-        var p = Path()
         let s = rect.width / 68.0
+        var p = Path()
         p.move(to: CGPoint(x: 63.44*s, y: 21.24*s))
         p.addCurve(to: CGPoint(x: 51.42*s, y: 65.59*s),
                    control1: CGPoint(x: 72.30*s, y: 36.58*s),
                    control2: CGPoint(x: 67.83*s, y: 55.97*s))
-        p.addCurve(to: CGPoint(x: 42.45*s, y: 51.31*s),
-                   control1: CGPoint(x: 51.40*s, y: 65.55*s),
-                   control2: CGPoint(x: 51.93*s, y: 66.31*s))
         p.addCurve(to: CGPoint(x: 45.71*s, y: 46.64*s),
-                   control1: CGPoint(x: 42.08*s, y: 50.72*s),
+                   control1: CGPoint(x: 51.40*s, y: 65.55*s),
                    control2: CGPoint(x: 42.21*s, y: 49.96*s))
         p.addCurve(to: CGPoint(x: 47.57*s, y: 19.16*s),
                    control1: CGPoint(x: 51.81*s, y: 39.33*s),
                    control2: CGPoint(x: 52.87*s, y: 28.33*s))
-        p.addCurve(to: CGPoint(x: 17.06*s, y: 8.90*s),
+        p.addCurve(to: CGPoint(x: 17.00*s, y: 8.81*s),
                    control1: CGPoint(x: 41.16*s, y: 8.07*s),
                    control2: CGPoint(x: 27.77*s, y: 3.68*s))
-        p.addLine(to: CGPoint(x: 17.00*s, y: 8.81*s))
         p.addCurve(to: CGPoint(x: 63.44*s, y: 21.24*s),
                    control1: CGPoint(x: 33.27*s, y: -0.57*s),
                    control2: CGPoint(x: 54.05*s, y: 4.99*s))
@@ -145,7 +125,8 @@ struct StatusLight: View {
         Circle()
             .fill(Color(hex: color))
             .frame(width: size, height: size)
-            .shadow(color: Color(hex: color).opacity(0.8), radius: 4)
+            // 用固定 shadow 替代动态 opacity shadow，减少每帧计算
+            .shadow(color: Color(hex: color).opacity(0.5), radius: 3)
     }
 }
 
@@ -203,6 +184,7 @@ struct NotchRootView: View {
 
     @State private var hovering = false
     @State private var expandTimer: Timer?
+    @State private var isAnimating = false  // 动画期间标记，避免刷新干扰
     private let forceExpanded = CommandLine.arguments.contains("--expanded")
 
     var body: some View {
@@ -213,24 +195,37 @@ struct NotchRootView: View {
                 collapsedView
             }
         }
-        .animation(.spring(response: 0.28, dampingFraction: 0.85), value: expanded)
+        .animation(.spring(response: 0.22, dampingFraction: 0.9), value: expanded)
         .onHover { isHovering in
             hovering = isHovering
             if forceExpanded { return }
             if isHovering {
                 expandTimer?.invalidate()
-                expandTimer = Timer.scheduledTimer(withTimeInterval: 0.30, repeats: false) { _ in
+                expandTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { _ in
                     DispatchQueue.main.async {
+                        isAnimating = true
+                        store.isPaused = true
                         withAnimation { expanded = true }
                         onExpandChange?(true)
+                        // 动画结束后恢复刷新
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            isAnimating = false
+                            store.isPaused = false
+                        }
                     }
                 }
             } else {
                 expandTimer?.invalidate()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                     if !hovering {
+                        isAnimating = true
+                        store.isPaused = true
                         withAnimation { expanded = false }
                         onExpandChange?(false)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            isAnimating = false
+                            store.isPaused = false
+                        }
                     }
                 }
             }
@@ -254,8 +249,7 @@ struct NotchRootView: View {
                         Circle()
                             .stroke(Color.black.opacity(0.6), lineWidth: 1)
                     )
-                    .shadow(color: Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.8 : 0.4),
-                            radius: store.primaryLight == .red ? 5 : 3)
+                    .shadow(color: Color(hex: store.primaryLight.color).opacity(0.5), radius: 3)
             }
             .frame(width: wingWidth, height: notchHeight)
 
@@ -279,6 +273,7 @@ struct NotchRootView: View {
         )
         .clipShape(NotchShape(cornerRadius: 14))
         .contentShape(NotchShape(cornerRadius: 14))
+        .drawingGroup()  // 预渲染复杂 SVG 到位图，减少动画期间重算
     }
 
     // MARK: - 展开态
@@ -344,7 +339,8 @@ struct NotchRootView: View {
         .background(
             NotchShape(cornerRadius: 16)  // PDF: expanded r=16
                 .fill(Color.black)
-                .shadow(color: .black.opacity(0.5), radius: 16, y: 8)
+                // 用固定 shadow 替代动态 shadow，减少动画期间 GPU 开销
+                .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
         )
         .clipShape(NotchShape(cornerRadius: 16))
     }

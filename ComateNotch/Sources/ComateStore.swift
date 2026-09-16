@@ -91,6 +91,8 @@ final class ComateStore: ObservableObject {
 
     private var timer: Timer?
     private let dbPath: String
+    /// 动画期间暂停刷新，避免 @Published 更新导致 SwiftUI 重绘竞争
+    var isPaused = false
 
     init(dbPath: String? = nil) {
         if let p = dbPath {
@@ -104,7 +106,8 @@ final class ComateStore: ObservableObject {
     func start() {
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            self?.refresh()
+            guard let self = self, !self.isPaused else { return }
+            self.refresh()
         }
     }
 
