@@ -152,37 +152,28 @@ struct StatusLight: View {
 // MARK: - 刘海形状（顶部外圆角/凹弧 + 底部凸圆角）
 
 struct NotchShape: Shape {
-    var topFlare: CGFloat = 10
-    var bottomRadius: CGFloat = 10
+    var cornerRadius: CGFloat = 16  // PDF: expanded r=16, compact r=14
 
     func path(in rect: CGRect) -> Path {
         let w = rect.width
         let h = rect.height
-        let tf = topFlare  // 顶部凸弧高度
-        let br = bottomRadius  // 底部凸弧半径
+        let r = min(cornerRadius, w / 2, h / 2)  // 确保圆角不超过尺寸的一半
         var p = Path()
 
-        // 顶部：直线（屏幕边缘）
-        p.move(to: CGPoint(x: 0, y: 0))
-        p.addLine(to: CGPoint(x: w, y: 0))
-        // 右上凸弧：从屏幕边缘向右下凸出，再收回机身
-        p.addQuadCurve(to: CGPoint(x: w - tf, y: tf),
-                       control: CGPoint(x: w, y: tf))
-        // 右侧机身
-        p.addLine(to: CGPoint(x: w - tf, y: h - br))
-        // 右下凸弧
-        p.addQuadCurve(to: CGPoint(x: w - tf - br, y: h),
-                       control: CGPoint(x: w - tf, y: h))
-        // 底部
-        p.addLine(to: CGPoint(x: tf + br, y: h))
-        // 左下凸弧
-        p.addQuadCurve(to: CGPoint(x: tf, y: h - br),
-                       control: CGPoint(x: tf, y: h))
-        // 左侧机身
-        p.addLine(to: CGPoint(x: tf, y: tf))
-        // 左上凸弧：从机身向左上凸出，再回到屏幕边缘
-        p.addQuadCurve(to: CGPoint(x: 0, y: 0),
-                       control: CGPoint(x: 0, y: tf))
+        // 标准圆角矩形（PDF 素材精确还原）
+        p.move(to: CGPoint(x: r, y: 0))
+        p.addLine(to: CGPoint(x: w - r, y: 0))
+        p.addArc(center: CGPoint(x: w - r, y: r), radius: r,
+                 startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
+        p.addLine(to: CGPoint(x: w, y: h - r))
+        p.addArc(center: CGPoint(x: w - r, y: h - r), radius: r,
+                 startAngle: .degrees(0), endAngle: .degrees(90), clockwise: false)
+        p.addLine(to: CGPoint(x: r, y: h))
+        p.addArc(center: CGPoint(x: r, y: h - r), radius: r,
+                 startAngle: .degrees(90), endAngle: .degrees(180), clockwise: false)
+        p.addLine(to: CGPoint(x: 0, y: r))
+        p.addArc(center: CGPoint(x: r, y: r), radius: r,
+                 startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
 
         return p
     }
@@ -275,11 +266,11 @@ struct NotchRootView: View {
         }
         .frame(width: collapsedTotalWidth, height: notchHeight)
         .background(
-            NotchShape(topFlare: 18, bottomRadius: 14)
+            NotchShape(cornerRadius: 14)  // PDF: compact r=14
                 .fill(Color.black)
         )
-        .clipShape(NotchShape(topFlare: 18, bottomRadius: 14))
-        .contentShape(NotchShape(topFlare: 18, bottomRadius: 14))
+        .clipShape(NotchShape(cornerRadius: 14))
+        .contentShape(NotchShape(cornerRadius: 14))
     }
 
     // MARK: - 展开态
@@ -345,11 +336,11 @@ struct NotchRootView: View {
         .padding(16)
         .frame(width: 340, height: 320)
         .background(
-            NotchShape(topFlare: 18, bottomRadius: 14)
+            NotchShape(cornerRadius: 16)  // PDF: expanded r=16
                 .fill(Color.black)
                 .shadow(color: .black.opacity(0.5), radius: 16, y: 8)
         )
-        .clipShape(NotchShape(topFlare: 18, bottomRadius: 14))
+        .clipShape(NotchShape(cornerRadius: 16))
     }
 
     private func taskRow(_ t: ComateTask) -> some View {
