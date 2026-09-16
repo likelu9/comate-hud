@@ -172,14 +172,16 @@ struct NotchShape: Shape {
                        control: CGPoint(x: w - tf, y: 0))
         // 右侧边
         p.addLine(to: CGPoint(x: w, y: h - br))
-        // 右下凸圆角
+        // 右下凹圆角：从 (w, h-br) 到 (w-br, h)，控制点 (w-br, h-br)
+        // 控制点在角落内侧，曲线向内凹进
         p.addQuadCurve(to: CGPoint(x: w - br, y: h),
-                       control: CGPoint(x: w, y: h))
+                       control: CGPoint(x: w - br, y: h - br))
         // 底边
         p.addLine(to: CGPoint(x: br, y: h))
-        // 左下凸圆角
+        // 左下凹圆角：从 (br, h) 到 (0, h-br)，控制点 (br, h-br)
+        // 控制点在角落内侧，曲线向内凹进
         p.addQuadCurve(to: CGPoint(x: 0, y: h - br),
-                       control: CGPoint(x: 0, y: h))
+                       control: CGPoint(x: br, y: h - br))
         // 左侧边
         p.addLine(to: CGPoint(x: 0, y: tf))
         // 左上凹圆角：从 (0, tf) 到 (0, 0)，控制点 (tf, 0)
