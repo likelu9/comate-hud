@@ -23,29 +23,36 @@ struct ComateTask: Identifiable, Equatable {
     let id: String
     let title: String
     let status: String
+    let lastMessageRole: String  // user / assistant
     let messageCount: Int
     let updatedAt: Date
     let sessionFile: String?
 
-    /// 根据 status 映射状态灯
+    /// 综合判断状态灯（status + lastMessageRole）
+    /// - 黄色：运行中/思考中（status=running，或 lastMessageRole=user 表示用户刚发消息 AI 正在处理）
+    /// - 绿色：已完成（status=done）
+    /// - 灰色：空闲（lastMessageRole=assistant 且 status=idle）
+    /// - 红色：等待用户授权/确认/异常（目前数据库无专门字段，暂不触发）
     var light: TaskLight {
-        switch status {
-        case "running": return .yellow
-        case "done":    return .green
-        case "idle":    return .gray
-        default:        return .gray
+        // status=running 或用户刚发消息 → 黄色（思考中）
+        if status == "running" || lastMessageRole == "user" {
+            return .yellow
         }
+        // 已完成 → 绿色
+        if status == "done" { return .green }
+        // 默认空闲 → 灰色
+        return .gray
     }
 
-    var isRunning: Bool { status == "running" }
+    var isRunning: Bool { light == .yellow }
     var isCompleted: Bool { status == "done" }
 
     var statusLabel: String {
-        switch status {
-        case "running": return "运行中"
-        case "done":    return "已完成"
-        case "idle":    return "空闲"
-        default:        return status
+        switch light {
+        case .yellow: return "思考中"
+        case .red:    return "等待回复"
+        case .green:  return "已完成"
+        case .gray:   return "空闲"
         }
     }
 }
@@ -58,12 +65,13 @@ final class ComateStore: ObservableObject {
 
     /// 当前最优先的状态灯（用于收起态显示）
     /// 优先级：红 > 黄 > 绿 > 灰
+    /// 与展开态每个任务的 light 使用同一套逻辑，保证一致
     var primaryLight: TaskLight {
-        // 1. 红色：有等待用户授权/回复/确认的任务，或异常/错误
+        // 1. 红色：有等待用户回复/确认的任务
         if recentTasks.contains(where: { $0.light == .red }) { return .red }
         // 2. 黄色：有运行中/思考中的任务
-        if let t = runningTasks.first { return t.light }
-        // 3. 绿色：有已完成的任务（最近 5 分钟内）
+        if recentTasks.contains(where: { $0.light == .yellow }) { return .yellow }
+        // 3. 绿色：有最近完成的任务（5 分钟内）
         let fiveMinAgo = Date().addingTimeInterval(-300)
         if recentTasks.contains(where: { $0.isCompleted && $0.updatedAt > fiveMinAgo }) { return .green }
         // 4. 灰色：全部空闲
@@ -108,7 +116,7 @@ final class ComateStore: ObservableObject {
             defer { sqlite3_close(db) }
 
             let sql = """
-            SELECT id, title, status, message_count, updated_at_ms, session_file
+            SELECT id, title, status, last_message_role, message_count, updated_at_ms, session_file
             FROM chat_sessions ORDER BY updated_at_ms DESC LIMIT 12;
             """
             var stmt: OpaquePointer?
@@ -121,11 +129,13 @@ final class ComateStore: ObservableObject {
                 let id     = String(cString: sqlite3_column_text(stmt, 0))
                 let title  = String(cString: sqlite3_column_text(stmt, 1))
                 let status = String(cString: sqlite3_column_text(stmt, 2))
-                let count  = Int(sqlite3_column_int(stmt, 3))
-                let ms     = sqlite3_column_int64(stmt, 4)
-                let sf     = sqlite3_column_text(stmt, 5)
+                let role   = sqlite3_column_text(stmt, 3).map { String(cString: $0) } ?? ""
+                let count  = Int(sqlite3_column_int(stmt, 4))
+                let ms     = sqlite3_column_int64(stmt, 5)
+                let sf     = sqlite3_column_text(stmt, 6)
                 let date   = ms > 0 ? Date(timeIntervalSince1970: TimeInterval(ms) / 1000.0) : Date()
                 let task = ComateTask(id: id, title: title, status: status,
+                                       lastMessageRole: role,
                                        messageCount: count, updatedAt: date,
                                        sessionFile: sf != nil ? String(cString: sf!) : nil)
                 if task.isRunning { running.append(task) }
@@ -138,29 +148,40 @@ final class ComateStore: ObservableObject {
             self.runningTasks = running
             self.recentTasks = recent
             self.lastRefreshed = .now
+            // 调试：打印第一条任务的状态灯
+            if let first = recent.first {
+                print("[ComateStore] #1 \(first.title.prefix(15)) status=\(first.status) role=\(first.lastMessageRole) light=\(first.light)")
+            }
         }
     }
 
     // MARK: - 交互
 
+    /// 打开指定会话：拉起 Comate 到前台
+    /// Comate 1.5.28 的 deeplink URL 格式未公开且前端未完整实现，
+    /// 因此采用可靠方案：用 wpscomate:// scheme 拉起应用 + AppleScript 激活到前台。
     func openSession(_ task: ComateTask) {
-        if let url = URL(string: "wpscomate://open?session=\(task.id)") {
-            NSWorkspace.shared.open(url, configuration: .init()) { _, _ in }
-        } else {
-            launchComate()
-        }
+        launchComate()
     }
 
+    /// 快速新建任务：拉起 Comate 到前台
     func launchNewSession() {
-        if let url = URL(string: "wpscomate://") {
-            NSWorkspace.shared.open(url, configuration: .init()) { _, _ in }
-        }
+        launchComate()
     }
 
+    /// 拉起 Comate 应用并激活到前台
     func launchComate() {
-        let bundleID = "cn.wpscomate.comate-agent"
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            NSWorkspace.shared.openApplication(at: url, configuration: .init())
+        // 1. 先用 URL scheme 唤起（确保应用启动）
+        if let url = URL(string: "wpscomate://") {
+            NSWorkspace.shared.open(url)
+        }
+        // 2. 延迟激活到前台（等应用启动/恢复窗口）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            let script = "tell application \"WPS Comate\" to activate"
+            if let appleScript = NSAppleScript(source: script) {
+                var err: NSDictionary?
+                appleScript.executeAndReturnError(&err)
+            }
         }
     }
 }
