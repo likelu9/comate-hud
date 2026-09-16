@@ -165,14 +165,12 @@ final class ComateStore: ObservableObject {
     // MARK: - 交互
 
     /// 打开指定会话：通过 deeplink 跳转到对应会话
-    /// 格式：wpscomate://chat.comate/jointtask?id=<session_uuid>&ckp=<base64({})>
-    /// id 为会话 UUID（从 sessionFile 提取），ckp 为 base64 编码的参数对象（空对象即可）
+    /// 格式：wpscomate://chat.comate/jointtask?task_id=<session_id>&ckp=<base64({})>
+    /// task_id 为会话 ID，ckp 为 base64 编码的参数对象（空对象即可）
     func openSession(_ task: ComateTask) {
-        // 优先使用 sessionId（UUID），fallback 到 id（会话 ID）
-        let taskId = task.sessionId ?? task.id
         // ckp 参数：base64 编码的空 JSON 对象
         let ckp = Data("{}".utf8).base64EncodedString()
-        let urlString = "wpscomate://chat.comate/jointtask?id=\(taskId)&ckp=\(ckp)"
+        let urlString = "wpscomate://chat.comate/jointtask?task_id=\(task.id)&ckp=\(ckp)"
         if let url = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let deepLink = URL(string: url) {
             NSWorkspace.shared.open(deepLink)
