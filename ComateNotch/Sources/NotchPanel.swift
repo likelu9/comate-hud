@@ -63,10 +63,7 @@ final class NotchPanel: NSPanel {
         self.titleVisibility = .hidden
         self.title = ""
         self.isReleasedWhenClosed = false
-        // 设置内容视图的圆角
         self.contentView?.wantsLayer = true
-        self.contentView?.layer?.cornerRadius = 10
-        self.contentView?.layer?.masksToBounds = true
     }
 
     override var canBecomeKey: Bool { true }

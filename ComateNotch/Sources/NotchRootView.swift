@@ -158,36 +158,31 @@ struct NotchShape: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width
         let h = rect.height
-        let tf = topFlare
-        let br = bottomRadius
+        let tf = topFlare  // 凹弧深度（顶部两侧向内收缩多少pt）
+        let br = bottomRadius  // 底部凸弧半径
         var p = Path()
 
-        // 从左上角开始
+        // 顶部：直线（屏幕边缘，比机身宽 tf*2）
         p.move(to: CGPoint(x: 0, y: 0))
-        // 顶边
         p.addLine(to: CGPoint(x: w, y: 0))
-        // 右上凹圆角：从 (w, 0) 到 (w, tf)，控制点 (w-tf, 0)
-        // 控制点在左下方，曲线向左下凹进，黑色区域在角落向内收缩
-        p.addQuadCurve(to: CGPoint(x: w, y: tf),
-                       control: CGPoint(x: w - tf, y: 0))
-        // 右侧边
-        p.addLine(to: CGPoint(x: w, y: h - br))
-        // 右下凹圆角：从 (w, h-br) 到 (w-br, h)，控制点 (w-br, h-br)
-        // 控制点在角落内侧，曲线向内凹进
-        p.addQuadCurve(to: CGPoint(x: w - br, y: h),
-                       control: CGPoint(x: w - br, y: h - br))
-        // 底边
-        p.addLine(to: CGPoint(x: br, y: h))
-        // 左下凹圆角：从 (br, h) 到 (0, h-br)，控制点 (br, h-br)
-        // 控制点在角落内侧，曲线向内凹进
-        p.addQuadCurve(to: CGPoint(x: 0, y: h - br),
-                       control: CGPoint(x: br, y: h - br))
-        // 左侧边
-        p.addLine(to: CGPoint(x: 0, y: tf))
-        // 左上凹圆角：从 (0, tf) 到 (0, 0)，控制点 (tf, 0)
-        // 控制点在右下方，曲线向右下凹进，黑色区域在角落向内收缩
+        // 右侧凹弧：从 (w,0) 曲线收缩到 (w-tf, tf)
+        p.addQuadCurve(to: CGPoint(x: w - tf, y: tf),
+                       control: CGPoint(x: w, y: tf))
+        // 右侧机身（比顶部窄 tf）
+        p.addLine(to: CGPoint(x: w - tf, y: h - br))
+        // 右下凸弧（标准圆角收口）
+        p.addQuadCurve(to: CGPoint(x: w - tf - br, y: h),
+                       control: CGPoint(x: w - tf, y: h))
+        // 底部
+        p.addLine(to: CGPoint(x: tf + br, y: h))
+        // 左下凸弧
+        p.addQuadCurve(to: CGPoint(x: tf, y: h - br),
+                       control: CGPoint(x: tf, y: h))
+        // 左侧机身
+        p.addLine(to: CGPoint(x: tf, y: tf))
+        // 左侧凹弧：从 (tf, tf) 曲线扩展到 (0, 0)
         p.addQuadCurve(to: CGPoint(x: 0, y: 0),
-                       control: CGPoint(x: tf, y: 0))
+                       control: CGPoint(x: 0, y: tf))
 
         return p
     }
@@ -280,11 +275,11 @@ struct NotchRootView: View {
         }
         .frame(width: collapsedTotalWidth, height: notchHeight)
         .background(
-            NotchShape(topFlare: 10, bottomRadius: 10)
+            NotchShape(topFlare: 18, bottomRadius: 14)
                 .fill(Color.black)
         )
-        .clipShape(NotchShape(topFlare: 10, bottomRadius: 10))
-        .contentShape(NotchShape(topFlare: 10, bottomRadius: 10))
+        .clipShape(NotchShape(topFlare: 18, bottomRadius: 14))
+        .contentShape(NotchShape(topFlare: 18, bottomRadius: 14))
     }
 
     // MARK: - 展开态
@@ -350,11 +345,11 @@ struct NotchRootView: View {
         .padding(16)
         .frame(width: 340, height: 320)
         .background(
-            NotchShape(topFlare: 12, bottomRadius: 18)
+            NotchShape(topFlare: 18, bottomRadius: 14)
                 .fill(Color.black)
                 .shadow(color: .black.opacity(0.5), radius: 16, y: 8)
         )
-        .clipShape(NotchShape(topFlare: 12, bottomRadius: 18))
+        .clipShape(NotchShape(topFlare: 18, bottomRadius: 14))
     }
 
     private func taskRow(_ t: ComateTask) -> some View {
