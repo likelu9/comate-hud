@@ -26,7 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             notchWidth: geo.notchRight - geo.notchLeft,
             wingWidth: panel.wingWidth,
-            notchHeight: geo.notchHeight
+            notchHeight: geo.notchHeight,
+            expandedWidth: panel.expandedWidth,
+            expandedHeight: panel.expandedHeight
         )
         let hosting = NSHostingView(rootView: view)
         panel.contentView = hosting

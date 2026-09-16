@@ -194,8 +194,10 @@ struct NotchRootView: View {
 
     // 刘海几何：HUD 总宽必须大于刘海宽，内容仅在左右两翼显示
     var notchWidth: CGFloat
-    var wingWidth: CGFloat = 68
+    var wingWidth: CGFloat = 48  // 从 68 缩小到 48
     var notchHeight: CGFloat
+    var expandedWidth: CGFloat = 320  // 新增：展开宽度
+    var expandedHeight: CGFloat = 280  // 新增：展开高度
 
     private var collapsedTotalWidth: CGFloat { notchWidth + wingWidth * 2 }
 
@@ -282,23 +284,23 @@ struct NotchRootView: View {
     // MARK: - 展开态
 
     private var expandedView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                ComateLogo(size: 16)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                ComateLogo(size: 14)
                 Text("Comate 任务")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
                 Spacer()
                 let count = store.runningTasks.count
                 if count > 0 {
                     Text("\(count) 运行中")
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
-                        .padding(.horizontal, 7).padding(.vertical, 2)
+                        .font(.system(size: 9, weight: .semibold, design: .rounded))
+                        .padding(.horizontal, 6).padding(.vertical, 1.5)
                         .background(Color(hex: "#FFB800").opacity(0.22), in: Capsule())
                         .foregroundStyle(Color(hex: "#FFB800"))
                 } else {
                     Text("空闲")
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .font(.system(size: 9, weight: .medium, design: .rounded))
                         .foregroundStyle(.white.opacity(0.4))
                 }
             }
@@ -307,12 +309,12 @@ struct NotchRootView: View {
 
             if store.recentTasks.isEmpty {
                 Text("暂无任务")
-                    .font(.system(size: 12, design: .rounded))
+                    .font(.system(size: 11, design: .rounded))
                     .foregroundStyle(.white.opacity(0.4))
                 Spacer()
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 5) {
+                    VStack(spacing: 3) {
                         ForEach(store.recentTasks.prefix(6)) { task in
                             taskRow(task)
                                 .onTapGesture { store.openSession(task) }
@@ -324,23 +326,23 @@ struct NotchRootView: View {
                 }
             }
 
-            HStack(spacing: 4) {
-                StatusLight(color: store.primaryLight.color, size: 5)
+            HStack(spacing: 3) {
+                StatusLight(color: store.primaryLight.color, size: 4)
                 Text("实时同步 · \(timeStr(store.lastRefreshed))")
-                    .font(.system(size: 9, design: .rounded))
+                    .font(.system(size: 8, design: .rounded))
                     .foregroundStyle(.white.opacity(0.35))
                 Spacer()
                 Button(action: { store.launchComate() }) {
                     Image(systemName: "arrow.up.right.square")
-                        .font(.system(size: 10))
+                        .font(.system(size: 9))
                         .foregroundStyle(.white.opacity(0.35))
                 }
                 .buttonStyle(.plain)
                 .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
             }
         }
-        .padding(16)
-        .frame(width: 340, height: 320)
+        .padding(12)
+        .frame(width: expandedWidth, height: expandedHeight)
         .background(
             NotchShape(cornerRadius: 16)  // PDF: expanded r=16
                 .fill(Color.black)
