@@ -166,24 +166,26 @@ struct NotchShape: Shape {
         p.move(to: CGPoint(x: 0, y: 0))
         // 顶边
         p.addLine(to: CGPoint(x: w, y: 0))
-        // 右上凹弧（外圆角）：从 (w, 0) 到 (w-tf, tf)，控制点 (w, tf)
-        p.addQuadCurve(to: CGPoint(x: w - tf, y: tf),
-                       control: CGPoint(x: w, y: tf))
+        // 右上凹圆角：从 (w, 0) 到 (w, tf)，控制点 (w-tf, 0)
+        // 控制点在左下方，曲线向左下凹进，黑色区域在角落向内收缩
+        p.addQuadCurve(to: CGPoint(x: w, y: tf),
+                       control: CGPoint(x: w - tf, y: 0))
         // 右侧边
-        p.addLine(to: CGPoint(x: w - tf, y: h - br))
+        p.addLine(to: CGPoint(x: w, y: h - br))
         // 右下凸圆角
-        p.addQuadCurve(to: CGPoint(x: w - tf - br, y: h),
-                       control: CGPoint(x: w - tf, y: h))
+        p.addQuadCurve(to: CGPoint(x: w - br, y: h),
+                       control: CGPoint(x: w, y: h))
         // 底边
-        p.addLine(to: CGPoint(x: tf + br, y: h))
+        p.addLine(to: CGPoint(x: br, y: h))
         // 左下凸圆角
-        p.addQuadCurve(to: CGPoint(x: tf, y: h - br),
-                       control: CGPoint(x: tf, y: h))
+        p.addQuadCurve(to: CGPoint(x: 0, y: h - br),
+                       control: CGPoint(x: 0, y: h))
         // 左侧边
-        p.addLine(to: CGPoint(x: tf, y: tf))
-        // 左上凹弧（外圆角）：从 (tf, tf) 到 (0, 0)，控制点 (0, tf)
+        p.addLine(to: CGPoint(x: 0, y: tf))
+        // 左上凹圆角：从 (0, tf) 到 (0, 0)，控制点 (tf, 0)
+        // 控制点在右下方，曲线向右下凹进，黑色区域在角落向内收缩
         p.addQuadCurve(to: CGPoint(x: 0, y: 0),
-                       control: CGPoint(x: 0, y: tf))
+                       control: CGPoint(x: tf, y: 0))
 
         return p
     }
