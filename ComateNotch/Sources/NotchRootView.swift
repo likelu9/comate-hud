@@ -278,10 +278,7 @@ struct NotchRootView: View {
                     if count > 0 {
                         Text("\(count)")
                             .font(.system(size: 8, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1.5)
-                            .background(Color(hex: "#FF4444"), in: Capsule())
+                            .foregroundStyle(.white.opacity(0.7))
                     }
                 }
                 .foregroundColor(.white.opacity(0.5))

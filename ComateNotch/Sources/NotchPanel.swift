@@ -64,22 +64,13 @@ final class NotchPanel: NSPanel {
         self.title = ""
         self.isReleasedWhenClosed = false
         self.contentView?.wantsLayer = true
-        // 窗口内容用 NotchShape 裁剪，收起态有圆角底部
+        // 窗口内容用 NotchShape 裁剪，底部圆角
+        // mask 使用展开态尺寸，收起/展开保持一致圆角
         if let layer = self.contentView?.layer {
             let maskLayer = CAShapeLayer()
-            let r: CGFloat = 14
-            let w = collapsedW
-            let h = notch.notchHeight
-            let path = CGMutablePath()
-            path.move(to: CGPoint(x: 0, y: h))
-            path.addLine(to: CGPoint(x: w, y: h))
-            path.addLine(to: CGPoint(x: w, y: r))
-            path.addArc(tangent1End: CGPoint(x: w, y: 0), tangent2End: CGPoint(x: w - r, y: 0), radius: r)
-            path.addLine(to: CGPoint(x: r, y: 0))
-            path.addArc(tangent1End: CGPoint(x: 0, y: 0), tangent2End: CGPoint(x: 0, y: r), radius: r)
-            path.closeSubpath()
-            maskLayer.path = path
+            maskLayer.path = maskPath(w: expandedWidth, h: expandedHeight, cornerR: 14)
             maskLayer.fillColor = NSColor.white.cgColor
+            maskLayer.frame = layer.bounds
             layer.mask = maskLayer
         }
     }
@@ -115,15 +106,7 @@ final class NotchPanel: NSPanel {
             ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             ctx.allowsImplicitAnimation = true
             self.animator().setFrame(target, display: true)
-            // 同步动画 mask 到收起态圆角
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(0.25)
-            CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeInEaseOut))
-            if let layer = self.contentView?.layer,
-               let currentMask = layer.mask as? CAShapeLayer {
-                currentMask.path = maskPath(w: collapsedWidth, h: notch.notchHeight, cornerR: 14)
-            }
-            CATransaction.commit()
+            // mask 保持不变（展开态尺寸 + 固定圆角），由 NSWindow frame 裁剪
         }
     }
 
@@ -134,15 +117,7 @@ final class NotchPanel: NSPanel {
             ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             ctx.allowsImplicitAnimation = true
             self.animator().setFrame(target, display: true)
-            // 同步动画 mask 到展开态圆角
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(0.25)
-            CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeInEaseOut))
-            if let layer = self.contentView?.layer,
-               let currentMask = layer.mask as? CAShapeLayer {
-                currentMask.path = maskPath(w: expandedWidth, h: expandedHeight, cornerR: 16)
-            }
-            CATransaction.commit()
+            // mask 保持不变
         }
     }
 }
