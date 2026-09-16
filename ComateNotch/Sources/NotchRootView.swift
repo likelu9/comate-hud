@@ -5,25 +5,34 @@ import AppKit
 
 struct ComateLogo: View {
     var size: CGFloat = 20
+    var colorful: Bool = true  // false = 白色镂空，true = 彩色填充
 
     var body: some View {
         ZStack {
-            ComatePath1()
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: "#937EE6"), Color(hex: "#4526BF")],
-                        startPoint: .init(x: 0.18, y: 0.97),
-                        endPoint: .init(x: 0.50, y: 0.14)
+            if colorful {
+                ComatePath1()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#937EE6"), Color(hex: "#4526BF")],
+                            startPoint: .init(x: 0.18, y: 0.97),
+                            endPoint: .init(x: 0.50, y: 0.14)
+                        )
                     )
-                )
-            ComatePath2()
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: "#FF9999"), Color(hex: "#D921B6")],
-                        startPoint: .init(x: 0.88, y: 0.19),
-                        endPoint: .init(x: 0.33, y: 0.42)
+                ComatePath2()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#FF9999"), Color(hex: "#D921B6")],
+                            startPoint: .init(x: 0.88, y: 0.19),
+                            endPoint: .init(x: 0.33, y: 0.42)
+                        )
                     )
-                )
+            } else {
+                // 白色镂空：用 stroke 描边，fill 用白色半透明
+                ComatePath1()
+                    .fill(Color.white.opacity(0.55))
+                ComatePath2()
+                    .fill(Color.white.opacity(0.55))
+            }
         }
         .frame(width: size, height: size)
     }
@@ -239,9 +248,9 @@ struct NotchRootView: View {
     /// 布局：[左翼: 图标+状态灯] [中段: 纯黑与刘海融合] [右翼: 新建按钮]
     private var collapsedView: some View {
         HStack(spacing: 0) {
-            // 左翼：Comate 图标 + 状态灯（灯叠在图标右下角）
+            // 左翼：Comate 图标（白色镂空） + 状态灯（灯叠在图标右下角）
             ZStack(alignment: .bottomTrailing) {
-                ComateLogo(size: 14)  // 从 18 缩小到 14
+                ComateLogo(size: 14, colorful: false)  // 收起态：白色镂空
                 Circle()
                     .fill(Color(hex: store.primaryLight.color))
                     .frame(width: 7, height: 7)  // 从 9 缩小到 7
@@ -280,7 +289,19 @@ struct NotchRootView: View {
 
     private var expandedView: some View {
         VStack(alignment: .leading, spacing: 6) {
+            // 顶部栏：左侧 logo + 状态灯，右侧状态标签
             HStack(spacing: 6) {
+                // 左侧：彩色 Comate Logo + 状态灯
+                ZStack(alignment: .bottomTrailing) {
+                    ComateLogo(size: 14, colorful: true)  // 展开态：彩色
+                    Circle()
+                        .fill(Color(hex: store.primaryLight.color))
+                        .frame(width: 5, height: 5)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.black.opacity(0.4), lineWidth: 0.8)
+                        )
+                }
                 Spacer()
                 let count = store.runningTasks.count
                 if count > 0 {
