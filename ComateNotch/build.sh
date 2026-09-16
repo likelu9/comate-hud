@@ -30,6 +30,7 @@ swiftc \
 echo "==> 组装 bundle"
 mkdir -p "$APP/Contents/Resources"
 cp "$ROOT/Info.plist" "$APP/Contents/Info.plist"
+cp -R "$ROOT/Resources/"* "$APP/Contents/Resources/" 2>/dev/null || true
 
 echo "==> 完成: $APP"
 echo "OUTPUT=$APP"

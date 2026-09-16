@@ -5,11 +5,12 @@ import AppKit
 
 struct ComateLogo: View {
     var size: CGFloat = 20
-    var colorful: Bool = true  // false = 白色镂空，true = 彩色填充
+    var colorful: Bool = true  // false = 白色镂空（tray 图标），true = 彩色填充
 
     var body: some View {
-        ZStack {
-            if colorful {
+        if colorful {
+            // 彩色：手绘 SVG 路径
+            ZStack {
                 ComatePath1()
                     .fill(
                         LinearGradient(
@@ -26,15 +27,24 @@ struct ComateLogo: View {
                             endPoint: .init(x: 0.33, y: 0.42)
                         )
                     )
+            }
+            .frame(width: size, height: size)
+        } else {
+            // 白色镂空：使用 Comate macOS 菜单栏 tray 图标
+            if let nsImage = NSImage(named: "tray_icon") {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: size, height: size)
             } else {
-                // 白色镂空：用 stroke 描边，fill 用白色半透明
-                ComatePath1()
-                    .fill(Color.white.opacity(0.55))
-                ComatePath2()
-                    .fill(Color.white.opacity(0.55))
+                // fallback: 白色 SVG
+                ZStack {
+                    ComatePath1().fill(Color.white.opacity(0.55))
+                    ComatePath2().fill(Color.white.opacity(0.55))
+                }
+                .frame(width: size, height: size)
             }
         }
-        .frame(width: size, height: size)
     }
 }
 
