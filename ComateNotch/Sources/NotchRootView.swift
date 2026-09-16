@@ -246,63 +246,58 @@ struct NotchRootView: View {
     var body: some View {
         let currentWidth = expanded ? expandedWidth : collapsedTotalWidth
         let currentHeight = expanded ? expandedHeight : notchHeight
-        let cornerR: CGFloat = 14  // 收起/展开圆角一致
+        let cornerR: CGFloat = 14
 
-        ZStack {
-            // 层 1：黑色背景 + 圆角裁剪
-            NotchShape(cornerRadius: cornerR)
-                .fill(Color.black)
-                .frame(width: currentWidth, height: currentHeight)
-
-            // 层 2：logo + 状态灯（位置固定在左上翼）
-            ZStack(alignment: .bottomTrailing) {
+        NotchShape(cornerRadius: cornerR)
+            .fill(Color.black)
+            .frame(width: currentWidth, height: currentHeight)
+            // 叠加层：logo + 状态灯（固定位置）
+            .overlay(alignment: .topLeading) {
                 ComateLogo(size: 18, colorful: expanded)
-                Circle()
-                    .fill(Color(hex: store.primaryLight.color))
-                    .frame(width: 6, height: 6)
-                    .overlay(Circle().stroke(Color.black.opacity(0.5), lineWidth: 0.8))
-                    .shadow(
-                        color: store.primaryLight != .gray
-                            ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65)
-                            : .clear,
-                        radius: store.primaryLight != .gray ? 5 : 0
-                    )
-            }
-            .position(
-                x: wingWidth / 2,
-                y: notchHeight / 2
-            )
-
-            // 层 3：消息中心徽章（始终可见）
-            Button(action: { store.launchComate() }) {
-                HStack(spacing: 3) {
-                    Image(systemName: "bell")
-                        .font(.system(size: 9))
-                    let count = store.totalMessageCount
-                    if count > 0 {
-                        Text("\(count)")
-                            .font(.system(size: 8, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.7))
+                    .position(x: wingWidth / 2, y: notchHeight / 2)
+                    .overlay(alignment: .topLeading) {
+                        Circle()
+                            .fill(Color(hex: store.primaryLight.color))
+                            .frame(width: 6, height: 6)
+                            .overlay(Circle().stroke(Color.black.opacity(0.5), lineWidth: 0.8))
+                            .shadow(
+                                color: store.primaryLight != .gray
+                                    ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65)
+                                    : .clear,
+                                radius: store.primaryLight != .gray ? 5 : 0
+                            )
+                            .position(x: 10, y: 10)
                     }
-                }
-                .foregroundColor(.white.opacity(0.5))
             }
-            .buttonStyle(.plain)
-            .position(
-                x: currentWidth - wingWidth / 2,
-                y: notchHeight / 2
-            )
-            .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
-
-            // 层 4：展开内容（收起时淡出）
-            expandedContent
-                .opacity(expanded ? 1 : 0)
-                .allowsHitTesting(expanded)
-        }
-        .frame(width: currentWidth, height: currentHeight)
-        .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
-        .animation(.easeInOut(duration: 0.22), value: expanded)
-        .onHover { isHovering in
+            // 叠加层：消息中心徽章（右翼）
+            .overlay(alignment: .topTrailing) {
+                Button(action: { store.launchComate() }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "bell")
+                            .font(.system(size: 9))
+                        let count = store.totalMessageCount
+                        if count > 0 {
+                            Text("\(count)")
+                                .font(.system(size: 8, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                    }
+                    .foregroundColor(.white.opacity(0.5))
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, wingWidth / 2 - 4)
+                .padding(.top, (notchHeight - 18) / 2)
+                .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
+            }
+            // 叠加层：展开内容
+            .overlay {
+                expandedContent
+                    .opacity(expanded ? 1 : 0)
+                    .allowsHitTesting(expanded)
+            }
+            .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
+            .animation(.easeInOut(duration: 0.22), value: expanded)
+            .onHover { isHovering in
             hovering = isHovering
             if forceExpanded { return }
             if isHovering {

@@ -40,20 +40,23 @@ final class NotchPanel: NSPanel {
     private let anchorTopY: CGFloat
 
     init() {
-        let screen = NSScreen.screens.first ?? NSScreen.main!
+        let screen = NSScreen.main!
         self.notch = NotchPanel.notchGeometry(for: screen)
         self.anchorTopY = screen.frame.maxY - notch.notchHeight
+        print("[NotchPanel] screen.frame=\(screen.frame), maxY=\(screen.frame.maxY), anchorTopY=\(anchorTopY)")
+        NSLog("[NotchPanel] screen.frame=%@, maxY=%.0f, anchorTopY=%.0f", NSStringFromRect(screen.frame), screen.frame.maxY, anchorTopY)
 
         // super.init 之前不能用 self 的计算属性，直接用已初始化的存储属性计算
-        // 窗口固定为展开尺寸，由 SwiftUI clipShape 控制裁剪
-        let frame = NSRect(x: notch.centerX - expandedWidth / 2,
-                           y: anchorTopY, width: expandedWidth, height: expandedHeight)
+        // 窗口初始为收起态尺寸
+        let collapsedW = (notch.notchRight - notch.notchLeft) + wingWidth * 2
+        let frame = NSRect(x: notch.centerX - collapsedW / 2,
+                           y: anchorTopY, width: collapsedW, height: notch.notchHeight)
         let styleMask: NSWindow.StyleMask = [.borderless, .fullSizeContentView, .nonactivatingPanel]
         super.init(contentRect: frame, styleMask: styleMask, backing: .buffered, defer: false)
         self.isFloatingPanel = true
         self.becomesKeyOnlyIfNeeded = true
         self.hidesOnDeactivate = false
-        self.level = .statusBar
+        self.level = NSWindow.Level(rawValue: 1000)
         self.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         self.isOpaque = false
         self.backgroundColor = .clear
@@ -64,13 +67,14 @@ final class NotchPanel: NSPanel {
         self.title = ""
         self.isReleasedWhenClosed = false
         self.contentView?.wantsLayer = true
+        NSLog("[NotchPanel] window.frame=%@, isVisible=%d", NSStringFromRect(self.frame), self.isVisible)
     }
 
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
     func expandedFrame() -> NSRect {
-        let screen = NSScreen.screens.first ?? NSScreen.main!
+        let screen = NSScreen.main!
         let expandedY = screen.frame.maxY - expandedHeight
         return NSRect(x: notch.centerX - expandedWidth / 2,
                       y: expandedY, width: expandedWidth, height: expandedHeight)
