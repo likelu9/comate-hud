@@ -243,23 +243,14 @@ struct NotchRootView: View {
     @State private var isAnimating = false  // 动画期间标记，避免刷新干扰
     private let forceExpanded = CommandLine.arguments.contains("--expanded")
 
-    // logo 在整个窗口中的固定坐标（收起/展开态一致）
-    private var logoPosition: CGPoint {
-        CGPoint(x: wingWidth / 2, y: notchHeight / 2)
-    }
-
     var body: some View {
-        let currentWidth = expanded ? expandedWidth : collapsedTotalWidth
-        let currentHeight = expanded ? expandedHeight : notchHeight
-        let cornerR: CGFloat = expanded ? 16 : 14
-
+        // SwiftUI 固定 expandedSize，所有尺寸动画由 NSWindow setFrame 处理
+        // 这样窗口顶部始终紧贴屏幕边缘，无闪动
         ZStack {
-            // 层 1：单一背景，动画尺寸和圆角（不切换 View）
-            NotchShape(cornerRadius: cornerR)
-                .fill(Color.black)
-                .frame(width: currentWidth, height: currentHeight)
+            // 层 1：黑色背景（固定 expanded 尺寸，裁剪由 NSWindow 提供）
+            Color.black
 
-            // 层 2：logo + 状态灯，位置永远不变
+            // 层 2：logo + 状态灯（用 offset 锚定到展开态视图的左上区域）
             ZStack(alignment: .bottomTrailing) {
                 ComateLogo(size: 18, colorful: expanded)
                 Circle()
@@ -273,28 +264,35 @@ struct NotchRootView: View {
                         radius: store.primaryLight != .gray ? 5 : 0
                     )
             }
-            .position(x: wingWidth / 2, y: notchHeight / 2)
+            .position(
+                x: wingWidth / 2,
+                y: notchHeight / 2
+            )
 
-            // 层 3：plus 按钮（始终存在，展开时淡出）
+            // 层 3：plus 按钮（展开时淡出）
             Button(action: { store.launchNewSession() }) {
                 Image(systemName: "plus")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.white.opacity(0.45))
             }
             .buttonStyle(.plain)
-            .position(x: collapsedTotalWidth - wingWidth / 2, y: notchHeight / 2)
+            .position(
+                x: collapsedTotalWidth - wingWidth / 2,
+                y: notchHeight / 2
+            )
             .opacity(expanded ? 0 : 1)
 
-            // 层 4：展开内容（始终存在，收起时淡出）
+            // 层 4：展开内容（收起时淡出）
             expandedContent
                 .opacity(expanded ? 1 : 0)
-                // 收起时禁止交互，避免挡住 hover
                 .allowsHitTesting(expanded)
         }
-        .frame(width: currentWidth, height: currentHeight)
-        .animation(.spring(response: 0.28, dampingFraction: 0.88), value: expanded)
-        // 动画期间 logo 只切颜色，不移动——单独用快速渐变
-        .animation(.easeInOut(duration: 0.15), value: store.primaryLight)
+        // 固定为展开尺寸——NSWindow 通过裁剪决定显示哪些部分
+        .frame(width: expandedWidth, height: expandedHeight)
+        // logo 颜色切换用快速渐变
+        .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
+        // 仅用于控制 plus/content 的 opacity 渐变（无位移）
+        .animation(.easeInOut(duration: 0.18), value: expanded)
         .onHover { isHovering in
             hovering = isHovering
             if forceExpanded { return }
@@ -304,9 +302,7 @@ struct NotchRootView: View {
                     DispatchQueue.main.async {
                         isAnimating = true
                         store.isPaused = true
-                        withAnimation(.spring(response: 0.28, dampingFraction: 0.88)) {
-                            expanded = true
-                        }
+                        withAnimation { expanded = true }
                         onExpandChange?(true)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                             isAnimating = false
@@ -320,9 +316,7 @@ struct NotchRootView: View {
                     if !hovering {
                         isAnimating = true
                         store.isPaused = true
-                        withAnimation(.spring(response: 0.28, dampingFraction: 0.88)) {
-                            expanded = false
-                        }
+                        withAnimation { expanded = false }
                         onExpandChange?(false)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                             isAnimating = false
