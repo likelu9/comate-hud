@@ -244,13 +244,17 @@ struct NotchRootView: View {
     private let forceExpanded = CommandLine.arguments.contains("--expanded")
 
     var body: some View {
-        // SwiftUI 固定 expandedSize，所有尺寸动画由 NSWindow setFrame 处理
-        // 这样窗口顶部始终紧贴屏幕边缘，无闪动
-        ZStack {
-            // 层 1：黑色背景（固定 expanded 尺寸，裁剪由 NSWindow 提供）
-            Color.black
+        let currentWidth = expanded ? expandedWidth : collapsedTotalWidth
+        let currentHeight = expanded ? expandedHeight : notchHeight
+        let cornerR: CGFloat = 14  // 收起/展开圆角一致
 
-            // 层 2：logo + 状态灯（用 offset 锚定到展开态视图的左上区域）
+        ZStack {
+            // 层 1：黑色背景 + 圆角裁剪
+            NotchShape(cornerRadius: cornerR)
+                .fill(Color.black)
+                .frame(width: currentWidth, height: currentHeight)
+
+            // 层 2：logo + 状态灯（位置固定在左上翼）
             ZStack(alignment: .bottomTrailing) {
                 ComateLogo(size: 18, colorful: expanded)
                 Circle()
@@ -285,7 +289,7 @@ struct NotchRootView: View {
             }
             .buttonStyle(.plain)
             .position(
-                x: collapsedTotalWidth - wingWidth / 2,
+                x: currentWidth - wingWidth / 2,
                 y: notchHeight / 2
             )
             .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
@@ -295,12 +299,9 @@ struct NotchRootView: View {
                 .opacity(expanded ? 1 : 0)
                 .allowsHitTesting(expanded)
         }
-        // 固定为展开尺寸——NSWindow 通过裁剪决定显示哪些部分
-        .frame(width: expandedWidth, height: expandedHeight)
-        // logo 颜色切换用快速渐变
+        .frame(width: currentWidth, height: currentHeight)
         .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
-        // 仅用于控制 plus/content 的 opacity 渐变（无位移）
-        .animation(.easeInOut(duration: 0.18), value: expanded)
+        .animation(.easeInOut(duration: 0.22), value: expanded)
         .onHover { isHovering in
             hovering = isHovering
             if forceExpanded { return }

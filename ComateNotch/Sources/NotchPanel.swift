@@ -45,9 +45,9 @@ final class NotchPanel: NSPanel {
         self.anchorTopY = screen.frame.maxY - notch.notchHeight
 
         // super.init 之前不能用 self 的计算属性，直接用已初始化的存储属性计算
-        let collapsedW = (notch.notchRight - notch.notchLeft) + wingWidth * 2
-        let frame = NSRect(x: notch.centerX - collapsedW / 2,
-                           y: anchorTopY, width: collapsedW, height: notch.notchHeight)
+        // 窗口固定为展开尺寸，由 SwiftUI clipShape 控制裁剪
+        let frame = NSRect(x: notch.centerX - expandedWidth / 2,
+                           y: anchorTopY, width: expandedWidth, height: expandedHeight)
         let styleMask: NSWindow.StyleMask = [.borderless, .fullSizeContentView, .nonactivatingPanel]
         super.init(contentRect: frame, styleMask: styleMask, backing: .buffered, defer: false)
         self.isFloatingPanel = true
@@ -64,15 +64,6 @@ final class NotchPanel: NSPanel {
         self.title = ""
         self.isReleasedWhenClosed = false
         self.contentView?.wantsLayer = true
-        // 窗口内容用 NotchShape 裁剪，底部圆角
-        // mask 使用展开态尺寸，收起/展开保持一致圆角
-        if let layer = self.contentView?.layer {
-            let maskLayer = CAShapeLayer()
-            maskLayer.path = maskPath(w: expandedWidth, h: expandedHeight, cornerR: 14)
-            maskLayer.fillColor = NSColor.white.cgColor
-            maskLayer.frame = layer.bounds
-            layer.mask = maskLayer
-        }
     }
 
     override var canBecomeKey: Bool { true }
@@ -85,19 +76,6 @@ final class NotchPanel: NSPanel {
                       y: expandedY, width: expandedWidth, height: expandedHeight)
     }
 
-    private func maskPath(w: CGFloat, h: CGFloat, cornerR: CGFloat) -> CGPath {
-        let r = min(cornerR, w / 2, h / 2)
-        let path = CGMutablePath()
-        path.move(to: CGPoint(x: 0, y: h))
-        path.addLine(to: CGPoint(x: w, y: h))
-        path.addLine(to: CGPoint(x: w, y: h - r))
-        path.addArc(tangent1End: CGPoint(x: w, y: h), tangent2End: CGPoint(x: w - r, y: h), radius: r)
-        path.addLine(to: CGPoint(x: r, y: 0))
-        path.addArc(tangent1End: CGPoint(x: 0, y: 0), tangent2End: CGPoint(x: 0, y: r), radius: r)
-        path.closeSubpath()
-        return path
-    }
-
     func animateToCollapsed() {
         let target = NSRect(x: notch.centerX - collapsedWidth / 2,
                             y: anchorTopY, width: collapsedWidth, height: notch.notchHeight)
@@ -106,7 +84,6 @@ final class NotchPanel: NSPanel {
             ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             ctx.allowsImplicitAnimation = true
             self.animator().setFrame(target, display: true)
-            // mask 保持不变（展开态尺寸 + 固定圆角），由 NSWindow frame 裁剪
         }
     }
 
@@ -117,7 +94,6 @@ final class NotchPanel: NSPanel {
             ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             ctx.allowsImplicitAnimation = true
             self.animator().setFrame(target, display: true)
-            // mask 保持不变
         }
     }
 }
