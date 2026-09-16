@@ -1,21 +1,51 @@
 import AppKit
 
-/// 贴合 MacBook 刘海的悬浮 HUD 窗口。
-/// - 无边框、置顶、不抢焦点、覆盖屏幕顶部
-/// - 有刘海时居中贴合刘海；无刘海时居中悬浮于顶部
+/// 精确贴合 MacBook 刘海的悬浮 HUD 窗口。
+/// 通过 auxiliaryTopLeftArea / auxiliaryTopRightArea 精确定位刘海中心。
+/// 支持收起态（仅刘海高度）和展开态（向下展开）的帧动画。
 final class NotchPanel: NSPanel {
 
+    // MARK: - 刘海几何
+
+    struct NotchGeometry {
+        let centerX: CGFloat
+        let notchLeft: CGFloat
+        let notchRight: CGFloat
+        let notchHeight: CGFloat
+        let hasNotch: Bool
+        var notchWidth: CGFloat { notchRight - notchLeft }
+    }
+
+    static func notchGeometry(for screen: NSScreen) -> NotchGeometry {
+        if #available(macOS 12.0, *) {
+            if let left = screen.auxiliaryTopLeftArea,
+               let right = screen.auxiliaryTopRightArea {
+                let l = left.maxX
+                let r = right.minX
+                let h = screen.frame.maxY - right.minY
+                return NotchGeometry(centerX: (l + r) / 2, notchLeft: l, notchRight: r,
+                                     notchHeight: max(h, 34), hasNotch: true)
+            }
+        }
+        return NotchGeometry(centerX: screen.frame.midX,
+                             notchLeft: screen.frame.midX - 100,
+                             notchRight: screen.frame.midX + 100,
+                             notchHeight: 34, hasNotch: false)
+    }
+
+    // MARK: - 属性
+
+    let notch: NotchGeometry
+    let collapsedWidth: CGFloat = 280
+    let expandedWidth: CGFloat = 340
+    let expandedHeight: CGFloat = 320
+
     init() {
-        let frame = NotchPanel.targetFrame()
-        let styleMask: NSWindow.StyleMask = [
-            .borderless,
-            .fullSizeContentView,
-            .nonactivatingPanel
-        ]
-        super.init(contentRect: frame,
-                   styleMask: styleMask,
-                   backing: .buffered,
-                   defer: false)
+        let screen = NSScreen.screens.first ?? NSScreen.main!
+        self.notch = NotchPanel.notchGeometry(for: screen)
+        let frame = NotchPanel.collapsedFrame(notch: notch, screen: screen, width: collapsedWidth)
+        let styleMask: NSWindow.StyleMask = [.borderless, .fullSizeContentView, .nonactivatingPanel]
+        super.init(contentRect: frame, styleMask: styleMask, backing: .buffered, defer: false)
         self.isFloatingPanel = true
         self.becomesKeyOnlyIfNeeded = true
         self.hidesOnDeactivate = false
@@ -34,31 +64,41 @@ final class NotchPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
-    // MARK: - 定位
+    // MARK: - 帧计算
 
-    static func targetFrame() -> NSRect {
-        guard let screen = NSScreen.screens.first else {
-            return NSRect(x: 0, y: 0, width: 240, height: 34)
+    static func collapsedFrame(notch: NotchGeometry, screen: NSScreen, width: CGFloat) -> NSRect {
+        NSRect(x: notch.centerX - width / 2,
+               y: screen.frame.maxY - notch.notchHeight,
+               width: width, height: notch.notchHeight)
+    }
+
+    func expandedFrame() -> NSRect {
+        let screen = NSScreen.screens.first ?? NSScreen.main!
+        return NSRect(x: notch.centerX - expandedWidth / 2,
+                      y: screen.frame.maxY - expandedHeight,
+                      width: expandedWidth, height: expandedHeight)
+    }
+
+    // MARK: - 动画
+
+    func animateToCollapsed() {
+        let screen = NSScreen.screens.first ?? NSScreen.main!
+        let target = NotchPanel.collapsedFrame(notch: notch, screen: screen, width: collapsedWidth)
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.30
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            ctx.allowsImplicitAnimation = true
+            self.animator().setFrame(target, display: true)
         }
-        let screenFrame = screen.frame
-        let visibleFrame = screen.visibleFrame
+    }
 
-        // 是否有刘海：visibleFrame.maxY < screenFrame.maxY 说明顶部有传感器区
-        let hasNotch: Bool = {
-            if #available(macOS 12.0, *) {
-                return screen.safeAreaInsets.top > 0
-            }
-            return false
-        }()
-
-        let notchWidth: CGFloat = hasNotch ? 200 : 240
-        let notchHeight: CGFloat = hasNotch ? 34 : 34
-        let cx = screenFrame.midX
-        // 紧贴屏幕顶部（刘海机型下与刘海齐平）
-        let topY = screenFrame.maxY - notchHeight
-        let x = cx - notchWidth / 2
-
-        _ = visibleFrame
-        return NSRect(x: x, y: topY, width: notchWidth, height: notchHeight)
+    func animateToExpanded() {
+        let target = expandedFrame()
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.30
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            ctx.allowsImplicitAnimation = true
+            self.animator().setFrame(target, display: true)
+        }
     }
 }
