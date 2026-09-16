@@ -250,15 +250,17 @@ struct NotchRootView: View {
         HStack(spacing: 0) {
             // 左翼：Comate 图标（白色镂空） + 状态灯（灯叠在图标右下角）
             ZStack(alignment: .bottomTrailing) {
-                ComateLogo(size: 14, colorful: false)  // 收起态：白色镂空
+                ComateLogo(size: 18, colorful: false)  // 收起态：白色镂空
+                // 状态灯：缩小为 4pt，点亮时带光晕
                 Circle()
                     .fill(Color(hex: store.primaryLight.color))
-                    .frame(width: 7, height: 7)  // 从 9 缩小到 7
+                    .frame(width: 4, height: 4)
                     .overlay(
                         Circle()
-                            .stroke(Color.black.opacity(0.6), lineWidth: 1)
+                            .stroke(Color.black.opacity(0.5), lineWidth: 0.6)
                     )
-                    .shadow(color: Color(hex: store.primaryLight.color).opacity(0.5), radius: 3)
+                    // 点亮状态（非灰色）时显示光晕
+                    .shadow(color: store.primaryLight != .gray ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65) : .clear, radius: store.primaryLight != .gray ? 4 : 0)
             }
             .frame(width: wingWidth, height: notchHeight)
 
@@ -293,14 +295,15 @@ struct NotchRootView: View {
             HStack(spacing: 6) {
                 // 左侧：彩色 Comate Logo + 状态灯
                 ZStack(alignment: .bottomTrailing) {
-                    ComateLogo(size: 14, colorful: true)  // 展开态：彩色
+                    ComateLogo(size: 18, colorful: true)  // 展开态：彩色
                     Circle()
                         .fill(Color(hex: store.primaryLight.color))
-                        .frame(width: 5, height: 5)
+                        .frame(width: 4, height: 4)
                         .overlay(
                             Circle()
-                                .stroke(Color.black.opacity(0.4), lineWidth: 0.8)
+                                .stroke(Color.black.opacity(0.4), lineWidth: 0.6)
                         )
+                        .shadow(color: store.primaryLight != .gray ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65) : .clear, radius: store.primaryLight != .gray ? 4 : 0)
                 }
                 Spacer()
                 let count = store.runningTasks.count
@@ -339,7 +342,11 @@ struct NotchRootView: View {
             }
 
             HStack(spacing: 3) {
-                StatusLight(color: store.primaryLight.color, size: 4)
+                // 底部状态灯同样带光晕
+                Circle()
+                    .fill(Color(hex: store.primaryLight.color))
+                    .frame(width: 4, height: 4)
+                    .shadow(color: store.primaryLight != .gray ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65) : .clear, radius: store.primaryLight != .gray ? 4 : 0)
                 Text("实时同步 · \(timeStr(store.lastRefreshed))")
                     .font(.system(size: 8, design: .rounded))
                     .foregroundStyle(.white.opacity(0.35))
