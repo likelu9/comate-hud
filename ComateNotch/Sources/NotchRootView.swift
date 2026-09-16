@@ -286,10 +286,6 @@ struct NotchRootView: View {
     private var expandedView: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                ComateLogo(size: 14)
-                Text("Comate 任务")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
                 Spacer()
                 let count = store.runningTasks.count
                 if count > 0 {
@@ -341,7 +337,9 @@ struct NotchRootView: View {
                 .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
             }
         }
-        .padding(12)
+        .padding(.horizontal, 12)
+        .padding(.top, 32)  // 避开刘海区域
+        .padding(.bottom, 12)
         .frame(width: expandedWidth, height: expandedHeight)
         .background(
             NotchShape(cornerRadius: 16)  // PDF: expanded r=16
