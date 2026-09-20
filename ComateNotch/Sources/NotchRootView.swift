@@ -237,15 +237,16 @@ struct NotchRootView: View {
                 ZStack(alignment: .topLeading) {
                     ComateLogo(size: 18, colorful: expanded)
                     // 状态灯：放在 logo 右下角
-                    // 外发光层
-                    Circle()
-                        .fill(Color(hex: store.primaryLight.color).opacity(store.primaryLight != .gray ? 0.45 : 0))
-                        .frame(width: 12, height: 12)
-                        .blur(radius: 3)
-                    // 主灯体
+                    // 主灯体 + 外发光
                     Circle()
                         .fill(Color(hex: store.primaryLight.color))
                         .frame(width: 6, height: 6)
+                        .overlay(
+                            Circle()
+                                .fill(Color(hex: store.primaryLight.color).opacity(store.primaryLight != .gray ? 0.45 : 0))
+                                .frame(width: 14, height: 14)
+                                .blur(radius: 4)
+                        )
                         .overlay(Circle().stroke(Color.black.opacity(0.3), lineWidth: 0.5))
                         .shadow(
                             color: store.primaryLight != .gray
