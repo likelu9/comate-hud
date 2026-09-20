@@ -11,6 +11,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let panel = NotchPanel()
         self.panel = panel
 
+        if CommandLine.arguments.contains("--expanded") {
+            self.expanded = true
+        }
+
         let binding = Binding<Bool>(
             get: { [weak self] in self?.expanded ?? false },
             set: { [weak self] val in self?.expanded = val }
@@ -34,6 +38,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.contentView = hosting
         panel.orderFrontRegardless()
         store.start()
+
+        if CommandLine.arguments.contains("--expanded") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                panel.animateToExpanded()
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

@@ -25,7 +25,7 @@ struct ComateLogo: View {
                     : AnyShapeStyle(Color.white))
         }
         .frame(width: size, height: size)
-        .drawingGroup(opaque: false, colorMode: .nonLinear)  // 预渲染到位图，避免锯齿
+
     }
 }
 
@@ -247,7 +247,7 @@ struct NotchRootView: View {
                                     : .clear,
                                 radius: store.primaryLight != .gray ? 5 : 0
                             )
-                            .position(x: 10, y: 10)
+                            .position(x: 15, y: 15)
                     }
             }
             // 叠加层：消息中心徽章（右翼）
