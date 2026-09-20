@@ -88,9 +88,17 @@ final class ComateStore: ObservableObject {
         todayModelUsage.reduce(0) { $0 + $1.count }
     }
 
-    /// 所有任务的总消息数（用于右侧徽章显示）
+    /// 需要关注的会话数（用于右侧徽章显示）
+    /// 定义：status=idle + last_message_role=assistant + source=app + 最近 7 天
+    /// 这些是 Comate 回复后等待用户查看的会话，近似"未读消息"
     var totalMessageCount: Int {
-        recentTasks.reduce(0) { $0 + $1.messageCount }
+        let cutoff = Date().timeIntervalSince1970 - 7 * 86400
+        return recentTasks.filter { task in
+            task.status == "idle" &&
+            task.lastMessageRole == "assistant" &&
+            task.source == "app" &&
+            Double(task.updatedAtMs) / 1000 > cutoff
+        }.count
     }
 
     /// 当前最优先的状态灯（用于收起态显示）
