@@ -11,18 +11,18 @@ struct ComateLogo: View {
         ZStack {
             ComateOfficialPath1()
                 .fill(colorful
-                    ? LinearGradient(
+                    ? AnyShapeStyle(LinearGradient(
                         colors: [Color(hex: "#937EE6"), Color(hex: "#4526BF")],
                         startPoint: .init(x: 0.18, y: 0.97),
-                        endPoint: .init(x: 0.50, y: 0.14))
-                    : Color.white)
+                        endPoint: .init(x: 0.50, y: 0.14)))
+                    : AnyShapeStyle(Color.white))
             ComateOfficialPath2()
                 .fill(colorful
-                    ? LinearGradient(
+                    ? AnyShapeStyle(LinearGradient(
                         colors: [Color(hex: "#FF9999"), Color(hex: "#D921B6")],
                         startPoint: .init(x: 0.88, y: 0.19),
-                        endPoint: .init(x: 0.33, y: 0.42))
-                    : Color.white)
+                        endPoint: .init(x: 0.33, y: 0.42)))
+                    : AnyShapeStyle(Color.white))
         }
         .frame(width: size, height: size)
         .drawingGroup(opaque: false, colorMode: .nonLinear)  // 预渲染到位图，避免锯齿
@@ -142,113 +142,6 @@ struct ComateOfficialPath2: Shape {
         p.addCurve(to: CGPoint(x: 63.4408*sx, y: 21.2404*sy),
                    control1: CGPoint(x: 33.265*sx, y: -0.574457*sy),
                    control2: CGPoint(x: 54.0538*sx, y: 4.99409*sy))
-        p.closeSubpath()
-        return p
-    }
-}
-        p.addCurve(to: CGPoint(x: 49.2073*s, y: 13.9254*s),
-                   control1: CGPoint(x: 46.3883*s, y: 12.2401*s),
-                   control2: CGPoint(x: 47.7904*s, y: 13.0769*s))
-        p.addCurve(to: CGPoint(x: 49.45*s, y: 14.0725*s),
-                   control1: CGPoint(x: 49.45*s, y: 14.0725*s),
-                   control2: CGPoint(x: 49.45*s, y: 14.0725*s))
-        p.addCurve(to: CGPoint(x: 49.691*s, y: 14.2165*s),
-                   control1: CGPoint(x: 49.691*s, y: 14.2165*s),
-                   control2: CGPoint(x: 49.691*s, y: 14.2165*s))
-        p.addCurve(to: CGPoint(x: 52.3753*s, y: 15.8221*s),
-                   control1: CGPoint(x: 51.0153*s, y: 15.0094*s),
-                   control2: CGPoint(x: 52.2401*s, y: 15.7424*s))
-        p.addCurve(to: CGPoint(x: 52.388*s, y: 15.8307*s),
-                   control1: CGPoint(x: 52.388*s, y: 15.8307*s),
-                   control2: CGPoint(x: 52.388*s, y: 15.8307*s))
-        p.addCurve(to: CGPoint(x: 57.3436*s, y: 21.3746*s),
-                   control1: CGPoint(x: 56.0481*s, y: 17.8438*s),
-                   control2: CGPoint(x: 57.3436*s, y: 21.3746*s))
-        p.addCurve(to: CGPoint(x: 55.3707*s, y: 34.4819*s),
-                   control1: CGPoint(x: 58.1472*s, y: 23.5637*s),
-                   control2: CGPoint(x: 56.6334*s, y: 29.7544*s))
-        p.addCurve(to: CGPoint(x: 55.2487*s, y: 34.9364*s),
-                   control1: CGPoint(x: 55.2487*s, y: 34.9364*s),
-                   control2: CGPoint(x: 55.2487*s, y: 34.9364*s))
-        p.addCurve(to: CGPoint(x: 53.9113*s, y: 40.2693*s),
-                   control1: CGPoint(x: 54.5232*s, y: 37.6235*s),
-                   control2: CGPoint(x: 53.9121*s, y: 39.7594*s))
-        p.addCurve(to: CGPoint(x: 53.2835*s, y: 44.849*s),
-                   control1: CGPoint(x: 53.9121*s, y: 40.9079*s),
-                   control2: CGPoint(x: 53.652*s, y: 42.8813*s))
-        p.addCurve(to: CGPoint(x: 53.2312*s, y: 45.13*s),
-                   control1: CGPoint(x: 53.2312*s, y: 45.13*s),
-                   control2: CGPoint(x: 53.2312*s, y: 45.13*s))
-        p.addCurve(to: CGPoint(x: 51.7505*s, y: 49.6273*s),
-                   control1: CGPoint(x: 52.7909*s, y: 47.4216*s),
-                   control2: CGPoint(x: 52.2185*s, y: 49.6243*s))
-        p.addCurve(to: CGPoint(x: 47.8788*s, y: 49.629*s),
-                   control1: CGPoint(x: 50.8653*s, y: 49.6286*s),
-                   control2: CGPoint(x: 48.4819*s, y: 49.6286*s))
-        p.addCurve(to: CGPoint(x: 45.3462*s, y: 49.6303*s),
-                   control1: CGPoint(x: 47.648*s, y: 49.6286*s),
-                   control2: CGPoint(x: 46.8065*s, y: 49.629*s))
-        p.addCurve(to: CGPoint(x: 44.4826*s, y: 48.1351*s),
-                   control1: CGPoint(x: 44.4826*s, y: 48.1351*s),
-                   control2: CGPoint(x: 44.4826*s, y: 48.1351*s))
-        p.addCurve(to: CGPoint(x: 26.7895*s, y: 25.7503*s),
-                   control1: CGPoint(x: 48.7556*s, y: 43.6238*s),
-                   control2: CGPoint(x: 33.6883*s, y: 21.7704*s))
-        p.addCurve(to: CGPoint(x: 21.5109*s, y: 45.4351*s),
-                   control1: CGPoint(x: 19.8908*s, y: 29.7302*s),
-                   control2: CGPoint(x: 17.5279*s, y: 38.5417*s))
-        p.addCurve(to: CGPoint(x: 25.1763*s, y: 49.4467*s),
-                   control1: CGPoint(x: 22.1908*s, y: 46.6119*s),
-                   control2: CGPoint(x: 23.4126*s, y: 47.949*s))
-        p.addCurve(to: CGPoint(x: 25.5767*s, y: 52.1918*s),
-                   control1: CGPoint(x: 25.9805*s, y: 50.1309*s),
-                   control2: CGPoint(x: 26.1531*s, y: 51.3052*s))
-        p.addCurve(to: CGPoint(x: 17.2217*s, y: 65.0463*s),
-                   control1: CGPoint(x: 25.5767*s, y: 52.1918*s),
-                   control2: CGPoint(x: 17.2217*s, y: 65.0463*s))
-        p.addCurve(to: CGPoint(x: 4.5599*s, y: 55.2144*s),
-                   control1: CGPoint(x: 16.5892*s, y: 66.0179*s),
-                   control2: CGPoint(x: 14.3133*s, y: 65.6651*s))
-        p.addCurve(to: CGPoint(x: 17.0028*s, y: 8.81253*s),
-                   control1: CGPoint(x: -4.82725*s, y: 38.9678*s),
-                   control2: CGPoint(x: 0.743863*s, y: 18.1924*s))
-        p.closeSubpath()
-        return p
-    }
-}
-
-struct ComatePath2: Shape {
-    func path(in rect: CGRect) -> Path {
-        let s = rect.width / 68.0
-        var p = Path()
-        p.move(to: CGPoint(x: 63.4408*s, y: 21.2404*s))
-        p.addCurve(to: CGPoint(x: 51.4213*s, y: 65.5945*s),
-                   control1: CGPoint(x: 72.3041*s, y: 36.5799*s),
-                   control2: CGPoint(x: 67.8315*s, y: 55.9653*s))
-        p.addCurve(to: CGPoint(x: 51.3729*s, y: 65.5252*s),
-                   control1: CGPoint(x: 52.9063*s, y: 66.4764*s),
-                   control2: CGPoint(x: 51.9254*s, y: 66.306*s))
-        p.addCurve(to: CGPoint(x: 42.4488*s, y: 51.3124*s),
-                   control1: CGPoint(x: 51.4039*s, y: 65.572*s),
-                   control2: CGPoint(x: 51.3903*s, y: 65.5473*s))
-        p.addCurve(to: CGPoint(x: 42.7513*s, y: 49.5248*s),
-                   control1: CGPoint(x: 42.0806*s, y: 50.7242*s),
-                   control2: CGPoint(x: 42.2119*s, y: 49.9571*s))
-        p.addCurve(to: CGPoint(x: 45.7119*s, y: 46.6361*s),
-                   control1: CGPoint(x: 44.1475*s, y: 48.4037*s),
-                   control2: CGPoint(x: 45.1335*s, y: 47.4427*s))
-        p.addCurve(to: CGPoint(x: 47.5738*s, y: 19.1609*s),
-                   control1: CGPoint(x: 51.8123*s, y: 39.3276*s),
-                   control2: CGPoint(x: 52.871*s, y: 28.3288*s))
-        p.addCurve(to: CGPoint(x: 17.0555*s, y: 8.8981*s),
-                   control1: CGPoint(x: 41.1637*s, y: 8.06718*s),
-                   control2: CGPoint(x: 27.7724*s, y: 3.68196*s))
-        p.addCurve(to: CGPoint(x: 17.0029*s, y: 8.8071*s),
-                   control1: CGPoint(x: 17.0555*s, y: 8.8981*s),
-                   control2: CGPoint(x: 17.0029*s, y: 8.8071*s))
-        p.addCurve(to: CGPoint(x: 63.4408*s, y: 21.2404*s),
-                   control1: CGPoint(x: 33.265*s, y: -0.574457*s),
-                   control2: CGPoint(x: 54.0538*s, y: 4.99409*s))
         p.closeSubpath()
         return p
     }
