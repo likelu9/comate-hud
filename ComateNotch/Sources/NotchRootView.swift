@@ -393,35 +393,10 @@ struct NotchRootView: View {
                             : .clear,
                         radius: store.primaryLight != .gray ? 5 : 0
                     )
-                // 今日模型用量比例条
-                if store.todayModelUsage.isEmpty {
-                    Text("今日暂无用量")
-                        .font(.system(size: 8, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.35))
-                } else {
-                    Text("今日")
-                        .font(.system(size: 8, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.35))
-                    HStack(spacing: 2) {
-                        ForEach(store.todayModelUsage) { u in
-                            RoundedRectangle(cornerRadius: 1.5)
-                                .fill(Color(hex: modelColor(u.name)))
-                                .frame(width: max(8, 120 * u.ratio), height: 6)
-                        }
-                    }
-                    HStack(spacing: 6) {
-                        ForEach(store.todayModelUsage) { u in
-                            HStack(spacing: 2) {
-                                Circle()
-                                    .fill(Color(hex: modelColor(u.name)))
-                                    .frame(width: 4, height: 4)
-                                Text("\(u.name) \(Int(u.ratio * 100))%")
-                                    .font(.system(size: 7, weight: .medium, design: .rounded))
-                                    .foregroundStyle(.white.opacity(0.5))
-                            }
-                        }
-                    }
-                }
+                // 今日模型用量总量
+                Text("今日 \(store.todayTotalMessages) 次对话")
+                    .font(.system(size: 8, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.35))
                 Spacer()
                 // 消息数提示
                 if store.totalMessageCount > 0 {

@@ -83,6 +83,11 @@ final class ComateStore: ObservableObject {
     @Published private(set) var lastRefreshed: Date = .now
     @Published private(set) var todayModelUsage: [ModelUsage] = []
 
+    /// 今日 assistant 消息总数（所有模型合计）
+    var todayTotalMessages: Int {
+        todayModelUsage.reduce(0) { $0 + $1.count }
+    }
+
     /// 所有任务的总消息数（用于右侧徽章显示）
     var totalMessageCount: Int {
         recentTasks.reduce(0) { $0 + $1.messageCount }
