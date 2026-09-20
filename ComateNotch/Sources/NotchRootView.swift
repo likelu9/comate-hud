@@ -287,10 +287,17 @@ struct NotchRootView: View {
                 }
                 .position(x: wingWidth / 2, y: notchHeight / 2)
             }
-            // 叠加层：+号按钮（右翼）
+            // 叠加层：+号按钮 + 未读消息数（右翼）
             .overlay(alignment: .topTrailing) {
-                ComatePlusButton {
-                    store.openNewTask()
+                HStack(spacing: 4) {
+                    if store.totalMessageCount > 0 {
+                        Text("\(store.totalMessageCount)")
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                    ComatePlusButton {
+                        store.openNewTask()
+                    }
                 }
                 .padding(.trailing, wingWidth / 2 - 2)
                 .padding(.top, (notchHeight - 18) / 2)
