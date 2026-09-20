@@ -223,6 +223,7 @@ struct NotchRootView: View {
     @State private var expandTimer: Timer?
     @State private var isAnimating = false
     @State private var expanded: Bool = false
+    @State private var breatheOpacity: Double = 1.0
     var body: some View {
         let currentWidth = expanded ? expandedWidth : collapsedTotalWidth
         let currentHeight = expanded ? expandedHeight : notchHeight
@@ -239,6 +240,26 @@ struct NotchRootView: View {
                     Circle()
                         .fill(Color(hex: store.primaryLight.color))
                         .frame(width: 6, height: 6)
+                        .opacity(store.primaryLight == .yellow ? breatheOpacity : 1.0)
+                        .onAppear {
+                            if store.primaryLight == .yellow {
+                                withAnimation(
+                                    .easeInOut(duration: 1.2)
+                                    .repeatForever(autoreverses: true)
+                                ) { breatheOpacity = 0.3 }
+                            }
+                        }
+                        .onChange(of: store.primaryLight) { newLight in
+                            if newLight == .yellow {
+                                breatheOpacity = 1.0
+                                withAnimation(
+                                    .easeInOut(duration: 1.2)
+                                    .repeatForever(autoreverses: true)
+                                ) { breatheOpacity = 0.3 }
+                            } else {
+                                breatheOpacity = 1.0
+                            }
+                        }
                         .overlay(Circle().stroke(Color.black.opacity(0.5), lineWidth: 0.8))
                         .shadow(
                             color: store.primaryLight != .gray
@@ -246,7 +267,7 @@ struct NotchRootView: View {
                                 : .clear,
                             radius: store.primaryLight != .gray ? 5 : 0
                         )
-                        .offset(x: 12, y: 12) // logo 18pt, 灯 6pt, 右下角
+                        .offset(x: 13.5, y: 13.5) // logo 18pt, 灯 6pt, 右下角微调
                 }
                 .position(x: wingWidth / 2, y: notchHeight / 2)
             }
