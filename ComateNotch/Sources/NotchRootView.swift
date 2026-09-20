@@ -261,11 +261,9 @@ struct NotchRootView: View {
                 .padding(.top, (notchHeight - 18) / 2)
                 .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
             }
-            // 叠加层：展开内容
+            // 展开内容（if 切换，避免 backing store 残留）
             .overlay {
-                expandedContent
-                    .opacity(expanded ? 1 : 0)
-                    .allowsHitTesting(expanded)
+                if expanded { expandedContent }
             }
             .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
             .animation(.easeInOut(duration: 0.22), value: expanded)
@@ -303,8 +301,14 @@ struct NotchRootView: View {
             }
         }
         .onAppear {
+            NSLog("[NotchRootView] onAppear: initialExpanded=%@ expanded_before=%@", String(describing: initialExpanded), String(describing: expanded))
             expanded = initialExpanded
-if expanded { onExpandChange?(true) }
+            NSLog("[NotchRootView] onAppear: expanded_after=%@", String(describing: expanded))
+            if expanded {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    onExpandChange?(true)
+                }
+            }
         }
     }
 
