@@ -268,13 +268,14 @@ struct NotchRootView: View {
             .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
             .animation(.easeInOut(duration: 0.22), value: expanded)
             .onHover { isHovering in
-            NSLog("[NotchRootView] onHover: isHovering=%@ expanded=%@ hovering=%@", String(describing: isHovering), String(describing: expanded), String(describing: hovering))
             hovering = isHovering
-            if expanded { return }
             if isHovering {
+                // 鼠标进入：如果收起则展开
                 expandTimer?.invalidate()
+                guard !expanded else { return }
                 expandTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { _ in
                     DispatchQueue.main.async {
+                        guard !self.expanded else { return }
                         isAnimating = true
                         store.isPaused = true
                         withAnimation { expanded = true }
@@ -286,17 +287,18 @@ struct NotchRootView: View {
                     }
                 }
             } else {
+                // 鼠标离开：如果展开则收起
                 expandTimer?.invalidate()
+                guard expanded else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    if !hovering {
-                        isAnimating = true
-                        store.isPaused = true
-                        withAnimation { expanded = false }
-                        onExpandChange?(false)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                            isAnimating = false
-                            store.isPaused = false
-                        }
+                    guard !self.hovering, self.expanded else { return }
+                    isAnimating = true
+                    store.isPaused = true
+                    withAnimation { expanded = false }
+                    onExpandChange?(false)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        isAnimating = false
+                        store.isPaused = false
                     }
                 }
             }
