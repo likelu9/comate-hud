@@ -43,8 +43,7 @@ final class NotchPanel: NSPanel {
         let screen = NSScreen.main!
         self.notch = NotchPanel.notchGeometry(for: screen)
         self.anchorTopY = screen.frame.maxY - notch.notchHeight
-        print("[NotchPanel] screen.frame=\(screen.frame), maxY=\(screen.frame.maxY), anchorTopY=\(anchorTopY)")
-        NSLog("[NotchPanel] screen.frame=%@, maxY=%.0f, anchorTopY=%.0f", NSStringFromRect(screen.frame), screen.frame.maxY, anchorTopY)
+        print("[NotchPanel] anchorTopY=\(anchorTopY)")
 
         // super.init 之前不能用 self 的计算属性，直接用已初始化的存储属性计算
         // 窗口初始为收起态尺寸
@@ -74,10 +73,9 @@ final class NotchPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 
     func expandedFrame() -> NSRect {
-        let screen = NSScreen.main!
-        let expandedY = screen.frame.maxY - expandedHeight
+        // Y 锚定 anchorTopY，确保展开时顶部紧贴屏幕边缘
         return NSRect(x: notch.centerX - expandedWidth / 2,
-                      y: expandedY, width: expandedWidth, height: expandedHeight)
+                      y: anchorTopY, width: expandedWidth, height: expandedHeight)
     }
 
     func animateToCollapsed() {
