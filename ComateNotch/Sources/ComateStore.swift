@@ -176,12 +176,8 @@ final class ComateStore: ObservableObject {
     /// 格式：wpscomate://chat.comate/jointtask?id=<session_uuid>&ckp=<base64({})>
     /// id 为会话 UUID（从 sessionFile 提取），ckp 为 base64 编码的参数对象（空对象即可）
     func openSession(_ task: ComateTask) {
-        guard let uuid = task.sessionId else {
-            print("[ComateNotch] 无法获取会话 UUID，sessionFile 为空")
-            return
-        }
-        let urlString = "wpscomate://chat.comate/local?id=\(uuid)"
-        print("[ComateNotch] 打开会话: uuid=\(uuid), url=\(urlString)")
+        let urlString = "wpscomate://chat.comate/local?id=\(task.id)"
+        print("[ComateNotch] 打开会话: id=\(task.id), url=\(urlString)")
         if let url = URL(string: urlString) {
             NSWorkspace.shared.open(url)
         }
