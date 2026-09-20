@@ -176,18 +176,14 @@ final class ComateStore: ObservableObject {
     /// 格式：wpscomate://chat.comate/jointtask?id=<session_uuid>&ckp=<base64({})>
     /// id 为会话 UUID（从 sessionFile 提取），ckp 为 base64 编码的参数对象（空对象即可）
     func openSession(_ task: ComateTask) {
-        // 从 sessionFile 提取 UUID（这是 Comate 应用期望的 task_id）
         guard let uuid = task.sessionId else {
             print("[ComateNotch] 无法获取会话 UUID，sessionFile 为空")
             return
         }
-        // ckp 参数：base64 编码的空 JSON 对象
-        let ckp = Data("{}".utf8).base64EncodedString()
-        let urlString = "wpscomate://chat.comate/jointtask?id=\(uuid)&ckp=\(ckp)"
+        let urlString = "wpscomate://chat.comate/local?id=\(uuid)"
         print("[ComateNotch] 打开会话: uuid=\(uuid), url=\(urlString)")
-        if let url = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let deepLink = URL(string: url) {
-            NSWorkspace.shared.open(deepLink)
+        if let url = URL(string: urlString) {
+            NSWorkspace.shared.open(url)
         }
     }
 
@@ -200,7 +196,7 @@ final class ComateStore: ObservableObject {
 
     /// 打开 Comate 新建本地任务页面
     func openNewTask() {
-        if let url = URL(string: "wpscomate://chat.comate/local") {
+        if let url = URL(string: "wpscomate://chat.comate/new") {
             NSWorkspace.shared.open(url)
         }
     }

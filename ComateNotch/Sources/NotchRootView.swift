@@ -265,19 +265,20 @@ struct NotchRootView: View {
                         .opacity(store.primaryLight == .yellow ? breatheOpacity : 1.0)
                         .onAppear {
                             if store.primaryLight == .yellow {
+                                breatheOpacity = 1.0
                                 withAnimation(
-                                    .easeInOut(duration: 1.2)
+                                    .easeInOut(duration: 2.0)
                                     .repeatForever(autoreverses: true)
-                                ) { breatheOpacity = 0.3 }
+                                ) { breatheOpacity = 0.08 }
                             }
                         }
                         .onChange(of: store.primaryLight) { newLight in
                             if newLight == .yellow {
                                 breatheOpacity = 1.0
                                 withAnimation(
-                                    .easeInOut(duration: 1.2)
+                                    .easeInOut(duration: 2.0)
                                     .repeatForever(autoreverses: true)
-                                ) { breatheOpacity = 0.3 }
+                                ) { breatheOpacity = 0.08 }
                             } else {
                                 breatheOpacity = 1.0
                             }
@@ -286,17 +287,13 @@ struct NotchRootView: View {
                 }
                 .position(x: wingWidth / 2, y: notchHeight / 2)
             }
-            // 叠加层：消息中心徽章（右翼）
+            // 叠加层：+号按钮（右翼）
             .overlay(alignment: .topTrailing) {
-                Button(action: { store.openNewTask() }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .light))
-                        .foregroundColor(.white.opacity(0.55))
+                ComatePlusButton {
+                    store.openNewTask()
                 }
-                .buttonStyle(.plain)
                 .padding(.trailing, wingWidth / 2 - 2)
                 .padding(.top, (notchHeight - 18) / 2)
-                .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
             }
             // 展开内容（if 切换，避免 backing store 残留）
             .overlay {
@@ -347,10 +344,6 @@ struct NotchRootView: View {
             }
             Divider()
             Button("退出悬浮窗") {
-                store.stop()
-                NSApp.terminate(nil)
-            }
-            Button("退出应用", role: .destructive) {
                 store.stop()
                 NSApp.terminate(nil)
             }
@@ -419,21 +412,34 @@ struct NotchRootView: View {
     }
 
     private func taskRow(_ t: ComateTask) -> some View {
+        ComateTaskRow(task: t) {
+            store.openSession(t)
+        }
+    }
+}
+
+// MARK: - ComateTaskRow
+private struct ComateTaskRow: View {
+    let task: ComateTask
+    let onTap: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
         HStack(spacing: 8) {
-            StatusLight(color: t.light.color, size: 7)
+            StatusLight(color: task.light.color, size: 7)
             VStack(alignment: .leading, spacing: 2) {
-                Text(t.title.isEmpty ? "（无标题）" : t.title)
+                Text(task.title.isEmpty ? "（无标题）" : task.title)
                     .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.92))
+                    .foregroundStyle(.white.opacity(isHovered ? 1.0 : 0.92))
                     .lineLimit(1)
                 HStack(spacing: 6) {
-                    Text(t.statusLabel)
+                    Text(task.statusLabel)
                         .font(.system(size: 9, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Color(hex: t.light.color))
-                    Text("\(t.messageCount) 条消息")
+                        .foregroundStyle(Color(hex: task.light.color))
+                    Text("\(task.messageCount) 条消息")
                         .font(.system(size: 9, design: .rounded))
                         .foregroundStyle(.white.opacity(0.4))
-                    Text(relTime(t.updatedAt))
+                    Text(relTime(task.updatedAt))
                         .font(.system(size: 9, design: .rounded))
                         .foregroundStyle(.white.opacity(0.4))
                 }
@@ -441,15 +447,16 @@ struct NotchRootView: View {
             Spacer(minLength: 0)
             Image(systemName: "arrow.up.right")
                 .font(.system(size: 9))
-                .foregroundStyle(.white.opacity(0.2))
+                .foregroundStyle(.white.opacity(isHovered ? 0.5 : 0.2))
         }
         .padding(.vertical, 3)
         .padding(.horizontal, 6)
-        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
-    }
-
-    private func timeStr(_ d: Date) -> String {
-        let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f.string(from: d)
+        .background(Color.white.opacity(isHovered ? 0.1 : 0.04), in: RoundedRectangle(cornerRadius: 8))
+        .onHover { h in
+            isHovered = h
+            if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+        .onTapGesture { onTap() }
     }
 
     private func relTime(_ d: Date) -> String {
@@ -458,6 +465,29 @@ struct NotchRootView: View {
         if s < 3600 { return "\(s/60)分钟前" }
         if s < 86400 { return "\(s/3600)小时前" }
         return "\(s/86400)天前"
+    }
+}
+
+// MARK: - ComatePlusButton
+private struct ComatePlusButton: View {
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "plus")
+                .font(.system(size: 16, weight: .light))
+                .foregroundStyle(.white.opacity(isHovered ? 0.85 : 0.55))
+                .frame(width: 20, height: 20)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .scaleEffect(isHovered ? 1.15 : 1.0)
+        .onHover { h in
+            isHovered = h
+            if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+        .animation(.easeInOut(duration: 0.12), value: isHovered)
     }
 }
 
