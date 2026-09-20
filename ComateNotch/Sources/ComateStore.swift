@@ -381,7 +381,8 @@ final class ComateStore: ObservableObject {
             if let error = error {
                 NSLog("[ComateNotch] openMessageCenter AppleScript error: \(error)")
             } else {
-                NSLog("[ComateNotch] openMessageCenter result: \(output.stringValue ?? \"nil\")")
+                let result = output.stringValue ?? "nil"
+                NSLog("[ComateNotch] openMessageCenter result: \(result)")
             }
         }
     }
