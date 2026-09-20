@@ -416,8 +416,11 @@ struct NotchRootView: View {
             store.openSession(t)
         }
     }
-}
 
+    private func timeStr(_ d: Date) -> String {
+        let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f.string(from: d)
+    }
+}
 // MARK: - ComateTaskRow
 private struct ComateTaskRow: View {
     let task: ComateTask
