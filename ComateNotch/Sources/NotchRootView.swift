@@ -393,9 +393,35 @@ struct NotchRootView: View {
                             : .clear,
                         radius: store.primaryLight != .gray ? 5 : 0
                     )
-                Text("实时同步 · \(timeStr(store.lastRefreshed))")
-                    .font(.system(size: 8, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.35))
+                // 今日模型用量比例条
+                if store.todayModelUsage.isEmpty {
+                    Text("今日暂无用量")
+                        .font(.system(size: 8, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.35))
+                } else {
+                    Text("今日")
+                        .font(.system(size: 8, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.35))
+                    HStack(spacing: 2) {
+                        ForEach(store.todayModelUsage) { u in
+                            RoundedRectangle(cornerRadius: 1.5)
+                                .fill(Color(hex: modelColor(u.name)))
+                                .frame(width: max(8, 120 * u.ratio), height: 6)
+                        }
+                    }
+                    HStack(spacing: 6) {
+                        ForEach(store.todayModelUsage) { u in
+                            HStack(spacing: 2) {
+                                Circle()
+                                    .fill(Color(hex: modelColor(u.name)))
+                                    .frame(width: 4, height: 4)
+                                Text("\(u.name) \(Int(u.ratio * 100))%")
+                                    .font(.system(size: 7, weight: .medium, design: .rounded))
+                                    .foregroundStyle(.white.opacity(0.5))
+                            }
+                        }
+                    }
+                }
                 Spacer()
                 // 消息数提示
                 if store.totalMessageCount > 0 {
@@ -419,6 +445,19 @@ struct NotchRootView: View {
 
     private func timeStr(_ d: Date) -> String {
         let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f.string(from: d)
+    }
+
+    /// 模型对应的展示颜色
+    private func modelColor(_ name: String) -> String {
+        switch name {
+        case "GLM":     return "#4A90D9"   // 蓝
+        case "MiMo":    return "#FFB800"   // 黄
+        case "DeepSeek": return "#9B59B6"  // 紫
+        case "Qwen":    return "#34C759"   // 绿
+        case "Claude":  return "#E67E22"  // 橙
+        case "GPT":     return "#10A37F"   // 青绿
+        default:        return "#8E8E93"   // 灰
+        }
     }
 }
 // MARK: - ComateTaskRow

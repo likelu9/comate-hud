@@ -68,11 +68,20 @@ struct ComateTask: Identifiable, Equatable {
     }
 }
 
+/// 今日模型用量（按模型分组统计 assistant 消息数）
+struct ModelUsage: Identifiable, Equatable {
+    let id: String        // model_name
+    let name: String      // 显示名
+    let count: Int        // 消息数
+    var ratio: Double     // 占比 0~1
+}
+
 final class ComateStore: ObservableObject {
     @Published private(set) var runningTasks: [ComateTask] = []
     @Published private(set) var recentTasks: [ComateTask] = []
     @Published private(set) var lastError: String?
     @Published private(set) var lastRefreshed: Date = .now
+    @Published private(set) var todayModelUsage: [ModelUsage] = []
 
     /// 所有任务的总消息数（用于右侧徽章显示）
     var totalMessageCount: Int {
@@ -125,6 +134,7 @@ final class ComateStore: ObservableObject {
         }
         var running: [ComateTask] = []
         var recent: [ComateTask] = []
+        var usage: [ModelUsage] = []
         var error: String?
 
         DispatchQueue(label: "comatenotch.db").sync {
@@ -160,14 +170,56 @@ final class ComateStore: ObservableObject {
                 if task.isRunning { running.append(task) }
                 recent.append(task)
             }
+
+            // 查询今日模型用量（按 model_name 分组统计 assistant 消息数）
+            let usageSQL = """
+            SELECT model_name, COUNT(*) as cnt
+            FROM chat_messages
+            WHERE role = 'assistant'
+              AND model_name IS NOT NULL
+              AND model_name != ''
+              AND created_at_ms > (strftime('%s','now','start of day') * 1000)
+            GROUP BY model_name
+            ORDER BY cnt DESC;
+            """
+            var uStmt: OpaquePointer?
+            if sqlite3_prepare_v2(db, usageSQL, -1, &uStmt, nil) == SQLITE_OK {
+                var raw: [(String, Int)] = []
+                while sqlite3_step(uStmt) == SQLITE_ROW {
+                    let m = String(cString: sqlite3_column_text(uStmt, 0))
+                    let c = Int(sqlite3_column_int(uStmt, 1))
+                    raw.append((m, c))
+                }
+                let total = raw.reduce(0) { $0 + $1.1 }
+                if total > 0 {
+                    usage = raw.map { (m, c) in
+                        ModelUsage(id: m, name: displayName(m), count: c, ratio: Double(c) / Double(total))
+                    }
+                }
+                sqlite3_finalize(uStmt)
+            }
         }
 
         DispatchQueue.main.async {
             self.lastError = error
             self.runningTasks = running
             self.recentTasks = recent
+            self.todayModelUsage = usage
             self.lastRefreshed = .now
         }
+    }
+
+    /// 模型名简化显示
+    private func displayName(_ model: String) -> String {
+        // glm-5.2 → GLM-5.2, mimo-v2.5 → MiMo, deepseek-v4 → DeepSeek
+        let lower = model.lowercased()
+        if lower.hasPrefix("glm") { return "GLM" }
+        if lower.hasPrefix("mimo") { return "MiMo" }
+        if lower.hasPrefix("deepseek") { return "DeepSeek" }
+        if lower.hasPrefix("qwen") { return "Qwen" }
+        if lower.hasPrefix("claude") { return "Claude" }
+        if lower.hasPrefix("gpt") { return "GPT" }
+        return model
     }
 
     // MARK: - 交互
