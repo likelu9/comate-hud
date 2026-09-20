@@ -83,17 +83,17 @@ final class ComateStore: ObservableObject {
     @Published private(set) var lastRefreshed: Date = .now
     @Published private(set) var todayModelUsage: [ModelUsage] = []
     @Published private(set) var attentionCount: Int = 0
+    /// 云端消息中心真实未读消息数（从 comate.wps.cn API 获取）
+    @Published private(set) var cloudUnreadCount: Int = 0
 
     /// 今日 assistant 消息总数（所有模型合计）
     var todayTotalMessages: Int {
         todayModelUsage.reduce(0) { $0 + $1.count }
     }
 
-    /// 需要关注的会话数（用于右侧徽章显示）
-    /// 定义：status=idle + last_message_role=assistant + 最近 7 天
-    /// 这些是 Comate 回复后等待用户查看的会话，近似"未读消息"
+    /// 右侧徽章显示的消息数：优先用云端真实未读数，兜底本地近似值
     var totalMessageCount: Int {
-        attentionCount
+        cloudUnreadCount > 0 ? cloudUnreadCount : attentionCount
     }
 
     /// 当前最优先的状态灯（用于收起态显示）
@@ -112,6 +112,7 @@ final class ComateStore: ObservableObject {
     }
 
     private var timer: Timer?
+    private var cloudTimer: Timer?
     private let dbPath: String
     /// 动画期间暂停刷新，避免 @Published 更新导致 SwiftUI 重绘竞争
     var isPaused = false
@@ -127,13 +128,18 @@ final class ComateStore: ObservableObject {
 
     func start() {
         refresh()
+        refreshCloudUnread()
         timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             guard let self = self, !self.isPaused else { return }
             self.refresh()
         }
+        // 云端未读数刷新频率较低（30秒），避免频繁请求
+        cloudTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            self?.refreshCloudUnread()
+        }
     }
 
-    func stop() { timer?.invalidate(); timer = nil }
+    func stop() { timer?.invalidate(); timer = nil; cloudTimer?.invalidate(); cloudTimer = nil }
 
     func refresh() {
         guard FileManager.default.fileExists(atPath: dbPath) else {
@@ -234,9 +240,73 @@ final class ComateStore: ObservableObject {
         }
     }
 
+    /// 从 macOS Keychain 获取 Comate 的 wps_sid
+    /// Comate (Tauri 应用) 通过 KSO Account SDK 将 sid 存入 Keychain
+    /// service=wps365, account=credential_wps_sid
+    /// 值格式为 "go-keyring-base64:<base64>"，解码后得到真实 sid
+    private func fetchWpsSid() -> String? {
+        // security find-generic-password -a "credential_wps_sid" -w
+        let task = Process()
+        task.launchPath = "/usr/bin/security"
+        task.arguments = ["find-generic-password", "-a", "credential_wps_sid", "-w"]
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = pipe
+        do {
+            try task.run()
+            task.waitUntilExit()
+            guard task.terminationStatus == 0 else { return nil }
+            let raw = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: raw, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            // 格式: go-keyring-base64:<base64>
+            if output.hasPrefix("go-keyring-base64:") {
+                let b64 = String(output.dropFirst("go-keyring-base64:".count))
+                if let data = Data(base64Encoded: b64) {
+                    return String(data: data, encoding: .utf8)
+                }
+            }
+            return output.isEmpty ? nil : output
+        } catch {
+            return nil
+        }
+    }
+
+    /// 从云端消息中心 API 获取真实未读消息数
+    /// API: GET https://comate.wps.cn/api/coserve/v1/messages?offset=0&limit=100&status=unread
+    /// 认证: Cookie: wps_sid=<sid>
+    private func refreshCloudUnread() {
+        DispatchQueue.global(qos: .utility).async {
+            guard let sid = self.fetchWpsSid() else { return }
+            var components = URLComponents(string: "https://comate.wps.cn/api/coserve/v1/messages")!
+            components.queryItems = [
+                URLQueryItem(name: "offset", value: "0"),
+                URLQueryItem(name: "limit", value: "100"),
+                URLQueryItem(name: "status", value: "unread")
+            ]
+            guard let url = components.url else { return }
+            var req = URLRequest(url: url)
+            req.setValue("wps_sid=\(sid)", forHTTPHeaderField: "Cookie")
+            req.setValue("https://comate.wps.cn/web/cloud/", forHTTPHeaderField: "Referer")
+            req.setValue("application/json", forHTTPHeaderField: "Accept")
+            req.timeoutInterval = 8
+            let task = URLSession.shared.dataTask(with: req) { data, _, _ in
+                guard let data = data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      json["code"] as? Int == 0 else { return }
+                if let dataDict = json["data"] as? [String: Any],
+                   let msgs = dataDict["msgs"] as? [Any] {
+                    let count = msgs.count
+                    DispatchQueue.main.async {
+                        self.cloudUnreadCount = count
+                    }
+                }
+            }
+            task.resume()
+        }
+    }
+
     /// 模型名简化显示
     private func displayName(_ model: String) -> String {
-        // glm-5.2 → GLM-5.2, mimo-v2.5 → MiMo, deepseek-v4 → DeepSeek
         let lower = model.lowercased()
         if lower.hasPrefix("glm") { return "GLM" }
         if lower.hasPrefix("mimo") { return "MiMo" }
