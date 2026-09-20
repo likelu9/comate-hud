@@ -268,6 +268,7 @@ struct NotchRootView: View {
             .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
             .animation(.easeInOut(duration: 0.22), value: expanded)
             .onHover { isHovering in
+            NSLog("[NotchRootView] onHover: isHovering=%@ expanded=%@ hovering=%@", String(describing: isHovering), String(describing: expanded), String(describing: hovering))
             hovering = isHovering
             if expanded { return }
             if isHovering {
