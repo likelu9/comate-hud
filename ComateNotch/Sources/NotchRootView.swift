@@ -291,9 +291,12 @@ struct NotchRootView: View {
             .overlay(alignment: .topTrailing) {
                 HStack(spacing: 4) {
                     if store.totalMessageCount > 0 {
-                        Text("\(store.totalMessageCount)")
-                            .font(.system(size: 10, weight: .medium, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.6))
+                        Button(action: { store.openMessageCenter() }) {
+                            Text("\(store.totalMessageCount)")
+                                .font(.system(size: 10, weight: .medium, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.6))
+                        }
+                        .buttonStyle(.plain)
                     }
                     ComatePlusButton {
                         store.openNewTask()

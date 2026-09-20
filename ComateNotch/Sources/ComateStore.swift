@@ -344,6 +344,13 @@ final class ComateStore: ObservableObject {
         }
     }
 
+    /// 打开 Comate 云端消息中心页面（未读消息列表）
+    func openMessageCenter() {
+        if let url = URL(string: "https://comate.wps.cn/web/notifications") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     func openComateApp() {
         NSWorkspace.shared.launchApplication("WPS Comate")
     }
