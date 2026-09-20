@@ -82,6 +82,7 @@ final class ComateStore: ObservableObject {
     @Published private(set) var lastError: String?
     @Published private(set) var lastRefreshed: Date = .now
     @Published private(set) var todayModelUsage: [ModelUsage] = []
+    @Published private(set) var attentionCount: Int = 0
 
     /// 今日 assistant 消息总数（所有模型合计）
     var todayTotalMessages: Int {
@@ -92,12 +93,7 @@ final class ComateStore: ObservableObject {
     /// 定义：status=idle + last_message_role=assistant + 最近 7 天
     /// 这些是 Comate 回复后等待用户查看的会话，近似"未读消息"
     var totalMessageCount: Int {
-        let cutoff = Date().addingTimeInterval(-7 * 86400)
-        return recentTasks.filter { task in
-            task.status == "idle" &&
-            task.lastMessageRole == "assistant" &&
-            task.updatedAt > cutoff
-        }.count
+        attentionCount
     }
 
     /// 当前最优先的状态灯（用于收起态显示）
@@ -147,6 +143,7 @@ final class ComateStore: ObservableObject {
         var running: [ComateTask] = []
         var recent: [ComateTask] = []
         var usage: [ModelUsage] = []
+        var attentionCount = 0
         var error: String?
 
         DispatchQueue(label: "comatenotch.db").sync {
@@ -210,6 +207,21 @@ final class ComateStore: ObservableObject {
                 }
                 sqlite3_finalize(uStmt)
             }
+
+            // 查询需要关注的会话数（近似"未读消息"）
+            // 定义：status=idle + last_message_role=assistant + 最近 7 天
+            let attSQL = """
+            SELECT COUNT(*) FROM chat_sessions
+            WHERE status='idle' AND last_message_role='assistant'
+            AND updated_at_ms > (strftime('%s','now')*1000 - 604800000);
+            """
+            var aStmt: OpaquePointer?
+            if sqlite3_prepare_v2(db, attSQL, -1, &aStmt, nil) == SQLITE_OK {
+                if sqlite3_step(aStmt) == SQLITE_ROW {
+                    attentionCount = Int(sqlite3_column_int(aStmt, 0))
+                }
+                sqlite3_finalize(aStmt)
+            }
         }
 
         DispatchQueue.main.async {
@@ -217,6 +229,7 @@ final class ComateStore: ObservableObject {
             self.runningTasks = running
             self.recentTasks = recent
             self.todayModelUsage = usage
+            self.attentionCount = attentionCount
             self.lastRefreshed = .now
         }
     }
