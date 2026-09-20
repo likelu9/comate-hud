@@ -346,6 +346,7 @@ final class ComateStore: ObservableObject {
 
     /// 打开 Comate 客户端消息中心：激活 Comate 并点击左下角铃铛
     func openMessageCenter() {
+        NSLog("[ComateNotch] openMessageCenter called")
         let script = """
         tell application \"WPS Comate\" to activate
         delay 0.6
@@ -376,9 +377,11 @@ final class ComateStore: ObservableObject {
         """
         var error: NSDictionary?
         if let appleScript = NSAppleScript(source: script) {
-            let _ = appleScript.executeAndReturnError(&error)
+            let output = appleScript.executeAndReturnError(&error)
             if let error = error {
-                print("[ComateNotch] openMessageCenter AppleScript error: \(error)")
+                NSLog("[ComateNotch] openMessageCenter AppleScript error: \(error)")
+            } else {
+                NSLog("[ComateNotch] openMessageCenter result: \(output.stringValue ?? \"nil\")")
             }
         }
     }
