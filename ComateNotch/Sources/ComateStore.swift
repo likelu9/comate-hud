@@ -346,7 +346,6 @@ final class ComateStore: ObservableObject {
 
     /// 打开 Comate 客户端消息中心：激活 Comate 并点击左下角铃铛
     func openMessageCenter() {
-        NSLog("[ComateNotch] openMessageCenter called")
         let script = """
         tell application \"WPS Comate\" to activate
         delay 0.6
@@ -359,30 +358,26 @@ final class ComateStore: ObservableObject {
                         set n to name of b
                         if n is \"1\" or n is \"2\" or n is \"3\" or n is \"4\" or n is \"5\" or n is \"6\" or n is \"7\" or n is \"8\" or n is \"9\" then
                             click b
-                            return \"clicked bell, badge=\" & n
+                            return "clicked"
                         end if
                     end repeat
                     set btnCount to count of btns
                     if btnCount > 0 then
-                        set lastBtn to item btnCount of btns
-                        click lastBtn
-                        return \"clicked last button (bell), name=\" & (name of lastBtn)
+                        click item btnCount of btns
+                        return "clicked"
                     end if
-                    return \"no button found\"
+                    return "no button"
                 on error errMsg
-                    return \"err: \" & errMsg
+                    return "err: " & errMsg
                 end try
             end tell
         end tell
         """
         var error: NSDictionary?
         if let appleScript = NSAppleScript(source: script) {
-            let output = appleScript.executeAndReturnError(&error)
+            let _ = appleScript.executeAndReturnError(&error)
             if let error = error {
-                NSLog("[ComateNotch] openMessageCenter AppleScript error: \(error)")
-            } else {
-                let result = output.stringValue ?? "nil"
-                NSLog("[ComateNotch] openMessageCenter result: \(result)")
+                NSLog("[ComateNotch] openMessageCenter error: %@", error)
             }
         }
     }
