@@ -244,21 +244,21 @@ struct NotchRootView: View {
                         .overlay(
                             Circle()
                                 .fill(Color(hex: store.primaryLight.color).opacity(store.primaryLight != .gray ? 0.45 : 0))
-                                .frame(width: 14, height: 14)
-                                .blur(radius: 4)
+                                .frame(width: 12, height: 12)
+                                .blur(radius: 3)
                         )
                         .overlay(Circle().stroke(Color.black.opacity(0.3), lineWidth: 0.5))
                         .shadow(
                             color: store.primaryLight != .gray
                                 ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.7)
                                 : .clear,
-                            radius: 5
+                            radius: 4
                         )
                         .shadow(
                             color: store.primaryLight != .gray
                                 ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.6 : 0.4)
                                 : .clear,
-                            radius: 10
+                            radius: 8
                         )
                         .opacity(store.primaryLight == .yellow ? breatheOpacity : 1.0)
                         .onAppear {
