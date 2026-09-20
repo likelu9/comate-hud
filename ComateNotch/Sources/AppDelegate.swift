@@ -22,7 +22,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             wingWidth: panel.wingWidth,
             notchHeight: geo.notchHeight,
             expandedWidth: panel.expandedWidth,
-            expandedHeight: panel.expandedHeight
+            expandedHeight: panel.expandedHeight,
+            onShowMainWindow: { [weak self] in
+                NSApp.setActivationPolicy(.regular)
+                NSApp.activate(ignoringOtherApps: true)
+            },
+            onQuit: {
+                NSApp.terminate(nil)
+            }
         )
         let hosting = NSHostingView(rootView: view)
         panel.contentView = hosting

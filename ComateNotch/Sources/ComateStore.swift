@@ -204,4 +204,8 @@ final class ComateStore: ObservableObject {
             NSWorkspace.shared.open(url)
         }
     }
+
+    func openComateApp() {
+        NSWorkspace.shared.launchApplication("WPS Comate")
+    }
 }

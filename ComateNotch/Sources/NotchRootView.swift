@@ -214,8 +214,10 @@ struct NotchRootView: View {
     var notchWidth: CGFloat
     var wingWidth: CGFloat = 36  // 收窄到 36
     var notchHeight: CGFloat
-    var expandedWidth: CGFloat = 280  // 收窄到 280
-    var expandedHeight: CGFloat = 280  // 新增：展开高度
+    var expandedWidth: CGFloat = 280
+    var expandedHeight: CGFloat = 280
+    var onShowMainWindow: (() -> Void)?
+    var onQuit: (() -> Void)?
 
     private var collapsedTotalWidth: CGFloat { notchWidth + wingWidth * 2 }
 
@@ -336,6 +338,21 @@ struct NotchRootView: View {
                         store.isPaused = false
                     }
                 }
+            }
+        }
+        .contextMenu {
+            Button("显示主窗口") {
+                store.openComateApp()
+                onShowMainWindow?()
+            }
+            Divider()
+            Button("退出悬浮窗") {
+                store.stop()
+                NSApp.terminate(nil)
+            }
+            Button("退出应用", role: .destructive) {
+                store.stop()
+                NSApp.terminate(nil)
             }
         }
         .onAppear {
