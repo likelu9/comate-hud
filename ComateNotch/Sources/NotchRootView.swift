@@ -207,7 +207,7 @@ struct NotchShape: Shape {
 
 struct NotchRootView: View {
     @ObservedObject var store: ComateStore
-    @Binding var expanded: Bool
+    var initialExpanded: Bool = false
     var onExpandChange: ((Bool) -> Void)?
 
     // 刘海几何：HUD 总宽必须大于刘海宽，内容仅在左右两翼显示
@@ -221,9 +221,8 @@ struct NotchRootView: View {
 
     @State private var hovering = false
     @State private var expandTimer: Timer?
-    @State private var isAnimating = false  // 动画期间标记，避免刷新干扰
-    private let forceExpanded = CommandLine.arguments.contains("--expanded")
-
+    @State private var isAnimating = false
+    @State private var expanded: Bool = false
     var body: some View {
         let currentWidth = expanded ? expandedWidth : collapsedTotalWidth
         let currentHeight = expanded ? expandedHeight : notchHeight
@@ -272,7 +271,7 @@ struct NotchRootView: View {
             .animation(.easeInOut(duration: 0.22), value: expanded)
             .onHover { isHovering in
             hovering = isHovering
-            if forceExpanded { return }
+            if expanded { return }
             if isHovering {
                 expandTimer?.invalidate()
                 expandTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { _ in
@@ -304,7 +303,8 @@ struct NotchRootView: View {
             }
         }
         .onAppear {
-            if forceExpanded { expanded = true; onExpandChange?(true) }
+            expanded = initialExpanded
+if expanded { onExpandChange?(true) }
         }
     }
 
