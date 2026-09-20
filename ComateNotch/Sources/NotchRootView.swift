@@ -1,63 +1,151 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Comate Logo（从 SVG 路径数据还原）
+// MARK: - Comate Logo（使用官方 SVG 路径，无锯齿矢量渲染）
 
 struct ComateLogo: View {
     var size: CGFloat = 20
-    var colorful: Bool = true  // false = 白色镂空（tray 图标），true = 彩色填充
+    var colorful: Bool = true
 
     var body: some View {
-        if colorful {
-            // 彩色：手绘 SVG 路径
-            ZStack {
-                ComatePath1()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "#937EE6"), Color(hex: "#4526BF")],
-                            startPoint: .init(x: 0.18, y: 0.97),
-                            endPoint: .init(x: 0.50, y: 0.14)
-                        )
-                    )
-                ComatePath2()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "#FF9999"), Color(hex: "#D921B6")],
-                            startPoint: .init(x: 0.88, y: 0.19),
-                            endPoint: .init(x: 0.33, y: 0.42)
-                        )
-                    )
-            }
-            .frame(width: size, height: size)
-        } else {
-            // 白色镂空：使用 Comate 官方 SVG 路径，白色填充
-            ZStack {
-                ComatePath1().fill(Color.white)
-                ComatePath2().fill(Color.white)
-            }
-            .frame(width: size, height: size)
+        ZStack {
+            ComateOfficialPath1()
+                .fill(colorful
+                    ? LinearGradient(
+                        colors: [Color(hex: "#937EE6"), Color(hex: "#4526BF")],
+                        startPoint: .init(x: 0.18, y: 0.97),
+                        endPoint: .init(x: 0.50, y: 0.14))
+                    : Color.white)
+            ComateOfficialPath2()
+                .fill(colorful
+                    ? LinearGradient(
+                        colors: [Color(hex: "#FF9999"), Color(hex: "#D921B6")],
+                        startPoint: .init(x: 0.88, y: 0.19),
+                        endPoint: .init(x: 0.33, y: 0.42))
+                    : Color.white)
         }
+        .frame(width: size, height: size)
+        .drawingGroup(opaque: false, colorMode: .nonLinear)  // 预渲染到位图，避免锯齿
     }
 }
 
-// 优化：缓存路径避免每帧重算贝塞尔曲线
-struct ComatePath1: Shape {
+// MARK: - 官方 SVG Path 1（从 logo_white.svg 提取）
+// viewBox="0 0 68 68", fill-rule="evenodd"
+struct ComateOfficialPath1: Shape {
     func path(in rect: CGRect) -> Path {
-        let s = rect.width / 68.0
+        let sx = rect.width / 68.0
+        let sy = rect.height / 68.0
         var p = Path()
-        p.move(to: CGPoint(x: 23.1597*s, y: 6.12598*s))
-        p.addCurve(to: CGPoint(x: 46.0126*s, y: 12.0037*s),
-                   control1: CGPoint(x: 39.2509*s, y: 7.46566*s),
-                   control2: CGPoint(x: 43.2085*s, y: 10.1198*s))
-        p.addCurve(to: CGPoint(x: 46.0538*s, y: 12.0326*s),
-                   control1: CGPoint(x: 45.4631*s, y: 11.6335*s),
-                   control2: CGPoint(x: 46.0538*s, y: 12.0326*s))
-        p.addCurve(to: CGPoint(x: 46.1257*s, y: 12.0801*s),
-                   control1: CGPoint(x: 46.0866*s, y: 12.0542*s),
-                   control2: CGPoint(x: 46.1078*s, y: 12.0702*s))
-        p.addCurve(to: CGPoint(x: 46.1762*s, y: 12.1116*s),
-                   control1: CGPoint(x: 46.1405*s, y: 12.0918*s),
-                   control2: CGPoint(x: 46.149*s, y: 12.0991*s))
+        p.move(to: CGPoint(x: 23.1597*sx, y: 6.12598*sy))
+        p.addLine(to: CGPoint(x: 39.2509*sx, y: 7.46566*sy))
+        p.addCurve(to: CGPoint(x: 46.0126*sx, y: 12.0037*sy),
+                   control1: CGPoint(x: 43.2085*sx, y: 10.1198*sy),
+                   control2: CGPoint(x: 45.4631*sx, y: 11.6335*sy))
+        p.addLine(to: CGPoint(x: 46.0538*sx, y: 12.0326*sy))
+        p.addCurve(to: CGPoint(x: 46.1257*sx, y: 12.0801*sy),
+                   control1: CGPoint(x: 46.0866*sx, y: 12.0542*sy),
+                   control2: CGPoint(x: 46.1078*sx, y: 12.0702*sy))
+        p.addLine(to: CGPoint(x: 46.1405*sx, y: 12.0918*sy))
+        p.addLine(to: CGPoint(x: 46.149*sx, y: 12.0991*sy))
+        p.addLine(to: CGPoint(x: 46.1762*sx, y: 12.1116*sy))
+        p.addCurve(to: CGPoint(x: 49.2073*sx, y: 13.9254*sy),
+                   control1: CGPoint(x: 46.3883*sx, y: 12.2401*sy),
+                   control2: CGPoint(x: 47.7904*sx, y: 13.0769*sy))
+        p.addLine(to: CGPoint(x: 49.45*sx, y: 14.0725*sy))
+        p.addLine(to: CGPoint(x: 49.691*sx, y: 14.2165*sy))
+        p.addCurve(to: CGPoint(x: 52.3753*sx, y: 15.8221*sy),
+                   control1: CGPoint(x: 51.0153*sx, y: 15.0094*sy),
+                   control2: CGPoint(x: 52.2401*sx, y: 15.7424*sy))
+        p.addLine(to: CGPoint(x: 52.388*sx, y: 15.8307*sy))
+        p.addCurve(to: CGPoint(x: 57.3436*sx, y: 21.3746*sy),
+                   control1: CGPoint(x: 52.388*sx, y: 15.8307*sy),
+                   control2: CGPoint(x: 56.0481*sx, y: 17.8438*sy))
+        p.addCurve(to: CGPoint(x: 55.3707*sx, y: 34.4819*sy),
+                   control1: CGPoint(x: 58.1472*sx, y: 23.5637*sy),
+                   control2: CGPoint(x: 56.6334*sx, y: 29.7544*sy))
+        p.addLine(to: CGPoint(x: 55.2487*sx, y: 34.9364*sy))
+        p.addCurve(to: CGPoint(x: 53.9113*sx, y: 40.2693*sy),
+                   control1: CGPoint(x: 54.5232*sx, y: 37.6235*sy),
+                   control2: CGPoint(x: 53.9121*sx, y: 39.7594*sy))
+        p.addCurve(to: CGPoint(x: 53.2835*sx, y: 44.849*sy),
+                   control1: CGPoint(x: 53.9121*sx, y: 40.9079*sy),
+                   control2: CGPoint(x: 53.652*sx, y: 42.8813*sy))
+        p.addLine(to: CGPoint(x: 53.2312*sx, y: 45.13*sy))
+        p.addCurve(to: CGPoint(x: 51.7505*sx, y: 49.6273*sy),
+                   control1: CGPoint(x: 52.7909*sx, y: 47.4216*sy),
+                   control2: CGPoint(x: 52.2185*sx, y: 49.6243*sy))
+        p.addCurve(to: CGPoint(x: 47.8788*sx, y: 49.629*sy),
+                   control1: CGPoint(x: 50.8653*sx, y: 49.6286*sy),
+                   control2: CGPoint(x: 48.4819*sx, y: 49.6286*sy))
+        p.addLine(to: CGPoint(x: 45.3462*sx, y: 49.6303*sy))
+        p.addLine(to: CGPoint(x: 44.4826*sx, y: 48.1351*sy))
+        p.addCurve(to: CGPoint(x: 46.4899*sx, y: 31.0249*sy),
+                   control1: CGPoint(x: 48.7556*sx, y: 43.6238*sy),
+                   control2: CGPoint(x: 49.756*sx, y: 36.6779*sy))
+        p.addCurve(to: CGPoint(x: 26.7895*sx, y: 25.7503*sy),
+                   control1: CGPoint(x: 42.5068*sx, y: 24.1315*sy),
+                   control2: CGPoint(x: 33.6883*sx, y: 21.7704*sy))
+        p.addCurve(to: CGPoint(x: 21.5109*sx, y: 45.4351*sy),
+                   control1: CGPoint(x: 19.8908*sx, y: 29.7302*sy),
+                   control2: CGPoint(x: 17.5279*sx, y: 38.5417*sy))
+        p.addCurve(to: CGPoint(x: 25.1763*sx, y: 49.4467*sy),
+                   control1: CGPoint(x: 22.1908*sx, y: 46.6119*sy),
+                   control2: CGPoint(x: 23.4126*sx, y: 47.949*sy))
+        p.addCurve(to: CGPoint(x: 25.5767*sx, y: 52.1918*sy),
+                   control1: CGPoint(x: 25.9805*sx, y: 50.1309*sy),
+                   control2: CGPoint(x: 26.1531*sx, y: 51.3052*sy))
+        p.addLine(to: CGPoint(x: 17.2217*sx, y: 65.0463*sy))
+        p.addCurve(to: CGPoint(x: 14.3133*sx, y: 65.6651*sy),
+                   control1: CGPoint(x: 16.5892*sx, y: 66.0179*sy),
+                   control2: CGPoint(x: 15.2855*sx, y: 66.2971*sy))
+        p.addCurve(to: CGPoint(x: 14.1061*sx, y: 65.5096*sy),
+                   control1: CGPoint(x: 14.2414*sx, y: 65.6175*sy),
+                   control2: CGPoint(x: 14.1707*sx, y: 65.5652*sy))
+        p.addCurve(to: CGPoint(x: 4.5599*sx, y: 55.2144*sy),
+                   control1: CGPoint(x: 8.76154*sx, y: 61.6786*sy),
+                   control2: CGPoint(x: 6.26313*sx, y: 58.1622*sy))
+        p.addCurve(to: CGPoint(x: 17.0028*sx, y: 8.81253*sy),
+                   control1: CGPoint(x: -4.82725*sx, y: 38.9678*sy),
+                   control2: CGPoint(x: 0.743863*sx, y: 18.1924*sy))
+        p.closeSubpath()
+        return p
+    }
+}
+
+// MARK: - 官方 SVG Path 2（从 logo_white.svg 提取）
+struct ComateOfficialPath2: Shape {
+    func path(in rect: CGRect) -> Path {
+        let sx = rect.width / 68.0
+        let sy = rect.height / 68.0
+        var p = Path()
+        p.move(to: CGPoint(x: 63.4408*sx, y: 21.2404*sy))
+        p.addCurve(to: CGPoint(x: 53.6203*sx, y: 65.9753*sy),
+                   control1: CGPoint(x: 72.3041*sx, y: 36.5799*sy),
+                   control2: CGPoint(x: 67.8315*sx, y: 55.9653*sy))
+        p.addCurve(to: CGPoint(x: 51.3729*sx, y: 65.5252*sy),
+                   control1: CGPoint(x: 52.9063*sx, y: 66.4764*sy),
+                   control2: CGPoint(x: 51.9254*sx, y: 66.306*sy))
+        p.addLine(to: CGPoint(x: 42.4488*sx, y: 51.3124*sy))
+        p.addCurve(to: CGPoint(x: 42.7513*sx, y: 49.5248*sy),
+                   control1: CGPoint(x: 42.0806*sx, y: 50.7242*sy),
+                   control2: CGPoint(x: 42.2119*sx, y: 49.9571*sy))
+        p.addCurve(to: CGPoint(x: 45.7119*sx, y: 46.6361*sy),
+                   control1: CGPoint(x: 44.1475*sx, y: 48.4037*sy),
+                   control2: CGPoint(x: 45.1335*sx, y: 47.4427*sy))
+        p.addCurve(to: CGPoint(x: 47.5738*sx, y: 19.1609*sy),
+                   control1: CGPoint(x: 51.8123*sx, y: 39.3276*sy),
+                   control2: CGPoint(x: 52.871*sx, y: 28.3288*sy))
+        p.addCurve(to: CGPoint(x: 17.0555*sx, y: 8.8981*sy),
+                   control1: CGPoint(x: 41.1637*sx, y: 8.06718*sy),
+                   control2: CGPoint(x: 27.7724*sx, y: 3.68196*sy))
+        p.addLine(to: CGPoint(x: 17.0029*sx, y: 8.8071*sy))
+        p.addCurve(to: CGPoint(x: 63.4408*sx, y: 21.2404*sy),
+                   control1: CGPoint(x: 33.265*sx, y: -0.574457*sy),
+                   control2: CGPoint(x: 54.0538*sx, y: 4.99409*sy))
+        p.closeSubpath()
+        return p
+    }
+}
         p.addCurve(to: CGPoint(x: 49.2073*s, y: 13.9254*s),
                    control1: CGPoint(x: 46.3883*s, y: 12.2401*s),
                    control2: CGPoint(x: 47.7904*s, y: 13.0769*s))
