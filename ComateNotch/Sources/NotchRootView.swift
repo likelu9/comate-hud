@@ -233,21 +233,22 @@ struct NotchRootView: View {
             .frame(width: currentWidth, height: currentHeight)
             // 叠加层：logo + 状态灯（固定位置）
             .overlay(alignment: .topLeading) {
-                ComateLogo(size: 18, colorful: expanded)
-                    .position(x: wingWidth / 2, y: notchHeight / 2)
-                    .overlay(alignment: .topLeading) {
-                        Circle()
-                            .fill(Color(hex: store.primaryLight.color))
-                            .frame(width: 6, height: 6)
-                            .overlay(Circle().stroke(Color.black.opacity(0.5), lineWidth: 0.8))
-                            .shadow(
-                                color: store.primaryLight != .gray
-                                    ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65)
-                                    : .clear,
-                                radius: store.primaryLight != .gray ? 5 : 0
-                            )
-                            .position(x: 15, y: 15)
-                    }
+                ZStack(alignment: .topLeading) {
+                    ComateLogo(size: 18, colorful: expanded)
+                    // 状态灯：放在 logo 右下角
+                    Circle()
+                        .fill(Color(hex: store.primaryLight.color))
+                        .frame(width: 6, height: 6)
+                        .overlay(Circle().stroke(Color.black.opacity(0.5), lineWidth: 0.8))
+                        .shadow(
+                            color: store.primaryLight != .gray
+                                ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65)
+                                : .clear,
+                            radius: store.primaryLight != .gray ? 5 : 0
+                        )
+                        .offset(x: 12, y: 12) // logo 18pt, 灯 6pt, 右下角
+                }
+                .position(x: wingWidth / 2, y: notchHeight / 2)
             }
             // 叠加层：消息中心徽章（右翼）
             .overlay(alignment: .topTrailing) {
