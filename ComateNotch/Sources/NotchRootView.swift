@@ -396,7 +396,7 @@ struct NotchRootView: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.top, notchHeight / 2 + 12)
+        .padding(.top, notchHeight / 2 + 24)
         .padding(.bottom, 12)
         .frame(width: expandedWidth, height: expandedHeight)
     }
