@@ -72,6 +72,12 @@
       "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
       "createdAt": 1789970406489,
       "file": "min-max-height.handoff.json"
+    },
+    {
+      "handoffId": "handoff-1789973875980",
+      "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+      "createdAt": 1789973875981,
+      "file": "handoff-1789973875980.handoff.json"
     }
   ]
 }
