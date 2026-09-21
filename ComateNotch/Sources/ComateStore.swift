@@ -5,7 +5,7 @@ import AppKit
 /// 任务状态灯颜色
 enum TaskLight: String {
     case gray    // 空闲
-    case yellow  // 运行中 / 思考中
+    case yellow  // 运行中 / 工作中
     case red     // 等待用户 / 异常 / 错误
     case green   // 已完成
 
@@ -125,7 +125,7 @@ struct ComateTask: Identifiable, Equatable {
     /// assistant，只看 role 会漏判）。
     ///
     /// 「心跳新鲜」：context_usage.updatedAt 由助手每次模型调用刷新。被强杀 / 中断的轮次
-    /// 心跳会停住，没有这道闸，最后一条恰好是 user 消息的会话会永远显示「思考中」。
+    /// 心跳会停住，没有这道闸，最后一条恰好是 user 消息的会话会永远显示「工作中」。
     var isActive: Bool {
         guard Date().timeIntervalSince(activityAt) < ComateTask.activeWindow else { return false }
         return lastMessageRole == "user" || hasUnfinishedToolCall
@@ -135,7 +135,7 @@ struct ComateTask: Identifiable, Equatable {
     private static let activeWindow: TimeInterval = 150
 
     /// 综合判断状态灯
-    /// 优先级：红（等待确认 / 异常）> 黄（思考中）> 绿（已完成）> 灰（空闲）
+    /// 优先级：红（等待确认 / 异常）> 黄（工作中）> 绿（已完成）> 灰（空闲）
     /// 注意本地库里 status=done 不代表「刚完成」——实测轮次进行中同样是 done，
     /// 所以 done 只当「有完成记录」用，真正的「在跑」由 isActive 判定。
     var light: TaskLight {
@@ -161,7 +161,7 @@ struct ComateTask: Identifiable, Equatable {
         case nil:                  break
         }
         switch light {
-        case .yellow: return "思考中"
+        case .yellow: return "工作中"
         case .red:    return "异常"
         case .green:  return "已完成"
         case .gray:   return "空闲"
@@ -210,7 +210,7 @@ final class ComateStore: ObservableObject {
             case nil:                  return false
             }
         }) { return .red }
-        // 2. 黄色：有运行中/思考中的任务
+        // 2. 黄色：有运行中/工作中的任务
         if recentTasks.contains(where: { $0.light == .yellow }) { return .yellow }
         // 3. 绿色：有最近完成的任务（30 分钟内）
         // 窗口需与详情区 task.light（done 即绿）保持视觉一致：完成后一段时间内顶部也显示绿，

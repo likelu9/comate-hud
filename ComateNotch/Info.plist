@@ -9,13 +9,15 @@
     <key>CFBundleIdentifier</key>
     <string>com.wpscomate.notch</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.1.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleExecutable</key>
     <string>ComateNotch</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSUIElement</key>
@@ -24,5 +26,9 @@
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
+    <!-- 「打开消息中心」通过 AppleScript 驱动 System Events 定位铃铛坐标。
+         缺这个键时，macOS 会直接拒绝发送 Apple Event（10.14+ 起强制要求）。 -->
+    <key>NSAppleEventsUsageDescription</key>
+    <string>ComateNotch 需要控制「系统事件」来定位 WPS Comate 窗口中的消息铃铛，从而打开消息中心。</string>
 </dict>
 </plist>

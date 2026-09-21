@@ -11,9 +11,25 @@ final class NotchPanel: NSPanel {
         let notchRight: CGFloat
         let notchHeight: CGFloat
         let hasNotch: Bool
+        /// 屏幕顶部 y（AppKit 坐标），收起态窗口的 y 即此值减刘海高
+        let screenTopY: CGFloat
     }
 
-    static func notchGeometry(for screen: NSScreen) -> NotchGeometry {
+    /// 取不到屏幕时的虚拟画布：只为让进程不崩，面板不可见
+    private static let virtualScreen = NSRect(x: 0, y: 0, width: 1920, height: 1080)
+
+    /// NSScreen.main 在无外接显示器 / 快速切换用户 / 登录窗口阶段可能为 nil，
+    /// 所以入参可空，调用方不传时自行兜底。
+    static func notchGeometry(for screen: NSScreen?) -> NotchGeometry {
+        guard let screen = screen else {
+            NSLog("[NotchPanel] 未取到任何屏幕，使用虚拟几何兜底")
+            let frame = virtualScreen
+            return NotchGeometry(centerX: frame.midX,
+                                 notchLeft: frame.midX - 100,
+                                 notchRight: frame.midX + 100,
+                                 notchHeight: 34, hasNotch: false,
+                                 screenTopY: frame.maxY)
+        }
         if #available(macOS 12.0, *) {
             if let left = screen.auxiliaryTopLeftArea,
                let right = screen.auxiliaryTopRightArea {
@@ -21,13 +37,15 @@ final class NotchPanel: NSPanel {
                     centerX: (left.maxX + right.minX) / 2,
                     notchLeft: left.maxX, notchRight: right.minX,
                     notchHeight: max(screen.frame.maxY - right.minY, 34),
-                    hasNotch: true)
+                    hasNotch: true,
+                    screenTopY: screen.frame.maxY)
             }
         }
         return NotchGeometry(centerX: screen.frame.midX,
                              notchLeft: screen.frame.midX - 100,
                              notchRight: screen.frame.midX + 100,
-                             notchHeight: 34, hasNotch: false)
+                             notchHeight: 34, hasNotch: false,
+                             screenTopY: screen.frame.maxY)
     }
 
     let notch: NotchGeometry
@@ -49,9 +67,10 @@ final class NotchPanel: NSPanel {
     private let anchorTopY: CGFloat
 
     init() {
-        let screen = NSScreen.main!
+        // NSScreen.main 可能为 nil（无外接显示器 / 切用户），notchGeometry 内部兜底
+        let screen = NSScreen.main ?? NSScreen.screens.first
         self.notch = NotchPanel.notchGeometry(for: screen)
-        self.anchorTopY = screen.frame.maxY - notch.notchHeight
+        self.anchorTopY = notch.screenTopY - notch.notchHeight
 
         // super.init 之前不能用 self 的计算属性，直接用已初始化的存储属性计算
         // 窗口初始为收起态尺寸（宽度全程不变，见 hudWidth）
