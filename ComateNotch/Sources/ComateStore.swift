@@ -119,9 +119,11 @@ final class ComateStore: ObservableObject {
         if recentTasks.contains(where: { $0.light == .red }) { return .red }
         // 2. 黄色：有运行中/思考中的任务
         if recentTasks.contains(where: { $0.light == .yellow }) { return .yellow }
-        // 3. 绿色：有最近完成的任务（5 分钟内）
-        let fiveMinAgo = Date().addingTimeInterval(-300)
-        if recentTasks.contains(where: { $0.isCompleted && $0.updatedAt > fiveMinAgo }) { return .green }
+        // 3. 绿色：有最近完成的任务（30 分钟内）
+        // 窗口需与详情区 task.light（done 即绿）保持视觉一致：完成后一段时间内顶部也显示绿，
+        // 超过窗口才回落到灰色表示"闲置、可开新任务"。5 分钟太短，用户回头查看时已变灰。
+        let recentDoneThreshold = Date().addingTimeInterval(-1800)
+        if recentTasks.contains(where: { $0.isCompleted && $0.updatedAt > recentDoneThreshold }) { return .green }
         // 4. 灰色：全部空闲
         return .gray
     }
