@@ -351,8 +351,8 @@ final class ComateStore: ObservableObject {
     func openMessageCenter() {
         guard !isOpeningMessageCenter else { return }
         isOpeningMessageCenter = true
-        // 3 秒后自动关闭 loading（兜底，防止脚本卡住）
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+        // 2.5 秒后自动关闭 loading（兜底，防止脚本卡住）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
             self?.isOpeningMessageCenter = false
         }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -368,12 +368,19 @@ final class ComateStore: ObservableObject {
                 }
             }
             // 等待 Comate 激活到前台
-            Thread.sleep(forTimeInterval: 0.8)
+            Thread.sleep(forTimeInterval: 0.5)
 
             // Step 1: 通过 AX 定位铃铛 button 的屏幕坐标
             // 铃铛特征：sidebar 底部、AXButton、desc 为空、size 28x28
+            // 脚本内先强制 Comate frontmost，确保 AX 能读到 window 1
             let locateScript = """
             tell application "System Events"
+                tell process "WPS Comate"
+                    try
+                        set frontmost to true
+                    end try
+                end tell
+                delay 0.2
                 tell process "WPS Comate"
                     tell window 1
                         set wa to UI element 1 of scroll area 1 of group 1 of group 1
@@ -420,7 +427,7 @@ final class ComateStore: ObservableObject {
             let cy = y + 14
             self?.cgEventClick(at: CGPoint(x: cx, y: cy))
             // 留足时间让 Comate 完成页面跳转，再关闭 loading
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 self?.isOpeningMessageCenter = false
             }
         }
