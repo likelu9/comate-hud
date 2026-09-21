@@ -37,8 +37,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 NSApp.terminate(nil)
             }
         )
+        // hostingView 固定为展开态尺寸并吸顶，不随窗口高度动画改变尺寸。
+        // 否则 NSHostingView 每次窗口 resize 都要重排，且窗口变矮时内容会被
+        // 推到底部（AppKit 默认底部锚定）→ 展开动画期间顶部 logo/状态灯/+ 跳动。
+        // 窗口收起时超出部分由窗口自身裁剪，可见区域正好是内容顶部。
+        let container = NSView(frame: NSRect(x: 0, y: 0,
+                                             width: panel.expandedWidth,
+                                             height: panel.expandedHeight))
+        container.wantsLayer = true
+        container.layer?.backgroundColor = NSColor.clear.cgColor
         let hosting = NSHostingView(rootView: view)
-        panel.contentView = hosting
+        hosting.frame = NSRect(x: 0, y: 0,
+                               width: panel.expandedWidth,
+                               height: panel.expandedHeight)
+        // minYMargin 弹性 = 顶部边距固定 → 视图始终吸在窗口顶部
+        hosting.autoresizingMask = [.minYMargin]
+        container.addSubview(hosting)
+        panel.contentView = container
         panel.orderFrontRegardless()
         store.start()
     }

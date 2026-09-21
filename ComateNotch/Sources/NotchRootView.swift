@@ -297,9 +297,15 @@ struct NotchRootView: View {
                 .padding(.trailing, wingWidth / 2 - 2)
                 .padding(.top, (notchHeight - 18) / 2)
             }
-            // 展开内容（if 切换，避免 backing store 残留）
-            .overlay {
-                if expanded { expandedContent }
+            // 展开内容：先固定为展开态尺寸（内部布局与动画无关，绝不重排），
+            // 再按当前高度裁剪 + opacity 显隐。这样展开/收起过程中
+            // 任务列表不会随窗口高度变化重新布局，也不会在收起时溢出到窗口外。
+            .overlay(alignment: .topLeading) {
+                expandedContent
+                    .frame(width: expandedWidth, height: expandedHeight, alignment: .topLeading)
+                    .opacity(expanded ? 1 : 0)
+                    .frame(width: currentWidth, height: currentHeight, alignment: .topLeading)
+                    .clipped()
             }
             .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
             .animation(.easeInOut(duration: 0.25), value: expanded)
@@ -359,27 +365,10 @@ struct NotchRootView: View {
                     onExpandChange?(true)
                 }
             }
-            // 临时调试：--autocycle 自动展开/收起，用于逐帧分析动效
-            if CommandLine.arguments.contains("--autocycle") {
-                Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-                    DispatchQueue.main.async {
-                        let next = !expanded
-                        isAnimating = true
-                        store.isPaused = true
-                        withAnimation { expanded = next }
-                        onExpandChange?(next)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                            isAnimating = false
-                            store.isPaused = false
-                        }
-                    }
-                }
-            }
         }
-        // 顶部对齐：窗口顶部固定于屏幕顶、向下生长，内容必须贴住顶部。
-        // 否则窗口动画与内容动画不同步时，内容会被窗口居中推到下方，
-        // 顶部空出一段露出桌面，表现为"不吸顶闪动"。
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // 固定为展开态尺寸并左上对齐：hostingView 尺寸恒定，
+        // 窗口高度动画只改变可见裁剪区，内容自身布局完全不动。
+        .frame(width: expandedWidth, height: expandedHeight, alignment: .topLeading)
     }
 
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）
