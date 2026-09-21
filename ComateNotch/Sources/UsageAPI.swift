@@ -162,11 +162,11 @@ enum UsageAPI {
 
     // MARK: - 展示格式
 
-    /// 智点：小额保留两位（1.68），大额压缩成万/亿
+    /// 智点：小额保留两位（1.68），中额一位（45.6），大额压缩成万/亿
     static func creditsLabel(_ value: Double) -> String {
         if value >= 100_000_000 { return String(format: "%.2f亿", value / 100_000_000) }
         if value >= 10_000 { return String(format: "%.2f万", value / 10_000) }
-        if value >= 100 { return String(format: "%.1f", value) }
+        if value >= 10 { return String(format: "%.1f", value) }
         return String(format: "%.2f", value)
     }
 
