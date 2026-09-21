@@ -215,8 +215,6 @@ struct NotchRootView: View {
     var wingWidth: CGFloat = 36  // 收窄到 36
     var notchHeight: CGFloat
     var expandedWidth: CGFloat = 280
-    /// 拖拽可达到的最大高度（受 hostingView 固定高度限制）
-    var maxExpandedHeight: CGFloat = 440
     /// hostingView 画布高度：根视图必须显式撑满它并左上对齐，
     /// 否则 NSHostingView 会把根视图垂直居中（偏移 (画布高-内容高)/2），
     /// 表现为整个 HUD 在窗口里被往下推。
@@ -242,8 +240,11 @@ struct NotchRootView: View {
     @State private var bellHovered = false
     @State private var bellRotate = false
 
-    /// 展开内容的自然高度（由 SwiftUI 实测上报）
-    @State private var contentHeight: CGFloat = 0
+    /// 实测：列表行 VStack 自然高度 + 该测量对应的行数（用于反推单行占高）
+    @State private var rowsHeight: CGFloat = 0
+    @State private var measuredRowCount: Int = 0
+    /// 实测：页脚高度
+    @State private var footerHeight: CGFloat = 0
     /// 首次测量完成前的兜底高度
     private let fallbackExpandedHeight: CGFloat = 280
     /// 拖拽状态
@@ -251,15 +252,50 @@ struct NotchRootView: View {
     @State private var resizeHovered = false
     @State private var dragBaseHeight: CGFloat = 0
 
-    /// 展开态实际高度 = max(内容自然高度, 用户自定义高度)
-    /// 保证内容永远不会被裁切；自定义高度只在比内容高时才生效。
-    private var targetExpandedHeight: CGFloat {
-        let base = contentHeight > 0 ? contentHeight : fallbackExpandedHeight
-        return max(base, store.customExpandedHeight ?? 0)
+    // 布局常量：必须与 expandedContent 的 padding / spacing 保持一致
+    private let listSpacing: CGFloat = 3
+    private let blockSpacing: CGFloat = 6
+    private let bottomPadding: CGFloat = 14
+    private var topInset: CGFloat { notchHeight / 2 + 24 }
+
+    /// 当前实际展示的记录条数
+    private var displayedRowCount: Int { min(store.recentTaskLimit, store.recentTasks.count) }
+
+    /// 单行占高（行高 + 行间距）：由实测行高反推。
+    /// 它只取决于行本身，与当前展示多少条无关，所以切换条数时依然有效。
+    private var rowUnit: CGFloat {
+        guard measuredRowCount > 0, rowsHeight > 0 else { return 0 }
+        return (rowsHeight + listSpacing) / CGFloat(measuredRowCount)
     }
 
-    /// 拖拽下界：不低于内容自然高度（否则列表会被裁掉且无法滚动）
-    private var minExpandedHeight: CGFloat { max(contentHeight, notchHeight + 40) }
+    /// 指定条数时面板应有的高度（即内容自适应高度）
+    private func contentHeight(forRows rows: Int) -> CGFloat {
+        guard rowUnit > 0, footerHeight > 0 else { return fallbackExpandedHeight }
+        let n = CGFloat(max(rows, 1))
+        return topInset + rowUnit * n - listSpacing + blockSpacing + footerHeight + bottomPadding
+    }
+
+    /// 自然高度：跟随当前条数
+    private var naturalContentHeight: CGFloat { contentHeight(forRows: displayedRowCount) }
+    /// 最小高度 = 1 条记录的高度
+    private var minExpandedHeight: CGFloat { contentHeight(forRows: 1) }
+    /// 最大高度 = 10 条记录的高度
+    private var maxExpandedHeight: CGFloat {
+        contentHeight(forRows: ComateStore.recentTaskLimitOptions.max() ?? 10)
+    }
+
+    /// 展开态实际高度：自定义高度被夹在 [1 条, 10 条] 之间；未自定义时跟随内容
+    private var targetExpandedHeight: CGFloat {
+        let custom = store.customExpandedHeight ?? naturalContentHeight
+        return min(max(custom, minExpandedHeight), maxExpandedHeight)
+    }
+
+    /// 列表可视高度：装得下就贴合内容，装不下则裁剪并可滚动
+    private var listViewportHeight: CGFloat {
+        guard footerHeight > 0 else { return rowsHeight }
+        let avail = targetExpandedHeight - topInset - blockSpacing - footerHeight - bottomPadding
+        return max(min(rowsHeight, avail), 0)
+    }
 
     /// 拖拽底部手柄调整展开高度（顶部锚定不动，向下拖变高）
     /// 必须用 .global 坐标空间：手柄本身会跟着面板底边移动，
@@ -282,8 +318,8 @@ struct NotchRootView: View {
             .onEnded { _ in
                 isResizing = false
                 let h = store.customExpandedHeight ?? 0
-                // 拖到不高于内容高度 → 视为恢复默认，避免"设了自定义但看不出区别"
-                if h <= contentHeight + 0.5 {
+                // 拖到恰好等于默认高度 → 视为恢复默认，避免"设了自定义但看不出区别"
+                if abs(h - naturalContentHeight) <= 1 {
                     store.resetCustomExpandedHeight()
                 } else {
                     store.saveCustomExpandedHeight(h)
@@ -390,13 +426,9 @@ struct NotchRootView: View {
             .animation(isResizing ? nil : Animation.easeInOut(duration: 0.25), value: expanded)
             // 拖拽时去掉高度动画，保证跟手
             .animation(isResizing ? nil : Animation.easeInOut(duration: 0.25), value: currentHeight)
-            // 高度变化（切换条数 / 恢复默认）→ 同步窗口高度
-            .onChange(of: contentHeight) { _ in
-                guard expanded else { return }
-                onExpandedHeightChange?(targetExpandedHeight)
-            }
-            .onChange(of: store.customExpandedHeight) { _ in
-                // 拖拽中窗口已撑到最大高度，松手时由 onResizeEnd 统一收口
+            // 高度变化（测量完成 / 切换条数 / 恢复默认）→ 同步窗口高度；
+            // 拖拽中窗口已撑到最大高度，松手时由 onResizeEnd 统一收口
+            .onChange(of: targetExpandedHeight) { _ in
                 guard expanded, !isResizing else { return }
                 onExpandedHeightChange?(targetExpandedHeight)
             }
@@ -487,22 +519,32 @@ struct NotchRootView: View {
 
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）
     private var expandedContent: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: blockSpacing) {
 
             if store.recentTasks.isEmpty {
                 Text("暂无任务")
                     .font(.system(size: 11, design: .rounded))
                     .foregroundStyle(.white.opacity(0.4))
             } else {
-                VStack(spacing: 3) {
-                    ForEach(store.recentTasks.prefix(store.recentTaskLimit)) { task in
-                        taskRow(task)
-                            .onTapGesture { store.openSession(task) }
-                            .onHover { h in
-                                if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-                            }
+                // 面板高度可小于内容高度（最小 = 1 条高度），超出时列表可滚动
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: listSpacing) {
+                        ForEach(store.recentTasks.prefix(store.recentTaskLimit)) { task in
+                            taskRow(task)
+                                .onTapGesture { store.openSession(task) }
+                                .onHover { h in
+                                    if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                                }
+                        }
                     }
+                    // 实测行 VStack 自然高度（与面板高度无关）
+                    .background(
+                        GeometryReader { g in
+                            Color.clear.preference(key: RowsHeightKey.self, value: g.size.height)
+                        }
+                    )
                 }
+                .frame(height: listViewportHeight)
             }
 
             HStack(spacing: 3) {
@@ -556,20 +598,26 @@ struct NotchRootView: View {
                     .help(store.isOpeningMessageCenter ? "正在打开消息中心…" : "打开消息中心")
                 }
             }
+            // 实测页脚高度（用于反推内容高度）
+            .background(
+                GeometryReader { g in
+                    Color.clear.preference(key: FooterHeightKey.self, value: g.size.height)
+                }
+            )
         }
         .padding(.horizontal, 12)
-        .padding(.top, notchHeight / 2 + 24)
-        .padding(.bottom, 14)
-        .frame(width: expandedWidth, alignment: .topLeading)
-        // 上报内容自然高度：窗口展开高度由它决定
-        .background(
-            GeometryReader { g in
-                Color.clear.preference(key: PanelContentHeightKey.self, value: g.size.height)
-            }
-        )
-        .onPreferenceChange(PanelContentHeightKey.self) { h in
-            guard h > 0, abs(h - contentHeight) > 0.5 else { return }
-            contentHeight = h
+        .padding(.top, topInset)
+        .padding(.bottom, bottomPadding)
+        // 高度固定为当前面板高度：列表超出时由 ScrollView 滚动，不撑高面板
+        .frame(width: expandedWidth, height: targetExpandedHeight, alignment: .topLeading)
+        .onPreferenceChange(RowsHeightKey.self) { h in
+            guard h > 0, abs(h - rowsHeight) > 0.5 else { return }
+            rowsHeight = h
+            measuredRowCount = displayedRowCount
+        }
+        .onPreferenceChange(FooterHeightKey.self) { h in
+            guard h > 0, abs(h - footerHeight) > 0.5 else { return }
+            footerHeight = h
         }
     }
 
@@ -675,8 +723,15 @@ private struct ComatePlusButton: View {
     }
 }
 
-/// 展开内容自然高度上报：窗口按此高度展开
-private struct PanelContentHeightKey: PreferenceKey {
+/// 列表行 VStack 自然高度 / 页脚高度上报：用于反推 1 条与 10 条时应有的面板高度
+private struct RowsHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat { 0 }
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
+private struct FooterHeightKey: PreferenceKey {
     static var defaultValue: CGFloat { 0 }
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
