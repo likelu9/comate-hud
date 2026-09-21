@@ -496,7 +496,8 @@ final class ComateStore: ObservableObject {
         task.arguments = ["find-generic-password", "-a", "credential_wps_sid", "-w"]
         let pipe = Pipe()
         task.standardOutput = pipe
-        task.standardError = pipe
+        // stderr 不能并入 stdout：否则 security 的警告文本会被当成 sid 发给接口
+        task.standardError = FileHandle.nullDevice
         do {
             try task.run()
             task.waitUntilExit()
