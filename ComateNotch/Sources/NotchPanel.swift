@@ -100,6 +100,12 @@ final class NotchPanel: NSPanel {
         setFrame(expandedFrame(height: height), display: true)
     }
 
+    /// 拖拽开始：窗口先一次性撑到最大高度，拖拽过程中只动 SwiftUI 内容高度。
+    /// 每次鼠标移动都 setFrame 会重新布局 hostingView，导致卡顿与抖动。
+    func beginLiveResize(maxHeight: CGFloat) {
+        setFrame(expandedFrame(height: maxHeight), display: true)
+    }
+
     func animateToCollapsed() {
         let target = NSRect(x: notch.centerX - collapsedWidth / 2,
                             y: anchorTopY, width: collapsedWidth, height: notch.notchHeight)

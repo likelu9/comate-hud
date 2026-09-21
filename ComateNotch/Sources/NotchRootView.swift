@@ -223,6 +223,10 @@ struct NotchRootView: View {
     var canvasHeight: CGFloat = 720
     /// 拖拽调整高度时立即同步窗口尺寸（不走动画，跟手）
     var onExpandedHeightChange: ((CGFloat) -> Void)?
+    /// 拖拽开始：参数为拖拽期间窗口应先撑到的最大高度
+    var onResizeBegin: ((CGFloat) -> Void)?
+    /// 拖拽结束：按最终高度收一次窗口
+    var onResizeEnd: ((CGFloat) -> Void)?
     var onShowMainWindow: (() -> Void)?
     var onQuit: (() -> Void)?
 
@@ -258,12 +262,18 @@ struct NotchRootView: View {
     private var minExpandedHeight: CGFloat { max(contentHeight, notchHeight + 40) }
 
     /// 拖拽底部手柄调整展开高度（顶部锚定不动，向下拖变高）
+    /// 必须用 .global 坐标空间：手柄本身会跟着面板底边移动，
+    /// 用默认的 .local 时 translation 会被手柄自身位移抵消，
+    /// 表现为底边追着鼠标抖、跟不走。
     private var resizeGesture: some Gesture {
-        DragGesture(minimumDistance: 1)
+        DragGesture(minimumDistance: 1, coordinateSpace: .global)
             .onChanged { v in
                 if !isResizing {
                     isResizing = true
                     dragBaseHeight = targetExpandedHeight
+                    // 拖拽期间窗口先撑到最大，之后只改 SwiftUI 内容高度，
+                    // 避免每次鼠标移动都 setFrame（卡顿且与内容互相拉扯）
+                    onResizeBegin?(maxExpandedHeight)
                 }
                 let h = min(max(dragBaseHeight + v.translation.height, minExpandedHeight),
                             maxExpandedHeight)
@@ -278,6 +288,7 @@ struct NotchRootView: View {
                 } else {
                     store.saveCustomExpandedHeight(h)
                 }
+                onResizeEnd?(targetExpandedHeight)
             }
     }
 
@@ -368,6 +379,7 @@ struct NotchRootView: View {
                     }
                     .frame(height: 14)
                     .onHover { h in
+                        guard h != resizeHovered else { return }
                         resizeHovered = h
                         if h { NSCursor.resizeUpDown.push() } else { NSCursor.pop() }
                     }
@@ -384,7 +396,8 @@ struct NotchRootView: View {
                 onExpandedHeightChange?(targetExpandedHeight)
             }
             .onChange(of: store.customExpandedHeight) { _ in
-                guard expanded else { return }
+                // 拖拽中窗口已撑到最大高度，松手时由 onResizeEnd 统一收口
+                guard expanded, !isResizing else { return }
                 onExpandedHeightChange?(targetExpandedHeight)
             }
             .onHover { isHovering in

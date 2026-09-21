@@ -32,6 +32,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onExpandedHeightChange: { [weak panel] h in
                 panel?.setExpandedHeightImmediate(h)
             },
+            onResizeBegin: { [weak panel] maxH in
+                panel?.beginLiveResize(maxHeight: maxH)
+            },
+            onResizeEnd: { [weak panel] h in
+                panel?.setExpandedHeightImmediate(h)
+            },
             onShowMainWindow: { [weak self] in
                 NSApp.setActivationPolicy(.regular)
                 NSApp.activate(ignoringOtherApps: true)
