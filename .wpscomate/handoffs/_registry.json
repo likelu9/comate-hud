@@ -42,6 +42,12 @@
       "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
       "createdAt": 1789966322778,
       "file": "notch-flash-fix-2.handoff.json"
+    },
+    {
+      "handoffId": "notch-jump-fix",
+      "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+      "createdAt": 1789967686919,
+      "file": "notch-jump-fix.handoff.json"
     }
   ]
 }
