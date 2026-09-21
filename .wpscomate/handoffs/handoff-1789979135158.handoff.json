@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "handoffId": "handoff-1789979135158",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789979135159,
+  "note": {
+    "completed": [
+      "新增 UsageAPI.swift：/llmproxy/v1/user/token-usage 取日/月限额，/api/coserve/v1/usage/details 取明细，UTC+8 归日与 30 天聚合",
+      "ComateStore：usage 状态机（ok/noCredential/failed）、60s 拉限额、5min 或启动回填 30 天，30 天智点写进 ComateTask",
+      "行内统一显示近 30 天智点（30天 1.68 点），无记录显示占位符；token 移到 hover 提示",
+      "左下角限额百分比 + 点击切换日/月 + UserDefaults 持久化（notch.usagePeriod）",
+      "清理 ModelUsage（本机 token 计数）全链路，含每 2s 一次的 GROUP BY 查询",
+      "fetchWpsSid 分离 stderr，避免 security 的警告文本被当成 sid",
+      "逻辑单测 43/43 通过；实拍验证：日 87%（默认）/ 月 90%、行内 30天 N 点、无凭据时全部显示 —"
+    ],
+    "remaining": [
+      "sid 过期后无刷新机制：token_cookie 里有 access_token/refresh_token_expires_at，未接刷新链路",
+      "云端任务的 session_id 与 chat_sessions.id 是否一致未在真实数据上核对（本地任务已一致）"
+    ],
+    "decisions": [
+      "智点单位由服务端算（model_source=credits），本地无价格表，因此显示「点」而非「token」，两者不可换算",
+      "行内只显示 30 天智点（用户指定：不显示当日）",
+      "左下角默认日限额，点击切换月限额，选择持久化到 UserDefaults",
+      "凭据复用 keychain（svce=wps365 / acct=credential_wps_sid，值前缀 go-keyring-base64: 需 base64 解码）；不带账号后缀，多账号登录自动指向当前账号",
+      "接口约束：model_type 只能传 public（private 点数全 0，all 返回空）；page_size 上限 100（传 500 被压回 20）",
+      "刷新策略：60s 限额 + 当日明细，5min 或启动回填 30 天（串行分页约 24 请求）；任何失败静默降级，保留旧值不空面板",
+      "主动中止的任务判为灰色空闲（不红），红灯只留给等待回答/硬错误/卡住；中止时作废悬空工具调用以防永久误报等待确认"
+    ],
+    "issues": [
+      "sid 会过期（实测约 15 分钟内失效过一次，重新解码后 200）：过期后本功能显示占位符，Comate 自身刷新 keychain 后自动恢复",
+      "月限额实际为 95000（早先记录 85000 是旧读数），百分比口径已按实时 limit 计算",
+      "用户操作鼠标时合成 hover/click 事件会被真实输入覆盖，实拍需注意；测试脚本 /tmp/expand_shot.py、/tmp/click_footer.py",
+      "NSHomeDirectory() 不认 $HOME（伪造 HOME 做隔离无效），但 security 子进程认 HOME —— 降级验证就是靠这一点（HOME=/tmp/fakehome 使 keychain 查不到条目）"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/UsageAPI.swift",
+      "ComateNotch/Sources/ComateStore.swift",
+      "ComateNotch/Sources/SessionJournal.swift",
+      "ComateNotch/Sources/NotchRootView.swift",
+      "ComateNotch/build.sh"
+    ]
+  },
+  "reason": "模型用量（限额+智点）落地完成，7/7 todo 通过，含实拍与降级验证"
+}
