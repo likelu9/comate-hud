@@ -236,6 +236,13 @@ struct NotchRootView: View {
         NotchShape(cornerRadius: cornerR)
             .fill(Color.black)
             .frame(width: currentWidth, height: currentHeight)
+            // 静态黑色托底层：固定收起态尺寸，不参与展开/收起动画。
+            // 桌面背景非黑时，上层形状边缘移动露出的仍是黑色，消除"不吸顶闪动"。
+            .background(
+                NotchShape(cornerRadius: 14)
+                    .fill(Color.black)
+                    .frame(width: collapsedTotalWidth, height: notchHeight)
+            )
             // 叠加层：logo + 状态灯（固定位置）
             .overlay(alignment: .topLeading) {
                 ZStack(alignment: .topLeading) {
