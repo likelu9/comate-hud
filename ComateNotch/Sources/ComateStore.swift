@@ -342,7 +342,30 @@ final class ComateStore: ObservableObject {
     /// 用量接口的凭据：桌面客户端登录时写进 keychain 的 wps_sid
     /// （svce=wps365 / acct=credential_wps_sid，不带账号后缀，多账号登录会覆盖成当前账号）。
     /// 与浏览器登录状态无关；与未读消息、云端任务列表两个接口复用同一凭据。
-    private var usageCredential: String? { fetchWpsSid() }
+    ///
+    /// 读取要 fork `/usr/bin/security`，在别人机器上首次还会弹钥匙串授权框，
+    /// 所以：① 一律在后台队列调用（主线程调用会把面板卡死）；
+    /// ② 成功后缓存，避免 30 秒内重复 fork 三次；③ 被服务端拒（401）时清缓存重读。
+    private let sidLock = NSLock()
+    private var cachedSid: String?
+
+    /// 取 sid（默认读缓存）。线程安全，可在任意队列调用。
+    /// forceRefresh 用于凭据失效后的重读。
+    /// 读失败不写缓存：用户这次点了「拒绝」，下次仍会重试，而不是一直拿 nil。
+    @discardableResult
+    private func wpsSid(forceRefresh: Bool = false) -> String? {
+        // 整段加锁（包括 fork 期间）：用量、未读数、云端任务三个调用点会在启动瞬间并发进来，
+        // 不串行就会同时 fork 三个 security——别人机器上首次就是三个钥匙串授权框一起弹。
+        // 加锁只阻塞后台队列，主线程不走这里。
+        sidLock.lock()
+        defer { sidLock.unlock() }
+        if !forceRefresh, let cached = cachedSid { return cached }
+        let fresh = Self.readWpsSidFromKeychain()
+        // 只在真的读了 keychain 时打日志（命中缓存不打），便于排查 fork 频率
+        NSLog("[ComateNotch] 读取 keychain 凭据: %@", fresh == nil ? "无" : "成功")
+        if let fresh = fresh { cachedSid = fresh }
+        return fresh
+    }
 
     /// 左下角限额显示周期：默认日限额，点击切换月限额，选择持久化
     @Published var usagePeriod: UsageAPI.Period = ComateStore.loadUsagePeriod()
@@ -516,24 +539,17 @@ final class ComateStore: ObservableObject {
         DispatchQueue.main.async {
             self.lastError = error
             self.runningTasks = running
-            // 合并本地 + 云端任务，按更新时间降序排序后取前 12 条
-            let merged = (recent + self.cloudTasks).sorted { $0.updatedAt > $1.updatedAt }
-            // 贴近 30 天智点：字典在主线程写，这里也在主线程读，无竞争
-            self.recentTasks = merged.prefix(12).map { task in
-                var copy = task
-                copy.credits30d = self.credits30d[task.id]
-                return copy
-            }
+            self.mergeRecentTasks(local: recent, cloud: self.cloudTasks)
             self.attentionCount = attentionCount
             self.lastRefreshed = .now
         }
     }
 
-    /// 从 macOS Keychain 获取 Comate 的 wps_sid
+    /// 从 macOS Keychain 读取 Comate 的 wps_sid（阻塞调用，必须在后台队列执行）
     /// Comate (Tauri 应用) 通过 KSO Account SDK 将 sid 存入 Keychain
     /// service=wps365, account=credential_wps_sid
     /// 值格式为 "go-keyring-base64:<base64>"，解码后得到真实 sid
-    private func fetchWpsSid() -> String? {
+    private static func readWpsSidFromKeychain() -> String? {
         // security find-generic-password -a "credential_wps_sid" -w
         let task = Process()
         task.launchPath = "/usr/bin/security"
@@ -582,12 +598,25 @@ final class ComateStore: ObservableObject {
         return nil
     }
 
+    /// 合并本地与云端任务并回填 30 天智点，按更新时间降序取前 12 条。
+    /// 两个调用点（2 秒 DB 轮询、30 秒云端刷新）必须都走这里：云端刷新只带本地任务，
+    /// 漏掉回填会让行上的智点标记每 30 秒闪没一次。
+    /// 智点字典只在主线程读写，本方法也只从主线程调用，无竞争。
+    private func mergeRecentTasks(local: [ComateTask], cloud: [ComateTask]) {
+        let merged = (local + cloud).sorted { $0.updatedAt > $1.updatedAt }
+        recentTasks = merged.prefix(12).map { task in
+            var copy = task
+            copy.credits30d = credits30d[task.id]
+            return copy
+        }
+    }
+
     /// 从云端消息中心 API 获取真实未读消息数
     /// API: GET https://comate.wps.cn/api/coserve/v1/messages?offset=0&limit=100&status=unread
     /// 认证: Cookie: wps_sid=<sid>
     private func refreshCloudUnread() {
         DispatchQueue.global(qos: .utility).async {
-            guard let sid = self.fetchWpsSid() else { return }
+            guard let sid = self.wpsSid() else { return }
             var components = URLComponents(string: "https://comate.wps.cn/api/coserve/v1/messages")!
             components.queryItems = [
                 URLQueryItem(name: "offset", value: "0"),
@@ -622,7 +651,7 @@ final class ComateStore: ObservableObject {
     /// 云端任务不落本地 SQLite，需单独拉取后与本地任务合并展示
     private func refreshCloudTasks() {
         DispatchQueue.global(qos: .utility).async {
-            guard let sid = self.fetchWpsSid() else { return }
+            guard let sid = self.wpsSid() else { return }
             var components = URLComponents(string: "https://comate.wps.cn/api/comate/v1/workmate/sessions/list")!
             components.queryItems = [
                 URLQueryItem(name: "offset", value: "0"),
@@ -664,9 +693,8 @@ final class ComateStore: ObservableObject {
                 DispatchQueue.main.async {
                     self.cloudTasks = cloudTasks
                     // 触发 recentTasks 重新合并（复用 refresh 末尾的合并逻辑）
-                    let local = self.recentTasks.filter { !$0.isCloud }
-                    let merged = (local + cloudTasks).sorted { $0.updatedAt > $1.updatedAt }
-                    self.recentTasks = Array(merged.prefix(12))
+                    self.mergeRecentTasks(local: self.recentTasks.filter { !$0.isCloud },
+                                          cloud: cloudTasks)
                 }
             }
             task.resume()
@@ -739,20 +767,23 @@ final class ComateStore: ObservableObject {
         guard Self.shouldFetch(lastFetch: lastUsageFetch, now: now) else { return }
         lastUsageFetch = now
         guard usageRetryAllowed else { return }
-        guard let credential = usageCredential else {
-            usageState = .noCredential
-            return
-        }
         let backfill = Self.shouldBackfill(trigger, lastBackfill: lastUsageBackfill, now: now)
-        NSLog("[ComateNotch] 拉取用量: trigger=%@, backfill=%@", "\(trigger)", backfill ? "true" : "false")
         DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self else { return }
+            // 读 keychain 会 fork security（别人机器首次还弹授权框），必须在后台队列做，
+            // 否则面板会在弹框期间卡住。
+            guard let credential = self.wpsSid() else {
+                DispatchQueue.main.async { self.usageState = .noCredential }
+                return
+            }
+            NSLog("[ComateNotch] 拉取用量: trigger=%@, backfill=%@", "\(trigger)", backfill ? "true" : "false")
             var sid = credential
             var limits = UsageAPI.fetchLimits(sid: sid)
 
-            // 凭据失效：重读 keychain，只有换到了新 sid 才值得重试
-            if case .authFailed = limits, let self = self {
+            // 凭据失效：清缓存重读 keychain，只有换到了新 sid 才值得重试
+            if case .authFailed = limits {
                 NSLog("[ComateNotch] 凭据失效(trigger=%@)，重读 keychain", "\(trigger)")
-                let fresh = self.fetchWpsSid()
+                let fresh = self.wpsSid(forceRefresh: true)
                 if Self.shouldRetryAfterAuthFailure(previous: sid, fresh: fresh), let fresh = fresh {
                     sid = fresh
                     limits = UsageAPI.fetchLimits(sid: sid)
@@ -769,7 +800,6 @@ final class ComateStore: ObservableObject {
             }
 
             DispatchQueue.main.async {
-                guard let self = self else { return }
                 if case .ok(let value) = limits { self.usageLimits = value }
                 if let credits = credits {
                     self.credits30d = credits
