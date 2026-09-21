@@ -18,6 +18,15 @@
       "createdAt": 1789547720800,
       "updatedAt": 1789549848407,
       "completedAt": null
+    },
+    {
+      "planId": "usage-credits",
+      "suffix": "usage-credits",
+      "title": "悬浮窗接入模型用量（日/月限额 + 单任务智点）",
+      "status": "active",
+      "createdAt": 1789977337781,
+      "updatedAt": 1789977337781,
+      "completedAt": null
     }
   ]
 }
