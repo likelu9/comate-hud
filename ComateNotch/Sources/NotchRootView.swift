@@ -211,7 +211,6 @@ struct NotchRootView: View {
     var onExpandChange: ((Bool) -> Void)?
 
     // 刘海几何：HUD 总宽必须大于刘海宽，内容仅在左右两翼显示
-    var notchWidth: CGFloat
     var wingWidth: CGFloat = 36  // 收窄到 36
     var notchHeight: CGFloat
     var expandedWidth: CGFloat = 280
@@ -219,7 +218,9 @@ struct NotchRootView: View {
     var onShowMainWindow: (() -> Void)?
     var onQuit: (() -> Void)?
 
-    private var collapsedTotalWidth: CGFloat { notchWidth + wingWidth * 2 }
+    /// 收起态与展开态同宽：宽度全程不变，动画只改变 y 与高度，
+    /// 左右边缘完全不动（否则两态差 1px 会看起来"右边没对齐"）。
+    private var collapsedTotalWidth: CGFloat { expandedWidth }
 
     @State private var hovering = false
     @State private var expandTimer: Timer?

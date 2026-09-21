@@ -24,7 +24,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if isExpanded { panel?.animateToExpanded() }
                 else { panel?.animateToCollapsed() }
             },
-            notchWidth: geo.notchRight - geo.notchLeft,
             wingWidth: panel.wingWidth,
             notchHeight: geo.notchHeight,
             expandedWidth: panel.expandedWidth,

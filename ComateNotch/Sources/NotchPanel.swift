@@ -34,10 +34,15 @@ final class NotchPanel: NSPanel {
     /// 收起态左右翼宽度：刘海两侧可显示区域的宽度
     /// HUD 总宽 = 刘海宽 + 左翼 + 右翼，中间段被刘海硬件遮挡，纯黑融合
     let wingWidth: CGFloat = 36  // 收窄到 36
+    /// HUD 宽度：收起态与展开态必须使用同一宽度。
+    /// 否则 281(收起) vs 280(展开) 在动画中会让左边位移 0.5px、右边位移 1px，
+    /// 表现为"展开/收起时右边没对齐"。同宽后动画只改变 y 与高度。
+    var hudWidth: CGFloat { (notch.notchRight - notch.notchLeft) + wingWidth * 2 }
     /// 收起态总宽（动态）：必须 > 刘海宽，否则整个 HUD 被刘海盖住
-    var collapsedWidth: CGFloat { (notch.notchRight - notch.notchLeft) + wingWidth * 2 }
-    let expandedWidth: CGFloat = 280  // 收窄到 280
+    var collapsedWidth: CGFloat { hudWidth }
     let expandedHeight: CGFloat = 280  // 从 320 缩小到 280
+    /// 展开态宽度 = 收起态宽度（同宽，保证左右边缘在动画中完全不动）
+    var expandedWidth: CGFloat { hudWidth }
     private let anchorTopY: CGFloat
 
     init() {
@@ -46,7 +51,7 @@ final class NotchPanel: NSPanel {
         self.anchorTopY = screen.frame.maxY - notch.notchHeight
 
         // super.init 之前不能用 self 的计算属性，直接用已初始化的存储属性计算
-        // 窗口初始为收起态尺寸
+        // 窗口初始为收起态尺寸（宽度全程不变，见 hudWidth）
         let collapsedW = (notch.notchRight - notch.notchLeft) + wingWidth * 2
         let frame = NSRect(x: notch.centerX - collapsedW / 2,
                            y: anchorTopY, width: collapsedW, height: notch.notchHeight)
