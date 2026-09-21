@@ -122,8 +122,8 @@ final class NotchBackdropPanel: NSPanel {
         self.level = NSWindow.Level(rawValue: 999)
         self.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         self.isOpaque = true
-        // 调试色：确认托底生效后改回 .black
-        self.backgroundColor = NSColor.systemPink
+        // 与主面板同色（黑），托底时与内容无缝融合，动效期间不可见
+        self.backgroundColor = .black
         self.hasShadow = false
         self.isMovable = false
         self.ignoresMouseEvents = true
