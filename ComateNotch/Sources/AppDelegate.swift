@@ -20,7 +20,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let view = NotchRootView(
             store: store,
             initialExpanded: CommandLine.arguments.contains("--expanded"),
-            onExpandChange: { [weak panel] isExpanded, height in
+            onExpandChange: { [weak panel, weak store] isExpanded, height in
+                // 展开时立即拉一次用量（受频次上限约束），并按展开/收起切换刷新节拍
+                store?.setPanelExpanded(isExpanded)
                 if isExpanded { panel?.animateToExpanded(height: height) }
                 else { panel?.animateToCollapsed() }
             },

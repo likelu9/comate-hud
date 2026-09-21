@@ -283,10 +283,26 @@ final class ComateStore: ObservableObject {
     /// 近 30 天各会话智点累计（session_id → 点数）。只在主线程读写
     private var credits30d: [String: Double] = [:]
 
-    /// 上次回填 30 天明细的时刻（限额 60s 一次，明细 5 分钟一次）
+    /// 上次回填 30 天明细的时刻
     private var lastUsageBackfill = Date.distantPast
 
-    /// 连续失败次数与下次可重试时间。sid 失效时不至于每 60 秒白打一次接口
+    /// 上次发起拉取的时刻，用于频次上限
+    private var lastUsageFetch = Date.distantPast
+
+    /// 面板是否展开：决定刷新节拍
+    private var panelExpanded = false
+
+    /// 频次上限：展开触发与定时节拍共用。反复悬停展开、节拍与展开撞在一起时
+    /// 直接跳过，避免连续打接口（最密 30 秒一次）
+    static let minFetchInterval: TimeInterval = 30
+    /// 展开时节拍：面板可见，保持接近实时
+    static let expandedUsageTick: TimeInterval = 60
+    /// 收起时兑底节拍：面板不可见，只保证数据不长期陈旧
+    static let collapsedUsageTick: TimeInterval = 600
+    /// 30 天明细回填间隔（约 5 个请求 / 0.7s）
+    static let backfillInterval: TimeInterval = 300
+
+    /// 连续失败次数与下次可重试时间。sid 失效时不至于每个节拍都白打一次接口
     private var usageFailures = 0
     private var usageRetryAfter = Date.distantPast
 
@@ -377,11 +393,9 @@ final class ComateStore: ObservableObject {
             self?.refreshCloudUnread()
             self?.refreshCloudTasks()
         }
-        // 模型用量：限额 60 秒一次；30 天明细在 refreshUsage 内按 5 分钟节流
-        refreshUsage()
-        usageTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
-            self?.refreshUsage()
-        }
+        // 模型用量：启动拉一次，之后按面板状态切换节拍（展开 1 分钟 / 收起 10 分钟兑底）
+        refreshUsage(trigger: .launch)
+        scheduleUsageTimer()
     }
 
     func stop() {
@@ -628,15 +642,57 @@ final class ComateStore: ObservableObject {
             task.resume()
         }
     }
-    /// 拉取模型用量：限额走 60 秒节拍，近 30 天智点明细走 5 分钟节拍（实测 462 条 / 5 个请求 / 0.7s）。
+    /// 面板展开状态变化：展开时立刻拉一次（受频次上限约束），并切换刷新节拍。
+    /// 由 NotchRootView 的 onExpandChange 调用。
+    func setPanelExpanded(_ expanded: Bool) {
+        guard panelExpanded != expanded else { return }
+        panelExpanded = expanded
+        scheduleUsageTimer()
+        if expanded { refreshUsage(trigger: .expand) }
+    }
+
+    private func scheduleUsageTimer() {
+        usageTimer?.invalidate()
+        usageTimer = Timer.scheduledTimer(
+            withTimeInterval: Self.usageTickInterval(expanded: panelExpanded),
+            repeats: true
+        ) { [weak self] _ in
+            self?.refreshUsage(trigger: .timer)
+        }
+    }
+
+    enum UsageTrigger { case launch, expand, timer }
+
+    /// 节拍间隔：展开时接近实时，收起时 10 分钟兑底
+    static func usageTickInterval(expanded: Bool) -> TimeInterval {
+        expanded ? expandedUsageTick : collapsedUsageTick
+    }
+
+    /// 频次上限：距上次拉取不足 minFetchInterval 就跳过
+    static func shouldFetch(lastFetch: Date, now: Date) -> Bool {
+        now.timeIntervalSince(lastFetch) >= minFetchInterval
+    }
+
+    /// 是否连 30 天明细一起拉：展开/启动时一律拉（打开面板就看到最新点数），
+    /// 定时节拍里按 backfillInterval 节流
+    static func shouldBackfill(_ trigger: UsageTrigger, lastBackfill: Date, now: Date) -> Bool {
+        trigger != .timer || now.timeIntervalSince(lastBackfill) > backfillInterval
+    }
+
+    /// 拉取模型用量：限额每个节拍都拉；近 30 天智点明细按 backfillInterval 节流
+    /// （实测 462 条 / 5 个请求 / 0.7s）。
     /// 失败不抛错：状态置 failed 并退避，面板显示「用量 —」，其余功能不受影响。
-    private func refreshUsage() {
+    private func refreshUsage(trigger: UsageTrigger) {
+        let now = Date()
+        guard Self.shouldFetch(lastFetch: lastUsageFetch, now: now) else { return }
+        lastUsageFetch = now
         guard usageRetryAllowed else { return }
         guard let sid = usageCredential else {
             usageState = .noCredential
             return
         }
-        let backfill = Date().timeIntervalSince(lastUsageBackfill) > 300
+        let backfill = Self.shouldBackfill(trigger, lastBackfill: lastUsageBackfill, now: now)
+        print("[ComateNotch] 拉取用量: trigger=\(trigger), backfill=\(backfill)")
         DispatchQueue.global(qos: .utility).async { [weak self] in
             let limits = UsageAPI.fetchLimits(sid: sid)
             var credits: [String: Double]?
