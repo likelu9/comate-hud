@@ -271,8 +271,10 @@ final class ComateStore: ObservableObject {
         case ok
         /// keychain 里没有 wps_sid：没装或没登录 Comate 桌面端
         case noCredential
-        /// 有凭据但取数失败（网络异常 / sid 失效 / 接口改版）
+        /// 有凭据但取数失败（网络异常 / 接口改版）
         case failed
+        /// 凭据被服务端拒（sid 过期）：已自动重读 keychain 重试，等 Comate 刷新登录态
+        case authExpired
     }
 
     @Published var usageState: UsageState = .idle
@@ -306,7 +308,7 @@ final class ComateStore: ObservableObject {
     private var usageFailures = 0
     private var usageRetryAfter = Date.distantPast
 
-    /// 退避是否已到期（间隔 60s → 120 → 240 → 300 封顶）
+    /// 退避是否已到期（普通失败 60s → 120 → 240 → 300 封顶；凭据失效固定 30s）
     private var usageRetryAllowed: Bool { Date() >= usageRetryAfter }
 
     private func noteUsageSuccess() {
@@ -314,10 +316,27 @@ final class ComateStore: ObservableObject {
         usageRetryAfter = .distantPast
     }
 
-    private func noteUsageFailure() {
+    private func noteUsageFailure(authFailed: Bool = false) {
         usageFailures = min(usageFailures + 1, 8)
-        let delay = min(60.0 * pow(2, Double(usageFailures - 1)), 300)
-        usageRetryAfter = Date().addingTimeInterval(delay)
+        usageRetryAfter = Date().addingTimeInterval(
+            Self.retryDelay(failures: usageFailures, authFailed: authFailed))
+    }
+
+    /// 凭据失效后的重试间隔：成因在外部（等 Comate 刷新登录态并重写 keychain），
+    /// 不等指数退避，固定 30 秒去重读；一旦 keychain 换了新 sid 就立即恢复
+    static let authRetryInterval: TimeInterval = 30
+
+    /// 重试延迟：凭据失效固定短间隔，其它失败走指数退避
+    static func retryDelay(failures: Int, authFailed: Bool) -> TimeInterval {
+        if authFailed { return authRetryInterval }
+        return min(60.0 * pow(2, Double(max(failures, 1) - 1)), 300)
+    }
+
+    /// 凭据失效后是否值得重试：只有 keychain 里已经换成另一个 sid 才有意义。
+    /// 拿到的还是同一个（Comate 尚未刷新）就不白打一次接口。
+    static func shouldRetryAfterAuthFailure(previous: String?, fresh: String?) -> Bool {
+        guard let fresh = fresh, !fresh.isEmpty else { return false }
+        return fresh != previous
     }
 
     /// 用量接口的凭据：桌面客户端登录时写进 keychain 的 wps_sid
@@ -351,6 +370,8 @@ final class ComateStore: ObservableObject {
         switch usageState {
         case .noCredential:
             return "未登录 Comate 桌面端，读不到用量"
+        case .authExpired:
+            return "登录态已过期（sid 失效），已自动重读凭据；Comate 刷新登录态后会自动恢复"
         case .failed:
             return "用量获取失败，稍后自动重试"
         case .idle:
@@ -652,12 +673,32 @@ final class ComateStore: ObservableObject {
     }
 
     private func scheduleUsageTimer() {
+        usageRetryScheduled = false
         usageTimer?.invalidate()
         usageTimer = Timer.scheduledTimer(
             withTimeInterval: Self.usageTickInterval(expanded: panelExpanded),
             repeats: true
         ) { [weak self] _ in
             self?.refreshUsage(trigger: .timer)
+        }
+    }
+
+    /// 退避期间是否已挂上一次性重试定时器
+    private var usageRetryScheduled = false
+
+    /// 失败后改用一次性定时器，按退避时间重试。
+    /// 收起态常规节拍是 10 分钟，而凭据失效的恢复窗口只有 30 秒——
+    /// 等常规节拍的话，Comate 刷新完 keychain 也要十分钟才接回来。
+    private func scheduleUsageRetry() {
+        usageTimer?.invalidate()
+        usageRetryScheduled = true
+        // +0.5s 容差：定时器可能比退避时刻早一丁点触发，被两个门（退避 + 频次上限）卡掉
+        let delay = max(usageRetryAfter.timeIntervalSinceNow, Self.minFetchInterval) + 0.5
+        usageTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            self.usageRetryScheduled = false
+            self.refreshUsage(trigger: .timer)
+            self.scheduleUsageTimer()
         }
     }
 
@@ -681,41 +722,67 @@ final class ComateStore: ObservableObject {
 
     /// 拉取模型用量：限额每个节拍都拉；近 30 天智点明细按 backfillInterval 节流
     /// （实测 462 条 / 5 个请求 / 0.7s）。
-    /// 失败不抛错：状态置 failed 并退避，面板显示「用量 —」，其余功能不受影响。
+    /// 凭据失效（sid 过期）时重读 keychain 再试一次：Comate 刷新登录态会重写 keychain，
+    /// 重读即可拿到新 sid（token_cookie 里只有 access_token，无 refresh_token，无法自行续期）。
+    /// 失败不抛错：状态置 failed/authExpired 并退避，面板显示「用量 —」，其余功能不受影响。
     private func refreshUsage(trigger: UsageTrigger) {
         let now = Date()
         guard Self.shouldFetch(lastFetch: lastUsageFetch, now: now) else { return }
         lastUsageFetch = now
         guard usageRetryAllowed else { return }
-        guard let sid = usageCredential else {
+        guard let credential = usageCredential else {
             usageState = .noCredential
             return
         }
         let backfill = Self.shouldBackfill(trigger, lastBackfill: lastUsageBackfill, now: now)
         NSLog("[ComateNotch] 拉取用量: trigger=%@, backfill=%@", "\(trigger)", backfill ? "true" : "false")
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            let limits = UsageAPI.fetchLimits(sid: sid)
+            var sid = credential
+            var limits = UsageAPI.fetchLimits(sid: sid)
+
+            // 凭据失效：重读 keychain，只有换到了新 sid 才值得重试
+            if case .authFailed = limits, let self = self {
+                NSLog("[ComateNotch] 凭据失效(trigger=%@)，重读 keychain", "\(trigger)")
+                let fresh = self.fetchWpsSid()
+                if Self.shouldRetryAfterAuthFailure(previous: sid, fresh: fresh), let fresh = fresh {
+                    sid = fresh
+                    limits = UsageAPI.fetchLimits(sid: sid)
+                    if case .ok = limits { NSLog("[ComateNotch] 重读凭据后恢复") }
+                }
+            }
+
             var credits: [String: Double]?
             if backfill {
                 let range = UsageAPI.recentRange(days: 30)
-                if let records = UsageAPI.fetchDetails(sid: sid, start: range.start, end: range.end) {
+                if case .ok(let records) = UsageAPI.fetchDetails(sid: sid, start: range.start, end: range.end) {
                     credits = UsageAPI.creditsBySession(records)
                 }
             }
+
             DispatchQueue.main.async {
                 guard let self = self else { return }
-                if let limits = limits { self.usageLimits = limits }
+                if case .ok(let value) = limits { self.usageLimits = value }
                 if let credits = credits {
                     self.credits30d = credits
                     self.lastUsageBackfill = Date()
                 }
                 // 明细失败不清空旧值：宁可显示上一次的结果，也不要凭空变空
-                if limits != nil || credits != nil {
+                if case .ok = limits {
                     self.usageState = .ok
                     self.noteUsageSuccess()
+                    if self.usageRetryScheduled { self.scheduleUsageTimer() }
+                } else if credits != nil {
+                    self.usageState = .ok
+                    self.noteUsageSuccess()
+                    if self.usageRetryScheduled { self.scheduleUsageTimer() }
+                } else if case .authFailed = limits {
+                    self.usageState = .authExpired
+                    self.noteUsageFailure(authFailed: true)
+                    self.scheduleUsageRetry()
                 } else {
                     self.usageState = .failed
                     self.noteUsageFailure()
+                    self.scheduleUsageRetry()
                 }
             }
         }

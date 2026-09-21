@@ -2,10 +2,19 @@ import Foundation
 
 /// Comate 网页版用量接口客户端。
 ///
-/// 这两个接口没有公开文档，所以所有失败路径都返回 nil，由调用方降级成占位符——
+/// 这两个接口没有公开文档，所以所有失败路径都收敛成 Outcome，由调用方降级成占位符——
 /// 面板其余功能不受影响，也不会因为接口改版而崩。
 /// 凭据是桌面客户端写在 keychain 里的 wps_sid，与浏览器登录状态无关。
 enum UsageAPI {
+
+    /// 单次请求结果。把「凭据失效」从其它失败里分出来：
+    /// 凭据失效是外部状态（Comate 刷新登录态后会重写 keychain），
+    /// 值得立刻重读 keychain 再试一次；其它失败走退避重试。
+    enum Outcome<T> {
+        case ok(T)
+        case authFailed
+        case failed
+    }
 
     /// 额度周期
     enum Period: String {
@@ -97,12 +106,17 @@ enum UsageAPI {
 
     // MARK: - 取数
 
-    /// 日/月限额。失败返回 nil。
-    static func fetchLimits(sid: String) -> Limits? {
-        guard let json = get("/llmproxy/v1/user/token-usage", query: [], sid: sid),
-              let data = json["data"] as? [String: Any],
+    /// 日/月限额。失败返回 .failed，凭据失效返回 .authFailed。
+    static func fetchLimits(sid: String) -> Outcome<Limits> {
+        let json: [String: Any]
+        switch get("/llmproxy/v1/user/token-usage", query: [], sid: sid) {
+        case .ok(let body): json = body
+        case .authFailed: return .authFailed
+        case .failed: return .failed
+        }
+        guard let data = json["data"] as? [String: Any],
               let usage = data["credits_usage"] as? [String: Any],
-              let periods = usage["periods"] as? [[String: Any]] else { return nil }
+              let periods = usage["periods"] as? [[String: Any]] else { return .failed }
 
         var daily: Limit?
         var monthly: Limit?
@@ -114,13 +128,15 @@ enum UsageAPI {
                               total: number(period["credits_limit"]))
             if kind == .daily { daily = limit } else { monthly = limit }
         }
-        guard daily != nil || monthly != nil else { return nil }
-        return Limits(daily: daily, monthly: monthly)
+        guard daily != nil || monthly != nil else { return .failed }
+        return .ok(Limits(daily: daily, monthly: monthly))
     }
 
     /// 区间内的消耗明细，自动翻页。
-    /// 首页就失败 → nil（调用方保留旧缓存）；后续页失败 → 返回已取到的部分，不整批丢弃。
-    static func fetchDetails(sid: String, start: String, end: String) -> [Record]? {
+    /// 首页就失败 → .failed（调用方保留旧缓存）；
+    /// 首页凭据失效 → .authFailed（调用方重读凭据重试）；
+    /// 后续页失败 → 返回已取到的部分，不整批丢弃。
+    static func fetchDetails(sid: String, start: String, end: String) -> Outcome<[Record]> {
         var records: [Record] = []
         var fetched = 0
         var page = 1
@@ -133,10 +149,18 @@ enum UsageAPI {
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "page_size", value: "\(pageSize)"),
             ]
-            guard let json = get("/api/coserve/v1/usage/details", query: query, sid: sid),
-                  let data = json["data"] as? [String: Any],
+            let body: [String: Any]
+            switch get("/api/coserve/v1/usage/details", query: query, sid: sid) {
+            case .ok(let json): body = json
+            case .authFailed:
+                if records.isEmpty { return .authFailed }
+                return .ok(records)
+            case .failed:
+                return records.isEmpty ? .failed : .ok(records)
+            }
+            guard let data = body["data"] as? [String: Any],
                   let items = data["items"] as? [[String: Any]] else {
-                return records.isEmpty ? nil : records
+                return records.isEmpty ? .failed : .ok(records)
             }
 
             for item in items {
@@ -152,7 +176,7 @@ enum UsageAPI {
             if items.isEmpty || fetched >= Int(number(data["total"])) { break }
             page += 1
         }
-        return records
+        return .ok(records)
     }
 
     /// 按会话汇总智点
@@ -174,11 +198,12 @@ enum UsageAPI {
 
     // MARK: - 内部
 
-    /// 同步 GET（调用方保证在后台队列）。任何异常都收敛成 nil。
-    private static func get(_ path: String, query: [URLQueryItem], sid: String) -> [String: Any]? {
-        guard var components = URLComponents(string: host + path) else { return nil }
+    /// 同步 GET（调用方保证在后台队列）。
+    /// 区分「凭据失效」与「其它失败」，前者由调用方重读 keychain 重试。
+    private static func get(_ path: String, query: [URLQueryItem], sid: String) -> Outcome<[String: Any]> {
+        guard var components = URLComponents(string: host + path) else { return .failed }
         if !query.isEmpty { components.queryItems = query }
-        guard let url = components.url else { return nil }
+        guard let url = components.url else { return .failed }
 
         var request = URLRequest(url: url)
         request.setValue("wps_sid=\(sid)", forHTTPHeaderField: "Cookie")
@@ -187,16 +212,34 @@ enum UsageAPI {
         request.timeoutInterval = 10
 
         let semaphore = DispatchSemaphore(value: 0)
-        var result: [String: Any]?
-        URLSession.shared.dataTask(with: request) { data, _, _ in
+        var outcome: Outcome<[String: Any]> = .failed
+        URLSession.shared.dataTask(with: request) { data, response, _ in
             defer { semaphore.signal() }
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  json["code"] as? Int == 0 else { return }
-            result = json
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                // 没有响应体时只看状态码：401/403 仍是凭据失效
+                if isAuthFailure(status: status) { outcome = .authFailed }
+                return
+            }
+            if isAuthFailure(status: status, body: json) {
+                outcome = .authFailed
+                return
+            }
+            guard json["code"] as? Int == 0 else { return }
+            outcome = .ok(json)
         }.resume()
         _ = semaphore.wait(timeout: .now() + 15)
-        return result
+        return outcome
+    }
+
+    /// 凭据失效判据：HTTP 401/403，或响应体里带 not_login 错误码。
+    static func isAuthFailure(status: Int, body: [String: Any]? = nil) -> Bool {
+        if status == 401 || status == 403 { return true }
+        if let error = body?["error"] as? [String: Any], error["code"] as? String == "not_login" {
+            return true
+        }
+        return false
     }
 
     /// JSON 数字可能是 Int / Double / NSNumber，统一转 Double
