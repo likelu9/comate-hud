@@ -461,8 +461,10 @@ final class ComateStore: ObservableObject {
     /// 报错是上一轮的结论（可能已经被后续重试覆盖）。
     private func fault(from reading: SessionJournal.Reading?) -> (Date, String)? {
         guard let reading = reading else { return nil }
-        if let stuckAt = reading.stuckAt { return (stuckAt, "卡住无响应") }
+        // 顺序即优先级：硬错误最具体，卡住最实时，已中止兜底
         if let error = reading.lastErrorDate { return (error.at, error.text) }
+        if let stuckAt = reading.stuckAt { return (stuckAt, "卡住无响应") }
+        if let aborted = reading.abortedAt { return (aborted, "已中止") }
         return nil
     }
 

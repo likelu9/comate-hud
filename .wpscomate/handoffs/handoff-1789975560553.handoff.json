@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "handoffId": "handoff-1789975560553",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789975560554,
+  "note": {
+    "completed": [
+      "纠正上轮误判：正常取消路径下 auq 会被清掉（SDK 补的 toolResult 带匹配的 toolCallId，实测 call_ezp977mkkeer5v47afr3yrre 配对），并非「一直红闪」",
+      "真正缺口：① 中止后任务看起来是「空闲」，取消这件事不可见；② 若轮次被杀、没补 toolResult，悬空的 auq 会永久报「等待确认」",
+      "SessionJournal 新增 abortedAtText/abortedAt（stopReason=aborted 时记录）；aborted 时 pendingToolCalls.removeAll() 作废悬空调用；stop=stop 或新 user 消息时清掉中止标记；删掉只写不读的死字段 lastStopReason",
+      "ComateStore.fault 优先级定为 硬错误 > 卡住 > 已中止（已中止时 statusLabel 显示「已中止」）",
+      "逻辑单测 14/14 通过（合成用例 7 组 + 真实「制作技能」日志：不报等待确认、识别已中止、consumedTokens=24500）",
+      "实拍：行内显示 红点+「已中止」+2.5万；收起态状态灯 r-g 在 8 次采样（≈1.1s）中恒为 133，无 0.55s 周期下沉 → 确认红常亮而非红闪"
+    ],
+    "decisions": [
+      "中止优先于 auq：提问发出后按停止，该报「已中止」而非「等待确认」——后者会让人以为还该去回一句话",
+      "中止标记的生命周期：新 user 消息或 stop=stop 即清除，避免陈旧中止把灯永久钉在红色",
+      "fault 优先级：硬错误最具体 > 卡住最实时 > 已中止兜底"
+    ],
+    "issues": [
+      "用户自己取消的任务现在展开态会红常亮「已中止」持续 24h（收起态 30 分钟内才红）；若嫌吵，把 fault 里的 aborted 分支去掉即变成「不红」",
+      "进程被杀且未补 toolResult 的悬空 auq 仍无法与「你只是还没回答」区分（心跳在等回答时同样会停），暂未处理"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/SessionJournal.swift",
+      "ComateNotch/Sources/ComateStore.swift"
+    ]
+  },
+  "reason": "aborted 优先于 auq 落地：中止不再误报「等待确认」，实拍+单测双验证"
+}
