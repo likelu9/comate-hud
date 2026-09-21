@@ -42,10 +42,10 @@ final class NotchPanel: NSPanel {
     var collapsedWidth: CGFloat { hudWidth }
     /// 展开态宽度 = 收起态宽度（同宽，保证左右边缘在动画中完全不动）
     var expandedWidth: CGFloat { hudWidth }
-    /// hostingView 的固定高度：足够容纳最多 10 条记录 + 页脚。
-    /// 展开态高度由内容自然高度决定（条数变化跟随），但 hostingView 尺寸必须恒定，
-    /// 否则又会重新布局导致顶部跳动；窗口只负责裁剪可见区域。
-    let hostingHeight: CGFloat = 460
+    /// hostingView 的固定高度：远大于内容最大自然高度（10 条 ≈ 435pt），
+    /// 为拖拽放大留足余量。展开态高度由内容自然高度决定（条数变化跟随），
+    /// 但 hostingView 尺寸必须恒定，否则又会重新布局导致顶部跳动；窗口只负责裁剪可见区域。
+    let hostingHeight: CGFloat = 720
     private let anchorTopY: CGFloat
 
     init() {
