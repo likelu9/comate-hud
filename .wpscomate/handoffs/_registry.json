@@ -48,6 +48,12 @@
       "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
       "createdAt": 1789967686919,
       "file": "notch-jump-fix.handoff.json"
+    },
+    {
+      "handoffId": "recent-limit-menu",
+      "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+      "createdAt": 1789968270971,
+      "file": "recent-limit-menu.handoff.json"
     }
   ]
 }

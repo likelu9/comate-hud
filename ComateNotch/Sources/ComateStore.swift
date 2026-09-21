@@ -100,6 +100,14 @@ final class ComateStore: ObservableObject {
     @Published private(set) var cloudUnreadCount: Int = 0
     /// 正在打开消息中心（用于 UI 显示 loading 提示）
     @Published private(set) var isOpeningMessageCenter: Bool = false
+    /// 展开态任务列表展示条数（右键菜单可调：3 / 6 / 10）
+    /// 变更即写入 UserDefaults，重启后保持用户选择
+    @Published var recentTaskLimit: Int = ComateStore.loadRecentTaskLimit() {
+        didSet {
+            guard oldValue != recentTaskLimit else { return }
+            UserDefaults.standard.set(recentTaskLimit, forKey: ComateStore.recentTaskLimitKey)
+        }
+    }
 
     /// 今日 assistant 消息总数（所有模型合计）
     var todayTotalMessages: Int {
@@ -133,6 +141,15 @@ final class ComateStore: ObservableObject {
     private let dbPath: String
     /// 动画期间暂停刷新，避免 @Published 更新导致 SwiftUI 重绘竞争
     var isPaused = false
+
+    /// 列表条数可选项与持久化 key
+    static let recentTaskLimitOptions = [3, 6, 10]
+    private static let recentTaskLimitKey = "notch.recentTaskLimit"
+
+    private static func loadRecentTaskLimit() -> Int {
+        let stored = UserDefaults.standard.integer(forKey: recentTaskLimitKey)
+        return recentTaskLimitOptions.contains(stored) ? stored : 6
+    }
 
     init(dbPath: String? = nil) {
         if let p = dbPath {

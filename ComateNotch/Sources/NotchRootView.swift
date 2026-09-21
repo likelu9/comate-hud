@@ -352,6 +352,21 @@ struct NotchRootView: View {
                 onShowMainWindow?()
             }
             Divider()
+            // 列表展示条数：3 / 6 / 10，选中项带勾选标记，选择结果持久化
+            Menu("最近记录条数") {
+                ForEach(ComateStore.recentTaskLimitOptions, id: \.self) { n in
+                    Button {
+                        store.recentTaskLimit = n
+                    } label: {
+                        if store.recentTaskLimit == n {
+                            Label("最近 \(n) 条", systemImage: "checkmark")
+                        } else {
+                            Text("最近 \(n) 条")
+                        }
+                    }
+                }
+            }
+            Divider()
             Button("退出悬浮窗") {
                 store.stop()
                 NSApp.terminate(nil)
@@ -384,7 +399,7 @@ struct NotchRootView: View {
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 3) {
-                        ForEach(store.recentTasks.prefix(6)) { task in
+                        ForEach(store.recentTasks.prefix(store.recentTaskLimit)) { task in
                             taskRow(task)
                                 .onTapGesture { store.openSession(task) }
                                 .onHover { h in
