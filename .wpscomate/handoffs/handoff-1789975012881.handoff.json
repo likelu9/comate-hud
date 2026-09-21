@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "handoffId": "handoff-1789975012881",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789975012887,
+  "note": {
+    "completed": [
+      "定位「4.7万 token 对不上 1.68 点」两个原因：① 原实现累加 usage.totalTokens，而该值包含 cacheRead（同一份上下文缓存重读），逐轮累加重复计数；② 「点」是 credits 计费单位（models.json 中 model_source=credits），本地日志 cost 全 0、无 credits 字段，服务端计算，离线无法换算",
+      "口径改为累计消耗 = Σ(input + output + cacheWrite)，排除 cacheRead；Reading.totalTokens → consumedTokens，ComateTask.totalTokens → consumedTokens（无残留引用）",
+      "实测新口径（展开面板）：AI培训管理平台 5066.3万、Comate任务进度小组件 8560.8万、制作技能 2.5万、连接BOSS直聘 7.5万，与脚本独立算出的值一致",
+      "挖到 Comate 自己的口径：chat_sessions.context_usage = {usedTokens, breakdown{system/skills/tools/mcp/messages}, responseModel}，usedTokens 是最后一个请求的上下文占用（制作技能=24105）"
+    ],
+    "remaining": [
+      "若要显示与 UI 完全一致的「点」，需 Comate 侧提供 credits 计算接口或模型价格表（本地 models.json 只有 context_window/model_tier，无价格）",
+      "测试发现会话被中止时 last_message=「任务已取消，以上为已生成的部分结果」，但末条 assistant 仍挂着未回答的 askUserQuestion，此时会显示红闪「等待确认」而不是红常亮——是否优先判定 aborted 待定"
+    ],
+    "decisions": [
+      "行内数字口径由「ΣtotalTokens」改为「Σ(input+output+cacheWrite)」：前者随轮次平方级膨胀（AI培训管理平台 2.37亿 中 1.87亿 是缓存重读），后者单调增长且可解释",
+      "不显示上下文占用作为默认值：它受上下文窗口限制、长会话不增长（AI培训管理平台仅 15.7万），不适合表达「任务花了多少」"
+    ],
+    "issues": [
+      "用伪造 HOME 做隔离测试无效（NSHomeDirectory() 不认 $HOME），验证只能用真实数据",
+      "UI 的「点」在 IndexedDB/WebKit/Kingsoft 日志里都找不到，确认是服务端实时下发"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/SessionJournal.swift",
+      "ComateNotch/Sources/ComateStore.swift"
+    ]
+  },
+  "reason": "token 口径修正为累计消耗（排除缓存重读），并查清「点」不可本地换算"
+}

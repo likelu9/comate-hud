@@ -78,6 +78,12 @@
       "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
       "createdAt": 1789973875981,
       "file": "handoff-1789973875980.handoff.json"
+    },
+    {
+      "handoffId": "handoff-1789975012881",
+      "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+      "createdAt": 1789975012887,
+      "file": "handoff-1789975012881.handoff.json"
     }
   ]
 }

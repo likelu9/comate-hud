@@ -45,8 +45,8 @@ struct ComateTask: Identifiable, Equatable {
     /// 异常时刻与原因（报错 / 卡住）；nil = 正常
     let faultSince: Date?
     let faultReason: String?
-    /// 该会话累计 token 消耗（nil = 没有会话日志可读）
-    let totalTokens: Int?
+    /// 该会话累计 token 消耗（input + output + cacheWrite，不含缓存重读；nil = 没有会话日志可读）
+    let consumedTokens: Int?
     /// 是否还有未收尾的工具调用（会话日志里有发出但没结果的调用）
     let hasUnfinishedToolCall: Bool
     /// 最近一次真实活动时间：context_usage.updatedAt（助手每次模型调用都会刷新），兜底 updated_at_ms
@@ -74,7 +74,7 @@ struct ComateTask: Identifiable, Equatable {
 
     /// 行内次要信息：有会话日志可读就显示 token 消耗，否则退回消息条数
     var metaLabel: String {
-        if let tokens = totalTokens, tokens > 0 { return "\(ComateTask.tokenLabel(tokens)) tokens" }
+        if let tokens = consumedTokens, tokens > 0 { return "\(ComateTask.tokenLabel(tokens)) tokens" }
         if messageCount > 0 { return "\(messageCount) 条消息" }
         // 云端接口不给消息数也不给 token，别硬凑一个「0 条消息」
         return isCloud ? "云端托管" : "暂无记录"
@@ -352,7 +352,7 @@ final class ComateStore: ObservableObject {
                                        waitingQuestion: journal?.pendingAskUserQuestion,
                                        faultSince: fault?.0,
                                        faultReason: fault?.1,
-                                       totalTokens: journal?.totalTokens,
+                                       consumedTokens: journal?.consumedTokens,
                                        hasUnfinishedToolCall: !(journal?.pendingToolCalls.isEmpty ?? true),
                                        activityAt: max(heartbeat, date))
                 if task.isRunning { running.append(task) }
@@ -541,7 +541,7 @@ final class ComateStore: ObservableObject {
                                      waitingQuestion: nil,
                                      faultSince: nil,
                                      faultReason: nil,
-                                     totalTokens: nil,
+                                     consumedTokens: nil,
                                      hasUnfinishedToolCall: false,
                                      activityAt: updated)
                 }

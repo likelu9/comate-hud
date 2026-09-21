@@ -8,7 +8,7 @@ import Foundation
 /// 数据库里没有的东西：
 ///
 /// 1. `askUserQuestion` 的调用/结果配对 → 「正在等你确认」（auq）
-/// 2. 每条消息的 `usage.totalTokens` → 累计 token 消耗
+/// 2. 每条消息的 `usage` → 累计 token 消耗
 /// 3. `errorMessage` / `stopReason` → 报错、被中止、卡住
 ///
 /// 文件可以长到十几 MB，所以首次全量扫一遍（实测 10MB ≈ 76ms），之后记住字节偏移量，
@@ -16,8 +16,10 @@ import Foundation
 final class SessionJournal {
     /// 一条会话日志的累计读数
     struct Reading {
-        /// 累计 token 消耗（所有 assistant 消息 usage.totalTokens 之和）
-        var totalTokens = 0
+        /// 累计 token 消耗：所有 assistant 消息的 input + output + cacheWrite 之和。
+        /// 不含 cacheRead —— 那是同一份上下文被缓存重读，逐轮累加会重复计数
+        /// （实测「制作技能」会话：含 cacheRead 是 4.7 万，真实新 token 只有 2.5 万）。
+        var consumedTokens = 0
         /// 已发出但还没收到结果的工具调用（id → 工具名 + 发出时刻 + 提问文本）
         /// 时刻先存原字符串，取用时才转 Date：ISO8601 解析很贵，而这里每条工具调用都要存一次
         var pendingToolCalls: [String: (name: String, atText: String, question: String?)] = [:]
@@ -137,7 +139,9 @@ final class SessionJournal {
 
         if role == "assistant" {
             if let usage = message["usage"] as? [String: Any] {
-                reading.totalTokens += usage["totalTokens"] as? Int ?? 0
+                // 只累加新产生的 token：cacheRead 是同一份上下文被缓存重读，算进去就重复了
+                reading.consumedTokens += ["input", "output", "cacheWrite"]
+                    .reduce(0) { $0 + (usage[$1] as? Int ?? 0) }
             }
             let stop = message["stopReason"] as? String
             reading.lastStopReason = stop
