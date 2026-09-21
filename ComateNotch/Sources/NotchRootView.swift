@@ -476,10 +476,16 @@ private struct ComateTaskRow: View {
         HStack(spacing: 8) {
             StatusLight(color: task.light.color, size: 7)
             VStack(alignment: .leading, spacing: 2) {
-                Text(task.title.isEmpty ? "（无标题）" : task.title)
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(isHovered ? 1.0 : 0.92))
-                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    Image(systemName: task.sourceIcon)
+                        .font(.system(size: 8))
+                        .foregroundStyle(.white.opacity(task.isCloud ? 0.55 : 0.4))
+                        .help(task.isCloud ? "云端托管" : "workspace")
+                    Text(task.title.isEmpty ? "（无标题）" : task.title)
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(isHovered ? 1.0 : 0.92))
+                        .lineLimit(1)
+                }
                 HStack(spacing: 6) {
                     Text(task.statusLabel)
                         .font(.system(size: 9, weight: .semibold, design: .rounded))

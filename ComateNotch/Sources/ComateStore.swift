@@ -27,6 +27,17 @@ struct ComateTask: Identifiable, Equatable {
     let messageCount: Int
     let updatedAt: Date
     let sessionFile: String?
+    /// 任务来源：local=本地(workspace)，cloud=云端托管
+    let source: String
+    
+    /// 是否为云端托管任务
+    var isCloud: Bool { source == "cloud" }
+    
+    /// 来源图标（SF Symbols），对应 Comate 左侧任务列表分组图标
+    /// cloud → 云端托管（云图标），local → workspace（文件夹图标）
+    var sourceIcon: String {
+        isCloud ? "icloud.fill" : "folder.fill"
+    }
     
     /// 从 sessionFile 中提取 UUID（Comate 应用期望的 task_id）
     var sessionId: String? {
@@ -79,6 +90,8 @@ struct ModelUsage: Identifiable, Equatable {
 final class ComateStore: ObservableObject {
     @Published private(set) var runningTasks: [ComateTask] = []
     @Published private(set) var recentTasks: [ComateTask] = []
+    /// 云端托管任务列表（从 comate.wps.cn API 获取，不落本地 SQLite）
+    @Published private(set) var cloudTasks: [ComateTask] = []
     @Published private(set) var lastError: String?
     @Published private(set) var lastRefreshed: Date = .now
     @Published private(set) var todayModelUsage: [ModelUsage] = []
@@ -131,13 +144,15 @@ final class ComateStore: ObservableObject {
     func start() {
         refresh()
         refreshCloudUnread()
+        refreshCloudTasks()
         timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             guard let self = self, !self.isPaused else { return }
             self.refresh()
         }
-        // 云端未读数刷新频率较低（30秒），避免频繁请求
+        // 云端数据刷新频率较低（30秒），避免频繁请求
         cloudTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             self?.refreshCloudUnread()
+            self?.refreshCloudTasks()
         }
     }
 
@@ -162,7 +177,7 @@ final class ComateStore: ObservableObject {
             defer { sqlite3_close(db) }
 
             let sql = """
-            SELECT id, title, status, last_message_role, message_count, updated_at_ms, session_file
+            SELECT id, title, status, last_message_role, message_count, updated_at_ms, session_file, source
             FROM chat_sessions ORDER BY updated_at_ms DESC LIMIT 12;
             """
             var stmt: OpaquePointer?
@@ -179,11 +194,14 @@ final class ComateStore: ObservableObject {
                 let count  = Int(sqlite3_column_int(stmt, 4))
                 let ms     = sqlite3_column_int64(stmt, 5)
                 let sf     = sqlite3_column_text(stmt, 6)
+                // source 列：app=云端工作目录任务，local=本地任务；统一映射为 cloud/local
+                let srcRaw = sqlite3_column_text(stmt, 7).map { String(cString: $0) } ?? "local"
                 let date   = ms > 0 ? Date(timeIntervalSince1970: TimeInterval(ms) / 1000.0) : Date()
                 let task = ComateTask(id: id, title: title, status: status,
                                        lastMessageRole: role,
                                        messageCount: count, updatedAt: date,
-                                       sessionFile: sf != nil ? String(cString: sf!) : nil)
+                                       sessionFile: sf != nil ? String(cString: sf!) : nil,
+                                       source: srcRaw == "app" ? "cloud" : "local")
                 if task.isRunning { running.append(task) }
                 recent.append(task)
             }
@@ -235,7 +253,9 @@ final class ComateStore: ObservableObject {
         DispatchQueue.main.async {
             self.lastError = error
             self.runningTasks = running
-            self.recentTasks = recent
+            // 合并本地 + 云端任务，按更新时间降序排序后取前 12 条
+            let merged = (recent + self.cloudTasks).sorted { $0.updatedAt > $1.updatedAt }
+            self.recentTasks = Array(merged.prefix(12))
             self.todayModelUsage = usage
             self.attentionCount = attentionCount
             self.lastRefreshed = .now
@@ -307,7 +327,55 @@ final class ComateStore: ObservableObject {
         }
     }
 
-    /// 模型名简化显示
+    /// 从云端 API 获取云端托管任务列表
+    /// API: GET https://comate.wps.cn/api/comate/v1/workmate/sessions/list?offset=0&limit=12
+    /// 认证: Cookie: wps_sid=<sid>
+    /// 云端任务不落本地 SQLite，需单独拉取后与本地任务合并展示
+    private func refreshCloudTasks() {
+        DispatchQueue.global(qos: .utility).async {
+            guard let sid = self.fetchWpsSid() else { return }
+            var components = URLComponents(string: "https://comate.wps.cn/api/comate/v1/workmate/sessions/list")!
+            components.queryItems = [
+                URLQueryItem(name: "offset", value: "0"),
+                URLQueryItem(name: "limit", value: "12")
+            ]
+            guard let url = components.url else { return }
+            var req = URLRequest(url: url)
+            req.setValue("wps_sid=\(sid)", forHTTPHeaderField: "Cookie")
+            req.setValue("https://comate.wps.cn/web/cloud/", forHTTPHeaderField: "Referer")
+            req.setValue("application/json", forHTTPHeaderField: "Accept")
+            req.timeoutInterval = 8
+            let task = URLSession.shared.dataTask(with: req) { data, _, _ in
+                guard let data = data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      json["code"] as? Int == 0,
+                      let dataDict = json["data"] as? [String: Any],
+                      let sessions = dataDict["sessions"] as? [[String: Any]] else { return }
+                let cloudTasks: [ComateTask] = sessions.compactMap { s in
+                    guard let id = s["id"] as? String,
+                          let title = s["title"] as? String,
+                          let status = s["status"] as? String,
+                          let updatedStr = s["updated_at"] as? String,
+                          let updated = ISO8601DateFormatter().date(from: updatedStr) else { return nil }
+                    // 云端 API 无 last_message_role，用 status 推断：running→user，否则 assistant
+                    let role = status == "running" ? "user" : "assistant"
+                    let count = s["message_count"] as? Int ?? 0
+                    return ComateTask(id: id, title: title, status: status,
+                                     lastMessageRole: role,
+                                     messageCount: count, updatedAt: updated,
+                                     sessionFile: nil, source: "cloud")
+                }
+                DispatchQueue.main.async {
+                    self.cloudTasks = cloudTasks
+                    // 触发 recentTasks 重新合并（复用 refresh 末尾的合并逻辑）
+                    let local = self.recentTasks.filter { !$0.isCloud }
+                    let merged = (local + cloudTasks).sorted { $0.updatedAt > $1.updatedAt }
+                    self.recentTasks = Array(merged.prefix(12))
+                }
+            }
+            task.resume()
+        }
+    }
     private func displayName(_ model: String) -> String {
         let lower = model.lowercased()
         if lower.hasPrefix("glm") { return "GLM" }
@@ -325,8 +393,16 @@ final class ComateStore: ObservableObject {
     /// 格式：wpscomate://chat.comate/jointtask?id=<session_uuid>&ckp=<base64({})>
     /// id 为会话 UUID（从 sessionFile 提取），ckp 为 base64 编码的参数对象（空对象即可）
     func openSession(_ task: ComateTask) {
-        let urlString = "wpscomate://chat.comate/local?id=\(task.id)"
-        print("[ComateNotch] 打开会话: id=\(task.id), url=\(urlString)")
+        // 云端任务用 cloud deeplink，本地任务用 local deeplink + sessionId（从 sessionFile 提取的 UUID）
+        let urlString: String
+        if task.isCloud {
+            urlString = "wpscomate://chat.comate/cloud?id=\(task.id)"
+        } else {
+            // 本地任务必须用 sessionId（Comate 期望的 task_id），而非数据库主键 id
+            let taskId = task.sessionId ?? task.id
+            urlString = "wpscomate://chat.comate/local?id=\(taskId)"
+        }
+        print("[ComateNotch] 打开会话: id=\(task.id), source=\(task.source), url=\(urlString)")
         if let url = URL(string: urlString) {
             NSWorkspace.shared.open(url)
         }
