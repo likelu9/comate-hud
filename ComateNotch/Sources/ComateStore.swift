@@ -260,6 +260,44 @@ final class ComateStore: ObservableObject {
 
     private static let customHeightKey = "notch.customExpandedHeight"
 
+    // MARK: - 模型用量
+
+    /// 用量取数状态，决定左下角是显示数字还是「用量 —」
+    enum UsageState: Equatable {
+        /// 还没取过（启动瞬间）
+        case idle
+        case ok
+        /// keychain 里没有 wps_sid：没装或没登录 Comate 桌面端
+        case noCredential
+        /// 有凭据但取数失败（网络异常 / sid 失效 / 接口改版）
+        case failed
+    }
+
+    @Published var usageState: UsageState = .idle
+
+    /// 连续失败次数与下次可重试时间。sid 失效时不至于每 60 秒白打一次接口
+    private var usageFailures = 0
+    private var usageRetryAfter = Date.distantPast
+
+    /// 退避是否已到期（间隔 60s → 120 → 240 → 300 封顶）
+    private var usageRetryAllowed: Bool { Date() >= usageRetryAfter }
+
+    private func noteUsageSuccess() {
+        usageFailures = 0
+        usageRetryAfter = .distantPast
+    }
+
+    private func noteUsageFailure() {
+        usageFailures = min(usageFailures + 1, 8)
+        let delay = min(60.0 * pow(2, Double(usageFailures - 1)), 300)
+        usageRetryAfter = Date().addingTimeInterval(delay)
+    }
+
+    /// 用量接口的凭据：桌面客户端登录时写进 keychain 的 wps_sid
+    /// （svce=wps365 / acct=credential_wps_sid，不带账号后缀，多账号登录会覆盖成当前账号）。
+    /// 与浏览器登录状态无关；与未读消息、云端任务列表两个接口复用同一凭据。
+    private var usageCredential: String? { fetchWpsSid() }
+
     private static func loadCustomExpandedHeight() -> CGFloat? {
         let v = UserDefaults.standard.double(forKey: customHeightKey)
         return v > 0 ? CGFloat(v) : nil
