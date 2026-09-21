@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "handoffId": "handoff-1789958144381",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789958144382,
+  "note": {
+    "completed": [
+      "根因定位：云端任务（如 28ea9435 国药集团项目使用情况分析）通过 comate.wps.cn/api/comate/v1/workmate/chat 发起，不写入本地 chat_history.db，悬浮窗只读本地 SQLite 所以看不到",
+      "发现云端任务列表 API：GET https://comate.wps.cn/api/comate/v1/workmate/sessions/list?offset=0&limit=12，Cookie 认证，返回 sessions 数组含 id/title/status/updated_at/source",
+      "发现云端任务 deeplink 格式：wpscomate://chat.comate/cloud?id=<id>（本地任务为 wpscomate://chat.comate/local?id=<sessionId>）",
+      "修复 openSession deeplink bug：本地任务改用 task.sessionId（从 sessionFile 提取的 UUID）而非 task.id（数据库主键），之前用错 id 导致点击报「找不到该任务」",
+      "ComateTask 结构体新增 source 字段（cloud/local）、isCloud 属性、sourceIcon 属性（icloud.fill / folder.fill）",
+      "ComateStore 新增 cloudTasks 属性、refreshCloudTasks() 方法，复用 fetchWpsSid() 调云端 API",
+      "refresh() 末尾改为合并本地+云端任务按 updatedAt 排序取前 12 条",
+      "本地 SQL 加查 source 列（app→cloud, local→local 映射）",
+      "start() 的 cloudTimer（30秒）顺带刷新云端任务列表",
+      "ComateTaskRow 在标题前加来源图标（云/文件夹）+ tooltip",
+      "编译成功，悬浮窗已重启"
+    ],
+    "remaining": [
+      "运行时验证：展开悬浮窗确认云端任务（28ea9435）是否出现在列表顶部并带云图标——print 在 release build 不输出，需用户肉眼确认",
+      "点击云端任务确认 deeplink wpscomate://chat.comate/cloud?id= 能正确跳转",
+      "点击本地任务确认修复后的 sessionId deeplink 不再报「找不到该任务」",
+      "图标视觉确认：icloud.fill/folder.fill 是否符合预期，如不符可换 cloud.fill/folder 等"
+    ],
+    "decisions": [
+      "云端任务 source 字段：API 返回的 source 值是 comate/share/woa 等，但悬浮窗统一标记为 cloud（只要来自 workmate/sessions/list 就是云端）",
+      "本地任务 source 映射：数据库 source=app 映射为 cloud（app 是工作目录任务，本质也是云端），source=local 映射为 local",
+      "图标选择：用 SF Symbols 的 icloud.fill 表示云端托管、folder.fill 表示 workspace（因 Comate 前端图标在远程 bundle 无法直接提取，用语义最接近的系统图标）",
+      "云端任务 last_message_role 推断：API 无此字段，用 status=running→user、否则 assistant 推断",
+      "云端任务 messageCount：API 返回无此字段时默认 0",
+      "云端任务刷新频率 30 秒（复用 cloudTimer，与未读消息数刷新合并）"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/ComateStore.swift",
+      "ComateNotch/Sources/NotchRootView.swift"
+    ]
+  }
+}
