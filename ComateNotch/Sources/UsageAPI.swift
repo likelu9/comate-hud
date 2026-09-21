@@ -17,7 +17,7 @@ enum UsageAPI {
     }
 
     /// 额度周期
-    enum Period: String {
+    enum Period: String, CaseIterable {
         case daily, monthly
 
         /// 左下角切换按钮上的短标签

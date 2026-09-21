@@ -354,15 +354,19 @@ final class ComateStore: ObservableObject {
             .flatMap(UsageAPI.Period.init(rawValue:)) ?? .daily
     }
 
-    func toggleUsagePeriod() {
-        usagePeriod = usagePeriod == .daily ? .monthly : .daily
-        UserDefaults.standard.set(usagePeriod.rawValue, forKey: ComateStore.usagePeriodKey)
+    func setUsagePeriod(_ period: UsageAPI.Period) {
+        guard usagePeriod != period else { return }
+        usagePeriod = period
+        UserDefaults.standard.set(period.rawValue, forKey: ComateStore.usagePeriodKey)
     }
 
-    /// 左下角文案：日/月限额百分比；取不到数据时给占位符
-    var usageLimitLabel: String {
-        guard usageState == .ok, let limit = usageLimits?.limit(usagePeriod) else { return "用量 —" }
-        return "\(usagePeriod.shortLabel) \(UsageAPI.percentLabel(limit.percent))"
+    /// 页脚额度文案：月/日两个周期都展示（高亮周期由左侧胶囊控制）。
+    /// 取不到数据时用占位符，不隐藏整段。
+    var usageBothLabel: (month: String, day: String) {
+        guard usageState == .ok, let limits = usageLimits else { return ("—", "—") }
+        let month = limits.monthly.map { UsageAPI.percentLabel($0.percent) } ?? "—"
+        let day = limits.daily.map { UsageAPI.percentLabel($0.percent) } ?? "—"
+        return (month, day)
     }
 
     /// 悬停详情：说清「用掉多少 / 还剩多少」，以及为什么没数字
@@ -378,7 +382,7 @@ final class ComateStore: ObservableObject {
             return "正在获取用量…"
         case .ok:
             guard let limit = usageLimits?.limit(usagePeriod) else { return "暂无用量数据" }
-            return "\(limit.period.shortLabel)限额：已用 \(UsageAPI.creditsLabel(limit.used)) / \(UsageAPI.creditsLabel(limit.total)) 智点\n剩余 \(UsageAPI.creditsLabel(limit.remain)) · 点击切换日/月"
+            return "\(limit.period.shortLabel)限额：已用 \(UsageAPI.creditsLabel(limit.used)) / \(UsageAPI.creditsLabel(limit.total)) 智点\n剩余 \(UsageAPI.creditsLabel(limit.remain)) · 左侧胶囊切换高亮周期"
         }
     }
 

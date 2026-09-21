@@ -288,7 +288,7 @@ struct NotchRootView: View {
     // 布局常量：必须与 expandedContent 的 padding / spacing 保持一致
     private let listSpacing: CGFloat = 3
     private let blockSpacing: CGFloat = 6
-    private let bottomPadding: CGFloat = 14
+    private let bottomPadding: CGFloat = 6
     private var topInset: CGFloat { notchHeight / 2 + 24 }
 
     /// 当前实际展示的记录条数
@@ -563,23 +563,18 @@ struct NotchRootView: View {
                 .frame(height: listViewportHeight)
             }
 
-            HStack(spacing: 3) {
-                Circle()
-                    .fill(Color(hex: store.primaryLight.color))
-                    .frame(width: 6, height: 6)
-                    .shadow(
-                        color: store.primaryLight != .gray
-                            ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.65)
-                            : .clear,
-                        radius: store.primaryLight != .gray ? 5 : 0
-                    )
-                // 模型用量：默认日限额，点击切换月限额（选择持久化）
-                Button(action: { store.toggleUsagePeriod() }) {
-                    Text(store.usageLimitLabel)
-                        .font(.system(size: 8, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(store.usageState == .ok ? 0.45 : 0.3))
+            HStack(spacing: 6) {
+                // 周期高亮开关：双段胶囊，点击切换月/日（两个周期的额度文案始终都展示）
+                usagePeriodSwitch
+                // 额度文案：月/日都展示，高亮周期更亮
+                HStack(spacing: 0) {
+                    Text("月额度已用 \(store.usageBothLabel.month)")
+                        .foregroundStyle(.white.opacity(store.usagePeriod == .monthly ? 0.55 : 0.3))
+                    Text("　")
+                    Text("日额度已用 \(store.usageBothLabel.day)")
+                        .foregroundStyle(.white.opacity(store.usagePeriod == .daily ? 0.55 : 0.3))
                 }
-                .buttonStyle(.plain)
+                .font(.system(size: 8, weight: .medium, design: .rounded))
                 .help(store.usageLimitDetail)
                 Spacer()
                 // 消息数提示：铃铛图标 + 未读数（可点击打开消息中心）
@@ -639,6 +634,30 @@ struct NotchRootView: View {
             guard h > 0, abs(h - footerHeight) > 0.5 else { return }
             footerHeight = h
         }
+    }
+
+    /// 额度周期切换：双段胶囊（日 | 月），高亮当前周期，点击切换
+    private var usagePeriodSwitch: some View {
+        HStack(spacing: 0) {
+            ForEach(UsageAPI.Period.allCases, id: \.self) { period in
+                Button(action: { store.setUsagePeriod(period) }) {
+                    Text(period.shortLabel)
+                        .font(.system(size: 8, weight: .semibold, design: .rounded))
+                        .foregroundStyle(store.usagePeriod == period
+                                         ? Color.black.opacity(0.8)
+                                         : Color.white.opacity(0.45))
+                        .frame(width: 13, height: 11)
+                        .background(
+                            RoundedRectangle(cornerRadius: 3.5)
+                                .fill(store.usagePeriod == period ? Color.white.opacity(0.85) : Color.clear)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(1)
+        .background(RoundedRectangle(cornerRadius: 4.5).fill(Color.white.opacity(0.1)))
+        .help("点击切换高亮周期（月/日额度都已在右侧展示）")
     }
 
     private func taskRow(_ t: ComateTask) -> some View {

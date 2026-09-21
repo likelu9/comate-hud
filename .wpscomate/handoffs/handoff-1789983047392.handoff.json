@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "handoffId": "handoff-1789983047392",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789983047397,
+  "note": {
+    "completed": [
+      "几何画布 notch_geometry_canvas.png 重新生成：形状圆角统一 r=14（收起/展开/托底窗同值，非旧的 10）、底部 280 托底示意、参数表更新（bottomPadding 14→6 吸底）",
+      "新增「页脚日/月胶囊 r=4.5」行与「页脚（展开态）」说明行；画布高度 1580→1640 避免文字被裁",
+      "sid 自愈链路：UsageAPI 遇 401/403 标记 .authExpired（不再吞成泛化失败），refreshUsage 检测到后重读 keychain 凭据并立即重试一次；仍失败则排 30s 一次性退避重试定时器，凭据恢复后自动回到正常节拍",
+      "展开态页脚重设计：左侧状态灯→日/月切换胶囊（白底高亮当前周期），文案改为「月额度已用 XX%　日额度已用 XX%」，高亮周期更亮；右侧保留消息铃铛",
+      "页脚吸底：bottomPadding 14→6，该行贴住面板下边缘",
+      "验证：临时单测 31/31（含 shouldFetch 频次上限、authExpired 判定、节拍）；实机日志验证 401→重读凭据→30s 重试→恢复；实机截图验证页脚布局与胶囊点击切换（defaults 持久化 daily↔monthly 双向确认）"
+    ],
+    "remaining": [
+      "token_cookie 内并无 refresh_token（access_token 已过期 27 天），因此没有实现「本地刷新 token 并回写 keychain」——当前是「凭据失效即自愈」而非「主动续期」，如需主动续期须向 Comate 侧确认凭据刷新接口",
+      "云端任务 session_id 与 chat_sessions.id 一致性仍未在真实数据上核对"
+    ],
+    "decisions": [
+      "不接 token_cookie 的 access/refresh 链路：实测该 cookie 无 refresh_token、access_token 已过期 27 天，本地无法续期；改为 401/403 → 重读 keychain → 立即重试 + 30s 退避，靠 Comate 自身刷新 keychain 后自愈",
+      "authExpired 单独建模（区别于 failed/noCredential），UI 文案明确告知「Comate 刷新登录态后会自动恢复」，避免用户以为坏了",
+      "退避重试用一次性 30s 定时器而非复用主节拍：收起态节拍是 600s，若只靠节拍恢复会等太久",
+      "页脚左侧改为可切换胶囊（替换原状态灯）：状态灯信息已由 logo 圆点承载，页脚让位给周期切换更省空间",
+      "页脚吸底用 bottomPadding 6 而非 0：底部拖拽把手需要留位，行内容在左右两侧因此视觉上已贴边"
+    ],
+    "issues": [
+      "合成 hover/click 会被真实光标覆盖：面板随真实光标离开刘海而收起，导致合成点击穿透到后台窗口；正确姿势是「真实光标 warp 进刘海 + 只发合成事件到页脚」，测试脚本 /tmp/click_pill2.py",
+      "判定胶囊是否生效不能只看截图：需同时读 defaults com.wpscomate.notch notch.usagePeriod 确认持久化值翻转（本次曾因点击落在已激活段导致 no-op，误判为无效）",
+      "画布生成脚本 /tmp/geo_canvas.py 是唯一来源，改动几何常量后须重跑；本次已把 bottomPadding 与页脚胶囊同步进去"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/UsageAPI.swift",
+      "ComateNotch/Sources/ComateStore.swift",
+      "ComateNotch/Sources/NotchRootView.swift",
+      "notch_geometry_canvas.png"
+    ]
+  },
+  "reason": "画布几何更新 + sid 失效自愈链路 + 展开态页脚重设计（可切换胶囊 / 新文案 / 吸底），全部构建与实机验证通过"
+}
