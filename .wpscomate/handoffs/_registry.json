@@ -66,6 +66,12 @@
       "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
       "createdAt": 1789969578325,
       "file": "drag-jitter-fix.handoff.json"
+    },
+    {
+      "handoffId": "min-max-height",
+      "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+      "createdAt": 1789970406489,
+      "file": "min-max-height.handoff.json"
     }
   ]
 }

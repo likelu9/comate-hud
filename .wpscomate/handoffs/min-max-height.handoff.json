@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "handoffId": "min-max-height",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789970406489,
+  "note": {
+    "completed": [
+      "拖拽范围改为 [1 条高度, 10 条高度]：由实测行高反推 rowUnit，contentHeight(forRows:) 计算任意条数的高度",
+      "面板高度 = clamp(自定义 ?? 自然高度, minExpandedHeight, maxExpandedHeight)；自然高度仍跟随当前条数自适应",
+      "新增 ScrollView + 显式 viewport 高度：面板比内容矮时列表可滚动，不再依赖\"面板不低于内容高度\"这个约束",
+      "测量拆分：RowsHeightKey（行 VStack 自然高度，与面板高度无关）+ FooterHeightKey（页脚高度），并记录 measuredRowCount 以反推单行占高",
+      "拖拽松手判定改为 abs(h - naturalContentHeight) <= 1 才恢复默认（低于自然高度现在是合法自定义值）",
+      "移除 NotchRootView 的 maxExpandedHeight 参数（改为内部计算），AppDelegate 同步去掉传参",
+      "实测：自然(3条)=180pt / 拖到最大=432pt(≈10条) / 拖到最小=108pt(≈1条，持久化 111)；最小高度下正好展示 1 条记录+页脚；重启后 111 保留"
+    ],
+    "remaining": [
+      "用户实测手感与视觉确认",
+      "选 10 条时条数=最大高度，此时只能往上拖（无向下空间），确认可接受"
+    ],
+    "decisions": [
+      "最小/最大高度不再硬编码，由实测行高线性外推（1 条 / 10 条），换字号或行布局时自动跟随",
+      "rowUnit 只取决于行本身，与展示条数无关，因此切换条数时高度换算仍然有效",
+      "onChange(of: targetExpandedHeight) 统一触发窗口同步（替代原 contentHeight + customExpandedHeight 两个监听）",
+      "保留\"内容不超过可视高度时贴合内容\"：ScrollView 显式设高度 min(rowsHeight, avail)，避免页脚被顶到面板底部"
+    ],
+    "issues": [
+      "截图量高有恒定 ~3pt 偏差（采样列 + 纯黑阈值），只用于趋势/边界比对",
+      "合成鼠标事件需辅助功能权限"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/NotchRootView.swift",
+      "ComateNotch/Sources/AppDelegate.swift"
+    ]
+  },
+  "reason": "拖拽高度范围改为 1 条↔10 条高度，列表超出时可滚动"
+}
