@@ -20,14 +20,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let view = NotchRootView(
             store: store,
             initialExpanded: CommandLine.arguments.contains("--expanded"),
-            onExpandChange: { [weak panel] isExpanded in
-                if isExpanded { panel?.animateToExpanded() }
+            onExpandChange: { [weak panel] isExpanded, height in
+                if isExpanded { panel?.animateToExpanded(height: height) }
                 else { panel?.animateToCollapsed() }
             },
             wingWidth: panel.wingWidth,
             notchHeight: geo.notchHeight,
             expandedWidth: panel.expandedWidth,
-            expandedHeight: panel.expandedHeight,
+            maxExpandedHeight: panel.hostingHeight - 20,
+            onExpandedHeightChange: { [weak panel] h in
+                panel?.setExpandedHeightImmediate(h)
+            },
             onShowMainWindow: { [weak self] in
                 NSApp.setActivationPolicy(.regular)
                 NSApp.activate(ignoringOtherApps: true)
@@ -42,13 +45,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 窗口收起时超出部分由窗口自身裁剪，可见区域正好是内容顶部。
         let container = NSView(frame: NSRect(x: 0, y: 0,
                                              width: panel.expandedWidth,
-                                             height: panel.expandedHeight))
+                                             height: panel.hostingHeight))
         container.wantsLayer = true
         container.layer?.backgroundColor = NSColor.clear.cgColor
         let hosting = NSHostingView(rootView: view)
         hosting.frame = NSRect(x: 0, y: 0,
                                width: panel.expandedWidth,
-                               height: panel.expandedHeight)
+                               height: panel.hostingHeight)
         // minYMargin 弹性 = 顶部边距固定 → 视图始终吸在窗口顶部
         hosting.autoresizingMask = [.minYMargin]
         container.addSubview(hosting)

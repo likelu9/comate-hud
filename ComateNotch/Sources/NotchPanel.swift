@@ -40,9 +40,12 @@ final class NotchPanel: NSPanel {
     var hudWidth: CGFloat { (notch.notchRight - notch.notchLeft) + wingWidth * 2 }
     /// 收起态总宽（动态）：必须 > 刘海宽，否则整个 HUD 被刘海盖住
     var collapsedWidth: CGFloat { hudWidth }
-    let expandedHeight: CGFloat = 280  // 从 320 缩小到 280
     /// 展开态宽度 = 收起态宽度（同宽，保证左右边缘在动画中完全不动）
     var expandedWidth: CGFloat { hudWidth }
+    /// hostingView 的固定高度：足够容纳最多 10 条记录 + 页脚。
+    /// 展开态高度由内容自然高度决定（条数变化跟随），但 hostingView 尺寸必须恒定，
+    /// 否则又会重新布局导致顶部跳动；窗口只负责裁剪可见区域。
+    let hostingHeight: CGFloat = 460
     private let anchorTopY: CGFloat
 
     init() {
@@ -77,18 +80,24 @@ final class NotchPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
-    func expandedFrame() -> NSRect {
+    /// 展开态窗口 frame：高度由内容实际高度决定（条数动态变化），顶部锚定屏幕顶
+    func expandedFrame(height: CGFloat) -> NSRect {
         // 锚定窗口顶部：top = anchorTopY + notchHeight = screen.maxY
-        // Y(底部) = screen.maxY - expandedHeight
-        let y = anchorTopY - (expandedHeight - notch.notchHeight)
+        let h = max(height, notch.notchHeight)
+        let y = anchorTopY - (h - notch.notchHeight)
         return NSRect(x: notch.centerX - expandedWidth / 2,
-                      y: y, width: expandedWidth, height: expandedHeight)
+                      y: y, width: expandedWidth, height: h)
     }
 
     /// 收起态窗口 frame（顶部锚定于屏幕顶），供静态托底窗口复用
     func collapsedFrame() -> NSRect {
         NSRect(x: notch.centerX - collapsedWidth / 2,
                y: anchorTopY, width: collapsedWidth, height: notch.notchHeight)
+    }
+
+    /// 拖拽调整高度时立即改窗口尺寸（不走动画，保证跟手）
+    func setExpandedHeightImmediate(_ height: CGFloat) {
+        setFrame(expandedFrame(height: height), display: true)
     }
 
     func animateToCollapsed() {
@@ -102,8 +111,8 @@ final class NotchPanel: NSPanel {
         }
     }
 
-    func animateToExpanded() {
-        let target = expandedFrame()
+    func animateToExpanded(height: CGFloat) {
+        let target = expandedFrame(height: height)
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.25
             ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)

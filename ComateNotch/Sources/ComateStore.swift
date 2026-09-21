@@ -146,6 +146,30 @@ final class ComateStore: ObservableObject {
     static let recentTaskLimitOptions = [3, 6, 10]
     private static let recentTaskLimitKey = "notch.recentTaskLimit"
 
+    /// 用户拖拽自定义的展开高度（nil = 跟随内容自适应）
+    @Published var customExpandedHeight: CGFloat? = ComateStore.loadCustomExpandedHeight()
+
+    /// 是否处于自定义高度（右键菜单据此显示"恢复默认高度"）
+    var hasCustomExpandedHeight: Bool { customExpandedHeight != nil }
+
+    /// 拖拽结束才落盘，避免拖拽过程中高频写 UserDefaults
+    func saveCustomExpandedHeight(_ h: CGFloat) {
+        customExpandedHeight = h
+        UserDefaults.standard.set(Double(h), forKey: ComateStore.customHeightKey)
+    }
+
+    func resetCustomExpandedHeight() {
+        customExpandedHeight = nil
+        UserDefaults.standard.removeObject(forKey: ComateStore.customHeightKey)
+    }
+
+    private static let customHeightKey = "notch.customExpandedHeight"
+
+    private static func loadCustomExpandedHeight() -> CGFloat? {
+        let v = UserDefaults.standard.double(forKey: customHeightKey)
+        return v > 0 ? CGFloat(v) : nil
+    }
+
     private static func loadRecentTaskLimit() -> Int {
         let stored = UserDefaults.standard.integer(forKey: recentTaskLimitKey)
         return recentTaskLimitOptions.contains(stored) ? stored : 6

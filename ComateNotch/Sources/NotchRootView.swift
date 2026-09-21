@@ -208,13 +208,17 @@ struct NotchShape: Shape {
 struct NotchRootView: View {
     @ObservedObject var store: ComateStore
     var initialExpanded: Bool = false
-    var onExpandChange: ((Bool) -> Void)?
+    /// 展开/收起回调：第二个参数为展开态目标高度（由内容自适应或用户拖拽决定）
+    var onExpandChange: ((Bool, CGFloat) -> Void)?
 
     // 刘海几何：HUD 总宽必须大于刘海宽，内容仅在左右两翼显示
     var wingWidth: CGFloat = 36  // 收窄到 36
     var notchHeight: CGFloat
     var expandedWidth: CGFloat = 280
-    var expandedHeight: CGFloat = 280
+    /// 拖拽可达到的最大高度（受 hostingView 固定高度限制）
+    var maxExpandedHeight: CGFloat = 440
+    /// 拖拽调整高度时立即同步窗口尺寸（不走动画，跟手）
+    var onExpandedHeightChange: ((CGFloat) -> Void)?
     var onShowMainWindow: (() -> Void)?
     var onQuit: (() -> Void)?
 
@@ -229,9 +233,53 @@ struct NotchRootView: View {
     @State private var breatheOpacity: Double = 1.0
     @State private var bellHovered = false
     @State private var bellRotate = false
+
+    /// 展开内容的自然高度（由 SwiftUI 实测上报）
+    @State private var contentHeight: CGFloat = 0
+    /// 首次测量完成前的兜底高度
+    private let fallbackExpandedHeight: CGFloat = 280
+    /// 拖拽状态
+    @State private var isResizing = false
+    @State private var resizeHovered = false
+    @State private var dragBaseHeight: CGFloat = 0
+
+    /// 展开态实际高度 = max(内容自然高度, 用户自定义高度)
+    /// 保证内容永远不会被裁切；自定义高度只在比内容高时才生效。
+    private var targetExpandedHeight: CGFloat {
+        let base = contentHeight > 0 ? contentHeight : fallbackExpandedHeight
+        return max(base, store.customExpandedHeight ?? 0)
+    }
+
+    /// 拖拽下界：不低于内容自然高度（否则列表会被裁掉且无法滚动）
+    private var minExpandedHeight: CGFloat { max(contentHeight, notchHeight + 40) }
+
+    /// 拖拽底部手柄调整展开高度（顶部锚定不动，向下拖变高）
+    private var resizeGesture: some Gesture {
+        DragGesture(minimumDistance: 1)
+            .onChanged { v in
+                if !isResizing {
+                    isResizing = true
+                    dragBaseHeight = targetExpandedHeight
+                }
+                let h = min(max(dragBaseHeight + v.translation.height, minExpandedHeight),
+                            maxExpandedHeight)
+                store.customExpandedHeight = h
+            }
+            .onEnded { _ in
+                isResizing = false
+                let h = store.customExpandedHeight ?? 0
+                // 拖到不高于内容高度 → 视为恢复默认，避免"设了自定义但看不出区别"
+                if h <= contentHeight + 0.5 {
+                    store.resetCustomExpandedHeight()
+                } else {
+                    store.saveCustomExpandedHeight(h)
+                }
+            }
+    }
+
     var body: some View {
         let currentWidth = expanded ? expandedWidth : collapsedTotalWidth
-        let currentHeight = expanded ? expandedHeight : notchHeight
+        let currentHeight = expanded ? targetExpandedHeight : notchHeight
         let cornerR: CGFloat = 14
 
         NotchShape(cornerRadius: cornerR)
@@ -298,18 +346,43 @@ struct NotchRootView: View {
                 .padding(.trailing, wingWidth / 2 - 2)
                 .padding(.top, (notchHeight - 18) / 2)
             }
-            // 展开内容：先固定为展开态尺寸（内部布局与动画无关，绝不重排），
-            // 再按当前高度裁剪 + opacity 显隐。这样展开/收起过程中
-            // 任务列表不会随窗口高度变化重新布局，也不会在收起时溢出到窗口外。
+            // 展开内容：按内容自然高度布局、顶部对齐。
+            // 收起时无需额外裁剪/透明：内容顶部内边距(notchHeight/2+24) 已大于
+            // 收起态高度，窗口裁剪就足以隐藏它。
             .overlay(alignment: .topLeading) {
                 expandedContent
-                    .frame(width: expandedWidth, height: expandedHeight, alignment: .topLeading)
-                    .opacity(expanded ? 1 : 0)
-                    .frame(width: currentWidth, height: currentHeight, alignment: .topLeading)
-                    .clipped()
+            }
+            // 拖拽手柄：展开态底部，拖动可自定义面板高度
+            .overlay(alignment: .bottom) {
+                if expanded {
+                    ZStack {
+                        Color.clear.contentShape(Rectangle())
+                        Capsule()
+                            .fill(Color.white.opacity(resizeHovered || isResizing ? 0.5 : 0.22))
+                            .frame(width: 44, height: 4)
+                            .padding(.bottom, 4)
+                    }
+                    .frame(height: 14)
+                    .onHover { h in
+                        resizeHovered = h
+                        if h { NSCursor.resizeUpDown.push() } else { NSCursor.pop() }
+                    }
+                    .gesture(resizeGesture)
+                }
             }
             .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
-            .animation(.easeInOut(duration: 0.25), value: expanded)
+            .animation(isResizing ? nil : Animation.easeInOut(duration: 0.25), value: expanded)
+            // 拖拽时去掉高度动画，保证跟手
+            .animation(isResizing ? nil : Animation.easeInOut(duration: 0.25), value: currentHeight)
+            // 高度变化（切换条数 / 恢复默认）→ 同步窗口高度
+            .onChange(of: contentHeight) { _ in
+                guard expanded else { return }
+                onExpandedHeightChange?(targetExpandedHeight)
+            }
+            .onChange(of: store.customExpandedHeight) { _ in
+                guard expanded else { return }
+                onExpandedHeightChange?(targetExpandedHeight)
+            }
             .onHover { isHovering in
             hovering = isHovering
             if isHovering {
@@ -322,7 +395,7 @@ struct NotchRootView: View {
                         isAnimating = true
                         store.isPaused = true
                         withAnimation { expanded = true }
-                        onExpandChange?(true)
+                        onExpandChange?(true, self.targetExpandedHeight)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                             isAnimating = false
                             store.isPaused = false
@@ -334,11 +407,12 @@ struct NotchRootView: View {
                 expandTimer?.invalidate()
                 guard expanded else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    guard !self.hovering, self.expanded else { return }
+                    // 拖拽调高度期间即使指针短暂移出窗口也不要收起
+                    guard !self.hovering, self.expanded, !self.isResizing else { return }
                     isAnimating = true
                     store.isPaused = true
                     withAnimation { expanded = false }
-                    onExpandChange?(false)
+                    onExpandChange?(false, self.targetExpandedHeight)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         isAnimating = false
                         store.isPaused = false
@@ -367,6 +441,13 @@ struct NotchRootView: View {
                 }
             }
             Divider()
+            // 已自定义高度时提供恢复默认（默认 = 跟随内容自适应）
+            if store.hasCustomExpandedHeight {
+                Button("恢复默认高度") {
+                    store.resetCustomExpandedHeight()
+                }
+            }
+            Divider()
             Button("退出悬浮窗") {
                 store.stop()
                 NSApp.terminate(nil)
@@ -378,13 +459,13 @@ struct NotchRootView: View {
             NSLog("[NotchRootView] onAppear: expanded_after=%@", String(describing: expanded))
             if expanded {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    onExpandChange?(true)
+                    onExpandChange?(true, self.targetExpandedHeight)
                 }
             }
         }
-        // 固定为展开态尺寸并左上对齐：hostingView 尺寸恒定，
-        // 窗口高度动画只改变可见裁剪区，内容自身布局完全不动。
-        .frame(width: expandedWidth, height: expandedHeight, alignment: .topLeading)
+        // 左上对齐：hostingView 尺寸恒定，窗口只负责裁剪可见区域，
+        // 内容按自然高度布局，高度变化不会引起重排跳动。
+        .frame(width: expandedWidth, alignment: .topLeading)
     }
 
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）
@@ -395,17 +476,14 @@ struct NotchRootView: View {
                 Text("暂无任务")
                     .font(.system(size: 11, design: .rounded))
                     .foregroundStyle(.white.opacity(0.4))
-                Spacer()
             } else {
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 3) {
-                        ForEach(store.recentTasks.prefix(store.recentTaskLimit)) { task in
-                            taskRow(task)
-                                .onTapGesture { store.openSession(task) }
-                                .onHover { h in
-                                    if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-                                }
-                        }
+                VStack(spacing: 3) {
+                    ForEach(store.recentTasks.prefix(store.recentTaskLimit)) { task in
+                        taskRow(task)
+                            .onTapGesture { store.openSession(task) }
+                            .onHover { h in
+                                if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                            }
                     }
                 }
             }
@@ -464,8 +542,18 @@ struct NotchRootView: View {
         }
         .padding(.horizontal, 12)
         .padding(.top, notchHeight / 2 + 24)
-        .padding(.bottom, 12)
-        .frame(width: expandedWidth, height: expandedHeight)
+        .padding(.bottom, 14)
+        .frame(width: expandedWidth, alignment: .topLeading)
+        // 上报内容自然高度：窗口展开高度由它决定
+        .background(
+            GeometryReader { g in
+                Color.clear.preference(key: PanelContentHeightKey.self, value: g.size.height)
+            }
+        )
+        .onPreferenceChange(PanelContentHeightKey.self) { h in
+            guard h > 0, abs(h - contentHeight) > 0.5 else { return }
+            contentHeight = h
+        }
     }
 
     private func taskRow(_ t: ComateTask) -> some View {
@@ -567,6 +655,14 @@ private struct ComatePlusButton: View {
             if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
         }
         .animation(.easeInOut(duration: 0.12), value: isHovered)
+    }
+}
+
+/// 展开内容自然高度上报：窗口按此高度展开
+private struct PanelContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat { 0 }
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
