@@ -23,6 +23,7 @@ swiftc \
     "$SRC/ComateNotchApp.swift" \
     "$SRC/AppDelegate.swift" \
     "$SRC/ComateStore.swift" \
+    "$SRC/SessionJournal.swift" \
     "$SRC/NotchPanel.swift" \
     "$SRC/NotchRootView.swift" \
     -o "$APP/Contents/MacOS/ComateNotch"

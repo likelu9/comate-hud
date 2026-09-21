@@ -152,10 +152,14 @@ struct ComateOfficialPath2: Shape {
 struct StatusLight: View {
     let color: String
     let size: CGFloat
+    /// 闪烁：用于「等你确认」这类需要打断你的状态（红闪）；异常是常亮
+    let blinking: Bool
+    @State private var dimmed = false
 
-    init(color: String, size: CGFloat = 8) {
+    init(color: String, size: CGFloat = 8, blinking: Bool = false) {
         self.color = color
         self.size = size
+        self.blinking = blinking
     }
 
     var body: some View {
@@ -164,6 +168,18 @@ struct StatusLight: View {
             .frame(width: size, height: size)
             // 用固定 shadow 替代动态 opacity shadow，减少每帧计算
             .shadow(color: Color(hex: color).opacity(0.5), radius: 3)
+            .opacity(blinking && dimmed ? 0.2 : 1)
+            .onAppear { restart() }
+            .onChange(of: blinking) { _ in restart() }
+    }
+
+    /// repeatForever 动画不会自己停，换状态时必须显式重置，否则会叠加多个动画
+    private func restart() {
+        dimmed = false
+        guard blinking else { return }
+        withAnimation(.easeInOut(duration: 0.55).repeatForever(autoreverses: true)) {
+            dimmed = true
+        }
     }
 }
 
@@ -236,7 +252,7 @@ struct NotchRootView: View {
     @State private var expandTimer: Timer?
     @State private var isAnimating = false
     @State private var expanded: Bool = false
-    @State private var breatheOpacity: Double = 1.0
+    @State private var pulseOpacity: Double = 1.0
     @State private var bellHovered = false
     @State private var bellRotate = false
 
@@ -251,6 +267,23 @@ struct NotchRootView: View {
     @State private var isResizing = false
     @State private var resizeHovered = false
     @State private var dragBaseHeight: CGFloat = 0
+
+    /// 状态灯脉冲：黄灯慢呼吸（思考中），红灯快闪（等你确认）。nil = 常亮
+    private var pulse: (duration: Double, low: Double)? {
+        if store.primaryLight == .yellow { return (2.0, 0.08) }
+        if store.primaryLight == .red && store.primaryRedBlinking { return (0.55, 0.15) }
+        return nil
+    }
+
+    /// 重启脉冲动画。repeatForever 动画一旦启动就不会自己停，所以换状态时必须显式重置，
+    /// 否则会叠加出多个动画。
+    private func restartPulse() {
+        pulseOpacity = 1.0
+        guard let pulse = pulse else { return }
+        withAnimation(.easeInOut(duration: pulse.duration).repeatForever(autoreverses: true)) {
+            pulseOpacity = pulse.low
+        }
+    }
 
     // 布局常量：必须与 expandedContent 的 padding / spacing 保持一致
     private let listSpacing: CGFloat = 3
@@ -364,27 +397,10 @@ struct NotchRootView: View {
                                 : .clear,
                             radius: 8
                         )
-                        .opacity(store.primaryLight == .yellow ? breatheOpacity : 1.0)
-                        .onAppear {
-                            if store.primaryLight == .yellow {
-                                breatheOpacity = 1.0
-                                withAnimation(
-                                    .easeInOut(duration: 2.0)
-                                    .repeatForever(autoreverses: true)
-                                ) { breatheOpacity = 0.08 }
-                            }
-                        }
-                        .onChange(of: store.primaryLight) { newLight in
-                            if newLight == .yellow {
-                                breatheOpacity = 1.0
-                                withAnimation(
-                                    .easeInOut(duration: 2.0)
-                                    .repeatForever(autoreverses: true)
-                                ) { breatheOpacity = 0.08 }
-                            } else {
-                                breatheOpacity = 1.0
-                            }
-                        }
+                        .opacity(pulseOpacity)
+                        .onAppear { restartPulse() }
+                        .onChange(of: store.primaryLight) { _ in restartPulse() }
+                        .onChange(of: store.primaryRedBlinking) { _ in restartPulse() }
                         .offset(x: 13.5, y: 13.5) // logo 18pt, 灯 6pt, 右下角微调
                 }
                 .position(x: wingWidth / 2, y: notchHeight / 2)
@@ -652,7 +668,8 @@ private struct ComateTaskRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            StatusLight(color: task.light.color, size: 7)
+            StatusLight(color: task.light.color, size: 7,
+                        blinking: task.redKind == .waitingConfirmation)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Image(systemName: task.sourceIcon)
@@ -668,7 +685,7 @@ private struct ComateTaskRow: View {
                     Text(task.statusLabel)
                         .font(.system(size: 9, weight: .semibold, design: .rounded))
                         .foregroundStyle(Color(hex: task.light.color))
-                    Text("\(task.messageCount) 条消息")
+                    Text(task.metaLabel)
                         .font(.system(size: 9, design: .rounded))
                         .foregroundStyle(.white.opacity(0.4))
                     Text(relTime(task.updatedAt))
