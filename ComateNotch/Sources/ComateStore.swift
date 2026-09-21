@@ -19,6 +19,14 @@ enum TaskLight: String {
     }
 }
 
+/// 红灯的两种成因，决定收起态里红灯能亮多久
+enum RedKind: Equatable {
+    /// 助手提问后卡住，等你回答（阻塞任务，值得一直提醒）
+    case waitingConfirmation
+    /// 轮次异常结束（模型不可用 / 连接失败 / 中止）
+    case aborted
+}
+
 struct ComateTask: Identifiable, Equatable {
     let id: String
     let title: String
@@ -29,7 +37,16 @@ struct ComateTask: Identifiable, Equatable {
     let sessionFile: String?
     /// 任务来源：local=本地(workspace)，cloud=云端托管
     let source: String
-    
+
+    /// 末条消息里「已发出但还没被回答」的提问文本（非 nil 即正在等你确认）
+    let pendingQuestion: String?
+    /// 末条消息里系统生成的硬错误/中止原因（非 nil 即轮次异常结束）
+    let abortReason: String?
+    /// 末条消息里是否还有未收尾的工具调用（calling / streaming）
+    let hasUnfinishedToolCall: Bool
+    /// 最近一次真实活动时间：context_usage.updatedAt（助手每次模型调用都会刷新），兜底 updated_at_ms
+    let activityAt: Date
+
     /// 是否为云端托管任务
     var isCloud: Bool { source == "cloud" }
     
@@ -50,19 +67,47 @@ struct ComateTask: Identifiable, Equatable {
         return uuid.isEmpty ? nil : uuid
     }
 
-    /// 综合判断状态灯（status + lastMessageRole）
-    /// - 黄色：运行中/思考中（status=running，或 lastMessageRole=user 表示用户刚发消息 AI 正在处理）
-    /// - 绿色：已完成（status=done）
-    /// - 灰色：空闲（lastMessageRole=assistant 且 status=idle）
-    /// - 红色：等待用户授权/确认/异常（目前数据库无专门字段，暂不触发）
+    /// 红灯原因（nil = 不红）
+    /// - waitingConfirmation：末条消息的 askUser 块还没有 answered/dismissed 字段。
+    ///   实测该字段在用户回答的瞬间就会写回数据库，所以这个判据是实时的、不需要时间阈值。
+    /// - aborted：末条消息是系统生成的硬错误/中止短句。
+    var redKind: RedKind? {
+        if pendingQuestion != nil { return .waitingConfirmation }
+        if abortReason != nil { return .aborted }
+        return nil
+    }
+
+    /// 是否正在干活（黄灯）= 轮次尚未收尾 且 心跳新鲜
+    ///
+    /// 「轮次尚未收尾」：助手消息只在轮次收尾时落库，所以中途数据库里看不到它。
+    /// 此时要么 last_message_role 还是 user（助手一个字都还没落库），要么末条消息里
+    /// 留着 calling/streaming 的工具调用（比如提问落库后 last_message_role 会被顶成
+    /// assistant，只看 role 会漏判）。
+    ///
+    /// 「心跳新鲜」：context_usage.updatedAt 由助手每次模型调用刷新。被强杀 / 中断的轮次
+    /// 心跳会停住，没有这道闸，最后一条恰好是 user 消息的会话会永远显示「思考中」。
+    var isActive: Bool {
+        guard Date().timeIntervalSince(activityAt) < ComateTask.activeWindow else { return false }
+        return lastMessageRole == "user" || hasUnfinishedToolCall
+    }
+
+    /// 心跳新鲜窗口：要能覆盖单次长工具调用（构建 / 测试），又不能长到让死掉的轮次复活
+    private static let activeWindow: TimeInterval = 150
+
+    /// 综合判断状态灯
+    /// 优先级：红（等待确认 / 异常）> 黄（思考中）> 绿（已完成）> 灰（空闲）
+    /// 注意本地库里 status=done 不代表「刚完成」——实测轮次进行中同样是 done，
+    /// 所以 done 只当「有完成记录」用，真正的「在跑」由 isActive 判定。
     var light: TaskLight {
-        // status=running 或用户刚发消息 → 黄色（思考中）
-        if status == "running" || lastMessageRole == "user" {
-            return .yellow
+        // 云端接口没有心跳也没有末条消息，只能信任它返回的 status（实测词表只有 idle/done）
+        if isCloud {
+            if status == "running" { return .yellow }
+            if status == "done" { return .green }
+            return .gray
         }
-        // 已完成 → 绿色
+        if redKind != nil { return .red }
+        if isActive { return .yellow }
         if status == "done" { return .green }
-        // 默认空闲 → 灰色
         return .gray
     }
 
@@ -70,9 +115,14 @@ struct ComateTask: Identifiable, Equatable {
     var isCompleted: Bool { status == "done" }
 
     var statusLabel: String {
+        switch redKind {
+        case .waitingConfirmation: return "等待确认"
+        case .aborted:             return "已中止"
+        case nil:                  break
+        }
         switch light {
         case .yellow: return "思考中"
-        case .red:    return "等待回复"
+        case .red:    return "异常"
         case .green:  return "已完成"
         case .gray:   return "空闲"
         }
@@ -121,10 +171,19 @@ final class ComateStore: ObservableObject {
 
     /// 当前最优先的状态灯（用于收起态显示）
     /// 优先级：红 > 黄 > 绿 > 灰
-    /// 与展开态每个任务的 light 使用同一套逻辑，保证一致
+    /// 与展开态每个任务的 light 同源，只是红灯额外加时效窗口：展开态回答的是「这个任务什么状态」
+    /// （可以一直红），收起态回答的是「现在要不要去看一眼」，陈年未答的提问 / 几天前的失败
+    /// 不该让刘海一直亮红。
     var primaryLight: TaskLight {
-        // 1. 红色：有等待用户回复/确认的任务
-        if recentTasks.contains(where: { $0.light == .red }) { return .red }
+        let now = Date()
+        // 1. 红色：等你确认的提问（24h 内，它一直阻塞任务）或异常中止（30min 内）
+        if recentTasks.contains(where: { task in
+            switch task.redKind {
+            case .waitingConfirmation: return now.timeIntervalSince(task.updatedAt) < 86400
+            case .aborted:             return now.timeIntervalSince(task.updatedAt) < 1800
+            case nil:                  return false
+            }
+        }) { return .red }
         // 2. 黄色：有运行中/思考中的任务
         if recentTasks.contains(where: { $0.light == .yellow }) { return .yellow }
         // 3. 绿色：有最近完成的任务（30 分钟内）
@@ -220,8 +279,14 @@ final class ComateStore: ObservableObject {
             defer { sqlite3_close(db) }
 
             let sql = """
-            SELECT id, title, status, last_message_role, message_count, updated_at_ms, session_file, source
-            FROM chat_sessions ORDER BY updated_at_ms DESC LIMIT 12;
+            SELECT s.id, s.title, s.status, s.last_message_role, s.message_count,
+                   s.updated_at_ms, s.session_file, s.source,
+                   json_extract(s.context_usage, '$.updatedAt') AS ctx_updated_ms,
+                   (SELECT m.content FROM chat_messages m WHERE m.session_id = s.id
+                    ORDER BY m.sort_order DESC, m.created_at_ms DESC LIMIT 1) AS last_content,
+                   (SELECT m.content_blocks FROM chat_messages m WHERE m.session_id = s.id
+                    ORDER BY m.sort_order DESC, m.created_at_ms DESC LIMIT 1) AS last_blocks
+            FROM chat_sessions s ORDER BY s.updated_at_ms DESC LIMIT 12;
             """
             var stmt: OpaquePointer?
             guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -237,13 +302,26 @@ final class ComateStore: ObservableObject {
                 let count  = Int(sqlite3_column_int(stmt, 4))
                 let ms     = sqlite3_column_int64(stmt, 5)
                 let sf     = sqlite3_column_text(stmt, 6)
+                let ctxMs  = sqlite3_column_int64(stmt, 8)
+                let lastContent = sqlite3_column_text(stmt, 9).map { String(cString: $0) }
+                let lastBlocks  = sqlite3_column_text(stmt, 10).map { String(cString: $0) }
                 // 本地任务统一标记为 local（app/local 来源都是本地，云端任务来自 workmate/sessions/list API）
                 let date   = ms > 0 ? Date(timeIntervalSince1970: TimeInterval(ms) / 1000.0) : Date()
+                // 心跳优先：context_usage.updatedAt 由助手每次模型调用刷新，updated_at_ms 只在
+                // 用户发消息 / 提问落库时被顶，取两者最大值才是「最近真的动过」的时刻
+                let heartbeat = ctxMs > 0
+                    ? Date(timeIntervalSince1970: TimeInterval(ctxMs) / 1000.0)
+                    : Date.distantPast
+                let hints = ComateStore.parseStatusHints(fromBlocksJSON: lastBlocks)
                 let task = ComateTask(id: id, title: title, status: status,
                                        lastMessageRole: role,
                                        messageCount: count, updatedAt: date,
                                        sessionFile: sf != nil ? String(cString: sf!) : nil,
-                                       source: "local")
+                                       source: "local",
+                                       pendingQuestion: hints.question,
+                                       abortReason: ComateStore.abortReason(inContent: lastContent),
+                                       hasUnfinishedToolCall: hints.unfinishedToolCall,
+                                       activityAt: max(heartbeat, date))
                 if task.isRunning { running.append(task) }
                 recent.append(task)
             }
@@ -399,13 +477,16 @@ final class ComateStore: ObservableObject {
                           let status = s["status"] as? String,
                           let updatedStr = s["updated_at"] as? String,
                           let updated = ISO8601DateFormatter().date(from: updatedStr) else { return nil }
-                    // 云端 API 无 last_message_role，用 status 推断：running→user，否则 assistant
-                    let role = status == "running" ? "user" : "assistant"
-                    let count = s["message_count"] as? Int ?? 0
+                    // 云端接口不返回 last_message_role，也没有心跳和末条消息，
+                    // 除 status 外的判据一律留空（light 里对云端只认 status）
                     return ComateTask(id: id, title: title, status: status,
-                                     lastMessageRole: role,
+                                     lastMessageRole: "",
                                      messageCount: count, updatedAt: updated,
-                                     sessionFile: nil, source: "cloud")
+                                     sessionFile: nil, source: "cloud",
+                                     pendingQuestion: nil,
+                                     abortReason: nil,
+                                     hasUnfinishedToolCall: false,
+                                     activityAt: updated)
                 }
                 DispatchQueue.main.async {
                     self.cloudTasks = cloudTasks
