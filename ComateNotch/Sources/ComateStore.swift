@@ -39,18 +39,6 @@ struct ComateTask: Identifiable, Equatable {
         isCloud ? "icloud.fill" : "folder.fill"
     }
     
-    /// 用于 deeplink 的 id：去掉 woa 任务的 account_id 前缀（如 1388246874-xxx → xxx）
-    /// Comate 前端期望标准 UUID，带前缀的 id 会报「找不到该任务」
-    var deeplinkId: String {
-        // 格式：<数字>-<uuid>，去掉第一个 '-' 及其之前的部分
-        if let dashIdx = id.firstIndex(of: "-"),
-           let prefix = Int(id[..<dashIdx]),
-           prefix > 1000000000 {  // account_id 是 10 位以上数字
-            return String(id[id.index(after: dashIdx)...])
-        }
-        return id
-    }
-    
     /// 从 sessionFile 中提取 UUID（Comate 应用期望的 task_id）
     var sessionId: String? {
         guard let path = sessionFile else { return nil }
@@ -206,9 +194,7 @@ final class ComateStore: ObservableObject {
                 let count  = Int(sqlite3_column_int(stmt, 4))
                 let ms     = sqlite3_column_int64(stmt, 5)
                 let sf     = sqlite3_column_text(stmt, 6)
-                // source 列：app/local 都是本地任务（app=工作目录项目，local=普通本地），
-                // 只有来自云端 workmate/sessions/list API 的才是 cloud
-                let srcRaw = sqlite3_column_text(stmt, 7).map { String(cString: $0) } ?? "local"
+                // 本地任务统一标记为 local（app/local 来源都是本地，云端任务来自 workmate/sessions/list API）
                 let date   = ms > 0 ? Date(timeIntervalSince1970: TimeInterval(ms) / 1000.0) : Date()
                 let task = ComateTask(id: id, title: title, status: status,
                                        lastMessageRole: role,
@@ -403,19 +389,15 @@ final class ComateStore: ObservableObject {
     // MARK: - 交互
 
     /// 打开指定会话：通过 deeplink 跳转到对应会话
-    /// 格式：wpscomate://chat.comate/jointtask?id=<session_uuid>&ckp=<base64({})>
-    /// id 为会话 UUID（从 sessionFile 提取），ckp 为 base64 编码的参数对象（空对象即可）
+    /// 云端任务：wpscomate://chat.comate/cloud?id=<id>
+    /// 本地任务：wpscomate://chat.comate/local?id=<db_id>（db_id 含 account_id 前缀，如 1388246874-<uuid>）
     func openSession(_ task: ComateTask) {
-        // 云端任务用 cloud deeplink，本地任务用 jointtask deeplink
-        // jointtask 格式来自 Comate 自身 jsonl：wpscomate://chat.comate/jointtask?id=<db_id>&ckp=e30=
-        // id 用数据库主键（task.id），不是 sessionFile 里的 UUID
-        // ckp=e30= 是 base64({})，表示空上下文参数
         let urlString: String
         if task.isCloud {
             urlString = "wpscomate://chat.comate/cloud?id=\(task.id)"
         } else {
-            // 本地任务用 jointtask，id 用 deeplinkId（去掉 woa 任务的 account_id 前缀）
-            urlString = "wpscomate://chat.comate/jointtask?id=\(task.deeplinkId)&ckp=e30="
+            // 本地任务用 local deeplink，id 用数据库主键（含 account_id 前缀）
+            urlString = "wpscomate://chat.comate/local?id=\(task.id)"
         }
         print("[ComateNotch] 打开会话: id=\(task.id), source=\(task.source), url=\(urlString)")
         if let url = URL(string: urlString) {
