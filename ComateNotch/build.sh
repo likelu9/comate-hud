@@ -23,6 +23,7 @@ swiftc \
     "$SRC/ComateNotchApp.swift" \
     "$SRC/AppDelegate.swift" \
     "$SRC/ComateStore.swift" \
+    "$SRC/UsageAPI.swift" \
     "$SRC/SessionJournal.swift" \
     "$SRC/NotchPanel.swift" \
     "$SRC/NotchRootView.swift" \

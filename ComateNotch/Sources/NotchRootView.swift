@@ -707,7 +707,7 @@ private struct ComateTaskRow: View {
         }
         .onTapGesture { onTap() }
         // 等确认时把具体问题带出来（行里放不下，做成悬停提示）
-        .help(task.waitingQuestion.map { "正在等你回答：\($0)" } ?? "在 Comate 中打开该任务")
+        .help(task.hoverHelp)
     }
 
     private func relTime(_ d: Date) -> String {

@@ -51,6 +51,8 @@ struct ComateTask: Identifiable, Equatable {
     let hasUnfinishedToolCall: Bool
     /// 最近一次真实活动时间：context_usage.updatedAt（助手每次模型调用都会刷新），兜底 updated_at_ms
     let activityAt: Date
+    /// 近 30 天智点累计（用量接口按会话汇总；nil = 30 天内没有消耗记录）
+    var credits30d: Double? = nil
 
     /// 是否为云端托管任务
     var isCloud: Bool { source == "cloud" }
@@ -72,12 +74,25 @@ struct ComateTask: Identifiable, Equatable {
         return uuid.isEmpty ? nil : uuid
     }
 
-    /// 行内次要信息：有会话日志可读就显示 token 消耗，否则退回消息条数
+    /// 行内次要信息：近 30 天智点（与网页「模型用量」同源，按会话汇总）
+    /// 30 天内没有消耗记录时给占位符，不硬凑一个「0 点」
     var metaLabel: String {
-        if let tokens = consumedTokens, tokens > 0 { return "\(ComateTask.tokenLabel(tokens)) tokens" }
-        if messageCount > 0 { return "\(messageCount) 条消息" }
-        // 云端接口不给消息数也不给 token，别硬凑一个「0 条消息」
-        return isCloud ? "云端托管" : "暂无记录"
+        guard let credits = credits30d, credits > 0 else { return "—" }
+        return "30天 \(UsageAPI.creditsLabel(credits)) 点"
+    }
+
+    /// 悬停提示：等确认时优先带出问题，再补用量细节（行里放不下）
+    var hoverHelp: String {
+        var lines: [String] = []
+        if let question = waitingQuestion { lines.append("正在等你回答：\(question)") }
+        if let credits = credits30d, credits > 0 {
+            lines.append("近 30 天消耗 \(UsageAPI.creditsLabel(credits)) 智点")
+        }
+        if let tokens = consumedTokens, tokens > 0 {
+            lines.append("本机累计 \(ComateTask.tokenLabel(tokens)) tokens")
+        }
+        if messageCount > 0 { lines.append("\(messageCount) 条消息") }
+        return lines.isEmpty ? "在 Comate 中打开该任务" : lines.joined(separator: "\n")
     }
 
     /// 大数字压缩成好读的形式（1.2万 / 3.45亿）
@@ -228,6 +243,7 @@ final class ComateStore: ObservableObject {
 
     private var timer: Timer?
     private var cloudTimer: Timer?
+    private var usageTimer: Timer?
     private let dbPath: String
     /// 动画期间暂停刷新，避免 @Published 更新导致 SwiftUI 重绘竞争
     var isPaused = false
@@ -274,6 +290,15 @@ final class ComateStore: ObservableObject {
     }
 
     @Published var usageState: UsageState = .idle
+
+    /// 日/月限额（左下角展示）
+    @Published var usageLimits: UsageAPI.Limits?
+
+    /// 近 30 天各会话智点累计（session_id → 点数）。只在主线程读写
+    private var credits30d: [String: Double] = [:]
+
+    /// 上次回填 30 天明细的时刻（限额 60s 一次，明细 5 分钟一次）
+    private var lastUsageBackfill = Date.distantPast
 
     /// 连续失败次数与下次可重试时间。sid 失效时不至于每 60 秒白打一次接口
     private var usageFailures = 0
@@ -330,9 +355,18 @@ final class ComateStore: ObservableObject {
             self?.refreshCloudUnread()
             self?.refreshCloudTasks()
         }
+        // 模型用量：限额 60 秒一次；30 天明细在 refreshUsage 内按 5 分钟节流
+        refreshUsage()
+        usageTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            self?.refreshUsage()
+        }
     }
 
-    func stop() { timer?.invalidate(); timer = nil; cloudTimer?.invalidate(); cloudTimer = nil }
+    func stop() {
+        timer?.invalidate(); timer = nil
+        cloudTimer?.invalidate(); cloudTimer = nil
+        usageTimer?.invalidate(); usageTimer = nil
+    }
 
     func refresh() {
         guard FileManager.default.fileExists(atPath: dbPath) else {
@@ -447,7 +481,12 @@ final class ComateStore: ObservableObject {
             self.runningTasks = running
             // 合并本地 + 云端任务，按更新时间降序排序后取前 12 条
             let merged = (recent + self.cloudTasks).sorted { $0.updatedAt > $1.updatedAt }
-            self.recentTasks = Array(merged.prefix(12))
+            // 贴近 30 天智点：字典在主线程写，这里也在主线程读，无竞争
+            self.recentTasks = merged.prefix(12).map { task in
+                var copy = task
+                copy.credits30d = self.credits30d[task.id]
+                return copy
+            }
             self.todayModelUsage = usage
             self.attentionCount = attentionCount
             self.lastRefreshed = .now
@@ -596,6 +635,43 @@ final class ComateStore: ObservableObject {
             task.resume()
         }
     }
+    /// 拉取模型用量：限额走 60 秒节拍，近 30 天智点明细走 5 分钟节拍（实测 462 条 / 5 个请求 / 0.7s）。
+    /// 失败不抛错：状态置 failed 并退避，面板显示「用量 —」，其余功能不受影响。
+    private func refreshUsage() {
+        guard usageRetryAllowed else { return }
+        guard let sid = usageCredential else {
+            usageState = .noCredential
+            return
+        }
+        let backfill = Date().timeIntervalSince(lastUsageBackfill) > 300
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let limits = UsageAPI.fetchLimits(sid: sid)
+            var credits: [String: Double]?
+            if backfill {
+                let range = UsageAPI.recentRange(days: 30)
+                if let records = UsageAPI.fetchDetails(sid: sid, start: range.start, end: range.end) {
+                    credits = UsageAPI.creditsBySession(records)
+                }
+            }
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                if let limits = limits { self.usageLimits = limits }
+                if let credits = credits {
+                    self.credits30d = credits
+                    self.lastUsageBackfill = Date()
+                }
+                // 明细失败不清空旧值：宁可显示上一次的结果，也不要凭空变空
+                if limits != nil || credits != nil {
+                    self.usageState = .ok
+                    self.noteUsageSuccess()
+                } else {
+                    self.usageState = .failed
+                    self.noteUsageFailure()
+                }
+            }
+        }
+    }
+
     private func displayName(_ model: String) -> String {
         let lower = model.lowercased()
         if lower.hasPrefix("glm") { return "GLM" }
