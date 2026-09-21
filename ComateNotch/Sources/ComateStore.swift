@@ -74,8 +74,10 @@ struct ComateTask: Identifiable, Equatable {
 
     /// 行内次要信息：有会话日志可读就显示 token 消耗，否则退回消息条数
     var metaLabel: String {
-        guard let tokens = totalTokens, tokens > 0 else { return "\(messageCount) 条消息" }
-        return "\(ComateTask.tokenLabel(tokens)) tokens"
+        if let tokens = totalTokens, tokens > 0 { return "\(ComateTask.tokenLabel(tokens)) tokens" }
+        if messageCount > 0 { return "\(messageCount) 条消息" }
+        // 云端接口不给消息数也不给 token，别硬凑一个「0 条消息」
+        return isCloud ? "云端托管" : "暂无记录"
     }
 
     /// 大数字压缩成好读的形式（1.2万 / 3.45亿）

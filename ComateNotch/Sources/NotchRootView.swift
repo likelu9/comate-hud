@@ -706,6 +706,8 @@ private struct ComateTaskRow: View {
             if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
         }
         .onTapGesture { onTap() }
+        // 等确认时把具体问题带出来（行里放不下，做成悬停提示）
+        .help(task.waitingQuestion.map { "正在等你回答：\($0)" } ?? "在 Comate 中打开该任务")
     }
 
     private func relTime(_ d: Date) -> String {
