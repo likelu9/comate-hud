@@ -217,6 +217,10 @@ struct NotchRootView: View {
     var expandedWidth: CGFloat = 280
     /// 拖拽可达到的最大高度（受 hostingView 固定高度限制）
     var maxExpandedHeight: CGFloat = 440
+    /// hostingView 画布高度：根视图必须显式撑满它并左上对齐，
+    /// 否则 NSHostingView 会把根视图垂直居中（偏移 (画布高-内容高)/2），
+    /// 表现为整个 HUD 在窗口里被往下推。
+    var canvasHeight: CGFloat = 720
     /// 拖拽调整高度时立即同步窗口尺寸（不走动画，跟手）
     var onExpandedHeightChange: ((CGFloat) -> Void)?
     var onShowMainWindow: (() -> Void)?
@@ -463,9 +467,9 @@ struct NotchRootView: View {
                 }
             }
         }
-        // 左上对齐：hostingView 尺寸恒定，窗口只负责裁剪可见区域，
-        // 内容按自然高度布局，高度变化不会引起重排跳动。
-        .frame(width: expandedWidth, alignment: .topLeading)
+        // 显式撑满 hostingView 画布并左上对齐：
+        // 根视图比画布小的话 NSHostingView 会垂直居中，导致 HUD 整体下移。
+        .frame(width: expandedWidth, height: canvasHeight, alignment: .topLeading)
     }
 
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）

@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             notchHeight: geo.notchHeight,
             expandedWidth: panel.expandedWidth,
             maxExpandedHeight: panel.hostingHeight - 20,
+            canvasHeight: panel.hostingHeight,
             onExpandedHeightChange: { [weak panel] h in
                 panel?.setExpandedHeightImmediate(h)
             },
