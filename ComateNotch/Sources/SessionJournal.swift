@@ -28,16 +28,8 @@ final class SessionJournal {
         /// 日志里最后一条事件的时间与角色
         var lastEventAtText: String?
         var lastEventRole: String?
-        /// 最近一次轮次被中止（stopReason=aborted）的时刻；后续有轮次正常收尾就清掉
-        var abortedAtText: String?
 
         var lastEventAt: Date? { SessionJournal.date(from: lastEventAtText) }
-
-        /// 轮次被中止的时刻；nil = 最后一轮正常收尾了。
-        ///
-        /// 中止和「等你确认」会同时出现：提问发出后你按了停止，提问就永远不会有答案。
-        /// 此时该报「已中止」而不是「等待确认」——后者会让人以为还该去回一句话。
-        var abortedAt: Date? { SessionJournal.date(from: abortedAtText) }
 
         /// 正在等你回答的提问时刻（auq）；nil = 没在等
         var pendingAskUserAt: Date? {
@@ -158,22 +150,17 @@ final class SessionJournal {
             // 这一轮怎么结束的，决定异常灯亮不亮
             if stop == "stop" {
                 reading.lastError = nil
-                reading.abortedAtText = nil
             } else if stop == "error" {
                 reading.lastError = (atText, "模型返回错误")
             } else if stop == "aborted" {
                 // 你按了停止 / 会话被取消：这一轮不会再有下文，挂着的工具调用（包括
-                // 提问）都作废，否则会一直报「等待确认」，而其实已经没人会回答它了
+                // 提问）都作废。否则被中止的提问会一直报「等待确认」，而其实没人会回答它了
                 reading.pendingToolCalls.removeAll()
-                reading.abortedAtText = atText
             }
         } else if role == "toolResult" {
             if let id = message["toolCallId"] as? String {
                 reading.pendingToolCalls.removeValue(forKey: id)
             }
-        } else if role == "user" {
-            // 你重新发了消息 = 上一轮的中止已经翻篇，灯不该继续停在「已中止」
-            reading.abortedAtText = nil
         }
 
         // errorMessage 比 stopReason 更具体（额度超限 / 连接失败 / 超时…）

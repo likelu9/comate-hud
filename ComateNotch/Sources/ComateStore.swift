@@ -23,8 +23,8 @@ enum TaskLight: String {
 enum RedKind: Equatable {
     /// 助手提问后卡住，等你回答（阻塞任务，值得一直提醒）
     case waitingConfirmation
-    /// 轮次异常结束（模型不可用 / 连接失败 / 中止）
-    case aborted
+    /// 轮次异常结束（模型不可用 / 连接失败 / 卡住）；你主动按停止不算
+    case fault
 }
 
 struct ComateTask: Identifiable, Equatable {
@@ -87,14 +87,15 @@ struct ComateTask: Identifiable, Equatable {
         return "\(n)"
     }
 
-    /// 红灯原因（nil = 不红）。两种成因对应两种呈现：等待确认 → 红闪，异常/卡住 → 红常亮
+    /// 红灯原因（nil = 不红）。两种成因对应两种呈现：等待确认 → 红闪，异常 → 红常亮
     /// - waitingConfirmation：会话日志里有 askUserQuestion 发出但没收到结果（auq）。
     ///   日志是实时追加的，提问和回答的瞬间就能反映出来，不需要时间阈值。
-    /// - aborted：额度用尽 / 连接失败 / 超时等硬错误，或日志停更超时的「卡住」。
+    /// - fault：额度用尽 / 连接失败 / 超时等硬错误，或日志停更超时的「卡住」。
+    ///   你主动按停止不属于异常（轮次被中止时挂着的工具调用已作废，不会走到这里）。
     var redKind: RedKind? {
         let now = Date()
         if let at = waitingSince, now.timeIntervalSince(at) < Self.redWindow { return .waitingConfirmation }
-        if let at = faultSince, now.timeIntervalSince(at) < Self.redWindow { return .aborted }
+        if let at = faultSince, now.timeIntervalSince(at) < Self.redWindow { return .fault }
         return nil
     }
 
@@ -141,7 +142,7 @@ struct ComateTask: Identifiable, Equatable {
     var statusLabel: String {
         switch redKind {
         case .waitingConfirmation: return "等待确认"
-        case .aborted:             return faultReason ?? "异常"
+        case .fault:               return faultReason ?? "异常"
         case nil:                  break
         }
         switch light {
@@ -204,7 +205,7 @@ final class ComateStore: ObservableObject {
         if recentTasks.contains(where: { task in
             switch task.redKind {
             case .waitingConfirmation: return true
-            case .aborted:             return now.timeIntervalSince(task.faultSince ?? task.updatedAt) < 1800
+            case .fault:               return now.timeIntervalSince(task.faultSince ?? task.updatedAt) < 1800
             case nil:                  return false
             }
         }) { return .red }
@@ -461,10 +462,9 @@ final class ComateStore: ObservableObject {
     /// 报错是上一轮的结论（可能已经被后续重试覆盖）。
     private func fault(from reading: SessionJournal.Reading?) -> (Date, String)? {
         guard let reading = reading else { return nil }
-        // 顺序即优先级：硬错误最具体，卡住最实时，已中止兜底
+        // 顺序即优先级：硬错误最具体，卡住最实时
         if let error = reading.lastErrorDate { return (error.at, error.text) }
         if let stuckAt = reading.stuckAt { return (stuckAt, "卡住无响应") }
-        if let aborted = reading.abortedAt { return (aborted, "已中止") }
         return nil
     }
 
