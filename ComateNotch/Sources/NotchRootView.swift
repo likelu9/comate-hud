@@ -236,13 +236,6 @@ struct NotchRootView: View {
         NotchShape(cornerRadius: cornerR)
             .fill(Color.black)
             .frame(width: currentWidth, height: currentHeight)
-            // 静态黑色托底层：固定收起态尺寸，不参与展开/收起动画。
-            // 桌面背景非黑时，上层形状边缘移动露出的仍是黑色，消除"不吸顶闪动"。
-            .background(
-                NotchShape(cornerRadius: 14)
-                    .fill(Color.black)
-                    .frame(width: collapsedTotalWidth, height: notchHeight)
-            )
             // 叠加层：logo + 状态灯（固定位置）
             .overlay(alignment: .topLeading) {
                 ZStack(alignment: .topLeading) {
@@ -367,6 +360,10 @@ struct NotchRootView: View {
                 }
             }
         }
+        // 顶部对齐：窗口顶部固定于屏幕顶、向下生长，内容必须贴住顶部。
+        // 否则窗口动画与内容动画不同步时，内容会被窗口居中推到下方，
+        // 顶部空出一段露出桌面，表现为"不吸顶闪动"。
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）

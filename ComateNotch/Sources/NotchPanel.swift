@@ -79,6 +79,12 @@ final class NotchPanel: NSPanel {
                       y: y, width: expandedWidth, height: expandedHeight)
     }
 
+    /// 收起态窗口 frame（顶部锚定于屏幕顶），供静态托底窗口复用
+    func collapsedFrame() -> NSRect {
+        NSRect(x: notch.centerX - collapsedWidth / 2,
+               y: anchorTopY, width: collapsedWidth, height: notch.notchHeight)
+    }
+
     func animateToCollapsed() {
         let target = NSRect(x: notch.centerX - collapsedWidth / 2,
                             y: anchorTopY, width: collapsedWidth, height: notch.notchHeight)
@@ -99,4 +105,33 @@ final class NotchPanel: NSPanel {
             self.animator().setFrame(target, display: true)
         }
     }
+}
+
+/// 静态托底窗口：固定收起态尺寸、吸顶、不参与展开/收起动画。
+/// 置于主面板下层，用于遮挡动效过程中露出的桌面背景（消除"不吸顶闪动"）。
+/// 不接收鼠标事件，不影响主面板交互。
+final class NotchBackdropPanel: NSPanel {
+    init(collapsedFrame: NSRect) {
+        super.init(contentRect: collapsedFrame,
+                   styleMask: [.borderless, .nonactivatingPanel],
+                   backing: .buffered, defer: false)
+        self.isFloatingPanel = true
+        self.becomesKeyOnlyIfNeeded = true
+        self.hidesOnDeactivate = false
+        // 低于主面板(1000)，保证主面板始终在上层
+        self.level = NSWindow.Level(rawValue: 999)
+        self.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
+        self.isOpaque = true
+        // 调试色：确认托底生效后改回 .black
+        self.backgroundColor = NSColor.systemPink
+        self.hasShadow = false
+        self.isMovable = false
+        self.ignoresMouseEvents = true
+        self.titleVisibility = .hidden
+        self.title = ""
+        self.isReleasedWhenClosed = false
+    }
+
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
 }

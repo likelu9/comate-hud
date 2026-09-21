@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "handoffId": "notch-flash-fix",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789963370753,
+  "note": {
+    "completed": [
+      "逐帧分析用户录屏 GIF（54 帧）：定位到闪动发生在 frames 10/28/43/44，这几帧顶部黑像素高度=0，即整条刘海黑条完全消失、露出桌面",
+      "根因：窗口顶部固定于屏幕顶向下生长，但 SwiftUI 内容在窗口内是居中对齐；窗口动画(0.25s NSAnimationContext)与内容动画(0.22s SwiftUI)不同步时，窗口已变大而内容仍是收起态→内容被居中推到下方（最多下移约123px），顶部空出→桌面透出=不吸顶闪动",
+      "移除视图内无效的 .background 托底层（它属于 SwiftUI 视图树，会跟随窗口动画一起移动，用户实测确认无效）",
+      "修复：在 body 末尾加 .frame(maxWidth:.infinity, maxHeight:.infinity, alignment:.top) 让内容顶部对齐窗口顶部（贴住屏幕顶）",
+      "新增独立静态托底窗口 NotchBackdropPanel：固定收起态尺寸、吸顶、level=999（低于主面板1000）、ignoresMouseEvents=true，置于主面板下层；当前用调试色 NSColor.systemPink 便于观察",
+      "NotchPanel 新增 collapsedFrame() 方法暴露收起态 frame；AppDelegate 创建并 orderFront 托底窗口",
+      "编译成功（swiftc 无 error），悬浮窗已重启"
+    ],
+    "remaining": [
+      "用户验证：展开/收起动效是否已无闪动；若已修复则把 NotchBackdropPanel 的 backgroundColor 从 systemPink 改回 .black（或确认冗余后直接删除托底窗口）",
+      "若顶部已吸顶但底部/两侧仍露背景，说明内容尺寸仍与窗口尺寸不同步，需进一步让两者动画同步（统一 0.25s 同时长同曲线）"
+    ],
+    "decisions": [
+      "根因是内容在窗口内居中导致动画期间下移，而非缺少托底层；优先用顶部对齐从根上解决",
+      "独立 NSWindow 才是真正的静态托底（SwiftUI 视图树内的 background 会跟着窗口动）",
+      "托底窗口 level 999 < 主面板 1000，保证主面板始终在上；ignoresMouseEvents=true 不干扰交互",
+      "调试期用 systemPink 作托底色，确认后改回 .black"
+    ],
+    "issues": [
+      "用户环境无 Xcode，只能用 ComateNotch/build.sh 的 swiftc 直编方式构建验证"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/NotchRootView.swift",
+      "ComateNotch/Sources/NotchPanel.swift",
+      "ComateNotch/Sources/AppDelegate.swift"
+    ]
+  }
+}

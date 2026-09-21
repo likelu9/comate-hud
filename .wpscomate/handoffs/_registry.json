@@ -30,6 +30,12 @@
       "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
       "createdAt": 1789961066414,
       "file": "deeplink-local-confirmed.handoff.json"
+    },
+    {
+      "handoffId": "notch-flash-fix",
+      "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+      "createdAt": 1789963370753,
+      "file": "notch-flash-fix.handoff.json"
     }
   ]
 }

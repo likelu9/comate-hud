@@ -3,12 +3,18 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: NotchPanel?
+    private var backdropPanel: NotchBackdropPanel?
     private var store = ComateStore()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         let panel = NotchPanel()
         self.panel = panel
+
+        // 静态托底窗口：固定收起态尺寸，置于主面板下层，不参与动效
+        let backdrop = NotchBackdropPanel(collapsedFrame: panel.collapsedFrame())
+        self.backdropPanel = backdrop
+        backdrop.orderFrontRegardless()
 
         let geo = panel.notch
         let view = NotchRootView(
