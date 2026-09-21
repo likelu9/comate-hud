@@ -359,6 +359,22 @@ struct NotchRootView: View {
                     onExpandChange?(true)
                 }
             }
+            // 临时调试：--autocycle 自动展开/收起，用于逐帧分析动效
+            if CommandLine.arguments.contains("--autocycle") {
+                Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                    DispatchQueue.main.async {
+                        let next = !expanded
+                        isAnimating = true
+                        store.isPaused = true
+                        withAnimation { expanded = next }
+                        onExpandChange?(next)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            isAnimating = false
+                            store.isPaused = false
+                        }
+                    }
+                }
+            }
         }
         // 顶部对齐：窗口顶部固定于屏幕顶、向下生长，内容必须贴住顶部。
         // 否则窗口动画与内容动画不同步时，内容会被窗口居中推到下方，
