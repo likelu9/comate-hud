@@ -356,11 +356,23 @@ final class ComateStore: ObservableObject {
             self?.isOpeningMessageCenter = false
         }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            // Step 1: AppleScript 激活 Comate 并通过 AX 定位铃铛 button 的屏幕坐标
+            // Step 0: 用 NSWorkspace 激活 Comate（比 AppleScript activate 更可靠）
+            // Comate bundle id: cn.wpscomate.comate-agent
+            if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "cn.wpscomate.comate-agent") {
+                NSWorkspace.shared.openApplication(at: appURL, configuration: .init(), completionHandler: nil)
+            } else {
+                // 兜底：按路径打开
+                let appPath = "/Applications/WPS Comate.app"
+                if FileManager.default.fileExists(atPath: appPath) {
+                    NSWorkspace.shared.openApplication(at: URL(fileURLWithPath: appPath), configuration: .init(), completionHandler: nil)
+                }
+            }
+            // 等待 Comate 激活到前台
+            Thread.sleep(forTimeInterval: 0.8)
+
+            // Step 1: 通过 AX 定位铃铛 button 的屏幕坐标
             // 铃铛特征：sidebar 底部、AXButton、desc 为空、size 28x28
             let locateScript = """
-            tell application "WPS Comate" to activate
-            delay 0.5
             tell application "System Events"
                 tell process "WPS Comate"
                     tell window 1
