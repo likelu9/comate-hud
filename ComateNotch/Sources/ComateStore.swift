@@ -85,6 +85,8 @@ final class ComateStore: ObservableObject {
     @Published private(set) var attentionCount: Int = 0
     /// 云端消息中心真实未读消息数（从 comate.wps.cn API 获取）
     @Published private(set) var cloudUnreadCount: Int = 0
+    /// 正在打开消息中心（用于 UI 显示 loading 提示）
+    @Published private(set) var isOpeningMessageCenter: Bool = false
 
     /// 今日 assistant 消息总数（所有模型合计）
     var todayTotalMessages: Int {
@@ -344,42 +346,86 @@ final class ComateStore: ObservableObject {
         }
     }
 
-    /// 打开 Comate 客户端消息中心：激活 Comate 并点击左下角铃铛
+    /// 打开 Comate 客户端消息中心：激活 Comate，通过 AX 定位左下角铃铛坐标，用 CGEvent 真实点击。
+    /// 异步执行，带 loading 状态（isOpeningMessageCenter）和超时保护。
     func openMessageCenter() {
-        let script = """
-        tell application \"WPS Comate\" to activate
-        delay 0.6
-        tell application \"System Events\"
-            tell process \"WPS Comate\"
-                try
-                    set userInfoGroup to group 2 of UI element 1 of scroll area 1 of group 1 of group 1 of window 1
-                    set btns to every button of userInfoGroup
-                    repeat with b in btns
-                        set n to name of b
-                        if n is \"1\" or n is \"2\" or n is \"3\" or n is \"4\" or n is \"5\" or n is \"6\" or n is \"7\" or n is \"8\" or n is \"9\" then
-                            click b
-                            return "clicked"
-                        end if
-                    end repeat
-                    set btnCount to count of btns
-                    if btnCount > 0 then
-                        click item btnCount of btns
-                        return "clicked"
-                    end if
-                    return "no button"
-                on error errMsg
-                    return "err: " & errMsg
-                end try
+        guard !isOpeningMessageCenter else { return }
+        isOpeningMessageCenter = true
+        // 3 秒后自动关闭 loading（兜底，防止脚本卡住）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            self?.isOpeningMessageCenter = false
+        }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            // Step 1: AppleScript 激活 Comate 并通过 AX 定位铃铛 button 的屏幕坐标
+            // 铃铛特征：sidebar 底部、AXButton、desc 为空、size 28x28
+            let locateScript = """
+            tell application "WPS Comate" to activate
+            delay 0.5
+            tell application "System Events"
+                tell process "WPS Comate"
+                    tell window 1
+                        set wa to UI element 1 of scroll area 1 of group 1 of group 1
+                        set sidebar to UI element 4 of wa
+                        set allElems to entire contents of sidebar
+                        repeat with el in allElems
+                            try
+                                set r to role of el
+                                set d to description of el
+                                set s to size of el
+                                set sw to (item 1 of s) as integer
+                                set sh to (item 2 of s) as integer
+                                if r is "AXButton" and d is "" and sw is 28 and sh is 28 then
+                                    set p to position of el
+                                    set px to (item 1 of p) as integer
+                                    set py to (item 2 of p) as integer
+                                    return (px as string) & "," & (py as string)
+                                end if
+                            end try
+                        end repeat
+                        return "notfound"
+                    end tell
+                end tell
             end tell
-        end tell
-        """
-        var error: NSDictionary?
-        if let appleScript = NSAppleScript(source: script) {
-            let _ = appleScript.executeAndReturnError(&error)
+            """
+            var error: NSDictionary?
+            let result = NSAppleScript(source: locateScript)?.executeAndReturnError(&error).stringValue ?? "notfound"
             if let error = error {
-                NSLog("[ComateNotch] openMessageCenter error: %@", error)
+                NSLog("[ComateNotch] openMessageCenter locate error: %@", error)
+            }
+            guard result != "notfound", !result.isEmpty else {
+                NSLog("[ComateNotch] openMessageCenter: bell button not found via AX")
+                DispatchQueue.main.async { self?.isOpeningMessageCenter = false }
+                return
+            }
+            // Step 2: 解析坐标，用 CGEvent 真实点击（AX click 对 web 元素不可靠）
+            let parts = result.split(separator: ",")
+            guard parts.count == 2, let x = Double(parts[0]), let y = Double(parts[1]) else {
+                NSLog("[ComateNotch] openMessageCenter: invalid coords %@", result)
+                DispatchQueue.main.async { self?.isOpeningMessageCenter = false }
+                return
+            }
+            let cx = x + 14  // button 28x28，点击中心点
+            let cy = y + 14
+            self?.cgEventClick(at: CGPoint(x: cx, y: cy))
+            // 留足时间让 Comate 完成页面跳转，再关闭 loading
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                self?.isOpeningMessageCenter = false
             }
         }
+    }
+
+    /// 用 CGEvent 在指定屏幕坐标执行真实鼠标点击（对 web 渲染元素可靠）
+    private func cgEventClick(at point: CGPoint) {
+        let source = CGEventSource(stateID: .hidSystemState)
+        let move = CGEvent(mouseEventSource: source, mouseType: .mouseMoved, mouseCursorPosition: point, mouseButton: .left)
+        move?.post(tap: .cghidEventTap)
+        usleep(150000)  // 0.15s，让 hover 事件先到达
+        let down = CGEvent(mouseEventSource: source, mouseType: .leftMouseDown, mouseCursorPosition: point, mouseButton: .left)
+        down?.post(tap: .cghidEventTap)
+        usleep(50000)   // 0.05s
+        let up = CGEvent(mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point, mouseButton: .left)
+        up?.post(tap: .cghidEventTap)
+        NSLog("[ComateNotch] openMessageCenter: CGEvent clicked at (%.0f, %.0f)", point.x, point.y)
     }
 
     func openComateApp() {

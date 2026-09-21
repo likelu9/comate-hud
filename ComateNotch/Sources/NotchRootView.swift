@@ -226,6 +226,8 @@ struct NotchRootView: View {
     @State private var isAnimating = false
     @State private var expanded: Bool = false
     @State private var breatheOpacity: Double = 1.0
+    @State private var bellHovered = false
+    @State private var bellRotate = false
     var body: some View {
         let currentWidth = expanded ? expandedWidth : collapsedTotalWidth
         let currentHeight = expanded ? expandedHeight : notchHeight
@@ -402,17 +404,36 @@ struct NotchRootView: View {
                 if store.totalMessageCount > 0 {
                     Button(action: { store.openMessageCenter() }) {
                         HStack(spacing: 3) {
-                            Image(systemName: "bell.fill")
-                                .font(.system(size: 9))
+                            if store.isOpeningMessageCenter {
+                                // loading 旋转动画
+                                Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
+                                    .font(.system(size: 9))
+                                    .rotationEffect(.degrees(bellRotate ? 360 : 0))
+                                    .animation(.linear(duration: 0.8).repeatForever(autoreverses: false), value: bellRotate)
+                                    .onAppear { bellRotate = true }
+                            } else {
+                                Image(systemName: "bell.fill")
+                                    .font(.system(size: 9))
+                                    .scaleEffect(bellHovered ? 1.2 : 1.0)
+                            }
                             Text("\(store.totalMessageCount)")
                                 .font(.system(size: 9, weight: .semibold, design: .rounded))
                         }
-                        .foregroundStyle(.white.opacity(0.55))
+                        .foregroundStyle(.white.opacity(bellHovered || store.isOpeningMessageCenter ? 0.9 : 0.55))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(
+                            Color.white.opacity(bellHovered ? 0.12 : 0)
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                        )
                     }
                     .buttonStyle(.plain)
                     .onHover { h in
+                        bellHovered = h
                         if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
                     }
+                    .animation(.easeInOut(duration: 0.12), value: bellHovered)
+                    .help(store.isOpeningMessageCenter ? "正在打开消息中心…" : "打开消息中心")
                 }
             }
         }
