@@ -302,7 +302,7 @@ struct NotchRootView: View {
                 if expanded { expandedContent }
             }
             .animation(.easeInOut(duration: 0.12), value: store.primaryLight)
-            .animation(.easeInOut(duration: 0.22), value: expanded)
+            .animation(.easeInOut(duration: 0.25), value: expanded)
             .onHover { isHovering in
             hovering = isHovering
             if isHovering {

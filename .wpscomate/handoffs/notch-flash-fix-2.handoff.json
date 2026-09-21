@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "handoffId": "notch-flash-fix-2",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789966322778,
+  "note": {
+    "completed": [
+      "托底窗口改为与主面板一致的 NotchShape（底部圆角 r=14）绘制黑色，修复下两角露直角问题（原来用纯矩形）",
+      "内容动画时长从 0.22s 改为 0.25s，与窗口 NSAnimationContext 动画(0.25s, easeInEaseOut)一致，减少残余不同步",
+      "编译成功，悬浮窗已重启"
+    ],
+    "remaining": [
+      "用户验证：logo/状态灯轻微闪动是否消失；底部圆角是否正常",
+      "若仍有轻微闪动：根因可能是 NSHostingView 在窗口 resize 动画期间重新布局有滞后；备选方案是窗口不动画、只动 SwiftUI 内容（窗口固定为展开态尺寸 + 顶部对齐）"
+    ],
+    "decisions": [
+      "托底窗口用 NSHostingView 包 NotchShape(cornerRadius:14).fill(black)，与主面板形状完全一致；窗口 isOpaque=false + backgroundColor=clear，让圆角外透明",
+      "窗口与内容动画统一为 0.25s + easeInOut/easeInEaseOut（两者曲线参数相同）"
+    ],
+    "issues": [
+      "无 Xcode，用 build.sh 的 swiftc 直编验证"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/NotchPanel.swift",
+      "ComateNotch/Sources/NotchRootView.swift"
+    ]
+  }
+}

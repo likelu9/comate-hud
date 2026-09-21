@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 /// 贴合 MacBook 刘海的悬浮 HUD 窗口。
 /// 展开时顶部锚定不动，仅向下生长（消除 hover 跳动）。
@@ -121,15 +122,26 @@ final class NotchBackdropPanel: NSPanel {
         // 低于主面板(1000)，保证主面板始终在上层
         self.level = NSWindow.Level(rawValue: 999)
         self.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
-        self.isOpaque = true
-        // 与主面板同色（黑），托底时与内容无缝融合，动效期间不可见
-        self.backgroundColor = .black
+        self.isOpaque = false
+        self.backgroundColor = .clear
         self.hasShadow = false
         self.isMovable = false
         self.ignoresMouseEvents = true
         self.titleVisibility = .hidden
         self.title = ""
         self.isReleasedWhenClosed = false
+
+        // 用与主面板一致的 NotchShape（底部圆角）绘制黑色托底，
+        // 纯矩形会在圆角处露出直角，形状一致才能与主面板无缝衔接
+        let host = NSHostingView(rootView:
+            NotchShape(cornerRadius: 14)
+                .fill(Color.black)
+                .frame(width: collapsedFrame.width, height: collapsedFrame.height)
+        )
+        host.frame = NSRect(origin: .zero, size: collapsedFrame.size)
+        host.wantsLayer = true
+        host.layer?.backgroundColor = NSColor.clear.cgColor
+        self.contentView = host
     }
 
     override var canBecomeKey: Bool { false }
