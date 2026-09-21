@@ -255,6 +255,8 @@ struct NotchRootView: View {
     @State private var pulseOpacity: Double = 1.0
     @State private var bellHovered = false
     @State private var bellRotate = false
+    /// 页脚左下「周期切换」整块的悬停态
+    @State private var usageToggleHovered = false
 
     /// 实测：列表行 VStack 自然高度 + 该测量对应的行数（用于反推单行占高）
     @State private var rowsHeight: CGFloat = 0
@@ -564,19 +566,32 @@ struct NotchRootView: View {
             }
 
             HStack(spacing: 6) {
-                // 周期高亮开关：双段胶囊，点击切换月/日（两个周期的额度文案始终都展示）
-                usagePeriodSwitch
-                // 额度文案：月/日都展示，高亮周期更亮
-                HStack(spacing: 0) {
-                    Text("月额度已用 \(store.usageBothLabel.month)")
-                        .foregroundStyle(.white.opacity(store.usagePeriod == .monthly ? 0.55 : 0.3))
-                    Text("　")
-                    Text("日额度已用 \(store.usageBothLabel.day)")
-                        .foregroundStyle(.white.opacity(store.usagePeriod == .daily ? 0.55 : 0.3))
+                // 周期切换：整块左下区域都是按钮（胶囊 + 文案一起点），点击切换展示的周期
+                Button(action: { store.toggleUsagePeriod() }) {
+                    HStack(spacing: 6) {
+                        usagePeriodIndicator
+                        // 额度文案：只展示当前周期，不再带「日/月」前缀（周期由左侧胶囊指示）
+                        Text("额度已用 \(store.activeUsageLabel)")
+                            .font(.system(size: 8, weight: .medium, design: .rounded))
+                            .foregroundStyle(.white.opacity(usageToggleHovered ? 0.8 : 0.55))
+                    }
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    // 命中区扩到整条左下：从左内边距一直延伸到铃铛前
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(Color.white.opacity(usageToggleHovered ? 0.1 : 0))
+                    )
                 }
-                .font(.system(size: 8, weight: .medium, design: .rounded))
+                .buttonStyle(.plain)
+                .onHover { h in
+                    usageToggleHovered = h
+                    if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                }
+                .animation(.easeInOut(duration: 0.12), value: usageToggleHovered)
                 .help(store.usageLimitDetail)
-                Spacer()
                 // 消息数提示：铃铛图标 + 未读数（可点击打开消息中心）
                 if store.totalMessageCount > 0 {
                     Button(action: { store.openMessageCenter() }) {
@@ -636,28 +651,24 @@ struct NotchRootView: View {
         }
     }
 
-    /// 额度周期切换：双段胶囊（日 | 月），高亮当前周期，点击切换
-    private var usagePeriodSwitch: some View {
+    /// 额度周期指示：双段胶囊（日 | 月），高亮当前周期。纯视觉，点击由外层整块按钮接管
+    private var usagePeriodIndicator: some View {
         HStack(spacing: 0) {
             ForEach(UsageAPI.Period.allCases, id: \.self) { period in
-                Button(action: { store.setUsagePeriod(period) }) {
-                    Text(period.shortLabel)
-                        .font(.system(size: 8, weight: .semibold, design: .rounded))
-                        .foregroundStyle(store.usagePeriod == period
-                                         ? Color.black.opacity(0.8)
-                                         : Color.white.opacity(0.45))
-                        .frame(width: 13, height: 11)
-                        .background(
-                            RoundedRectangle(cornerRadius: 3.5)
-                                .fill(store.usagePeriod == period ? Color.white.opacity(0.85) : Color.clear)
-                        )
-                }
-                .buttonStyle(.plain)
+                Text(period.shortLabel)
+                    .font(.system(size: 8, weight: .semibold, design: .rounded))
+                    .foregroundStyle(store.usagePeriod == period
+                                     ? Color.black.opacity(0.8)
+                                     : Color.white.opacity(0.45))
+                    .frame(width: 13, height: 11)
+                    .background(
+                        RoundedRectangle(cornerRadius: 3.5)
+                            .fill(store.usagePeriod == period ? Color.white.opacity(0.85) : Color.clear)
+                    )
             }
         }
         .padding(1)
         .background(RoundedRectangle(cornerRadius: 4.5).fill(Color.white.opacity(0.1)))
-        .help("点击切换高亮周期（月/日额度都已在右侧展示）")
     }
 
     private func taskRow(_ t: ComateTask) -> some View {
