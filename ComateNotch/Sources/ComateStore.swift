@@ -692,7 +692,7 @@ final class ComateStore: ObservableObject {
             return
         }
         let backfill = Self.shouldBackfill(trigger, lastBackfill: lastUsageBackfill, now: now)
-        print("[ComateNotch] 拉取用量: trigger=\(trigger), backfill=\(backfill)")
+        NSLog("[ComateNotch] 拉取用量: trigger=%@, backfill=%@", "\(trigger)", backfill ? "true" : "false")
         DispatchQueue.global(qos: .utility).async { [weak self] in
             let limits = UsageAPI.fetchLimits(sid: sid)
             var credits: [String: Double]?
