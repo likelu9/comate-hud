@@ -169,14 +169,6 @@ struct ComateTask: Identifiable, Equatable {
     }
 }
 
-/// 今日模型用量（按模型分组统计 assistant 消息数）
-struct ModelUsage: Identifiable, Equatable {
-    let id: String        // model_name
-    let name: String      // 显示名
-    let count: Int        // 消息数
-    var ratio: Double     // 占比 0~1
-}
-
 final class ComateStore: ObservableObject {
     @Published private(set) var runningTasks: [ComateTask] = []
     @Published private(set) var recentTasks: [ComateTask] = []
@@ -184,7 +176,6 @@ final class ComateStore: ObservableObject {
     @Published private(set) var cloudTasks: [ComateTask] = []
     @Published private(set) var lastError: String?
     @Published private(set) var lastRefreshed: Date = .now
-    @Published private(set) var todayModelUsage: [ModelUsage] = []
     @Published private(set) var attentionCount: Int = 0
     /// 云端消息中心真实未读消息数（从 comate.wps.cn API 获取）
     @Published private(set) var cloudUnreadCount: Int = 0
@@ -197,11 +188,6 @@ final class ComateStore: ObservableObject {
             guard oldValue != recentTaskLimit else { return }
             UserDefaults.standard.set(recentTaskLimit, forKey: ComateStore.recentTaskLimitKey)
         }
-    }
-
-    /// 今日 assistant 消息总数（所有模型合计）
-    var todayTotalMessages: Int {
-        todayModelUsage.reduce(0) { $0 + $1.count }
     }
 
     /// 右侧徽章显示的消息数：优先用云端真实未读数，兜底本地近似值
@@ -323,6 +309,42 @@ final class ComateStore: ObservableObject {
     /// 与浏览器登录状态无关；与未读消息、云端任务列表两个接口复用同一凭据。
     private var usageCredential: String? { fetchWpsSid() }
 
+    /// 左下角限额显示周期：默认日限额，点击切换月限额，选择持久化
+    @Published var usagePeriod: UsageAPI.Period = ComateStore.loadUsagePeriod()
+
+    private static let usagePeriodKey = "notch.usagePeriod"
+
+    private static func loadUsagePeriod() -> UsageAPI.Period {
+        UserDefaults.standard.string(forKey: usagePeriodKey)
+            .flatMap(UsageAPI.Period.init(rawValue:)) ?? .daily
+    }
+
+    func toggleUsagePeriod() {
+        usagePeriod = usagePeriod == .daily ? .monthly : .daily
+        UserDefaults.standard.set(usagePeriod.rawValue, forKey: ComateStore.usagePeriodKey)
+    }
+
+    /// 左下角文案：日/月限额百分比；取不到数据时给占位符
+    var usageLimitLabel: String {
+        guard usageState == .ok, let limit = usageLimits?.limit(usagePeriod) else { return "用量 —" }
+        return "\(usagePeriod.shortLabel) \(UsageAPI.percentLabel(limit.percent))"
+    }
+
+    /// 悬停详情：说清「用掉多少 / 还剩多少」，以及为什么没数字
+    var usageLimitDetail: String {
+        switch usageState {
+        case .noCredential:
+            return "未登录 Comate 桌面端，读不到用量"
+        case .failed:
+            return "用量获取失败，稍后自动重试"
+        case .idle:
+            return "正在获取用量…"
+        case .ok:
+            guard let limit = usageLimits?.limit(usagePeriod) else { return "暂无用量数据" }
+            return "\(limit.period.shortLabel)限额：已用 \(UsageAPI.creditsLabel(limit.used)) / \(UsageAPI.creditsLabel(limit.total)) 智点\n剩余 \(UsageAPI.creditsLabel(limit.remain)) · 点击切换日/月"
+        }
+    }
+
     private static func loadCustomExpandedHeight() -> CGFloat? {
         let v = UserDefaults.standard.double(forKey: customHeightKey)
         return v > 0 ? CGFloat(v) : nil
@@ -375,7 +397,6 @@ final class ComateStore: ObservableObject {
         }
         var running: [ComateTask] = []
         var recent: [ComateTask] = []
-        var usage: [ModelUsage] = []
         var attentionCount = 0
         var error: String?
 
@@ -432,34 +453,6 @@ final class ComateStore: ObservableObject {
                 recent.append(task)
             }
 
-            // 查询今日模型用量（按 model_name 分组统计 assistant 消息数）
-            let usageSQL = """
-            SELECT model_name, COUNT(*) as cnt
-            FROM chat_messages
-            WHERE role = 'assistant'
-              AND model_name IS NOT NULL
-              AND model_name != ''
-              AND created_at_ms > (strftime('%s','now','start of day') * 1000)
-            GROUP BY model_name
-            ORDER BY cnt DESC;
-            """
-            var uStmt: OpaquePointer?
-            if sqlite3_prepare_v2(db, usageSQL, -1, &uStmt, nil) == SQLITE_OK {
-                var raw: [(String, Int)] = []
-                while sqlite3_step(uStmt) == SQLITE_ROW {
-                    let m = String(cString: sqlite3_column_text(uStmt, 0))
-                    let c = Int(sqlite3_column_int(uStmt, 1))
-                    raw.append((m, c))
-                }
-                let total = raw.reduce(0) { $0 + $1.1 }
-                if total > 0 {
-                    usage = raw.map { (m, c) in
-                        ModelUsage(id: m, name: displayName(m), count: c, ratio: Double(c) / Double(total))
-                    }
-                }
-                sqlite3_finalize(uStmt)
-            }
-
             // 查询需要关注的会话数（近似"未读消息"）
             // 定义：status=idle + last_message_role=assistant + 最近 7 天
             let attSQL = """
@@ -487,7 +480,6 @@ final class ComateStore: ObservableObject {
                 copy.credits30d = self.credits30d[task.id]
                 return copy
             }
-            self.todayModelUsage = usage
             self.attentionCount = attentionCount
             self.lastRefreshed = .now
         }
@@ -670,17 +662,6 @@ final class ComateStore: ObservableObject {
                 }
             }
         }
-    }
-
-    private func displayName(_ model: String) -> String {
-        let lower = model.lowercased()
-        if lower.hasPrefix("glm") { return "GLM" }
-        if lower.hasPrefix("mimo") { return "MiMo" }
-        if lower.hasPrefix("deepseek") { return "DeepSeek" }
-        if lower.hasPrefix("qwen") { return "Qwen" }
-        if lower.hasPrefix("claude") { return "Claude" }
-        if lower.hasPrefix("gpt") { return "GPT" }
-        return model
     }
 
     // MARK: - 交互

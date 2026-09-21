@@ -573,10 +573,14 @@ struct NotchRootView: View {
                             : .clear,
                         radius: store.primaryLight != .gray ? 5 : 0
                     )
-                // 今日模型用量总量
-                Text("今日 \(store.todayTotalMessages) 次对话")
-                    .font(.system(size: 8, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.35))
+                // 模型用量：默认日限额，点击切换月限额（选择持久化）
+                Button(action: { store.toggleUsagePeriod() }) {
+                    Text(store.usageLimitLabel)
+                        .font(.system(size: 8, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(store.usageState == .ok ? 0.45 : 0.3))
+                }
+                .buttonStyle(.plain)
+                .help(store.usageLimitDetail)
                 Spacer()
                 // 消息数提示：铃铛图标 + 未读数（可点击打开消息中心）
                 if store.totalMessageCount > 0 {
