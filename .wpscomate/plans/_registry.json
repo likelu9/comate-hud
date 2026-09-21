@@ -27,6 +27,15 @@
       "createdAt": 1789977337781,
       "updatedAt": 1789979118709,
       "completedAt": null
+    },
+    {
+      "planId": "comate-notch-dist",
+      "suffix": "comate-notch-dist",
+      "title": "ComateNotch 分发打包（DMG）+ 阻塞项修复",
+      "status": "active",
+      "createdAt": 1789984618228,
+      "updatedAt": 1789984618228,
+      "completedAt": null
     }
   ]
 }
