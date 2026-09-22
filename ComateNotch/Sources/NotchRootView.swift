@@ -575,11 +575,9 @@ struct NotchRootView: View {
                             .font(.system(size: 8, weight: .medium, design: .rounded))
                             .foregroundStyle(.white.opacity(usageToggleHovered ? 0.8 : 0.55))
                     }
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    // 命中区扩到整条左下：从左内边距一直延伸到铃铛前
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .contentShape(RoundedRectangle(cornerRadius: 5))
                     .background(
                         RoundedRectangle(cornerRadius: 5)
                             .fill(Color.white.opacity(usageToggleHovered ? 0.1 : 0))
