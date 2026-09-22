@@ -270,9 +270,9 @@ struct NotchRootView: View {
     @State private var resizeHovered = false
     @State private var dragBaseHeight: CGFloat = 0
 
-    /// 状态灯脉冲：黄灯慢呼吸（工作中），红灯快闪（等你确认）。nil = 常亮
+    /// 状态灯脉冲：黄灯跳动（工作中），红灯快闪（等你确认）。nil = 常亮
     private var pulse: (duration: Double, low: Double)? {
-        if store.primaryLight == .yellow { return (2.0, 0.08) }
+        if store.primaryLight == .yellow { return (1.2, 0.08) }
         if store.primaryLight == .red && store.primaryRedBlinking { return (0.55, 0.15) }
         return nil
     }
