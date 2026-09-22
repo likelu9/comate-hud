@@ -590,6 +590,7 @@ struct NotchRootView: View {
                 }
                 .animation(.easeInOut(duration: 0.12), value: usageToggleHovered)
                 .help(store.usageLimitDetail)
+                Spacer(minLength: 0)
                 // 消息数提示：铃铛图标 + 未读数（可点击打开消息中心）
                 if store.totalMessageCount > 0 {
                     Button(action: { store.openMessageCenter() }) {
