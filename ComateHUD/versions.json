@@ -5,7 +5,7 @@
       "version": "1.2.0",
       "build": 3,
       "date": "2026-09-23",
-      "download": "https://github.com/nicepkg/comate-notch/releases/download/v1.2.0/ComateHUD-1.2.0.dmg",
+      "download": "https://github.com/likelu9/comate-hud/releases/download/v1.2.0/ComateHUD-1.2.0.dmg",
       "size": "1.3 MB",
       "minOS": "12.0",
       "changelog": [
@@ -26,7 +26,7 @@
       "version": "1.1.0",
       "build": 2,
       "date": "2026-09-23",
-      "download": "../ComateNotch/dist/ComateNotch-1.1.0.dmg",
+      "download": null,
       "size": "932 KB",
       "minOS": "12.0",
       "changelog": [
