@@ -44,7 +44,7 @@ struct HUDLogoBadge: View {
                 .overlay(
                     Circle()
                         .fill(Color(hex: store.primaryLight.color)
-                            .opacity(store.primaryLight != .gray ? 0.45 : 0))
+                            .opacity(store.primaryLight != .gray ? 0.45 * glow : 0))
                         .frame(width: lightSize * 2, height: lightSize * 2)
                         .blur(radius: 3 * scale * glow)
                 )
