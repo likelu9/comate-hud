@@ -1,0 +1,59 @@
+{
+  "latest": "1.2.0",
+  "versions": [
+    {
+      "version": "1.2.0",
+      "build": 3,
+      "date": "2026-09-23",
+      "download": "../ComateNotch/dist/ComateHUD-1.2.0.dmg",
+      "size": "1.3 MB",
+      "minOS": "12.0",
+      "changelog": [
+        { "type": "new", "text": "全新应用图标（深色 squircle + 蓝粉双色环 + 三灯）" },
+        { "type": "new", "text": "右键「关于 Comate HUD」弹窗，含应用简介" },
+        { "type": "new", "text": "UserDefaults 设置迁移（从旧 bundle id 无缝过渡）" },
+        { "type": "new", "text": "黄灯闪烁频率优化（2.0s → 1.2s，呼吸感更强）" },
+        { "type": "opt", "text": "DB 查询改为异步队列，消除主线程卡顿" },
+        { "type": "opt", "text": "任务行点击修复（不再双重弹窗）" },
+        { "type": "opt", "text": "额度热区收窄至仅覆盖文字区域" },
+        { "type": "opt", "text": "云端刷新支持动画期间暂停（isPaused）" },
+        { "type": "fix", "text": "build.sh 编译回退逻辑错误（arm64 失败误判）" },
+        { "type": "fix", "text": "HTTP Cookie sid 注入风险（新增校验）" },
+        { "type": "fix", "text": "journals 字典无限增长（自动清理旧条目）" }
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "build": 2,
+      "date": "2026-09-23",
+      "download": "../ComateNotch/dist/ComateNotch-1.1.0.dmg",
+      "size": "932 KB",
+      "minOS": "12.0",
+      "changelog": [
+        { "type": "new", "text": "自定义应用图标（用户原图直接生成 icns）" },
+        { "type": "new", "text": "双架构 universal binary（arm64 + x86_64）" },
+        { "type": "new", "text": "build.sh 自动化构建脚本" },
+        { "type": "opt", "text": "DMG 打包流程优化" },
+        { "type": "fix", "text": "arm64 编译回退逻辑错误" },
+        { "type": "fix", "text": "lipo 合并路径错误" }
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "build": 1,
+      "date": "2026-09-22",
+      "download": null,
+      "size": "-",
+      "minOS": "12.0",
+      "changelog": [
+        { "type": "new", "text": "首次发布" },
+        { "type": "new", "text": "刘海区三色状态灯（绿/黄/红）" },
+        { "type": "new", "text": "任务面板展开（悬停触发）" },
+        { "type": "new", "text": "消息中心（铃铛角标）" },
+        { "type": "new", "text": "额度用量显示（日/月切换）" },
+        { "type": "new", "text": "SQLite 本地读取 Comate 聊天记录" },
+        { "type": "new", "text": "Deeplink 调起 Comate 会话窗口" }
+      ]
+    }
+  ]
+}
