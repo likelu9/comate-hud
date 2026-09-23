@@ -369,8 +369,6 @@ final class FloatingPanel: NSPanel {
         }
 
         applyLayout(expanded: false)
-        NSLog("[FloatingPanel] init iconCenter=(%.0f,%.0f) width=%.0f",
-              iconCenter.x, iconCenter.y, expandedWidth)
     }
 
     deinit {
@@ -490,7 +488,6 @@ final class FloatingPanel: NSPanel {
             collapseWorkItem = item
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.24, execute: item)
         }
-        NSLog("[FloatingPanel] %@", expanded ? "expanded" : "collapsed")
     }
 
     // MARK: - 拖拽移动
@@ -549,16 +546,6 @@ final class FloatingPanel: NSPanel {
 
 // MARK: - SwiftUI 内容：图标（Comate logo + 状态灯）/ 展开态面板
 
-private struct FloatingRowsHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-
-private struct FloatingFooterHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-
 struct FloatingPanelContent: View {
     @ObservedObject var store: ComateStore
     @ObservedObject var interaction: FloatingInteraction
@@ -614,6 +601,19 @@ struct FloatingPanelContent: View {
             maxHeight: contentHeight(forRows: ComateStore.recentTaskLimitOptions.max() ?? 10)))
     }
 
+    private func updateRowsHeight(_ h: CGFloat) {
+        guard h > 0, abs(h - rowsHeight) > 0.5 else { return }
+        rowsHeight = h
+        measuredRowCount = displayedRowCount
+        reportMetrics()
+    }
+
+    private func updateFooterHeight(_ h: CGFloat) {
+        guard h > 0, abs(h - footerHeight) > 0.5 else { return }
+        footerHeight = h
+        reportMetrics()
+    }
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             // 图标：与刘海模式同一套视觉（Comate logo + 紧贴右下的状态灯），
@@ -661,10 +661,13 @@ struct FloatingPanelContent: View {
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
                     HUDTaskRows(store: store, spacing: FloatingMetrics.listSpacing)
-                        .background(GeometryReader { g in
-                            Color.clear.preference(key: FloatingRowsHeightKey.self,
-                                                   value: g.size.height)
-                        })
+                        .background(
+                            GeometryReader { g in
+                                Color.clear
+                                    .onAppear { updateRowsHeight(g.size.height) }
+                                    .onChange(of: g.size.height) { h in updateRowsHeight(h) }
+                            }
+                        )
                 }
                 .frame(height: listViewportHeight)
             }
@@ -673,9 +676,13 @@ struct FloatingPanelContent: View {
             Spacer(minLength: 0)
 
             HUDUsageFooter(store: store)
-                .background(GeometryReader { g in
-                    Color.clear.preference(key: FloatingFooterHeightKey.self, value: g.size.height)
-                })
+                .background(
+                    GeometryReader { g in
+                        Color.clear
+                            .onAppear { updateFooterHeight(g.size.height) }
+                            .onChange(of: g.size.height) { h in updateFooterHeight(h) }
+                    }
+                )
         }
         .padding(.horizontal, FloatingMetrics.panelHPadding)
         .padding(.top, FloatingMetrics.panelTopPadding)
@@ -690,17 +697,6 @@ struct FloatingPanelContent: View {
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
         .overlay(alignment: .bottom) { resizeHandle }
-        .onPreferenceChange(FloatingRowsHeightKey.self) { h in
-            guard h > 0, abs(h - rowsHeight) > 0.5 else { return }
-            rowsHeight = h
-            measuredRowCount = displayedRowCount
-            reportMetrics()
-        }
-        .onPreferenceChange(FloatingFooterHeightKey.self) { h in
-            guard h > 0, abs(h - footerHeight) > 0.5 else { return }
-            footerHeight = h
-            reportMetrics()
-        }
     }
 
     /// 底部拖拽手柄：向下拖变高（顶部锚定不动），与刘海模式交互一致
@@ -709,8 +705,8 @@ struct FloatingPanelContent: View {
             Color.clear.contentShape(Rectangle())
             Capsule()
                 .fill(Color.white.opacity(resizeHovered || isResizing ? 0.5 : 0.22))
-                .frame(width: 44, height: 4)
-                .padding(.bottom, 4)
+                .frame(width: 44, height: 3)
+                .padding(.bottom, 2)
         }
         .frame(height: FloatingMetrics.handleHeight)
         .onHover { h in
