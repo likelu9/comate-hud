@@ -74,6 +74,10 @@
     .release-body .cat.new { color: var(--accent); }
     .release-body .cat.opt { color: var(--yellow); }
     .release-body .cat.fix { color: var(--red); }
+    .release-body .rn-group { margin-top: 10px; }
+    .release-body .rn-list { list-style: none; padding: 4px 0 0; margin: 0; }
+    .release-body .rn-list li { position: relative; padding-left: 14px; line-height: 1.9; }
+    .release-body .rn-list li::before { content: ''; position: absolute; left: 2px; top: 11px; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.25); }
     .mockup-section { padding: 60px 0 100px; }
     .mockup-wrapper { max-width: 900px; margin: 0 auto; background: var(--bg-card); border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.06); overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.5); }
     .mockup-titlebar { display: flex; align-items: center; gap: 8px; padding: 14px 18px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -157,7 +161,15 @@
     .version-item .vi-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .version-item .vi-ver { font-size: 18px; font-weight: 700; }
     .version-item .vi-date { font-size: 12px; color: var(--text-dim); }
-    .version-item .vi-changes { font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+    .version-item .vi-changes { font-size: 13px; color: var(--text-secondary); line-height: 1.8; margin-top: 14px; }
+    .version-item summary { cursor: pointer; list-style: none; }
+    .version-item summary::-webkit-details-marker { display: none; }
+    .version-item summary .vi-date::after { content: '▾'; margin-left: 8px; font-size: 11px; color: var(--text-dim); }
+    .version-item[open] summary .vi-date::after { content: '▴'; }
+    .vc-group { margin-bottom: 10px; }
+    .vc-list { list-style: none; padding: 4px 0 0; margin: 0; }
+    .vc-list li { position: relative; padding-left: 14px; font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+    .vc-list li::before { content: ''; position: absolute; left: 2px; top: 10px; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.25); }
     .vc-label { font-weight: 600; margin-right: 4px; }
     .vc-new { color: var(--accent); }
     .vc-opt { color: var(--yellow); }
@@ -179,12 +191,12 @@
     .wish-section { padding: 80px 0; }
     .wish-form { max-width: 560px; margin: 40px auto 0; display: flex; flex-direction: column; gap: 10px; }
     .wish-row { display: flex; gap: 10px; }
-    .wish-row input, .wish-row textarea, .wish-row select {
+    .wish-row input, .wish-row textarea {
       flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
       background: var(--bg-card); color: var(--text); font-size: 14px; font-family: inherit; resize: none;
     }
     .wish-row input:focus, .wish-row textarea:focus { outline: none; border-color: var(--accent); }
-    .wish-row select { flex: 0 0 120px; }
+    .wish-hint { font-size: 12px; color: var(--text-dim); text-align: center; min-height: 16px; }
     .wish-row button {
       flex: 0 0 80px; padding: 10px; border-radius: 10px; border: none; cursor: pointer;
       background: var(--accent); color: #0a0a0f; font-weight: 600; font-size: 14px;
@@ -192,22 +204,30 @@
     }
     .wish-row button:hover { transform: scale(1.03); }
     .wish-barrage {
-      margin-top: 32px; height: 180px; position: relative; overflow: hidden;
+      margin-top: 32px; height: 210px; position: relative; overflow: hidden;
       border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.06);
       background: var(--bg-card);
     }
+    .wish-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-dim); }
     .wish-bubble {
-      position: absolute; padding: 8px 16px; border-radius: 20px;
+      position: absolute; left: 0; padding: 8px 16px; border-radius: 20px;
       background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
       font-size: 13px; color: var(--text-secondary); white-space: nowrap;
-      animation: wish-float linear forwards;
+      animation: wish-float linear infinite;
     }
     .wish-bubble .wish-author { font-weight: 600; color: var(--accent); margin-right: 6px; }
+    .wish-bubble .wish-reply { display: block; font-size: 12px; color: var(--accent); margin-top: 3px; }
+    .wish-barrage:hover .wish-bubble { animation-play-state: paused; }
+    .wish-ops { margin-left: 10px; }
+    .wish-ops button {
+      font-size: 11px; padding: 2px 8px; margin-left: 4px; border-radius: 6px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
+      color: var(--text-secondary); font-family: inherit; transition: color 0.15s, border-color 0.15s;
+    }
+    .wish-ops button:hover { color: var(--text); border-color: rgba(255,255,255,0.32); }
     @keyframes wish-float {
-      0% { transform: translateX(110%); opacity: 0; }
-      5% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { transform: translateX(-120%); opacity: 0; }
+      0% { transform: translateX(var(--track, 100%)); }
+      100% { transform: translateX(calc(-100% - 8px)); }
     }
     @media (max-width: 768px) {
       .hero { padding: 120px 0 60px; }
@@ -227,7 +247,7 @@
   <div class="container">
     <a href="#" class="brand"><img src="icon.png" alt="Comate HUD" /><strong>Comate HUD</strong></a>
     <div class="nav-links">
-      <a href="#features">功能</a><a href="#lights">状态灯</a><a href="#tech">技术</a><a href="#versions">更新日志</a><a href="#compat">兼容性</a><a href="#powered">能力提供</a>
+      <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">技术栈</a><a href="#compat">兼容性</a><a href="#versions">更新日志</a><a href="#powered">能力提供</a><a href="#wishwall">许愿反馈</a>
       <a href="#download" class="btn-sm">下载</a>
       <span id="pv-display" style="font-size:12px;color:var(--text-dim);margin-left:8px;">-</span>
     </div>
@@ -240,6 +260,7 @@
     <p class="subtitle">一款常驻 macOS 刘海区的轻量状态指示器，为 WPS Comate 而生。<br/>无需打开主窗口，任务状态一目了然。</p>
     <div class="hero-lights">
       <div class="hero-light"><div class="dot gray"></div><span>空闲</span></div>
+      <div class="hero-light"><div class="dot green"></div><span>已完成</span></div>
       <div class="hero-light"><div class="dot yellow"></div><span>工作中</span></div>
       <div class="hero-light"><div class="dot red"></div><span>等待确认</span></div>
     </div>
@@ -301,7 +322,7 @@
 </section>
 <section class="lights-section" id="lights">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">状态灯语义</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">四种状态，一眼看懂</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">每种状态都有独特的灯色与节奏，让你在余光中就能感知 AI 在干什么。</p></div>
+    <div class="reveal" style="text-align:center;"><div class="section-label">状态含义</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">四种状态，一眼看懂</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">每种状态都有独特的灯色与节奏，让你在余光中就能感知 AI 在干什么。</p></div>
     <div class="lights-showcase reveal">
       <div class="light-item"><div class="light-orb gray"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/></svg></div><h4>⚪️ 空闲</h4><p>没有进行中的任务。灯常亮，安静守候。</p></div>
       <div class="light-item"><div class="light-orb green"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div><h4>🟢 已完成</h4><p>任务刚跑完。绿灯保持 15 分钟，期间触发新对话会继续顺延。</p></div>
@@ -366,7 +387,7 @@
 </section>
 <section class="version-section" id="versions">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">版本历史</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">更新日志</h2></div>
+    <div class="reveal" style="text-align:center;"><div class="section-label">更新日志</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">每个版本改了什么</h2></div>
     <div class="version-list">
       <div id="version-list"></div>
     </div>
@@ -374,7 +395,7 @@
 </section>
 <section class="powered-section" id="powered">
   <div class="container">
-    <div class="reveal"><div class="section-label">生态</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">基于 WPS Comate 应用开发能力</h2></div>
+    <div class="reveal"><div class="section-label">能力提供</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">基于 WPS Comate 应用开发能力</h2></div>
     <div class="powered-card reveal">
       <div class="powered-logo">C</div>
       <h3>Comate 应用开发能力 (App Studio)</h3>
@@ -385,16 +406,16 @@
 </section>
 <section class="wish-section" id="wishwall">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">许愿墙</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">许个愿，让 HUD 更好</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">实名或匿名提交你的愿望和建议，所有留言会在弹幕中展示。</p></div>
+    <div class="reveal" style="text-align:center;"><div class="section-label">许愿反馈</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">许个愿，让 HUD 更好</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">实名或匿名提交你的愿望和建议，所有留言会在弹幕中展示。</p></div>
     <div class="wish-form reveal">
       <div class="wish-row">
         <input id="wish-name" type="text" placeholder="你的名字（可选，留空匿名）" maxlength="20" />
-        <select id="wish-type"><option value="wish">🌟 许愿</option><option value="suggest">💡 建议</option></select>
       </div>
       <div class="wish-row">
         <textarea id="wish-text" placeholder="写下你的愿望或建议..." maxlength="100" rows="2"></textarea>
-        <button id="wish-submit" onclick="submitWish()">发送</button>
+        <button id="wish-submit">发送</button>
       </div>
+      <div class="wish-hint" id="wish-hint"></div>
     </div>
     <div class="wish-barrage reveal" id="wish-barrage"></div>
   </div>
@@ -403,7 +424,7 @@
   <div class="container">
     <p style="margin-bottom:8px;">Comate HUD — 为 WPS Comate 而生的 macOS 状态指示器</p>
     <p>macOS 12.0+ · Apple Silicon &amp; Intel · Swift · SwiftUI</p>
-    <p style="margin-top:12px;"><a href="#download">下载</a> · <a href="https://github.com/likelu9/comate-hud" target="_blank" rel="noopener">GitHub</a></p>
+    <p style="margin-top:12px;"><a href="#download">下载</a> · <a href="#wishwall">许愿反馈</a> · <a href="https://github.com/likelu9/comate-hud" target="_blank" rel="noopener">GitHub</a></p>
   </div>
 </footer>
 <script>
@@ -436,8 +457,10 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
     var grouped = {};
     v.changelog.forEach(function(c){ if(!grouped[c.type]) grouped[c.type]=[]; grouped[c.type].push(c.text); });
     Object.keys(grouped).forEach(function(t){
-      html += '<div' + (Object.keys(grouped).indexOf(t)>0?' style="margin-top:10px"':'') + '><span class="cat '+typeColors[t]+'">'+typeLabels[t]+'</span></div>';
-      html += '<div style="padding-left:16px;">' + grouped[t].join(' · ') + '</div>';
+      html += '<div class="rn-group"><span class="cat '+typeColors[t]+'">'+typeLabels[t]+'</span>';
+      html += '<ul class="rn-list">';
+      grouped[t].forEach(function(txt){ html += '<li>'+txt+'</li>'; });
+      html += '</ul></div>';
     });
     rb.innerHTML = html;
     // Version history
@@ -445,13 +468,17 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
     var vh = '';
     data.versions.forEach(function(v,i){
       var tag = i===0?' <span class="vi-tag">LATEST</span>':'';
-      vh += '<div class="version-item reveal"><div class="vi-head"><span class="vi-ver">v'+v.version+tag+'</span><span class="vi-date">'+v.date+'</span></div><div class="vi-changes">';
+      vh += '<details class="version-item reveal"'+(i===0?' open':'')+'>';
+      vh += '<summary class="vi-head"><span class="vi-ver">v'+v.version+tag+'</span><span class="vi-date">'+v.date+' · '+v.changelog.length+' 项改动</span></summary>';
+      vh += '<div class="vi-changes">';
       var g = {};
       v.changelog.forEach(function(c){ if(!g[c.type])g[c.type]=[];g[c.type].push(c.text);});
       Object.keys(g).forEach(function(t){
-        vh += '<span class="vc-label vc-'+typeColors[t]+'">'+typeLabels[t]+'</span> '+g[t].join(' · ')+'<br/>';
+        vh += '<div class="vc-group"><span class="vc-label vc-'+typeColors[t]+'">'+typeLabels[t]+'</span><ul class="vc-list">';
+        g[t].forEach(function(txt){ vh += '<li>'+txt+'</li>'; });
+        vh += '</ul></div>';
       });
-      vh += '</div></div>';
+      vh += '</div></details>';
     });
     vl.innerHTML = vh;
     // Re-observe new reveals
@@ -467,50 +494,159 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
   var el = document.getElementById('pv-display');
   if(el) el.textContent = '🔥 已有 ' + pv + ' 人体验';
 })();
-// Wish Wall
-var WISH_KEY = 'comate-hud-wishes';
-function getWishes(){ try{return JSON.parse(localStorage.getItem(WISH_KEY))||[]}catch(e){return[]} }
-function saveWishes(w){ localStorage.setItem(WISH_KEY, JSON.stringify(w)); }
-function submitWish(){
-  var name = document.getElementById('wish-name').value.trim() || '匿名';
-  var text = document.getElementById('wish-text').value.trim();
-  var type = document.getElementById('wish-type').value;
-  if(!text) return;
-  var wishes = getWishes();
-  wishes.push({name:name, text:text, type:type, ts:Date.now()});
-  saveWishes(wishes);
-  document.getElementById('wish-text').value = '';
+
+</script>
+<script type="module">
+import { createClient } from './vendor/appbase.js';
+
+const PROJECT_ID = '3171466180955374';
+const WISH_TABLE = 'wish_feedback';
+// owner 白名单：命中才显示回复/删除入口（仅防误操作，非安全边界）
+const OWNER_NAMES = ['李柯陆'];
+const appbase = createClient({ projectId: PROJECT_ID });
+
+let wishRows = [];
+
+function wishEl(id) { return document.getElementById(id); }
+
+function ownerName() {
+  try { return localStorage.getItem('comate-hud-who') || ''; } catch (e) { return ''; }
+}
+function isOwner() { return OWNER_NAMES.indexOf(ownerName()) >= 0; }
+
+// 把 SDK 的错误信息压成一行短文本（后端 404/500 会返回整页 HTML）
+function errText(error) {
+  let m = (error && error.message) ? String(error.message) : '';
+  m = m.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return m.length > 60 ? m.slice(0, 60) + '…' : m;
+}
+
+async function loadWishes() {
+  const hint = wishEl('wish-hint');
+  const { data, error } = await appbase.from(WISH_TABLE).select();
+  if (error) {
+    if (hint) hint.textContent = '留言暂时加载失败，刷新页面重试';
+    renderWishBarrage();
+    return;
+  }
+  const rows = (data && data.rows) ? data.rows.slice() : [];
+  // 按提交时间倒序（最新的排最前）
+  rows.sort(function (a, b) { return String(b.create_at || '').localeCompare(String(a.create_at || '')); });
+  wishRows = rows;
+  if (hint) hint.textContent = '';
   renderWishBarrage();
 }
-function renderWishBarrage(){
-  var container = document.getElementById('wish-barrage');
-  if(!container) return;
+
+async function submitWish() {
+  const nameInput = wishEl('wish-name');
+  const textInput = wishEl('wish-text');
+  const hint = wishEl('wish-hint');
+  const btn = wishEl('wish-submit');
+  const text = (textInput.value || '').trim();
+  const name = (nameInput.value || '').trim() || '匿名';
+  if (!text) { if (hint) hint.textContent = '先写点什么再发送吧'; return; }
+  if (btn) btn.disabled = true;
+  if (hint) hint.textContent = '发送中…';
+  const { error } = await appbase.from(WISH_TABLE).insert([{ name: name, text: text }]);
+  if (btn) btn.disabled = false;
+  if (error) { if (hint) hint.textContent = '发送失败：' + (errText(error) || '请稍后重试'); return; }
+  try { localStorage.setItem('comate-hud-who', name); } catch (e) {}
+  textInput.value = '';
+  if (hint) hint.textContent = '已发送，感谢反馈';
+  loadWishes();
+}
+
+function renderWishBarrage() {
+  const container = wishEl('wish-barrage');
+  if (!container) return;
   container.innerHTML = '';
-  var wishes = getWishes();
-  if(!wishes.length) {
-    // 默认许愿
-    wishes = [
-      {name:'小明',text:'希望能支持 Linux 版本！',type:'wish'},
-      {name:'匿名',text:'加个自定义主题色功能吧',type:'suggest'},
-      {name:'阿花',text:'状态灯能不能加个紫色？',type:'wish'},
-      {name:'Coder',text:'希望支持快捷键呼出面板',type:'suggest'},
-      {name:'匿名',text:'已用了一周，非常好用 👍',type:'wish'},
-    ];
+  container.style.setProperty('--track', (container.clientWidth || 800) + 'px');
+  if (!wishRows.length) {
+    container.innerHTML = '<div class="wish-empty">还没有留言，来写第一条</div>';
+    return;
   }
-  // 弹幕：随机位置、随机速度
-  wishes.forEach(function(w, i){
-    var bubble = document.createElement('div');
+  const owner = isOwner();
+  wishRows.forEach(function (w, i) {
+    const bubble = document.createElement('div');
     bubble.className = 'wish-bubble';
-    var icon = w.type==='wish' ? '🌟' : '💡';
-    bubble.innerHTML = '<span class="wish-author">'+w.name+'</span>' + icon + ' ' + w.text;
-    var row = i % 3;
-    bubble.style.top = (15 + row * 55) + 'px';
-    bubble.style.animationDuration = (12 + Math.random()*8) + 's';
-    bubble.style.animationDelay = (i * 1.5) + 's';
+    const author = document.createElement('span');
+    author.className = 'wish-author';
+    author.textContent = w.name || '匿名';
+    bubble.appendChild(author);
+    bubble.appendChild(document.createTextNode(w.text || ''));
+    if (w.reply) {
+      const r = document.createElement('span');
+      r.className = 'wish-reply';
+      r.textContent = '作者回复：' + w.reply;
+      bubble.appendChild(r);
+    }
+    if (owner) {
+      const ops = document.createElement('span');
+      ops.className = 'wish-ops';
+      const rb = document.createElement('button');
+      rb.type = 'button';
+      rb.textContent = w.reply ? '改回复' : '回复';
+      rb.addEventListener('click', function (ev) { ev.stopPropagation(); replyWish(w); });
+      const db = document.createElement('button');
+      db.type = 'button';
+      db.textContent = '删除';
+      db.addEventListener('click', function (ev) { ev.stopPropagation(); deleteWish(w); });
+      ops.appendChild(rb);
+      ops.appendChild(db);
+      bubble.appendChild(ops);
+    }
+    bubble.style.top = (10 + (i % 3) * 58) + 'px';
+    bubble.style.animationDuration = (24 + (i % 5) * 4) + 's';
+    // 负延迟让弹幕一进场就铺满轨道
+    bubble.style.animationDelay = (-i * 4.5) + 's';
     container.appendChild(bubble);
   });
 }
-renderWishBarrage();
+
+async function replyWish(w) {
+  const hint = wishEl('wish-hint');
+  const current = w.reply || '';
+  const text = window.prompt('回复「' + (w.name || '匿名') + '」的留言：', current);
+  if (text === null) return;
+  const val = text.trim();
+  if (val === current) return;
+  const { error } = await appbase.from(WISH_TABLE).update({ reply: val, reply_at: new Date().toISOString() }).eq('_id', w._id);
+  if (error) { if (hint) hint.textContent = '回复失败：' + (errText(error) || '请稍后重试'); return; }
+  if (hint) hint.textContent = '已回复';
+  loadWishes();
+}
+
+async function deleteWish(w) {
+  const hint = wishEl('wish-hint');
+  if (!window.confirm('确定删除「' + (w.name || '匿名') + '」的这条留言？')) return;
+  const { error } = await appbase.from(WISH_TABLE).delete().eq('_id', w._id);
+  if (error) { if (hint) hint.textContent = '删除失败：' + (errText(error) || '请稍后重试'); return; }
+  if (hint) hint.textContent = '已删除';
+  loadWishes();
+}
+
+const submitBtn = wishEl('wish-submit');
+if (submitBtn) submitBtn.addEventListener('click', submitWish);
+
+// 名字填成 owner 白名单即切换为管理视图（仅防误操作）
+const nameInput = wishEl('wish-name');
+if (nameInput) {
+  nameInput.addEventListener('input', function () {
+    const v = nameInput.value.trim();
+    if (OWNER_NAMES.indexOf(v) >= 0 && ownerName() !== v) {
+      try { localStorage.setItem('comate-hud-who', v); } catch (e) {}
+      renderWishBarrage();
+    }
+  });
+}
+
+window.addEventListener('resize', function () {
+  const container = wishEl('wish-barrage');
+  if (container) container.style.setProperty('--track', (container.clientWidth || 800) + 'px');
+});
+
+loadWishes();
+setInterval(loadWishes, 30000);
 </script>
 </body>
 </html>
