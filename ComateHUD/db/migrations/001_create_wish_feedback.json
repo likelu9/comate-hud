@@ -1,0 +1,29 @@
+{
+  "version": "001_create_wish_feedback",
+  "description": "创建许愿反馈表：所有访问者可读、可提交；owner 由前端白名单控制回复/删除",
+  "operations": [
+    {
+      "type": "schema",
+      "action": "create_table",
+      "table": "wish_feedback",
+      "params": {
+        "columns": [
+          { "name": "name", "type": "text", "length": 64 },
+          { "name": "text", "type": "text", "length": 512, "required": true },
+          { "name": "reply", "type": "text", "length": 512 },
+          { "name": "reply_at", "type": "text" }
+        ]
+      },
+      "access": {
+        "pattern": "custom",
+        "default_role": "member",
+        "rules": {
+          "create": { "effect": "allow" },
+          "read": { "effect": "allow" },
+          "update": { "effect": "allow" },
+          "delete": { "effect": "allow" }
+        }
+      }
+    }
+  ]
+}

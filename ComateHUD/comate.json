@@ -10,5 +10,6 @@
     "build": "",
     "zip": "$system-zip frontend:."
   },
+  "enableCloud": true,
   "cover": true
 }

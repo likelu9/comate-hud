@@ -63,6 +63,15 @@
       "createdAt": 1790155976385,
       "updatedAt": 1790156903371,
       "completedAt": null
+    },
+    {
+      "planId": "hud-site-wish",
+      "suffix": "hud-site-wish",
+      "title": "官网改造：许愿反馈 + 目录统一 + 更新日志折叠",
+      "status": "active",
+      "createdAt": 1790158771779,
+      "updatedAt": 1790159003452,
+      "completedAt": null
     }
   ]
 }
