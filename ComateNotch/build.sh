@@ -71,3 +71,50 @@ rm -rf "$BUILD/arm64" "$BUILD/x86_64"
 
 echo "==> 构建完成: $APP"
 echo "OUTPUT=$APP"
+
+# 打包 DMG
+echo "==> 打包 DMG"
+DIST="$ROOT/dist"
+STAGING="$DIST/staging"
+DMG="$DIST/ComateHUD-$VER.dmg"
+rm -rf "$STAGING" "$DMG"
+mkdir -p "$STAGING"
+cp -R "$APP" "$STAGING/ComateHUD.app"
+ln -s /Applications "$STAGING/Applications"
+cat > "$STAGING/安装说明.txt" <<'TXT'
+Comate HUD —— 安装说明
+============================
+
+【安装】
+把左侧的 Comate HUD.app 拖到右侧的 Applications 文件夹即可。
+
+【首次打开】
+本应用未使用 Apple 付费开发者证书签名，macOS 会拦截首次启动。
+任选一种方式放行：
+
+  方式一：右键点击 Comate HUD.app → 选择「打开」→ 在弹窗中再点「打开」
+
+  方式二：打开「终端」，执行下面这行命令：
+      xattr -dr com.apple.quarantine /Applications/ComateHUD.app
+      然后双击启动
+
+【首次启动会弹权限提示】
+  · 读取 Comate 用量数据需要访问钥匙串，请选「始终允许」；
+    若选「拒绝」，额度区会显示「—」，任务列表不受影响。
+
+【使用】
+  · 刘海 HUD 模式：常驻屏幕顶部刘海区，鼠标移上去展开任务面板
+  · 任意悬浮模式：圆形悬浮球可拖到桌面任意位置，移上去展开面板
+  · 右键菜单：切换显示模式 / 显示主窗口 / 最近记录条数 / 关于 / 退出
+
+【系统要求】
+macOS 12.0 或更高版本，支持 Apple 芯片与 Intel 芯片。
+TXT
+hdiutil create -volname "Comate HUD" -srcfolder "$STAGING" -ov -format UDZO -quiet "$DMG"
+rm -rf "$STAGING"
+if hdiutil verify "$DMG" >/dev/null 2>&1; then
+    echo "✅ DMG 校验通过: $(ls -lh "$DMG" | awk '{print $5}')"
+else
+    echo "⚠ DMG 校验失败"
+fi
+echo "OUTPUT=$DMG"
