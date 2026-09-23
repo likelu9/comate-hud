@@ -43,8 +43,8 @@
     .hero h1 { font-size: clamp(42px,7vw,72px); font-weight: 800; line-height: 1.08; letter-spacing: -0.04em; margin-bottom: 24px; }
     .hero h1 .gradient { background: linear-gradient(135deg, var(--accent) 0%, var(--blue) 50%, var(--purple) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .hero .subtitle { font-size: clamp(17px,2.4vw,21px); color: var(--text-secondary); max-width: 640px; margin: 0 auto 40px; line-height: 1.7; }
-    .hero-lights { display: flex; justify-content: center; gap: 24px; margin-bottom: 48px; }
-    .hero-light { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .hero-lights { display: flex; justify-content: center; gap: 40px; margin-bottom: 48px; }
+    .hero-light { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 60px; }
     .hero-light .dot { width: 14px; height: 14px; border-radius: 50%; }
     .hero-light .dot.green { background: var(--green); box-shadow: 0 0 16px var(--green); }
     .hero-light .dot.yellow { background: var(--yellow); box-shadow: 0 0 16px var(--yellow); animation: breathe 2s ease-in-out infinite; }
@@ -52,7 +52,7 @@
     .hero-light span { font-size: 12px; color: var(--text-dim); }
     @keyframes breathe { 0%,100%{opacity:1} 50%{opacity:.08} }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
-    .hero-actions { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .hero-actions { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
     .btn-download { display: inline-flex; align-items: center; gap: 10px; padding: 14px 32px; border-radius: 14px; font-size: 16px; font-weight: 600; text-decoration: none; transition: all 0.25s cubic-bezier(0.22,1,0.36,1); border: none; }
     .btn-primary { background: var(--accent); color: #0a0a0f; box-shadow: 0 0 24px var(--accent-glow), 0 4px 16px rgba(0,0,0,0.4); }
     .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 0 40px var(--accent-glow), 0 8px 24px rgba(0,0,0,0.5); }
@@ -60,6 +60,7 @@
     .btn-secondary:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
     .btn-download svg { width: 20px; height: 20px; }
     .hero-req { margin-top: 12px; font-size: 13px; color: var(--text-dim); }
+    .btn-coming { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
     .hero-tags { margin-top: 12px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
     .hero-tags span { font-size: 12px; color: var(--text-dim); }
     .release-toggle summary { font-size: 13px; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; justify-content: center; }
@@ -209,6 +210,10 @@
       <a id="dl-btn" href="#" class="btn-download btn-primary" download>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v14m0 0l-5-5m5 5l5-5M5 20h14"/></svg>
         <span id="dl-text">加载中...</span>
+      </a>
+      <a id="dl-win" href="javascript:void(0)" class="btn-download btn-primary btn-coming" title="Windows 版即将发布">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v14m0 0l-5-5m5 5l5-5M5 20h14"/></svg>
+        <span>Windows · 即将发布</span>
       </a>
       <a href="https://github.com/likelu9/comate-hud" class="btn-download btn-secondary" target="_blank" rel="noopener">GitHub</a>
     </div>
