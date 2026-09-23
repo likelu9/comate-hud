@@ -9,5 +9,6 @@
     "dev": "",
     "build": "",
     "zip": "$system-zip frontend:."
-  }
+  },
+  "cover": true
 }
