@@ -60,6 +60,9 @@ final class FloatingInteraction: ObservableObject {
 
     /// SwiftUI 实测内容尺寸回传。不参与渲染，故不 @Published（避免刷新循环）
     var onContentMetrics: ((FloatingContentMetrics) -> Void)?
+    /// 拖拽底部手柄调整高度：开始 / 结束
+    var onResizeBegin: (() -> Void)?
+    var onResizeEnd: (() -> Void)?
 }
 
 /// 自定义内容视图：负责 hover 展开/收起、拖拽移动，并把透明区域的事件透传给下层窗口。
@@ -259,6 +262,8 @@ final class FloatingPanel: NSPanel {
 
     /// 图标中心（屏幕坐标，原点左下）
     private(set) var iconCenter: NSPoint
+    /// 最近一次算出的面板矩形（屏幕坐标），供 hover 判定使用
+    private(set) var panelRectScreen: NSRect = .zero
 
     /// 面板自然高度（实测）/ 最小（1 条）/ 最大（10 条）
     private var contentHeight: CGFloat = 300
@@ -397,7 +402,7 @@ final class FloatingPanel: NSPanel {
     /// 展开态面板矩形（屏幕坐标）。
     /// 垂直：优先放在图标下方，下方不够且上方更宽裕时翻到上方；
     /// 水平：默认左对齐图标（面板落在图标右下角），再夹到屏幕内。
-    private func layoutGeometry() -> (win: NSRect, panel: NSRect, panelAbove: Bool) {
+    private func layoutGeometry(expanded: Bool) -> (win: NSRect, panel: NSRect, panelAbove: Bool) {
         let icon = iconRectScreen
         let sf = currentScreen().frame
         let m = FloatingMetrics.screenMargin
@@ -416,8 +421,13 @@ final class FloatingPanel: NSPanel {
         let top = below ? icon.minY - gap : icon.maxY + gap
 
         let panel = NSRect(x: x, y: below ? top - h : top, width: w, height: h)
-        let winPanel = NSRect(x: x, y: below ? top - windowH : top, width: w, height: windowH)
-        let win = icon.union(winPanel).insetBy(dx: -FloatingMetrics.pad, dy: -FloatingMetrics.pad)
+        // 收起态窗口只有图标大小：面板不参与外接矩形，避免大块透明窗口盖住桌面
+        var win = icon
+        if expanded {
+            let winPanel = NSRect(x: x, y: below ? top - windowH : top, width: w, height: windowH)
+            win = icon.union(winPanel)
+        }
+        win = win.insetBy(dx: -FloatingMetrics.pad, dy: -FloatingMetrics.pad)
         return (win, panel, !below)
     }
 
@@ -425,10 +435,11 @@ final class FloatingPanel: NSPanel {
     /// 收起态窗口只有图标大小，展开时窗口瞬时长大（全透明不可见），
     /// SwiftUI 内容再从小图标下边缘动画展开 —— 图标全程不动。
     private func applyLayout(expanded: Bool) {
-        let g = layoutGeometry()
+        let g = layoutGeometry(expanded: expanded)
         if !isLiveResizing {
             setFrame(g.win, display: true)
         }
+        panelRectScreen = g.panel
 
         var layout = FloatingLayout()
         layout.windowSize = g.win.size
