@@ -9,6 +9,8 @@ struct HUDLogoBadge: View {
     @ObservedObject var store: ComateStore
     var logoSize: CGFloat
     var lightSize: CGFloat
+    /// 状态灯光晕强度：1 = 刘海模式基准；悬浮模式图标更大，需收敛避免光晕发散
+    var glow: CGFloat = 1
     var colorful: Bool = true
 
     @State private var pulseOpacity: Double = 1.0
@@ -44,22 +46,22 @@ struct HUDLogoBadge: View {
                         .fill(Color(hex: store.primaryLight.color)
                             .opacity(store.primaryLight != .gray ? 0.45 : 0))
                         .frame(width: lightSize * 2, height: lightSize * 2)
-                        .blur(radius: 3 * scale)
+                        .blur(radius: 3 * scale * glow)
                 )
                 .overlay(Circle().stroke(Color.black.opacity(0.3), lineWidth: 0.5))
                 .shadow(
                     color: store.primaryLight != .gray
                         ? Color(hex: store.primaryLight.color)
-                            .opacity(store.primaryLight == .red ? 0.9 : 0.7)
+                            .opacity((store.primaryLight == .red ? 0.9 : 0.7) * glow)
                         : .clear,
-                    radius: 4 * scale
+                    radius: 4 * scale * glow
                 )
                 .shadow(
                     color: store.primaryLight != .gray
                         ? Color(hex: store.primaryLight.color)
-                            .opacity(store.primaryLight == .red ? 0.6 : 0.4)
+                            .opacity((store.primaryLight == .red ? 0.6 : 0.4) * glow)
                         : .clear,
-                    radius: 8 * scale
+                    radius: 8 * scale * glow
                 )
                 .opacity(pulseOpacity)
                 .onAppear { restartPulse() }
