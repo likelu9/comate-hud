@@ -51,6 +51,8 @@ struct ComateTask: Identifiable, Equatable {
     let hasUnfinishedToolCall: Bool
     /// 最近一次真实活动时间：context_usage.updatedAt（助手每次模型调用都会刷新），兜底 updated_at_ms
     let activityAt: Date
+    /// 会话日志末条事件的角色（assistant / toolResult / user）；nil = 没有日志可读
+    var lastJournalEventRole: String? = nil
     /// 近 30 天智点累计（用量接口按会话汇总；nil = 30 天内没有消耗记录）
     var credits30d: Double? = nil
 
@@ -111,13 +113,18 @@ struct ComateTask: Identifiable, Equatable {
     /// 「轮次尚未收尾」：助手消息只在轮次收尾时落库，所以中途数据库里看不到它。
     /// 此时要么 last_message_role 还是 user（助手一个字都还没落库），要么会话日志里
     /// 留着发出但没结果的工具调用（比如提问落库后 last_message_role 会被顶成
-    /// assistant，只看 role 会漏判）。
+    /// assistant，只看 role 会漏判），要么工具刚回、模型还没落库新消息。
+    ///
+    /// 最后那条是「工具已回、轮到模型说话」的空档，典型场景就是 auq：你提交回答后
+    /// 提问那条 toolCall 已被 toolResult 配对回收，而回答不会把 last_message_role
+    /// 顶回 user，只看前两条会误判成已完成→变绿。日志末条是 toolResult 即算在干活。
     ///
     /// 「心跳新鲜」：context_usage.updatedAt 由助手每次模型调用刷新。被强杀 / 中断的轮次
     /// 心跳会停住，没有这道闸，最后一条恰好是 user 消息的会话会永远显示「工作中」。
     var isActive: Bool {
         guard Date().timeIntervalSince(activityAt) < ComateTask.activeWindow else { return false }
-        return lastMessageRole == "user" || hasUnfinishedToolCall
+        if lastMessageRole == "user" || hasUnfinishedToolCall { return true }
+        return lastJournalEventRole == "toolResult"
     }
 
     /// 心跳新鲜窗口：要能覆盖单次长工具调用（构建 / 测试），又不能长到让死掉的轮次复活
@@ -585,7 +592,8 @@ final class ComateStore: ObservableObject {
                                        faultReason: fault?.1,
                                        consumedTokens: journal?.consumedTokens,
                                        hasUnfinishedToolCall: !(journal?.pendingToolCalls.isEmpty ?? true),
-                                       activityAt: max(heartbeat, date))
+                                       activityAt: max(heartbeat, date),
+                                       lastJournalEventRole: journal?.lastEventRole)
                 result.recent.append(task)
             }
 
