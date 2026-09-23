@@ -36,8 +36,21 @@ cd "$ROOT_DIR/ComateNotch"
 bash "$BUILD_SCRIPT" 2>&1 | grep -E "^(==>|⚠|OUTPUT)" || true
 echo ""
 
-# --- Step 2: 更新 versions.json ---
-echo "==> Step 2: 更新版本清单"
+# --- Step 2: 复制 DMG 到部署目录 ---
+echo "==> Step 2: 复制 DMG"
+DMG_SRC="$ROOT_DIR/ComateNotch/dist/ComateHUD-${VERSION}.dmg"
+DMG_DST="$HUD_DIR/ComateHUD-${VERSION}.dmg"
+if [[ -f "$DMG_SRC" ]]; then
+  cp "$DMG_SRC" "$DMG_DST"
+  echo "✅ DMG 已复制: $(ls -lh "$DMG_DST" | awk '{print $5}')"
+else
+  echo "⚠ 未找到 DMG: $DMG_SRC"
+  echo "  DMG 下载路径将不可用，请手动复制"
+fi
+echo ""
+
+# --- Step 3: 更新 versions.json ---
+echo "==> Step 3: 更新版本清单"
 cd "$HUD_DIR"
 
 # 用 Node.js 更新 JSON（macOS 自带）
@@ -56,7 +69,7 @@ data.versions.unshift({
   version: '${VERSION}',
   build: ${BUILD_NUM},
   date: new Date().toISOString().split('T')[0],
-  download: '../ComateNotch/dist/ComateHUD-${VERSION}.dmg',
+  download: 'ComateHUD-${VERSION}.dmg',
   size: '-',
   minOS: '12.0',
   changelog: [
@@ -72,8 +85,8 @@ console.log('⚠ 请编辑 versions.json 填写本次更新的具体 changelog')
 "
 echo ""
 
-# --- Step 3: 部署到 Comate ---
-echo "==> Step 3: 部署前端页面"
+# --- Step 4: 部署到 Comate ---
+echo "==> Step 4: 部署前端页面"
 bash /Users/likelu/.wpscomate/agent/skills/official/comate-cli/scripts/comate.sh code publish \
   --workspace "$HUD_DIR" \
   --version "${VERSION}" \
