@@ -104,11 +104,11 @@ final class FloatingPanel: NSPanel {
     func animateToExpanded(height: CGFloat) {
         let w = Self.expandedWidth
         let h = max(height, Self.collapsedSize)
-        // 锚定当前图标中心点，向上扩展（图标中心 = 新 frame 底部中央）
-        let centerX = frame.midX
-        let iconBottom = frame.origin.y  // 当前图标底边
-        let target = NSRect(x: centerX - w / 2,
-                            y: iconBottom - (h - Self.collapsedSize),  // 向上扩展
+        // 锚定图标中心(cx,cy)不动，展开窗口从图标中心向下扩展
+        let cx = frame.midX
+        let cy = frame.midY
+        let target = NSRect(x: cx - w / 2,
+                            y: cy - h / 2,
                             width: w, height: h)
 
         self.contentView?.layer?.cornerRadius = 16
@@ -234,27 +234,27 @@ struct FloatingPanelContent: View {
                     }
                 }
             } else {
-                // 展开态：简化内容（后续可复用 NotchRootView）
-                VStack(spacing: 8) {
-                    HStack {
-                        Image(nsImage: NSImage(named: "AppIcon") ?? NSImage())
-                            .resizable()
-                            .frame(width: 20, height: 20)
-                        Text("Comate HUD")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white)
+                // 展开态：图标固定在顶部，内容从下方展开
+                ZStack(alignment: .top) {
+                    Color.black.opacity(0.95)
+                    VStack(spacing: 8) {
+                        // 图标固定在顶部居中，与收起态视觉位置一致
+                        HStack {
+                            Spacer()
+                            Image(nsImage: NSImage(named: "AppIcon") ?? NSImage())
+                                .resizable()
+                                .frame(width: 32, height: 32)
+                                .padding(.top, 8)
+                            Spacer()
+                        }
+                        Divider().background(Color.white.opacity(0.2))
+                        Text("展开态内容")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.6))
                         Spacer()
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 10)
-                    Divider().background(Color.white.opacity(0.2))
-                    Text("展开态内容")
-                        .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.6))
-                    Spacer()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.clear)
                 .onHover { hovering in
                     if !hovering {
                         withAnimation(.easeInOut(duration: 0.2)) {
