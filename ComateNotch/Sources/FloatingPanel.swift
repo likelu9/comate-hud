@@ -1,38 +1,39 @@
 import AppKit
 import SwiftUI
 
-/// 任意悬浮模式：圆形窗口，logo 为主 + 状态灯辅助。
-/// 常规态透明度弱化，hover 展开为矩形面板（与刘海模式交互一致）。
-/// 支持鼠标拖拽自由移动，位置持久化。
+/// 任意悬浮模式：固定尺寸窗口（展开态大小），收起态通过遮罩只露出圆形图标。
+/// 窗口 frame 永不改变 → 图标永不跳动。hover 切换遮罩实现展开/收起。
 final class FloatingPanel: NSPanel {
 
     private let store: ComateStore
-    private let hostingView: NSHostingView<AnyView>
     private var isDragging = false
     private var dragOffset: CGPoint = .zero
 
-    /// 收起态：圆形
+    /// 收起态：圆形直径
     static let collapsedSize: CGFloat = 48
-    /// 展开态宽度（与刘海模式保持一致的内容宽度）
+    /// 展开态宽度
     static let expandedWidth: CGFloat = 300
-    /// 展开态最大高度
-    static let expandedMaxHeight: CGFloat = 500
+    /// 展开态高度
+    static let expandedHeight: CGFloat = 360
+    /// 图标距顶部的偏移
+    static let iconTopOffset: CGFloat = 16
 
     init(store: ComateStore) {
         self.store = store
 
-        // 初始位置：从持久化的归一化坐标还原
         let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
-        let screenFrame = screen.frame
-        let x = screenFrame.origin.x + store.floatingPositionX * screenFrame.width
-        let y = screenFrame.origin.y + store.floatingPositionY * screenFrame.height
-        let initialFrame = NSRect(x: x - Self.collapsedSize / 2,
-                                  y: y - Self.collapsedSize / 2,
-                                  width: Self.collapsedSize,
-                                  height: Self.collapsedSize)
+        let sf = screen.frame
+        let cx = sf.minX + store.floatingPositionX * sf.width
+        let cy = sf.minY + store.floatingPositionY * sf.height
+
+        let w = Self.expandedWidth
+        let h = Self.expandedHeight
+        let iconCenterY = h - Self.iconTopOffset - Self.collapsedSize / 2
+        let initialFrame = NSRect(x: cx - w / 2,
+                                  y: cy - iconCenterY,
+                                  width: w, height: h)
 
         let styleMask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel, .fullSizeContentView]
-        self.hostingView = NSHostingView(rootView: AnyView(EmptyView()))
 
         super.init(contentRect: initialFrame, styleMask: styleMask, backing: .buffered, defer: false)
         self.isFloatingPanel = true
@@ -49,37 +50,30 @@ final class FloatingPanel: NSPanel {
         self.title = ""
         self.isReleasedWhenClosed = false
         self.contentView?.wantsLayer = true
-
-        // 裁剪为圆形
-        self.contentView?.layer?.cornerRadius = Self.collapsedSize / 2
+        self.contentView?.layer?.cornerRadius = 16
         self.contentView?.layer?.masksToBounds = true
 
-        // 设置 SwiftUI 内容
         let contentView = FloatingPanelContent(store: store, panel: self)
         let hosting = NSHostingView(rootView: AnyView(contentView))
-        hosting.frame = NSRect(x: 0, y: 0,
-                               width: Self.collapsedSize,
-                               height: Self.collapsedSize)
+        hosting.frame = NSRect(x: 0, y: 0, width: w, height: h)
         self.contentView = hosting
 
-        // 拖拽由 SwiftUI DragGesture 处理，无需全局监听
-
-        NSLog("[FloatingPanel] init: pos=(%.0f,%.0f)", x, y)
+        NSLog("[FloatingPanel] init: iconCenter=(%.0f,%.0f)", cx, cy)
     }
 
     // MARK: - 拖拽
 
-    func beginDrag(at point: NSPoint) {
+    func beginDrag(at screenPoint: NSPoint) {
         isDragging = true
-        dragOffset = NSPoint(x: point.x - frame.origin.x, y: point.y - frame.origin.y)
+        dragOffset = NSPoint(x: screenPoint.x - frame.origin.x,
+                             y: screenPoint.y - frame.origin.y)
     }
 
-    func continueDrag(at point: NSPoint) {
+    func continueDrag(at screenPoint: NSPoint) {
         guard isDragging else { return }
-        let newX = point.x - dragOffset.x
-        let newY = point.y - dragOffset.y
+        let newX = screenPoint.x - dragOffset.x
+        let newY = screenPoint.y - dragOffset.y
 
-        // 限制在屏幕范围内
         let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
         let sf = screen.frame
         let clampedX = max(sf.minX + 12, min(newX, sf.maxX - frame.width - 12))
@@ -91,70 +85,13 @@ final class FloatingPanel: NSPanel {
     func endDrag() {
         guard isDragging else { return }
         isDragging = false
-        // 保存归一化位置
         let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
         let sf = screen.frame
-        let normX = (frame.midX - sf.minX) / sf.width
-        let normY = (frame.midY - sf.minY) / sf.height
+        let iconCenterX = frame.origin.x + Self.expandedWidth / 2
+        let iconCenterY = frame.origin.y + Self.expandedHeight - Self.iconTopOffset - Self.collapsedSize / 2
+        let normX = (iconCenterX - sf.minX) / sf.width
+        let normY = (iconCenterY - sf.minY) / sf.height
         store.saveFloatingPosition(x: normX, y: normY)
-    }
-
-    // MARK: - 展开/收起动画（锚定图标中心不动）
-
-    func animateToExpanded(height: CGFloat) {
-        let w = Self.expandedWidth
-        let h = max(height, Self.collapsedSize)
-        // 锚定图标中心(cx,cy)不动，展开窗口从图标中心向下扩展
-        let cx = frame.midX
-        let cy = frame.midY
-        let target = NSRect(x: cx - w / 2,
-                            y: cy - h / 2,
-                            width: w, height: h)
-
-        self.contentView?.layer?.cornerRadius = 16
-
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.25
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            ctx.allowsImplicitAnimation = true
-            self.animator().setFrame(target, display: true)
-        }
-    }
-
-    func animateToCollapsed() {
-        // 锚定当前窗口中心点，回到 48x48 圆形
-        let cx = frame.midX
-        let cy = frame.midY
-        let target = NSRect(x: cx - Self.collapsedSize / 2,
-                            y: cy - Self.collapsedSize / 2,
-                            width: Self.collapsedSize,
-                            height: Self.collapsedSize)
-
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.25
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            ctx.allowsImplicitAnimation = true
-            self.animator().setFrame(target, display: true)
-        } completionHandler: { [weak self] in
-            self?.contentView?.layer?.cornerRadius = Self.collapsedSize / 2
-            // 收起后保存位置（可能被展开撑偏了）
-            if let s = self {
-                let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
-                let sf = screen.frame
-                let normX = (s.frame.midX - sf.minX) / sf.width
-                let normY = (s.frame.midY - sf.minY) / sf.height
-                s.store.saveFloatingPosition(x: normX, y: normY)
-            }
-        }
-    }
-
-    func setFrameImmediate(height: CGFloat) {
-        let w = Self.expandedWidth
-        let h = max(height, Self.collapsedSize)
-        let target = NSRect(x: frame.midX - w / 2,
-                            y: frame.midY - h / 2,
-                            width: w, height: h)
-        setFrame(target, display: true)
     }
 
     // MARK: - 外接显示器适配
@@ -162,11 +99,13 @@ final class FloatingPanel: NSPanel {
     func repositionToMainScreen() {
         let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
         let sf = screen.frame
-        let x = sf.minX + store.floatingPositionX * sf.width
-        let y = sf.minY + store.floatingPositionY * sf.height
-        let target = NSRect(x: x - frame.width / 2,
-                            y: y - frame.height / 2,
-                            width: frame.width, height: frame.height)
+        let cx = sf.minX + store.floatingPositionX * sf.width
+        let cy = sf.minY + store.floatingPositionY * sf.height
+        let iconCenterY = Self.expandedHeight - Self.iconTopOffset - Self.collapsedSize / 2
+        let target = NSRect(x: cx - Self.expandedWidth / 2,
+                            y: cy - iconCenterY,
+                            width: Self.expandedWidth,
+                            height: Self.expandedHeight)
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.35
             self.animator().setFrame(target, display: true)
@@ -174,15 +113,13 @@ final class FloatingPanel: NSPanel {
     }
 }
 
-// MARK: - SwiftUI 收起态内容：圆形 logo + 状态灯
+// MARK: - SwiftUI 内容
 
 struct FloatingPanelContent: View {
     @ObservedObject var store: ComateStore
     let panel: FloatingPanel
     @State private var isHovering = false
     @State private var isDragging = false
-    @State private var dragStart: CGPoint = .zero
-    @State private var panelOrigin: CGPoint = .zero
 
     private var lightColor: Color {
         switch store.primaryLight {
@@ -194,9 +131,13 @@ struct FloatingPanelContent: View {
     }
 
     var body: some View {
-        ZStack {
-            if !isHovering {
-                // 收起态：圆形 logo + 小状态灯
+        VStack(spacing: 0) {
+            // 图标区域：固定在顶部
+            ZStack {
+                if isHovering {
+                    Color.black.opacity(0.95)
+                        .transition(.opacity)
+                }
                 ZStack(alignment: .bottomTrailing) {
                     Image(nsImage: NSImage(named: "AppIcon") ?? NSImage())
                         .resizable()
@@ -209,61 +150,60 @@ struct FloatingPanelContent: View {
                 }
                 .frame(width: 48, height: 48)
                 .opacity(store.primaryLight == .gray ? 0.4 : 1.0)
-                .gesture(
-                    DragGesture(minimumDistance: 2)
-                        .onChanged { value in
-                            if !isDragging {
-                                isDragging = true
-                                dragStart = value.startLocation
-                                panelOrigin = panel.frame.origin
-                                panel.beginDrag(at: NSEvent.mouseLocation)
-                            }
-                        }
-                        .onEnded { _ in
-                            isDragging = false
-                            panel.endDrag()
-                        }
-                )
-                .onHover { hovering in
-                    guard !isDragging else { return }
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isHovering = hovering
-                    }
-                    if hovering {
-                        panel.animateToExpanded(height: 320)
-                    }
+            }
+            .frame(width: FloatingPanel.expandedWidth,
+                   height: FloatingPanel.iconTopOffset + FloatingPanel.collapsedSize + 8)
+            .onHover { hovering in
+                guard !isDragging else { return }
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isHovering = hovering
                 }
-            } else {
-                // 展开态：图标固定在顶部，内容从下方展开
-                ZStack(alignment: .top) {
-                    Color.black.opacity(0.95)
-                    VStack(spacing: 8) {
-                        // 图标固定在顶部居中，与收起态视觉位置一致
-                        HStack {
-                            Spacer()
-                            Image(nsImage: NSImage(named: "AppIcon") ?? NSImage())
-                                .resizable()
-                                .frame(width: 32, height: 32)
-                                .padding(.top, 8)
-                            Spacer()
+            }
+            .gesture(
+                DragGesture(minimumDistance: 2)
+                    .onChanged { _ in
+                        if !isDragging {
+                            isDragging = true
+                            let loc = NSEvent.mouseLocation
+                            let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
+                            let flipped = NSPoint(x: loc.x, y: screen.frame.height - loc.y)
+                            panel.beginDrag(at: flipped)
                         }
-                        Divider().background(Color.white.opacity(0.2))
-                        Text("展开态内容")
-                            .font(.system(size: 11))
-                            .foregroundColor(.white.opacity(0.6))
-                        Spacer()
+                        let loc = NSEvent.mouseLocation
+                        let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
+                        let flipped = NSPoint(x: loc.x, y: screen.frame.height - loc.y)
+                        panel.continueDrag(at: flipped)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onEnded { _ in
+                        isDragging = false
+                        panel.endDrag()
+                    }
+            )
+
+            // 展开内容区域
+            if isHovering {
+                Divider().background(Color.white.opacity(0.15))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Comate HUD")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.top, 8)
+                    Text("展开态内容区")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.5))
+                    Spacer()
                 }
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .onHover { hovering in
                     if !hovering {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             isHovering = false
                         }
-                        panel.animateToCollapsed()
                     }
                 }
             }
         }
+        .frame(width: FloatingPanel.expandedWidth, height: FloatingPanel.expandedHeight)
     }
 }
