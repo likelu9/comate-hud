@@ -188,32 +188,190 @@ struct HUDUsageFooter: View {
 
 // MARK: - 关于弹窗内容
 
+/// 「关于」弹窗的设计常量
+private enum AboutDesign {
+    static let width: CGFloat = 420
+    static let height: CGFloat = 556
+    static let brand = Color(hex: "#00D4AA")
+    static let cardFill = Color.white.opacity(0.045)
+    static let cardStroke = Color.white.opacity(0.07)
+    static let website = "https://comate.wpsgo.com/s/HyDSehobOTHX/"
+}
+
+/// 主按钮：品牌绿实底 + 深色文字
+private struct HUDPrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12.5, weight: .semibold))
+            .foregroundStyle(Color(hex: "#06251F"))
+            .frame(width: 150, height: 34)
+            .background(RoundedRectangle(cornerRadius: 10).fill(AboutDesign.brand))
+            .shadow(color: AboutDesign.brand.opacity(configuration.isPressed ? 0.10 : 0.22),
+                    radius: 9, y: 5)
+            .opacity(configuration.isPressed ? 0.82 : 1)
+            .contentShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+/// 次要按钮：浅底 + 描边
+private struct HUDGhostButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12.5, weight: .semibold))
+            .foregroundStyle(Color.white.opacity(0.85))
+            .frame(width: 96, height: 34)
+            .background(RoundedRectangle(cornerRadius: 10)
+                .fill(Color.white.opacity(configuration.isPressed ? 0.14 : 0.08)))
+            .overlay(RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+            .contentShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
 struct AboutHUDView: View {
     var onClose: () -> Void
 
     var body: some View {
-        VStack(spacing: 14) {
-            Image(nsImage: NSApplication.shared.applicationIconImage)
-                .resizable()
-                .frame(width: 96, height: 96)
-                .clipShape(RoundedRectangle(cornerRadius: 22))
-            Text("Comate HUD")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-            Text("版本 \(appVersion)")
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-            Divider()
-            Text("你的 AI 任务状态灯。\n常驻 macOS 刘海区，无需打开主窗口，任务状态一目了然：\n🟢 空闲 · 🟡 工作中 · 🔴 等待确认\n\n悬停刘海即可展开任务面板——最近会话、执行进度、额度用量尽收眼底；点击任务直达对应会话，动态显示 Comate 消息数量。\n\n让 AI 干活，你只管看灯。")
-                .font(.system(size: 12))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: 320)
-            Divider()
-            Button("好", action: onClose)
-                .keyboardShortcut(.defaultAction)
+        ZStack(alignment: .top) {
+            brandGlow
+            VStack(spacing: 0) {
+                appIcon
+                Text("Comate HUD")
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.top, 20)
+                versionChip.padding(.top, 9)
+                Text("让 AI 干活，你只管看灯")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(AboutDesign.brand)
+                    .padding(.top, 20)
+                Text("一款常驻 macOS 刘海区的轻量状态指示器，为 WPS Comate 而生。无需打开主窗口，任务状态一目了然。")
+                    .font(.system(size: 12))
+                    .lineSpacing(5)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Color.white.opacity(0.6))
+                    .frame(maxWidth: 300)
+                    .padding(.top, 10)
+                statusLegend.padding(.top, 20)
+                featureList.padding(.top, 20)
+                Spacer(minLength: 10)
+                Text("当前应用通过 Comate 应用开发能力实现")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(Color.white.opacity(0.36))
+                HStack(spacing: 10) {
+                    Button("访问官网", action: openWebsite)
+                        .buttonStyle(HUDPrimaryButtonStyle())
+                        .help("打开官网，检查更新或提交意见反馈")
+                    Button("关闭", action: onClose)
+                        .buttonStyle(HUDGhostButtonStyle())
+                        .keyboardShortcut(.cancelAction)
+                }
+                .padding(.top, 15)
+                Button(action: openWebsite) {
+                    Text("检查更新 · 意见反馈 · comate.wpsgo.com")
+                        .font(.system(size: 10.5))
+                        .foregroundStyle(Color.white.opacity(0.4))
+                        .padding(.bottom, 2)
+                        .overlay(alignment: .bottom) {
+                            Rectangle()
+                                .fill(Color.white.opacity(0.22))
+                                .frame(height: 1)
+                        }
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 13)
+            }
+            .padding(.horizontal, 30)
+            .padding(.top, 32)
+            .padding(.bottom, 22)
         }
-        .padding(24)
-        .frame(width: 380)
+        .frame(width: AboutDesign.width, height: AboutDesign.height)
+        .background(Color(hex: "#0F0F11"))
+    }
+
+    /// 顶部品牌光晕，让图标有发光感
+    private var brandGlow: some View {
+        RadialGradient(colors: [Color(hex: "#937EE6").opacity(0.28),
+                                Color(hex: "#4526BF").opacity(0.14),
+                                .clear],
+                       center: .center, startRadius: 0, endRadius: 190)
+            .frame(width: AboutDesign.width, height: 320)
+            .offset(y: -120)
+            .allowsHitTesting(false)
+    }
+
+    private var appIcon: some View {
+        Image(nsImage: NSApplication.shared.applicationIconImage)
+            .resizable()
+            .frame(width: 88, height: 88)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .shadow(color: .black.opacity(0.55), radius: 14, y: 10)
+            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.09), lineWidth: 1))
+    }
+
+    private var versionChip: some View {
+        Text("版本 \(appVersion)")
+            .font(.system(size: 10.5, weight: .medium))
+            .foregroundStyle(Color.white.opacity(0.58))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(Color.white.opacity(0.07)))
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.07), lineWidth: 1))
+    }
+
+    /// 三色状态图例，颜色取自真实任务灯色
+    private var statusLegend: some View {
+        HStack(spacing: 0) {
+            legendItem(TaskLight.gray.color, "空闲")
+            legendItem(TaskLight.yellow.color, "工作中")
+            legendItem(TaskLight.red.color, "等待确认")
+        }
+        .padding(.vertical, 13)
+        .frame(maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 14).fill(AboutDesign.cardFill))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(AboutDesign.cardStroke, lineWidth: 1))
+    }
+
+    private func legendItem(_ hex: String, _ label: String) -> some View {
+        HStack(spacing: 7) {
+            Circle()
+                .fill(Color(hex: hex))
+                .frame(width: 8, height: 8)
+                .shadow(color: Color(hex: hex).opacity(0.6), radius: 3.5)
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.white.opacity(0.72))
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var featureList: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            feature("悬停刘海，展开任务面板")
+            feature("最近会话 · 执行进度 · 额度用量，尽收眼底")
+            feature("点击任务，直达对应会话")
+        }
+        .frame(maxWidth: 312, alignment: .leading)
+    }
+
+    private func feature(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 9) {
+            Text("✓")
+                .font(.system(size: 9, weight: .heavy))
+                .foregroundStyle(AboutDesign.brand)
+                .frame(width: 14, height: 14)
+                .background(Circle().fill(AboutDesign.brand.opacity(0.14)))
+            Text(text)
+                .font(.system(size: 11.5))
+                .foregroundStyle(Color.white.opacity(0.72))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func openWebsite() {
+        guard let url = URL(string: AboutDesign.website) else { return }
+        NSWorkspace.shared.open(url)
     }
 
     private var appVersion: String {
@@ -242,6 +400,7 @@ enum AboutHUDWindow {
         w.title = "关于 Comate HUD"
         w.styleMask = [.titled, .closable]
         w.isReleasedWhenClosed = false
+        w.setContentSize(NSSize(width: AboutDesign.width, height: AboutDesign.height))
         w.center()
         window = w
         NSApp.activate(ignoringOtherApps: true)

@@ -45,6 +45,15 @@
       "createdAt": 1790143208818,
       "updatedAt": 1790144110508,
       "completedAt": null
+    },
+    {
+      "planId": "about-redesign",
+      "suffix": "about-redesign",
+      "title": "Comate HUD「关于」界面改版",
+      "status": "active",
+      "createdAt": 1790151177010,
+      "updatedAt": 1790152207717,
+      "completedAt": null
     }
   ]
 }
