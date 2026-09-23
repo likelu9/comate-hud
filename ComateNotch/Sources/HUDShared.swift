@@ -18,9 +18,11 @@ struct HUDLogoBadge: View {
     private var scale: CGFloat { logoSize / 18 }
 
     /// 状态灯脉冲：黄灯跳动（工作中），红灯快闪（等你确认）。nil = 常亮
+    /// 谷值取 0（完全熄灭）：灯与光晕是同一图层，谷值非 0 时灯已看不见、
+    /// 但光晕在浅色背景上仍会残留一块黄斑（“灯灭了光晕还在”）。
     private var pulse: (duration: Double, low: Double)? {
-        if store.primaryLight == .yellow { return (1.2, 0.08) }
-        if store.primaryLight == .red && store.primaryRedBlinking { return (0.55, 0.15) }
+        if store.primaryLight == .yellow { return (1.2, 0.0) }
+        if store.primaryLight == .red && store.primaryRedBlinking { return (0.55, 0.0) }
         return nil
     }
 

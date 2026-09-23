@@ -11,8 +11,8 @@ enum FloatingMetrics {
     static let logoSize: CGFloat = 30
     /// 状态灯直径（按刘海模式 18pt logo / 6pt 灯 的比例放大）
     static let lightSize: CGFloat = 10
-    /// 状态灯光晕强度：图标比刘海模式大 1.67 倍，光晕按比例放大会发散，故收敛到 0.40
-    static let lightGlow: CGFloat = 0.40
+    /// 状态灯光晕强度：图标比刘海模式大 1.67 倍，光晕按比例放大会发散，故收敛到 0.45
+    static let lightGlow: CGFloat = 0.45
     /// 窗口内边距：留给状态灯发光，避免被窗口边缘裁掉
     static let pad: CGFloat = 8
     /// 图标与展开面板之间的间距
