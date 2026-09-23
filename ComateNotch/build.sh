@@ -28,6 +28,7 @@ SOURCES=(
     "$SRC/SessionJournal.swift"
     "$SRC/NotchPanel.swift"
     "$SRC/NotchRootView.swift"
+    "$SRC/HUDShared.swift"
     "$SRC/FloatingPanel.swift"
 )
 

@@ -33,9 +33,109 @@ final class FloatingContentView: NSView {
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
-    /// 透明区域返回 nil → 点击穿透到下层窗口；可交互区域返回 self → 由本视图处理
+    /// 展开态面板区域（图标以下部分），AppKit 坐标（原点左下）
+    private var expandedPanelRect: NSRect {
+        let top = FloatingPanel.iconTopOffset + FloatingPanel.collapsedSize + FloatingPanel.iconPanelGap
+        return NSRect(x: 0, y: 0, width: bounds.width, height: max(0, bounds.height - top))
+    }
+
+    /// 图标区 → 本视图处理（可拖拽）；展开态面板区 → 交给 SwiftUI（按钮、滚动可用）；
+    /// 其余透明区 → nil，点击穿透到下层窗口
     override func hitTest(_ point: NSPoint) -> NSView? {
-        activeHitRect.contains(point) ? self : nil
+        if collapsedHitRect.contains(point) { return self }
+        if interaction.isExpanded, expandedPanelRect.contains(point) {
+            return super.hitTest(point)
+        }
+        return nil
+    }
+
+    // MARK: - 右键菜单
+    // 非激活 borderless 面板里 SwiftUI 的 contextMenu 不可靠，故用 AppKit 原生 NSMenu。
+    // menu(for:) 覆盖整个窗口（AppKit 会沿 superview 向上找菜单）；
+    // rightMouseDown 兼顾 hitTest 直接命中本视图（图标区）的情况。两者共用同一份菜单构建代码。
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        buildContextMenu()
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        NSMenu.popUpContextMenu(buildContextMenu(), with: event, for: self)
+    }
+
+    private func buildContextMenu() -> NSMenu {
+        guard let store = panel?.store else { return NSMenu() }
+        let menu = NSMenu()
+
+        let about = NSMenuItem(title: "关于 Comate HUD", action: #selector(menuAbout), keyEquivalent: "")
+        about.target = self
+        menu.addItem(about)
+        menu.addItem(.separator())
+
+        let modeItem = NSMenuItem(title: "显示模式", action: nil, keyEquivalent: "")
+        let modeMenu = NSMenu()
+        for mode in ComateStore.DisplayMode.allCases {
+            let item = NSMenuItem(title: mode.label, action: #selector(menuSwitchMode(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = mode.rawValue
+            if store.displayMode == mode { item.state = .on }
+            modeMenu.addItem(item)
+        }
+        modeItem.submenu = modeMenu
+        menu.addItem(modeItem)
+
+        let mainItem = NSMenuItem(title: "显示主窗口", action: #selector(menuShowMain), keyEquivalent: "")
+        mainItem.target = self
+        menu.addItem(mainItem)
+        menu.addItem(.separator())
+
+        let limitItem = NSMenuItem(title: "最近记录条数", action: nil, keyEquivalent: "")
+        let limitMenu = NSMenu()
+        for n in ComateStore.recentTaskLimitOptions {
+            let item = NSMenuItem(title: "最近 \(n) 条", action: #selector(menuSetLimit(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = n
+            if store.recentTaskLimit == n { item.state = .on }
+            limitMenu.addItem(item)
+        }
+        limitItem.submenu = limitMenu
+        menu.addItem(limitItem)
+        menu.addItem(.separator())
+
+        if store.hasCustomExpandedHeight {
+            let reset = NSMenuItem(title: "恢复默认高度", action: #selector(menuResetHeight), keyEquivalent: "")
+            reset.target = self
+            menu.addItem(reset)
+            menu.addItem(.separator())
+        }
+
+        let quit = NSMenuItem(title: "退出悬浮窗", action: #selector(menuQuit), keyEquivalent: "")
+        quit.target = self
+        menu.addItem(quit)
+        return menu
+    }
+
+    @objc private func menuAbout() { AboutHUDWindow.show() }
+
+    @objc private func menuSwitchMode(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let mode = ComateStore.DisplayMode(rawValue: raw) else { return }
+        panel?.onSwitchMode?(mode)
+    }
+
+    @objc private func menuShowMain() {
+        panel?.store.openComateApp()
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func menuSetLimit(_ sender: NSMenuItem) {
+        panel?.store.recentTaskLimit = sender.tag
+    }
+
+    @objc private func menuResetHeight() { panel?.store.resetCustomExpandedHeight() }
+
+    @objc private func menuQuit() {
+        panel?.store.stop()
+        NSApp.terminate(nil)
     }
 
     // MARK: - Hover（基于全局鼠标位置，不依赖 tracking area）
@@ -109,7 +209,9 @@ final class FloatingContentView: NSView {
 /// 窗口 frame 永不改变（仅拖拽时移动）→ 图标不会因展开而跳动。
 final class FloatingPanel: NSPanel {
 
-    private let store: ComateStore
+    let store: ComateStore
+    /// 切换显示模式（由 AppDelegate 注入）
+    var onSwitchMode: ((ComateStore.DisplayMode) -> Void)?
     private let interaction = FloatingInteraction()
     private var floatContent: FloatingContentView?
     private var globalMouseMonitor: Any?
@@ -118,11 +220,16 @@ final class FloatingPanel: NSPanel {
     static let collapsedSize: CGFloat = 48
     static let expandedWidth: CGFloat = 300
     static let iconTopOffset: CGFloat = 12
-    static let expandedContentHeight: CGFloat = 320
-    static var panelHeight: CGFloat { iconTopOffset + collapsedSize + expandedContentHeight }
+    /// 图标与展开面板之间的间距
+    static let iconPanelGap: CGFloat = 6
+    static let expandedContentHeight: CGFloat = 334
+    static var panelHeight: CGFloat {
+        iconTopOffset + collapsedSize + iconPanelGap + expandedContentHeight
+    }
 
-    init(store: ComateStore) {
+    init(store: ComateStore, onSwitchMode: ((ComateStore.DisplayMode) -> Void)? = nil) {
         self.store = store
+        self.onSwitchMode = onSwitchMode
 
         let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
         let sf = screen.frame
@@ -283,16 +390,32 @@ struct FloatingPanelContent: View {
     }
 
     private var expandedContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Comate HUD")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white)
-            Text("展开态内容区")
-                .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.5))
-            Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Text("Comate HUD")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.7))
+                Spacer(minLength: 0)
+                // 新建任务：仅在展开态出现
+                ComatePlusButton { store.openNewTask() }
+            }
+
+            if store.recentTasks.isEmpty {
+                Text("暂无任务")
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.4))
+                Spacer(minLength: 0)
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    HUDTaskRows(store: store, spacing: 3)
+                }
+                .frame(maxHeight: .infinity)
+            }
+
+            HUDUsageFooter(store: store)
         }
-        .padding(16)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: FloatingPanel.expandedContentHeight, alignment: .top)
         .background(
@@ -303,6 +426,6 @@ struct FloatingPanelContent: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
-        .padding(.top, 6)
+        .padding(.top, FloatingPanel.iconPanelGap)
     }
 }

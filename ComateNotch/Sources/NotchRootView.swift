@@ -254,10 +254,6 @@ struct NotchRootView: View {
     @State private var isAnimating = false
     @State private var expanded: Bool = false
     @State private var pulseOpacity: Double = 1.0
-    @State private var bellHovered = false
-    @State private var bellRotate = false
-    /// 页脚左下「周期切换」按钮的悬停态
-    @State private var usageToggleHovered = false
     /// 「关于」弹窗显示状态
     @State private var showAbout = false
 
@@ -560,36 +556,6 @@ struct NotchRootView: View {
         }
     }
 
-    // MARK: - 关于弹窗
-    private struct AboutHUDView: View {
-        var onClose: () -> Void
-
-        var body: some View {
-            VStack(spacing: 14) {
-                Image(nsImage: NSApplication.shared.applicationIconImage)
-                    .resizable()
-                    .frame(width: 96, height: 96)
-                    .clipShape(RoundedRectangle(cornerRadius: 22))
-                Text("Comate HUD")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                Text("版本 1.2.0 (3)")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                Divider()
-                Text("你的 AI 任务状态灯。\n常驻 macOS 刘海区，无需打开主窗口，任务状态一目了然：\n🟢 空闲 · 🟡 工作中 · 🔴 等待确认\n\n悬停刘海即可展开任务面板——最近会话、执行进度、额度用量尽收眼底；点击任务直达对应会话，动态显示 Comate 消息数量。\n\n让 AI 干活，你只管看灯。")
-                    .font(.system(size: 12))
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: 320)
-                Divider()
-                Button("好", action: onClose)
-                    .keyboardShortcut(.defaultAction)
-            }
-            .padding(24)
-            .frame(width: 380)
-        }
-    }
-
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: blockSpacing) {
@@ -601,11 +567,7 @@ struct NotchRootView: View {
             } else {
                 // 面板高度可小于内容高度（最小 = 1 条高度），超出时列表可滚动
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: listSpacing) {
-                        ForEach(store.recentTasks.prefix(store.recentTaskLimit)) { task in
-                            taskRow(task)
-                        }
-                    }
+                    HUDTaskRows(store: store, spacing: listSpacing)
                     // 实测行 VStack 自然高度（与面板高度无关）
                     .background(
                         GeometryReader { g in
@@ -616,69 +578,8 @@ struct NotchRootView: View {
                 .frame(height: listViewportHeight)
             }
 
-            HStack(spacing: 6) {
-                // 周期切换：胶囊 + 文案一起点，热区仅覆盖内容本身（不占满整行）
-                Button(action: { store.toggleUsagePeriod() }) {
-                    HStack(spacing: 6) {
-                        usagePeriodIndicator
-                        // 额度文案：只展示当前周期，不再带「日/月」前缀（周期由左侧胶囊指示）
-                        Text("额度已用 \(store.activeUsageLabel)")
-                            .font(.system(size: 8, weight: .medium, design: .rounded))
-                            .foregroundStyle(.white.opacity(usageToggleHovered ? 0.8 : 0.55))
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 4)
-                    .contentShape(RoundedRectangle(cornerRadius: 5))
-                    .background(
-                        RoundedRectangle(cornerRadius: 5)
-                            .fill(Color.white.opacity(usageToggleHovered ? 0.1 : 0))
-                    )
-                }
-                .buttonStyle(.plain)
-                .onHover { h in
-                    usageToggleHovered = h
-                    if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-                }
-                .animation(.easeInOut(duration: 0.12), value: usageToggleHovered)
-                .help(store.usageLimitDetail)
-                Spacer(minLength: 0)
-                // 消息数提示：铃铛图标 + 未读数（可点击打开消息中心）
-                if store.totalMessageCount > 0 {
-                    Button(action: { store.openMessageCenter() }) {
-                        HStack(spacing: 3) {
-                            if store.isOpeningMessageCenter {
-                                // loading 旋转动画
-                                Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
-                                    .font(.system(size: 9))
-                                    .rotationEffect(.degrees(bellRotate ? 360 : 0))
-                                    .animation(.linear(duration: 0.8).repeatForever(autoreverses: false), value: bellRotate)
-                                    .onAppear { bellRotate = true }
-                            } else {
-                                Image(systemName: "bell.fill")
-                                    .font(.system(size: 9))
-                                    .scaleEffect(bellHovered ? 1.2 : 1.0)
-                            }
-                            Text("\(store.totalMessageCount)")
-                                .font(.system(size: 9, weight: .semibold, design: .rounded))
-                        }
-                        .foregroundStyle(.white.opacity(bellHovered || store.isOpeningMessageCenter ? 0.9 : 0.55))
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .background(
-                            Color.white.opacity(bellHovered ? 0.12 : 0)
-                                .clipShape(RoundedRectangle(cornerRadius: 5))
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .onHover { h in
-                        bellHovered = h
-                        if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-                    }
-                    .animation(.easeInOut(duration: 0.12), value: bellHovered)
-                    .help(store.isOpeningMessageCenter ? "正在打开消息中心…" : "打开消息中心")
-                }
-            }
-            // 实测页脚高度（用于反推内容高度）
+            HUDUsageFooter(store: store)
+                // 实测页脚高度（用于反推内容高度）
             .background(
                 GeometryReader { g in
                     Color.clear.preference(key: FooterHeightKey.self, value: g.size.height)
@@ -700,35 +601,9 @@ struct NotchRootView: View {
             footerHeight = h
         }
     }
-
-    /// 额度周期指示：双段胶囊（日 | 月），高亮当前周期。纯视觉，点击由外层按钮接管
-    private var usagePeriodIndicator: some View {
-        HStack(spacing: 0) {
-            ForEach(UsageAPI.Period.allCases, id: \.self) { period in
-                Text(period.shortLabel)
-                    .font(.system(size: 8, weight: .semibold, design: .rounded))
-                    .foregroundStyle(store.usagePeriod == period
-                                     ? Color(hex: "#00D4AA")
-                                     : Color.white.opacity(0.45))
-                    .frame(width: 13, height: 11)
-                    .background(
-                        RoundedRectangle(cornerRadius: 3.5)
-                            .fill(store.usagePeriod == period ? Color(hex: "#00D4AA").opacity(0.85) : Color.clear)
-                    )
-            }
-        }
-        .padding(1)
-        .background(RoundedRectangle(cornerRadius: 4.5).fill(Color.white.opacity(0.1)))
-    }
-
-    private func taskRow(_ t: ComateTask) -> some View {
-        ComateTaskRow(task: t) {
-            store.openSession(t)
-        }
-    }
 }
 // MARK: - ComateTaskRow
-private struct ComateTaskRow: View {
+struct ComateTaskRow: View {
     let task: ComateTask
     let onTap: () -> Void
     @State private var isHovered = false
@@ -787,7 +662,7 @@ private struct ComateTaskRow: View {
 }
 
 // MARK: - ComatePlusButton
-private struct ComatePlusButton: View {
+struct ComatePlusButton: View {
     let action: () -> Void
     @State private var isHovered = false
 

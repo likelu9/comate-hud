@@ -88,22 +88,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.stop()
     }
 
+    /// 切换显示模式。幂等：重复切到同一模式不会重建窗口（启动时也会调用一次）
     private func switchDisplayMode(_ mode: ComateStore.DisplayMode) {
         store.displayMode = mode
         switch mode {
         case .notchHUD:
-            // 切回刘海模式：隐藏浮动面板，显示刘海面板
-            floatingPanel?.orderOut(nil)
-            floatingPanel = nil
+            if floatingPanel != nil {
+                floatingPanel?.orderOut(nil)
+                floatingPanel = nil
+            }
             panel?.orderFrontRegardless()
             backdropPanel?.orderFrontRegardless()
         case .floating:
-            // 切到浮动模式：隐藏刘海面板，创建浮动面板
+            if floatingPanel == nil {
+                let fp = FloatingPanel(store: store) { [weak self] m in
+                    self?.switchDisplayMode(m)
+                }
+                floatingPanel = fp
+            }
             panel?.orderOut(nil)
             backdropPanel?.orderOut(nil)
-            let fp = FloatingPanel(store: store)
-            self.floatingPanel = fp
-            fp.orderFrontRegardless()
+            floatingPanel?.orderFrontRegardless()
         }
     }
 }
