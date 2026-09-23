@@ -23,15 +23,20 @@ final class FloatingPanel: NSPanel {
 
         let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
         let sf = screen.frame
-        let cx = sf.minX + store.floatingPositionX * sf.width
-        let cy = sf.minY + store.floatingPositionY * sf.height
+        // 测试模式：固定在屏幕中央
+        let cx = sf.midX
+        let cy = sf.midY
 
         let w = Self.expandedWidth
         let h = Self.expandedHeight
-        let iconCenterY = h - Self.iconTopOffset - Self.collapsedSize / 2
+        let iconOffsetFromTop = Self.iconTopOffset + Self.collapsedSize / 2
         let initialFrame = NSRect(x: cx - w / 2,
-                                  y: cy - iconCenterY,
+                                  y: cy - (h - iconOffsetFromTop),
                                   width: w, height: h)
+
+        NSLog("[FloatingPanel] screen=(%.0f,%.0f,%.0f,%.0f) frame=(%.0f,%.0f,%.0f,%.0f)",
+              sf.minX, sf.minY, sf.width, sf.height,
+              initialFrame.origin.x, initialFrame.origin.y, w, h)
 
         let styleMask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel, .fullSizeContentView]
 
