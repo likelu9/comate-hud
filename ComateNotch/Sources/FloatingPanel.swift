@@ -120,7 +120,6 @@ final class FloatingContentView: NSView {
     /// 走与右键完全相同的弹出手径（该路径已验证可用），定位到当前鼠标处。
     func showContextMenu() {
         let menu = buildContextMenu()
-        NSLog("[ComateHUD] gear click → showContextMenu")
         let win = window
         let loc = win?.convertPoint(fromScreen: NSEvent.mouseLocation) ?? .zero
         if let ev = NSEvent.mouseEvent(with: .rightMouseDown, location: loc,
@@ -179,7 +178,7 @@ final class FloatingContentView: NSView {
             menu.addItem(.separator())
         }
 
-        let quit = NSMenuItem(title: "退出悬浮窗", action: #selector(menuQuit), keyEquivalent: "")
+        let quit = NSMenuItem(title: "退出 Comate HUD", action: #selector(menuQuit), keyEquivalent: "")
         quit.target = self
         menu.addItem(quit)
         return menu

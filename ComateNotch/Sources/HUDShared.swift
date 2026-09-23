@@ -18,11 +18,12 @@ struct HUDLogoBadge: View {
     private var scale: CGFloat { logoSize / 18 }
 
     /// 状态灯脉冲：黄灯跳动（工作中），红灯快闪（等你确认）。nil = 常亮
-    /// 谷值取 0（完全熄灭）：灯与光晕是同一图层，谷值非 0 时灯已看不见、
-    /// 但光晕在浅色背景上仍会残留一块黄斑（“灯灭了光晕还在”）。
+    /// 谷值留一点点（不是 0）：完全熄灭时读起来像「灯没了」，
+    /// 保留微弱亮度 + 等比光晕，才是「亮-暗-亮-暗」的呼吸感。
+    /// 灯与光晕同一图层、同比缩放，不会出现「灯灭了光晕还在」的脱节。
     private var pulse: (duration: Double, low: Double)? {
-        if store.primaryLight == .yellow { return (1.2, 0.0) }
-        if store.primaryLight == .red && store.primaryRedBlinking { return (0.55, 0.0) }
+        if store.primaryLight == .yellow { return (1.2, 0.05) }
+        if store.primaryLight == .red && store.primaryRedBlinking { return (0.55, 0.08) }
         return nil
     }
 

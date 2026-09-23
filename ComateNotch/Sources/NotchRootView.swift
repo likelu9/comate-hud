@@ -483,7 +483,7 @@ struct NotchRootView: View {
                 }
             }
             Divider()
-            Button("退出悬浮窗") {
+            Button("退出 Comate HUD") {
                 store.stop()
                 NSApp.terminate(nil)
             }
