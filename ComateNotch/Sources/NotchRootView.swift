@@ -253,7 +253,6 @@ struct NotchRootView: View {
     @State private var expandTimer: Timer?
     @State private var isAnimating = false
     @State private var expanded: Bool = false
-    @State private var pulseOpacity: Double = 1.0
     /// 「关于」弹窗显示状态
     @State private var showAbout = false
 
@@ -268,23 +267,6 @@ struct NotchRootView: View {
     @State private var isResizing = false
     @State private var resizeHovered = false
     @State private var dragBaseHeight: CGFloat = 0
-
-    /// 状态灯脉冲：黄灯跳动（工作中），红灯快闪（等你确认）。nil = 常亮
-    private var pulse: (duration: Double, low: Double)? {
-        if store.primaryLight == .yellow { return (1.2, 0.08) }
-        if store.primaryLight == .red && store.primaryRedBlinking { return (0.55, 0.15) }
-        return nil
-    }
-
-    /// 重启脉冲动画。repeatForever 动画一旦启动就不会自己停，所以换状态时必须显式重置，
-    /// 否则会叠加出多个动画。
-    private func restartPulse() {
-        pulseOpacity = 1.0
-        guard let pulse = pulse else { return }
-        withAnimation(.easeInOut(duration: pulse.duration).repeatForever(autoreverses: true)) {
-            pulseOpacity = pulse.low
-        }
-    }
 
     // 布局常量：必须与 expandedContent 的 padding / spacing 保持一致
     private let listSpacing: CGFloat = 3
@@ -370,41 +352,10 @@ struct NotchRootView: View {
         NotchShape(cornerRadius: cornerR)
             .fill(Color.black)
             .frame(width: currentWidth, height: currentHeight)
-            // 叠加层：logo + 状态灯（固定位置）
+            // 叠加层：logo + 状态灯（与悬浮模式共用 HUDLogoBadge）
             .overlay(alignment: .topLeading) {
-                ZStack(alignment: .topLeading) {
-                    ComateLogo(size: 18, colorful: expanded)
-                    // 状态灯：放在 logo 右下角
-                    // 主灯体 + 外发光
-                    Circle()
-                        .fill(Color(hex: store.primaryLight.color))
-                        .frame(width: 6, height: 6)
-                        .overlay(
-                            Circle()
-                                .fill(Color(hex: store.primaryLight.color).opacity(store.primaryLight != .gray ? 0.45 : 0))
-                                .frame(width: 12, height: 12)
-                                .blur(radius: 3)
-                        )
-                        .overlay(Circle().stroke(Color.black.opacity(0.3), lineWidth: 0.5))
-                        .shadow(
-                            color: store.primaryLight != .gray
-                                ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.9 : 0.7)
-                                : .clear,
-                            radius: 4
-                        )
-                        .shadow(
-                            color: store.primaryLight != .gray
-                                ? Color(hex: store.primaryLight.color).opacity(store.primaryLight == .red ? 0.6 : 0.4)
-                                : .clear,
-                            radius: 8
-                        )
-                        .opacity(pulseOpacity)
-                        .onAppear { restartPulse() }
-                        .onChange(of: store.primaryLight) { _ in restartPulse() }
-                        .onChange(of: store.primaryRedBlinking) { _ in restartPulse() }
-                        .offset(x: 13.5, y: 13.5) // logo 18pt, 灯 6pt, 右下角微调
-                }
-                .position(x: wingWidth / 2, y: notchHeight / 2)
+                HUDLogoBadge(store: store, logoSize: 18, lightSize: 6, colorful: expanded)
+                    .position(x: wingWidth / 2, y: notchHeight / 2)
             }
             // 叠加层：+号按钮（右翼，收起态）
             .overlay(alignment: .topTrailing) {
@@ -577,6 +528,10 @@ struct NotchRootView: View {
                 }
                 .frame(height: listViewportHeight)
             }
+
+            // 页脚吸底：面板被拖高时，额度/消息行贴在面板底部，
+            // 而不是跟着列表最后一条记录往下跑
+            Spacer(minLength: 0)
 
             HUDUsageFooter(store: store)
                 // 实测页脚高度（用于反推内容高度）

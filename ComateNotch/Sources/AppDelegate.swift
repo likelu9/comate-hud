@@ -101,7 +101,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             backdropPanel?.orderFrontRegardless()
         case .floating:
             if floatingPanel == nil {
-                let fp = FloatingPanel(store: store) { [weak self] m in
+                // 宽度对齐刘海模式，两种模式面板宽度一致
+                let fp = FloatingPanel(store: store,
+                                       expandedWidth: panel?.expandedWidth ?? 280) { [weak self] m in
                     self?.switchDisplayMode(m)
                 }
                 floatingPanel = fp
