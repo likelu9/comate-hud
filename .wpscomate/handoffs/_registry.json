@@ -150,6 +150,12 @@
       "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
       "createdAt": 1790135306901,
       "file": "comatehud-deploy.handoff.json"
+    },
+    {
+      "handoffId": "comatehud-github",
+      "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+      "createdAt": 1790141351548,
+      "file": "comatehud-github.handoff.json"
     }
   ]
 }
