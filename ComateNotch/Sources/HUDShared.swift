@@ -18,12 +18,13 @@ struct HUDLogoBadge: View {
     private var scale: CGFloat { logoSize / 18 }
 
     /// 状态灯脉冲：黄灯跳动（工作中），红灯快闪（等你确认）。nil = 常亮
-    /// 谷值留一点点（不是 0）：完全熄灭时读起来像「灯没了」，
-    /// 保留微弱亮度 + 等比光晕，才是「亮-暗-亮-暗」的呼吸感。
+    /// 谷值不是 0：灯完全熄灭时读起来像「灯没了」，保留约四分之一亮度 + 等比光晕，
+    /// 才是「亮-暗-亮-暗」的呼吸感。实测 0.05 时灯本体压在彩色 logo 上会糊掉、
+    /// 只剩一圈光晕，故黄灯取 0.25、红灯（闪得更快、更急）取 0.35。
     /// 灯与光晕同一图层、同比缩放，不会出现「灯灭了光晕还在」的脱节。
     private var pulse: (duration: Double, low: Double)? {
-        if store.primaryLight == .yellow { return (1.2, 0.05) }
-        if store.primaryLight == .red && store.primaryRedBlinking { return (0.55, 0.08) }
+        if store.primaryLight == .yellow { return (1.2, 0.25) }
+        if store.primaryLight == .red && store.primaryRedBlinking { return (0.55, 0.35) }
         return nil
     }
 
