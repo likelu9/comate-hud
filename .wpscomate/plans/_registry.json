@@ -36,6 +36,15 @@
       "createdAt": 1789984618228,
       "updatedAt": 1790048241620,
       "completedAt": null
+    },
+    {
+      "planId": "hud-v130",
+      "suffix": "hud-v130",
+      "title": "Comate HUD v1.3.0 迭代",
+      "status": "active",
+      "createdAt": 1790143208818,
+      "updatedAt": 1790143427195,
+      "completedAt": null
     }
   ]
 }
