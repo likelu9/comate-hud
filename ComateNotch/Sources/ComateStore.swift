@@ -223,7 +223,7 @@ final class ComateStore: ObservableObject {
 
     /// DB 查询与会话日志解析的专用串行队列：SQLite 查询 + 12 个日志增量解析
     /// 首次可达几百毫秒，不能 block 主线程。journals 只在本队列访问，天然无竞争。
-    private let dbQueue = DispatchQueue(label: "comatenotch.db", qos: .utility)
+    private let dbQueue = DispatchQueue(label: "comatehud.db", qos: .utility)
 
     /// 会话日志读取器缓存（按文件路径）。日志可达十几 MB，靠增量解析把每次轮询压到
     /// 「只读新增的那几 KB」；首次读某个文件会全量扫一遍（实测 10MB ≈ 76ms）。
@@ -353,7 +353,7 @@ final class ComateStore: ObservableObject {
         if !forceRefresh, let cached = cachedSid { return cached }
         let fresh = Self.readWpsSidFromKeychain()
         // 只在真的读了 keychain 时打日志（命中缓存不打），便于排查 fork 频率
-        NSLog("[ComateNotch] 读取 keychain 凭据: %@", fresh == nil ? "无" : "成功")
+        NSLog("[ComateHUD] 读取 keychain 凭据: %@", fresh == nil ? "无" : "成功")
         if let fresh = fresh, Self.isValidSid(fresh) {
             cachedSid = fresh
             return fresh
@@ -375,7 +375,7 @@ final class ComateStore: ObservableObject {
         guard usagePeriod != period else { return }
         usagePeriod = period
         UserDefaults.standard.set(period.rawValue, forKey: ComateStore.usagePeriodKey)
-        NSLog("[ComateNotch] 切换额度周期: %@", period.rawValue)
+        NSLog("[ComateHUD] 切换额度周期: %@", period.rawValue)
     }
 
     /// 页脚点击切换：在日/月之间来回切
@@ -424,6 +424,20 @@ final class ComateStore: ObservableObject {
         } else {
             let home = NSHomeDirectory()
             self.dbPath = (home as NSString).appendingPathComponent(".wpscomate/data/chat_history.db")
+        }
+        migrateLegacyDefaults()
+    }
+
+    /// 从旧 bundle id（com.wpscomate.notch）迁移用户设置。
+    /// bundle id 变更后 UserDefaults 域随之改变，不迁移会丢失任务条数/面板高度/额度周期。
+    private func migrateLegacyDefaults() {
+        let legacy = UserDefaults(suiteName: "com.wpscomate.notch")
+        let keys = [ComateStore.recentTaskLimitKey, ComateStore.customHeightKey, ComateStore.usagePeriodKey]
+        for key in keys {
+            if UserDefaults.standard.object(forKey: key) == nil,
+               let v = legacy?.object(forKey: key) {
+                UserDefaults.standard.set(v, forKey: key)
+            }
         }
     }
 
@@ -477,7 +491,7 @@ final class ComateStore: ObservableObject {
         var result = DBResult()
         var db: OpaquePointer?
         guard sqlite3_open_v2(dbPath, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
-            NSLog("[ComateNotch] 无法打开数据库: %@", dbPath)
+            NSLog("[ComateHUD] 无法打开数据库: %@", dbPath)
             return result
         }
         defer { sqlite3_close(db) }
@@ -489,7 +503,7 @@ final class ComateStore: ObservableObject {
         """
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
-            NSLog("[ComateNotch] SQL 预编译失败")
+            NSLog("[ComateHUD] SQL 预编译失败")
             return result
         }
         defer { sqlite3_finalize(stmt) }
@@ -796,18 +810,18 @@ final class ComateStore: ObservableObject {
                 DispatchQueue.main.async { self.usageState = .noCredential }
                 return
             }
-            NSLog("[ComateNotch] 拉取用量: trigger=%@, backfill=%@", "\(trigger)", backfill ? "true" : "false")
+            NSLog("[ComateHUD] 拉取用量: trigger=%@, backfill=%@", "\(trigger)", backfill ? "true" : "false")
             var sid = credential
             var limits = UsageAPI.fetchLimits(sid: sid)
 
             // 凭据失效：清缓存重读 keychain，只有换到了新 sid 才值得重试
             if case .authFailed = limits {
-                NSLog("[ComateNotch] 凭据失效(trigger=%@)，重读 keychain", "\(trigger)")
+                NSLog("[ComateHUD] 凭据失效(trigger=%@)，重读 keychain", "\(trigger)")
                 let fresh = self.wpsSid(forceRefresh: true)
                 if Self.shouldRetryAfterAuthFailure(previous: sid, fresh: fresh), let fresh = fresh {
                     sid = fresh
                     limits = UsageAPI.fetchLimits(sid: sid)
-                    if case .ok = limits { NSLog("[ComateNotch] 重读凭据后恢复") }
+                    if case .ok = limits { NSLog("[ComateHUD] 重读凭据后恢复") }
                 }
             }
 
@@ -860,7 +874,7 @@ final class ComateStore: ObservableObject {
             // 本地任务用 local deeplink，id 用数据库主键（含 account_id 前缀）
             urlString = "wpscomate://chat.comate/local?id=\(task.id)"
         }
-        NSLog("[ComateNotch] 打开会话: id=%@, source=%@, url=%@", task.id, task.source, urlString)
+        NSLog("[ComateHUD] 打开会话: id=%@, source=%@, url=%@", task.id, task.source, urlString)
         if let url = URL(string: urlString) {
             NSWorkspace.shared.open(url)
         }
@@ -943,17 +957,17 @@ final class ComateStore: ObservableObject {
             var error: NSDictionary?
             let result = NSAppleScript(source: locateScript)?.executeAndReturnError(&error).stringValue ?? "notfound"
             if let error = error {
-                NSLog("[ComateNotch] openMessageCenter locate error: %@", error)
+                NSLog("[ComateHUD] openMessageCenter locate error: %@", error)
             }
             guard result != "notfound", !result.isEmpty else {
-                NSLog("[ComateNotch] openMessageCenter: bell button not found via AX")
+                NSLog("[ComateHUD] openMessageCenter: bell button not found via AX")
                 DispatchQueue.main.async { self?.isOpeningMessageCenter = false }
                 return
             }
             // Step 2: 解析坐标，用 CGEvent 真实点击（AX click 对 web 元素不可靠）
             let parts = result.split(separator: ",")
             guard parts.count == 2, let x = Double(parts[0]), let y = Double(parts[1]) else {
-                NSLog("[ComateNotch] openMessageCenter: invalid coords %@", result)
+                NSLog("[ComateHUD] openMessageCenter: invalid coords %@", result)
                 DispatchQueue.main.async { self?.isOpeningMessageCenter = false }
                 return
             }
@@ -978,7 +992,7 @@ final class ComateStore: ObservableObject {
         usleep(50000)   // 0.05s
         let up = CGEvent(mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point, mouseButton: .left)
         up?.post(tap: .cghidEventTap)
-        NSLog("[ComateNotch] openMessageCenter: CGEvent clicked at (%.0f, %.0f)", point.x, point.y)
+        NSLog("[ComateHUD] openMessageCenter: CGEvent clicked at (%.0f, %.0f)", point.x, point.y)
     }
 
     func openComateApp() {

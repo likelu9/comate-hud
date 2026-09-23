@@ -257,6 +257,8 @@ struct NotchRootView: View {
     @State private var bellRotate = false
     /// 页脚左下「周期切换」按钮的悬停态
     @State private var usageToggleHovered = false
+    /// 「关于」弹窗显示状态
+    @State private var showAbout = false
 
     /// 实测：列表行 VStack 自然高度 + 该测量对应的行数（用于反推单行占高）
     @State private var rowsHeight: CGFloat = 0
@@ -488,6 +490,10 @@ struct NotchRootView: View {
             }
         }
         .contextMenu {
+            Button("关于 Comate HUD") {
+                showAbout = true
+            }
+            Divider()
             Button("显示主窗口") {
                 store.openComateApp()
                 onShowMainWindow?()
@@ -533,6 +539,40 @@ struct NotchRootView: View {
         // 显式撑满 hostingView 画布并左上对齐：
         // 根视图比画布小的话 NSHostingView 会垂直居中，导致 HUD 整体下移。
         .frame(width: expandedWidth, height: canvasHeight, alignment: .topLeading)
+        .sheet(isPresented: $showAbout) {
+            AboutHUDView(onClose: { showAbout = false })
+                .environment(\.colorScheme, .dark)
+        }
+    }
+
+    // MARK: - 关于弹窗
+    private struct AboutHUDView: View {
+        var onClose: () -> Void
+
+        var body: some View {
+            VStack(spacing: 14) {
+                Image(nsImage: NSApplication.shared.applicationIconImage)
+                    .resizable()
+                    .frame(width: 96, height: 96)
+                    .clipShape(RoundedRectangle(cornerRadius: 22))
+                Text("Comate HUD")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                Text("版本 1.2.0 (3)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                Divider()
+                Text("你的 AI 任务状态灯。\n常驻 macOS 刘海区，无需打开主窗口，任务状态一目了然：\n🟢 空闲 · 🟡 工作中 · 🔴 等待确认\n\n悬停刘海即可展开任务面板——最近会话、执行进度、额度用量尽收眼底；点击任务直达对应会话，动态显示 Comate 消息数量。\n\n让 AI 干活，你只管看灯。")
+                    .font(.system(size: 12))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: 320)
+                Divider()
+                Button("好", action: onClose)
+                    .keyboardShortcut(.defaultAction)
+            }
+            .padding(24)
+            .frame(width: 380)
+        }
     }
 
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）

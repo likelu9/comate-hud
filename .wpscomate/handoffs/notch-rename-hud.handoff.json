@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "handoffId": "notch-rename-hud",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1790133385043,
+  "note": {
+    "completed": [
+      "应用改名 ComateNotch → Comate HUD（CFBundleName=ComateHUD, DisplayName=Comate HUD, bundle id=com.wpscomate.hud, 版本 1.2.0 build 3）",
+      "源码改名：ComateNotchApp.swift → ComateHUDApp.swift，NSLog 前缀 [ComateHUD]，dbQueue label comatehud.db",
+      "UserDefaults 设置迁移：从旧域 com.wpscomate.notch 搬 3 项（recentTaskLimit/customExpandedHeight/usagePeriod），实机验证迁移成功",
+      "右键菜单新增「关于 Comate HUD」弹窗（sheet，含图标/版本/简介文案）",
+      "简介文案按用户确认版：名称 Comate HUD，「动态显示 Comate 消息数量」",
+      "修复 build.sh 逻辑 bug：arm64 失败误置 CAN_X86、2>/dev/null 吞错误；改为 arm64 失败直接 exit 1",
+      "修复编译错误：migrateLegacyDefaults 在 dbPath 初始化前调用 self",
+      "构建 universal binary + 打包 ComateHUD-1.2.0.dmg（1.3MB，含 app + Applications 链接 + 安装说明.md）",
+      "验证：DMG checksum VALID、双架构、adhoc 签名、版本号、设置迁移、HUD 实机渲染正常（绿灯）"
+    ],
+    "remaining": [
+      "正式签名 + 公证（需 Apple Developer 证书）",
+      "TODO.md 中的 P0-P2 待优化项",
+      "旧 com.wpscomate.notch.plist 域残留（无害，可手动清理）"
+    ],
+    "decisions": [
+      "bundle id 改为 com.wpscomate.hud（用户确认方案），配套写设置迁移代码防丢用户偏好",
+      "简介文案用户确认版：名称 Comate HUD（两词），铃铛描述改为「动态显示 Comate 消息数量」",
+      "关于弹窗用 SwiftUI sheet 实现，关闭按钮通过闭包回调（弃用了最初的通知中心方案）"
+    ],
+    "files_changed": [
+      "ComateNotch/Info.plist",
+      "ComateNotch/build.sh",
+      "ComateNotch/Sources/ComateHUDApp.swift（新建，替代 ComateNotchApp.swift）",
+      "ComateNotch/Sources/ComateStore.swift",
+      "ComateNotch/Sources/NotchRootView.swift",
+      "ComateNotch/dist/staging/安装说明.md",
+      "ComateNotch/dist/ComateHUD-1.2.0.dmg",
+      "ComateNotch/build/ComateHUD.app"
+    ]
+  },
+  "reason": "ComateNotch → Comate HUD 改名 + 简介补充 + v1.2.0 打包完成，实机验证通过"
+}
