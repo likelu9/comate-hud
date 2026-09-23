@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comate HUD - macOS AI 任务状态灯｜为 WPS Comate 而生</title>
+  <title>Comate HUD - 轻量状态指示器</title>
   <meta name="description" content="Comate HUD 是一款原生 macOS 刘海区状态指示器，为 WPS Comate 而生。无需打开主窗口，任务状态一目了然。基于 WPS Comate 应用开发能力构建。" />
   <meta name="theme-color" content="#0a0a0f" />
   <link rel="icon" type="image/png" href="icon.png" />
@@ -173,6 +173,40 @@
     footer p { font-size: 13px; color: var(--text-dim); }
     footer a { color: var(--text-secondary); text-decoration: none; }
     footer a:hover { color: var(--text); }
+    /* 许愿墙 */
+    .wish-section { padding: 80px 0; }
+    .wish-form { max-width: 560px; margin: 40px auto 0; display: flex; flex-direction: column; gap: 10px; }
+    .wish-row { display: flex; gap: 10px; }
+    .wish-row input, .wish-row textarea, .wish-row select {
+      flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+      background: var(--bg-card); color: var(--text); font-size: 14px; font-family: inherit; resize: none;
+    }
+    .wish-row input:focus, .wish-row textarea:focus { outline: none; border-color: var(--accent); }
+    .wish-row select { flex: 0 0 120px; }
+    .wish-row button {
+      flex: 0 0 80px; padding: 10px; border-radius: 10px; border: none; cursor: pointer;
+      background: var(--accent); color: #0a0a0f; font-weight: 600; font-size: 14px;
+      transition: transform 0.15s;
+    }
+    .wish-row button:hover { transform: scale(1.03); }
+    .wish-barrage {
+      margin-top: 32px; height: 180px; position: relative; overflow: hidden;
+      border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.06);
+      background: var(--bg-card);
+    }
+    .wish-bubble {
+      position: absolute; padding: 8px 16px; border-radius: 20px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+      font-size: 13px; color: var(--text-secondary); white-space: nowrap;
+      animation: wish-float linear forwards;
+    }
+    .wish-bubble .wish-author { font-weight: 600; color: var(--accent); margin-right: 6px; }
+    @keyframes wish-float {
+      0% { transform: translateX(110%); opacity: 0; }
+      5% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateX(-120%); opacity: 0; }
+    }
     @media (max-width: 768px) {
       .hero { padding: 120px 0 60px; }
       .lights-showcase { gap: 32px; }
@@ -191,8 +225,9 @@
   <div class="container">
     <a href="#" class="brand"><img src="icon.png" alt="Comate HUD" /><strong>Comate HUD</strong></a>
     <div class="nav-links">
-      <a href="#features">功能</a><a href="#lights">状态灯</a><a href="#tech">技术</a><a href="#versions">版本</a><a href="#compat">兼容性</a>
+      <a href="#features">功能</a><a href="#lights">状态灯</a><a href="#tech">技术</a><a href="#versions">更新日志</a><a href="#compat">兼容性</a><a href="#powered">能力提供</a>
       <a href="#download" class="btn-sm">下载</a>
+      <span id="pv-display" style="font-size:12px;color:var(--text-dim);margin-left:8px;">-</span>
     </div>
   </div>
 </nav>
@@ -257,6 +292,8 @@
       <div class="feature-card reveal"><div class="feature-icon blue">⚡</div><h3>一键直达</h3><p>点击任意任务行，自动打开对应的 Comate 会话窗口。零切换成本，从状态灯直达对话。</p></div>
       <div class="feature-card reveal"><div class="feature-icon purple">📊</div><h3>额度用量</h3><p>实时显示 AI 用量消耗，支持日/月周期切换。一眼掌握剩余额度，合理规划使用节奏。</p></div>
       <div class="feature-card reveal"><div class="feature-icon teal">⚙️</div><h3>极简配置</h3><p>右键即设：调整任务条数、查看用量、切换周期。无需复杂设置面板，ContextMenu 搞定一切。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon green">🪟</div><h3>任意悬浮模式</h3><p>v1.3.0 新增：圆形悬浮球常驻桌面任意位置，logo 为主、状态灯为辅。hover 展开任务面板，常规态透明弱化存在感。支持鼠标拖拽自由移动。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon blue">🖥</div><h3>外接显示器适配</h3><p>v1.3.0 新增：插拔外接显示器时自动重新定位到主屏幕，无需重启应用。双屏模式下 HUD 始终跟随主屏。</p></div>
     </div>
   </div>
 </section>
@@ -332,7 +369,7 @@
     </div>
   </div>
 </section>
-<section class="powered-section">
+<section class="powered-section" id="powered">
   <div class="container">
     <div class="reveal"><div class="section-label">生态</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">基于 WPS Comate 应用开发能力</h2></div>
     <div class="powered-card reveal">
@@ -341,6 +378,22 @@
       <p>Comate HUD 基于 <a href="https://comate.wps.cn" target="_blank" rel="noopener">WPS Comate</a> 的应用开发能力构建。利用 Comate 提供的本地数据库读取、Deeplink 调起、OAuth 认证等开放接口，实现了与 Comate 桌面客户端的深度集成——读取任务状态、打开会话窗口、获取未读消息、查询用量额度。</p>
       <p style="margin-top:12px;font-size:13px;color:var(--text-dim);">Comate HUD 是一个独立的 macOS 原生应用，不属于 WPS 或 WPS Comate 的官方产品。它由社区开发者基于 Comate 开放能力构建，以第三方应用形式运行。</p>
     </div>
+  </div>
+</section>
+<section class="wish-section" id="wishwall">
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">许愿墙</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">许个愿，让 HUD 更好</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">实名或匿名提交你的愿望和建议，所有留言会在弹幕中展示。</p></div>
+    <div class="wish-form reveal">
+      <div class="wish-row">
+        <input id="wish-name" type="text" placeholder="你的名字（可选，留空匿名）" maxlength="20" />
+        <select id="wish-type"><option value="wish">🌟 许愿</option><option value="suggest">💡 建议</option></select>
+      </div>
+      <div class="wish-row">
+        <textarea id="wish-text" placeholder="写下你的愿望或建议..." maxlength="100" rows="2"></textarea>
+        <button id="wish-submit" onclick="submitWish()">发送</button>
+      </div>
+    </div>
+    <div class="wish-barrage reveal" id="wish-barrage"></div>
   </div>
 </section>
 <footer>
@@ -403,6 +456,58 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
     document.querySelectorAll('.reveal:not(.visible)').forEach(function(el){o2.observe(el)});
   }).catch(function(e){console.warn('Failed to load versions.json:',e)});
 })();
+// PV Counter (localStorage based)
+(function(){
+  var pv = parseInt(localStorage.getItem('comate-hud-pv') || '0', 10);
+  pv++;
+  localStorage.setItem('comate-hud-pv', pv);
+  var el = document.getElementById('pv-display');
+  if(el) el.textContent = '🔥 已有 ' + pv + ' 人体验';
+})();
+// Wish Wall
+var WISH_KEY = 'comate-hud-wishes';
+function getWishes(){ try{return JSON.parse(localStorage.getItem(WISH_KEY))||[]}catch(e){return[]} }
+function saveWishes(w){ localStorage.setItem(WISH_KEY, JSON.stringify(w)); }
+function submitWish(){
+  var name = document.getElementById('wish-name').value.trim() || '匿名';
+  var text = document.getElementById('wish-text').value.trim();
+  var type = document.getElementById('wish-type').value;
+  if(!text) return;
+  var wishes = getWishes();
+  wishes.push({name:name, text:text, type:type, ts:Date.now()});
+  saveWishes(wishes);
+  document.getElementById('wish-text').value = '';
+  renderWishBarrage();
+}
+function renderWishBarrage(){
+  var container = document.getElementById('wish-barrage');
+  if(!container) return;
+  container.innerHTML = '';
+  var wishes = getWishes();
+  if(!wishes.length) {
+    // 默认许愿
+    wishes = [
+      {name:'小明',text:'希望能支持 Linux 版本！',type:'wish'},
+      {name:'匿名',text:'加个自定义主题色功能吧',type:'suggest'},
+      {name:'阿花',text:'状态灯能不能加个紫色？',type:'wish'},
+      {name:'Coder',text:'希望支持快捷键呼出面板',type:'suggest'},
+      {name:'匿名',text:'已用了一周，非常好用 👍',type:'wish'},
+    ];
+  }
+  // 弹幕：随机位置、随机速度
+  wishes.forEach(function(w, i){
+    var bubble = document.createElement('div');
+    bubble.className = 'wish-bubble';
+    var icon = w.type==='wish' ? '🌟' : '💡';
+    bubble.innerHTML = '<span class="wish-author">'+w.name+'</span>' + icon + ' ' + w.text;
+    var row = i % 3;
+    bubble.style.top = (15 + row * 55) + 'px';
+    bubble.style.animationDuration = (12 + Math.random()*8) + 's';
+    bubble.style.animationDelay = (i * 1.5) + 's';
+    container.appendChild(bubble);
+  });
+}
+renderWishBarrage();
 </script>
 </body>
 </html>

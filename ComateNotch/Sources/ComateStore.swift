@@ -234,6 +234,46 @@ final class ComateStore: ObservableObject {
     static let recentTaskLimitOptions = [3, 6, 10]
     private static let recentTaskLimitKey = "notch.recentTaskLimit"
 
+    // MARK: - 显示模式
+    enum DisplayMode: String, CaseIterable {
+        case notchHUD = "notch"      // 刘海 HUD 模式（默认）
+        case floating = "floating"   // 任意悬浮模式
+
+        var label: String {
+            switch self {
+            case .notchHUD:  return "刘海 HUD 模式"
+            case .floating:  return "任意悬浮模式"
+            }
+        }
+    }
+
+    /// 当前显示模式，变更即写入 UserDefaults
+    @Published var displayMode: DisplayMode = ComateStore.loadDisplayMode() {
+        didSet {
+            guard oldValue != displayMode else { return }
+            UserDefaults.standard.set(displayMode.rawValue, forKey: ComateStore.displayModeKey)
+        }
+    }
+
+    /// 任意悬浮模式下的窗口位置（归一化 0~1，nil = 首次使用时居中）
+    @Published var floatingPositionX: CGFloat = UserDefaults.standard.object(forKey: ComateStore.floatingPosXKey) as? CGFloat ?? 0.7
+    @Published var floatingPositionY: CGFloat = UserDefaults.standard.object(forKey: ComateStore.floatingPosYKey) as? CGFloat ?? 0.5
+
+    func saveFloatingPosition(x: CGFloat, y: CGFloat) {
+        floatingPositionX = x
+        floatingPositionY = y
+        UserDefaults.standard.set(x, forKey: ComateStore.floatingPosXKey)
+        UserDefaults.standard.set(y, forKey: ComateStore.floatingPosYKey)
+    }
+
+    private static let displayModeKey = "notch.displayMode"
+    private static let floatingPosXKey = "notch.floatingPosX"
+    private static let floatingPosYKey = "notch.floatingPosY"
+    private static func loadDisplayMode() -> DisplayMode {
+        let raw = UserDefaults.standard.string(forKey: displayModeKey) ?? "notch"
+        return DisplayMode(rawValue: raw) ?? .notchHUD
+    }
+
     /// 用户拖拽自定义的展开高度（nil = 跟随内容自适应）
     @Published var customExpandedHeight: CGFloat? = ComateStore.loadCustomExpandedHeight()
 

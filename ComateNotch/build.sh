@@ -28,6 +28,7 @@ SOURCES=(
     "$SRC/SessionJournal.swift"
     "$SRC/NotchPanel.swift"
     "$SRC/NotchRootView.swift"
+    "$SRC/FloatingPanel.swift"
 )
 
 # 确定是否能编译双架构

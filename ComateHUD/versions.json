@@ -1,8 +1,22 @@
 {
-  "latest": "1.2.0",
+  "latest": "1.3.0",
   "versions": [
     {
-      "version": "1.2.0",
+      "version": "1.3.0",
+      "date": "2026-09-23",
+      "platform": "macOS",
+      "size": "~1.3 MB",
+      "download": "https://github.com/likelu9/comate-hud/releases/download/v1.3.0/ComateHUD-1.3.0.dmg",
+      "changelog": [
+        {"type": "new", "text": "任意悬浮模式：圆形悬浮球常驻桌面任意位置，hover 展开任务面板，支持鼠标拖拽自由移动"},
+        {"type": "new", "text": "外接显示器适配：插拔外接屏时自动重新定位到主屏幕，双屏模式下始终跟随主屏"},
+        {"type": "new", "text": "右键菜单新增「显示模式」切换：刘海 HUD / 任意悬浮"},
+        {"type": "opt", "text": "额度显示颜色改为品牌绿（#00D4AA），与下载按钮统一视觉"},
+        {"type": "opt", "text": "产品官网改版：新增许愿墙、PV 统计、v1.3.0 功能同步"},
+        {"type": "fix", "text": "外接显示器拔掉后 HUD 无法回到主屏幕的问题"},
+        {"type": "fix", "text": "官网下载按钮锚点定位不准确的问题"}
+      ]
+    },
       "build": 3,
       "date": "2026-09-23",
       "download": "https://github.com/likelu9/comate-hud/releases/download/v1.2.0/ComateHUD-1.2.0.dmg",

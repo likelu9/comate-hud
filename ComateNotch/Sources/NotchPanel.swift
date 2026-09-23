@@ -3,6 +3,7 @@ import SwiftUI
 
 /// 贴合 MacBook 刘海的悬浮 HUD 窗口。
 /// 展开时顶部锚定不动，仅向下生长（消除 hover 跳动）。
+/// 支持外接显示器热插拔：屏幕变化时自动重新定位到主屏幕。
 final class NotchPanel: NSPanel {
 
     struct NotchGeometry {
@@ -123,6 +124,32 @@ final class NotchPanel: NSPanel {
     /// 每次鼠标移动都 setFrame 会重新布局 hostingView，导致卡顿与抖动。
     func beginLiveResize(maxHeight: CGFloat) {
         setFrame(expandedFrame(height: maxHeight), display: true)
+    }
+
+    /// 外接显示器热插拔：屏幕数量/排列变化时重新定位到主屏幕
+    func repositionToMainScreen() {
+        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
+            NSLog("[NotchPanel] reposition: 无可用屏幕")
+            return
+        }
+        let newNotch = NotchPanel.notchGeometry(for: screen)
+        // 如果主屏幕没变（frame 完全一致），跳过无意义的重定位
+        if newNotch.centerX == notch.centerX && newNotch.screenTopY == notch.screenTopY {
+            NSLog("[NotchPanel] reposition: 主屏幕未变化，跳过")
+            return
+        }
+        NSLog("[NotchPanel] reposition: 屏幕变化，从 (%.0f,%.0f) 移动到 (%.0f,%.0f)",
+              notch.centerX, notch.screenTopY, newNotch.centerX, newNotch.screenTopY)
+        // 由于 NotchGeometry 是 let 不可变，需要重建面板
+        // 简单方案：直接移动窗口 frame 到新屏幕的对应位置
+        let newX = newNotch.centerX - collapsedWidth / 2
+        let newY = newNotch.screenTopY - notch.notchHeight
+        let target = NSRect(x: newX, y: newY, width: collapsedWidth, height: notch.notchHeight)
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.35
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            self.animator().setFrame(target, display: true)
+        }
     }
 
     func animateToCollapsed() {

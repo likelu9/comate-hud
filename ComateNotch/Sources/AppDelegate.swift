@@ -4,12 +4,24 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: NotchPanel?
     private var backdropPanel: NotchBackdropPanel?
+    private var floatingPanel: FloatingPanel?
     private var store = ComateStore()
+    private var screenObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         let panel = NotchPanel()
         self.panel = panel
+
+        // 监听外接显示器热插拔：屏幕数量/排列变化时重新定位
+        screenObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main) { [weak self] _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self?.panel?.repositionToMainScreen()
+                self?.floatingPanel?.repositionToMainScreen()
+            }
+        }
 
         // 静态托底窗口：固定收起态尺寸，置于主面板下层，不参与动效
         let backdrop = NotchBackdropPanel(collapsedFrame: panel.collapsedFrame())
@@ -21,7 +33,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             store: store,
             initialExpanded: CommandLine.arguments.contains("--expanded"),
             onExpandChange: { [weak panel, weak store] isExpanded, height in
-                // 展开时立即拉一次用量（受频次上限约束），并按展开/收起切换刷新节拍
                 store?.setPanelExpanded(isExpanded)
                 if isExpanded { panel?.animateToExpanded(height: height) }
                 else { panel?.animateToCollapsed() }
@@ -43,6 +54,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 NSApp.setActivationPolicy(.regular)
                 NSApp.activate(ignoringOtherApps: true)
             },
+            onSwitchMode: { [weak self] mode in
+                self?.switchDisplayMode(mode)
+            },
             onQuit: {
                 NSApp.terminate(nil)
             }
@@ -61,7 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                width: panel.expandedWidth,
                                height: panel.hostingHeight)
         // minYMargin 弹性 = 顶部边距固定 → 视图始终吸在窗口顶部
-        hosting.autoresizingMask = [.minYMargin]
+        hosting.autoresizingMask = [NSView.AutoresizingMask.minYMargin]
         container.addSubview(hosting)
         panel.contentView = container
         panel.orderFrontRegardless()
@@ -69,6 +83,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        if let obs = screenObserver { NotificationCenter.default.removeObserver(obs) }
         store.stop()
+    }
+
+    private func switchDisplayMode(_ mode: ComateStore.DisplayMode) {
+        store.displayMode = mode
+        switch mode {
+        case .notchHUD:
+            // 切回刘海模式：隐藏浮动面板，显示刘海面板
+            floatingPanel?.orderOut(nil)
+            floatingPanel = nil
+            panel?.orderFrontRegardless()
+            backdropPanel?.orderFrontRegardless()
+        case .floating:
+            // 切到浮动模式：隐藏刘海面板，创建浮动面板
+            panel?.orderOut(nil)
+            backdropPanel?.orderOut(nil)
+            let fp = FloatingPanel(store: store)
+            self.floatingPanel = fp
+            fp.orderFrontRegardless()
+        }
     }
 }

@@ -242,6 +242,7 @@ struct NotchRootView: View {
     /// 拖拽结束：按最终高度收一次窗口
     var onResizeEnd: ((CGFloat) -> Void)?
     var onShowMainWindow: (() -> Void)?
+    var onSwitchMode: ((ComateStore.DisplayMode) -> Void)?
     var onQuit: (() -> Void)?
 
     /// 收起态与展开态同宽：宽度全程不变，动画只改变 y 与高度，
@@ -494,6 +495,20 @@ struct NotchRootView: View {
                 showAbout = true
             }
             Divider()
+            // 显示模式切换
+            Menu("显示模式") {
+                ForEach(ComateStore.DisplayMode.allCases, id: \.rawValue) { mode in
+                    Button {
+                        onSwitchMode?(mode)
+                    } label: {
+                        if store.displayMode == mode {
+                            Label(mode.label, systemImage: "checkmark")
+                        } else {
+                            Text(mode.label)
+                        }
+                    }
+                }
+            }
             Button("显示主窗口") {
                 store.openComateApp()
                 onShowMainWindow?()
@@ -693,12 +708,12 @@ struct NotchRootView: View {
                 Text(period.shortLabel)
                     .font(.system(size: 8, weight: .semibold, design: .rounded))
                     .foregroundStyle(store.usagePeriod == period
-                                     ? Color.black.opacity(0.8)
+                                     ? Color(hex: "#00D4AA")
                                      : Color.white.opacity(0.45))
                     .frame(width: 13, height: 11)
                     .background(
                         RoundedRectangle(cornerRadius: 3.5)
-                            .fill(store.usagePeriod == period ? Color.white.opacity(0.85) : Color.clear)
+                            .fill(store.usagePeriod == period ? Color(hex: "#00D4AA").opacity(0.85) : Color.clear)
                     )
             }
         }
