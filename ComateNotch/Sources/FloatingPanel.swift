@@ -483,6 +483,11 @@ final class FloatingPanel: NSPanel {
             // 内容淡出后再把窗口收回图标大小，否则收起动画会被窗口裁断
             let item = DispatchWorkItem { [weak self] in
                 guard let self = self, !self.interaction.isExpanded else { return }
+                // 延迟收起期间鼠标可能已回到图标/面板上，执行前重新校验，避免误收
+                let mouse = NSEvent.mouseLocation
+                let inside = self.panelRectScreen.insetBy(dx: -4, dy: -4).contains(mouse)
+                    || self.iconRectScreen.insetBy(dx: -4, dy: -4).contains(mouse)
+                if inside { return }
                 self.applyLayout(expanded: false)
             }
             collapseWorkItem = item
