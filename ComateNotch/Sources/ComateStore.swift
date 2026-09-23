@@ -53,6 +53,9 @@ struct ComateTask: Identifiable, Equatable {
     let activityAt: Date
     /// 会话日志末条事件的角色（assistant / toolResult / user）；nil = 没有日志可读
     var lastJournalEventRole: String? = nil
+    /// 最近一次观察到「已完成」的时刻（本地库的 status 会被 Comate 改回 idle，
+    /// 只看当次 status 会让绿灯提前消失，故记住最后一次看到 done 的时间）
+    var doneSeenAt: Date? = nil
     /// 近 30 天智点累计（用量接口按会话汇总；nil = 30 天内没有消耗记录）
     var credits30d: Double? = nil
 
@@ -130,6 +133,9 @@ struct ComateTask: Identifiable, Equatable {
     /// 心跳新鲜窗口：要能覆盖单次长工具调用（构建 / 测试），又不能长到让死掉的轮次复活
     private static let activeWindow: TimeInterval = 150
 
+    /// 绿灯窗口：任务完成后 15 分钟内保持绿色，之后回落到灰色表示「闲置、可开新任务」
+    static let greenWindow: TimeInterval = 900
+
     /// 综合判断状态灯
     /// 优先级：红（等待确认 / 异常）> 黄（工作中）> 绿（已完成）> 灰（空闲）
     /// 注意本地库里 status=done 不代表「刚完成」——实测轮次进行中同样是 done，
@@ -138,17 +144,24 @@ struct ComateTask: Identifiable, Equatable {
         // 云端接口没有心跳也没有末条消息，只能信任它返回的 status（实测词表只有 idle/done）
         if isCloud {
             if status == "running" { return .yellow }
-            if status == "done" { return .green }
+            if isCompleted { return .green }
             return .gray
         }
         if redKind != nil { return .red }
         if isActive { return .yellow }
-        if status == "done" { return .green }
+        if isCompleted { return .green }
         return .gray
     }
 
     var isRunning: Bool { light == .yellow }
-    var isCompleted: Bool { status == "done" }
+    /// 是否算「已完成」：除了当次 status=done，还认 greenWindow 内曾观察到 done。
+    /// 本地库的 status 会被 Comate 自己从 done 改回 idle（实测 7 分钟内就回落），
+    /// 只信当次 status 会让「完成后保持 15 分钟绿灯」形同虚设。
+    var isCompleted: Bool {
+        if status == "done" { return true }
+        guard let seen = doneSeenAt else { return false }
+        return Date().timeIntervalSince(seen) < Self.greenWindow
+    }
 
     var statusLabel: String {
         switch redKind {
@@ -189,9 +202,6 @@ final class ComateStore: ObservableObject {
         cloudUnreadCount > 0 ? cloudUnreadCount : attentionCount
     }
 
-    /// 绿灯窗口：任务完成后 15 分钟内保持绿色，之后回落到灰色表示「闲置、可开新任务」
-    private static let greenWindow: TimeInterval = 900
-
     /// 当前最优先的状态灯（用于收起态显示）
     /// 优先级：红 > 黄 > 绿 > 灰
     /// 与展开态每个任务的 light 同源，只是红灯额外加时效窗口：展开态回答的是「这个任务什么状态」
@@ -216,7 +226,7 @@ final class ComateStore: ObservableObject {
         // 超过窗口才回落到灰色表示"闲置、可开新任务"。5 分钟太短，用户回头查看时已变灰。
         let lastActivity = recentTasks.map { max($0.activityAt, $0.updatedAt) }.max() ?? .distantPast
         if recentTasks.contains(where: { $0.isCompleted }),
-           now.timeIntervalSince(lastActivity) < Self.greenWindow { return .green }
+           now.timeIntervalSince(lastActivity) < ComateTask.greenWindow { return .green }
         // 4. 灰色：全部空闲
         return .gray
     }
@@ -687,16 +697,30 @@ final class ComateStore: ObservableObject {
     }
 
     /// 合并本地与云端任务并回填 30 天智点，按更新时间降序取前 12 条。
+    /// 任务 id → 最近一次观察到「已完成」的时刻。
+    /// 本地库的 status 会被 Comate 自己从 done 改回 idle（实测 7 分钟内就回落），
+    /// 只信当次 status 会让「完成后保持 15 分钟绿灯」形同虚设，所以这里记一笔。
+    private var lastDoneSeen: [String: Date] = [:]
+
     /// 两个调用点（2 秒 DB 轮询、30 秒云端刷新）必须都走这里：云端刷新只带本地任务，
     /// 漏掉回填会让行上的智点标记每 30 秒闪没一次。
     /// 智点字典只在主线程读写，本方法也只从主线程调用，无竞争。
     private func mergeRecentTasks(local: [ComateTask], cloud: [ComateTask]) {
+        lastDoneSeen = lastDoneSeen.filter { Date().timeIntervalSince($0.value) < 3600 }
         let merged = (local + cloud).sorted { $0.updatedAt > $1.updatedAt }
         recentTasks = merged.prefix(12).map { task in
-            var copy = task
+            var copy = stampDoneSeen(task)
             copy.credits30d = credits30d[task.id]
             return copy
         }
+    }
+
+    /// 给任务打上「最近一次观察到已完成」的时刻（本次是 done 就刷新记录）
+    private func stampDoneSeen(_ task: ComateTask) -> ComateTask {
+        var copy = task
+        if task.status == "done" { lastDoneSeen[task.id] = Date() }
+        copy.doneSeenAt = lastDoneSeen[task.id]
+        return copy
     }
 
     /// 从云端消息中心 API 获取真实未读消息数
@@ -779,7 +803,7 @@ final class ComateStore: ObservableObject {
                                      activityAt: updated)
                 }
                 DispatchQueue.main.async {
-                    self.cloudTasks = cloudTasks
+                    self.cloudTasks = cloudTasks.map { self.stampDoneSeen($0) }
                     // 触发 recentTasks 重新合并（复用 refresh 末尾的合并逻辑）
                     self.mergeRecentTasks(local: self.recentTasks.filter { !$0.isCloud },
                                           cloud: cloudTasks)
