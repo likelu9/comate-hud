@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comate HUD - macOS AI 任务状态灯｜为 WPS Comate 而生</title>
+  <meta name="description" content="Comate HUD 是一款原生 macOS 刘海区状态指示器，为 WPS Comate 而生。无需打开主窗口，任务状态一目了然。基于 WPS Comate 应用开发能力构建。" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <link rel="icon" type="image/png" href="icon.png" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a0f; --bg-card: #111118; --bg-card-hover: #16161f;
+      --text: #f5f5f7; --text-secondary: #8e8e93; --text-dim: #55555d;
+      --accent: #00d4aa; --accent-glow: rgba(0,212,170,0.25);
+      --red: #ff453a; --yellow: #ffd60a; --green: #30d158;
+      --purple: #bf5af2; --blue: #0a84ff; --radius: 20px; --max-w: 1080px;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", sans-serif; line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    #boot-cover { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; transition: opacity 0.5s ease 0.1s, visibility 0s linear 0.6s; }
+    #boot-cover.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    #boot-cover img { width: 64px; height: 64px; border-radius: 28%; box-shadow: 0 0 40px var(--accent-glow); animation: boot-pulse 1.4s ease-in-out infinite; object-fit: contain; }
+    #boot-cover span { color: var(--text-secondary); font-size: 13px; letter-spacing: 0.08em; }
+    @keyframes boot-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+    .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; background: rgba(0,212,170,0.1); color: var(--accent); border: 1px solid rgba(0,212,170,0.2); }
+    .section-label { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 14px 0; background: rgba(10,10,15,0.8); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    nav .container { display: flex; align-items: center; justify-content: space-between; }
+    nav .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    nav .brand img { width: 32px; height: 32px; border-radius: 9px; object-fit: contain; }
+    nav .brand strong { font-size: 16px; font-weight: 700; }
+    nav .nav-links { display: flex; gap: 28px; align-items: center; }
+    nav .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+    nav .nav-links a:hover { color: var(--text); }
+    .btn-sm { display: inline-flex; align-items: center; padding: 8px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none; background: var(--accent) !important; color: #0a0a0f !important; box-shadow: 0 0 16px var(--accent-glow); transition: all 0.2s; }
+    .btn-sm:hover { transform: translateY(-1px); box-shadow: 0 0 24px var(--accent-glow); }
+    .hero { padding: 160px 0 80px; text-align: center; position: relative; }
+    .hero::before { content: ''; position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); opacity: 0.4; pointer-events: none; }
+    .hero h1 { font-size: clamp(42px,7vw,72px); font-weight: 800; line-height: 1.08; letter-spacing: -0.04em; margin-bottom: 24px; }
+    .hero h1 .gradient { background: linear-gradient(135deg, var(--accent) 0%, var(--blue) 50%, var(--purple) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero .subtitle { font-size: clamp(17px,2.4vw,21px); color: var(--text-secondary); max-width: 640px; margin: 0 auto 40px; line-height: 1.7; }
+    .hero-lights { display: flex; justify-content: center; gap: 24px; margin-bottom: 48px; }
+    .hero-light { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .hero-light .dot { width: 14px; height: 14px; border-radius: 50%; }
+    .hero-light .dot.green { background: var(--green); box-shadow: 0 0 16px var(--green); }
+    .hero-light .dot.yellow { background: var(--yellow); box-shadow: 0 0 16px var(--yellow); animation: breathe 2s ease-in-out infinite; }
+    .hero-light .dot.red { background: var(--red); box-shadow: 0 0 16px var(--red); animation: blink 0.55s ease-in-out infinite; }
+    .hero-light span { font-size: 12px; color: var(--text-dim); }
+    @keyframes breathe { 0%,100%{opacity:1} 50%{opacity:.08} }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+    .hero-actions { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .btn-download { display: inline-flex; align-items: center; gap: 10px; padding: 14px 32px; border-radius: 14px; font-size: 16px; font-weight: 600; text-decoration: none; transition: all 0.25s cubic-bezier(0.22,1,0.36,1); border: none; }
+    .btn-primary { background: var(--accent); color: #0a0a0f; box-shadow: 0 0 24px var(--accent-glow), 0 4px 16px rgba(0,0,0,0.4); }
+    .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 0 40px var(--accent-glow), 0 8px 24px rgba(0,0,0,0.5); }
+    .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid rgba(255,255,255,0.1); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+    .btn-download svg { width: 20px; height: 20px; }
+    .hero-req { margin-top: 12px; font-size: 13px; color: var(--text-dim); }
+    .hero-tags { margin-top: 12px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .hero-tags span { font-size: 12px; color: var(--text-dim); }
+    .release-toggle summary { font-size: 13px; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; justify-content: center; }
+    .release-toggle summary:hover { color: var(--text); }
+    .release-toggle summary svg { transition: transform 0.2s; }
+    .release-toggle[open] summary svg { transform: rotate(90deg); }
+    .release-body { margin-top: 14px; padding: 24px 28px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.9; text-align: left; max-width: 480px; margin-left: auto; margin-right: auto; }
+    .release-body .rv { font-weight: 700; color: var(--text); font-size: 15px; margin-bottom: 10px; }
+    .release-body .cat { font-weight: 600; margin-bottom: 4px; }
+    .release-body .cat.new { color: var(--accent); }
+    .release-body .cat.opt { color: var(--yellow); }
+    .release-body .cat.fix { color: var(--red); }
+    .mockup-section { padding: 60px 0 100px; }
+    .mockup-wrapper { max-width: 900px; margin: 0 auto; background: var(--bg-card); border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.06); overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.5); }
+    .mockup-titlebar { display: flex; align-items: center; gap: 8px; padding: 14px 18px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .mockup-titlebar .dot-r { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; }
+    .mockup-titlebar .dot-y { width: 12px; height: 12px; border-radius: 50%; background: #febc2e; }
+    .mockup-titlebar .dot-g { width: 12px; height: 12px; border-radius: 50%; background: #28c840; }
+    .mockup-body { padding: 40px 32px 48px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
+    .sim-hud { display: flex; align-items: center; gap: 10px; background: #1a1a22; border-radius: 40px; padding: 10px 18px; box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.6); }
+    .sim-hud .logo { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: white; background: linear-gradient(135deg, #0a84ff, #bf5af2); }
+    .sim-hud .sim-light { width: 8px; height: 8px; border-radius: 50%; }
+    .sim-hud .sim-light.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .sim-hud .sim-light.yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); animation: breathe 2s ease-in-out infinite; }
+    .sim-hud .sim-light.red { background: var(--red); box-shadow: 0 0 8px var(--red); animation: blink 0.55s ease-in-out infinite; }
+    .sim-hud .sim-badge { font-size: 11px; font-weight: 600; color: var(--text-secondary); background: rgba(255,255,255,0.06); padding: 3px 10px; border-radius: 999px; }
+    .sim-hud .sim-bell { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-secondary); }
+    .sim-panel { width: 280px; background: #111118; border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
+    .sim-panel-header { padding: 14px 16px 10px; font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+    .sim-task { display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
+    .sim-task .t-light { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .sim-task .t-info { flex: 1; min-width: 0; }
+    .sim-task .t-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sim-task .t-desc { font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sim-task .t-time { font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
+    .sim-panel-footer { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; }
+    .sim-panel-footer .usage { font-size: 11px; color: var(--accent); }
+    .sim-panel-footer .usage span { color: var(--text-dim); }
+    .features { padding: 80px 0; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .feature-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 36px 28px; transition: all 0.3s cubic-bezier(0.22,1,0.36,1); position: relative; overflow: hidden; }
+    .feature-card::before { content: ''; position: absolute; top: -1px; left: 20%; right: 20%; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0; transition: opacity 0.3s; }
+    .feature-card:hover { background: var(--bg-card-hover); transform: translateY(-4px); border-color: rgba(0,212,170,0.15); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 20px; }
+    .feature-icon.green { background: rgba(48,209,88,0.12); }
+    .feature-icon.yellow { background: rgba(255,214,10,0.12); }
+    .feature-icon.red { background: rgba(255,69,58,0.12); }
+    .feature-icon.blue { background: rgba(10,132,255,0.12); }
+    .feature-icon.purple { background: rgba(191,90,242,0.12); }
+    .feature-icon.teal { background: rgba(0,212,170,0.12); }
+    .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.65; }
+    .lights-section { padding: 80px 0; }
+    .lights-showcase { display: flex; justify-content: center; gap: 60px; margin-top: 48px; flex-wrap: wrap; }
+    .light-item { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .light-orb { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .light-orb.green { background: var(--green); box-shadow: 0 0 40px rgba(48,209,88,0.4); }
+    .light-orb.yellow { background: var(--yellow); box-shadow: 0 0 40px rgba(255,214,10,0.4); animation: breathe 2s ease-in-out infinite; }
+    .light-orb.red { background: var(--red); box-shadow: 0 0 40px rgba(255,69,58,0.4); animation: blink 0.55s ease-in-out infinite; }
+    .light-orb svg { width: 28px; height: 28px; fill: white; opacity: 0.9; }
+    .light-item h4 { font-size: 16px; font-weight: 600; }
+    .light-item p { font-size: 13px; color: var(--text-secondary); text-align: center; max-width: 180px; }
+    .how-section { padding: 80px 0; }
+    .steps { display: flex; flex-direction: column; gap: 32px; margin-top: 48px; position: relative; }
+    .steps::before { content: ''; position: absolute; left: 24px; top: 48px; bottom: 24px; width: 2px; background: linear-gradient(to bottom, var(--accent), var(--purple)); opacity: 0.2; }
+    .step { display: flex; align-items: flex-start; gap: 24px; padding: 24px 0; }
+    .step-num { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: var(--accent); position: relative; z-index: 1; }
+    .step-content h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .step-content p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+    .tech-section { padding: 80px 0; }
+    .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 40px; }
+    .tech-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 24px 20px; text-align: center; }
+    .tech-card .tech-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 8px; }
+    .tech-card .tech-value { font-size: 15px; font-weight: 600; color: var(--text); }
+    .tech-card .tech-note { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .arch-detail { max-width: 720px; margin: 40px auto 0; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 32px 28px; font-size: 13px; line-height: 1.9; color: var(--text-secondary); text-align: left; }
+    .arch-detail code { font-family: "SF Mono", "Menlo", monospace; font-size: 12px; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 5px; color: var(--accent); }
+    .arch-detail .arch-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+    .arch-detail ul { padding-left: 18px; }
+    .arch-detail li { margin-bottom: 4px; }
+    .compat-section { padding: 80px 0; }
+    .compat-table { width: 100%; margin-top: 40px; border-collapse: separate; border-spacing: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+    .compat-table th, .compat-table td { padding: 16px 20px; text-align: left; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .compat-table th { background: rgba(255,255,255,0.03); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+    .compat-table td { color: var(--text-secondary); }
+    .compat-table tr:last-child td { border-bottom: none; }
+    .compat-table .check { color: var(--green); font-weight: 600; }
+    .version-section { padding: 80px 0; }
+    .version-list { margin-top: 40px; max-width: 640px; margin-left: auto; margin-right: auto; }
+    .version-item { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 28px 24px; margin-bottom: 16px; }
+    .version-item .vi-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .version-item .vi-ver { font-size: 18px; font-weight: 700; }
+    .version-item .vi-date { font-size: 12px; color: var(--text-dim); }
+    .version-item .vi-changes { font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+    .vc-label { font-weight: 600; margin-right: 4px; }
+    .vc-new { color: var(--accent); }
+    .vc-opt { color: var(--yellow); }
+    .vc-fix { color: var(--red); }
+    .vi-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; background: rgba(0,212,170,0.15); color: var(--accent); }
+    .powered-section { padding: 80px 0; text-align: center; }
+    .powered-card { max-width: 720px; margin: 40px auto 0; background: linear-gradient(135deg, rgba(0,212,170,0.06) 0%, rgba(10,132,255,0.06) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 40px 32px; }
+    .powered-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+    .powered-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 560px; margin: 0 auto; }
+    .powered-card a { color: var(--accent); text-decoration: none; }
+    .powered-card a:hover { text-decoration: underline; }
+    .powered-logo { width: 56px; height: 56px; border-radius: 14px; margin: 0 auto 20px; background: linear-gradient(135deg, #0a84ff, #bf5af2); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: white; box-shadow: 0 0 30px rgba(10,132,255,0.3); }
+    footer { padding: 48px 0; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; }
+    footer p { font-size: 13px; color: var(--text-dim); }
+    footer a { color: var(--text-secondary); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+    @media (max-width: 768px) {
+      .hero { padding: 120px 0 60px; }
+      .lights-showcase { gap: 32px; }
+      .light-orb { width: 56px; height: 56px; }
+      .light-orb svg { width: 22px; height: 22px; }
+      .steps::before { left: 23px; }
+      nav .nav-links { display: none; }
+      .compat-table th, .compat-table td { padding: 12px 14px; }
+      .version-item .vi-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+<div id="boot-cover"><img src="icon.png" alt="" /><span>正在加载</span></div>
+<nav>
+  <div class="container">
+    <a href="#" class="brand"><img src="icon.png" alt="Comate HUD" /><strong>Comate HUD</strong></a>
+    <div class="nav-links">
+      <a href="#features">功能</a><a href="#lights">状态灯</a><a href="#tech">技术</a><a href="#versions">版本</a><a href="#compat">兼容性</a>
+      <a href="#download" class="btn-sm">下载</a>
+    </div>
+  </div>
+</nav>
+<section class="hero">
+  <div class="container">
+    <span class="badge">macOS 原生 · Swift · SwiftUI</span>
+    <h1 style="margin-top:28px;"><span class="gradient">Comate HUD</span><br/>让 AI 干活，你只管看灯</h1>
+    <p class="subtitle">一款常驻 macOS 刘海区的轻量状态指示器，为 WPS Comate 而生。<br/>无需打开主窗口，任务状态一目了然。</p>
+    <div class="hero-lights">
+      <div class="hero-light"><div class="dot green"></div><span>空闲</span></div>
+      <div class="hero-light"><div class="dot yellow"></div><span>工作中</span></div>
+      <div class="hero-light"><div class="dot red"></div><span>等待确认</span></div>
+    </div>
+    <div class="hero-actions" id="download">
+      <a href="../ComateNotch/dist/ComateHUD-1.2.0.dmg" class="btn-download btn-primary" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v14m0 0l-5-5m5 5l5-5M5 20h14"/></svg>
+        下载 Comate HUD v1.2.0 (1.3 MB)
+      </a>
+      <a href="https://github.com/nicepkg/comate-notch" class="btn-download btn-secondary" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <details class="release-toggle" style="margin-top:12px;">
+      <summary><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>v1.2.0 Release Notes</summary>
+      <div class="release-body">
+        <div class="rv">v1.2.0 · 2026-09-23</div>
+        <div><span class="cat new">✨ 新增</span></div>
+        <div style="padding-left:16px;">全新应用图标（深色 squircle + 蓝粉双色环 + 三灯）· 右键「关于 Comate HUD」弹窗 · 设置迁移 · 黄灯呼吸优化（2.0s→1.2s）</div>
+        <div style="margin-top:10px;"><span class="cat opt">⚡ 优化</span></div>
+        <div style="padding-left:16px;">DB 异步查询消除主线程卡顿 · 任务行点击修复 · 额度热区收窄 · 云端刷新动画期间暂停</div>
+        <div style="margin-top:10px;"><span class="cat fix">🔧 修复</span></div>
+        <div style="padding-left:16px;">build.sh 编译回退逻辑 · sid Cookie 注入风险 · journals 内存无限增长 · 过期注释清理</div>
+      </div>
+    </details>
+    <p class="hero-req">支持 macOS 12.0+ · Apple Silicon &amp; Intel · Universal Binary</p>
+    <div class="hero-tags">
+      <span>🍎 macOS 12.0+</span><span>⚡ Universal Binary</span><span>🛡 App Sandbox Free</span><span>📦 ~1.3 MB DMG</span>
+    </div>
+  </div>
+</section>
+<section class="mockup-section reveal">
+  <div class="container">
+    <div class="mockup-wrapper">
+      <div class="mockup-titlebar"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+      <div class="mockup-body">
+        <div class="sim-hud">
+          <div class="logo">C</div><div class="sim-light yellow"></div><div class="sim-badge">7 任务</div><div class="sim-bell">🔔</div>
+        </div>
+        <div class="sim-panel">
+          <div class="sim-panel-header">最近任务</div>
+          <div class="sim-task"><div class="t-light" style="background:var(--yellow);box-shadow:0 0 6px var(--yellow)"></div><div class="t-info"><div class="t-name">周报生成器</div><div class="t-desc">正在采集 IM 消息...</div></div><div class="t-time">12s</div></div>
+          <div class="sim-task"><div class="t-light" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><div class="t-info"><div class="t-name">代码审查 - API 模块</div><div class="t-desc">已完成，等待查看</div></div><div class="t-time">2m</div></div>
+          <div class="sim-task"><div class="t-light" style="background:var(--red);box-shadow:0 0 6px var(--red);animation:blink 0.55s infinite"></div><div class="t-info"><div class="t-name">部署脚本修复</div><div class="t-desc">需要你确认...</div></div><div class="t-time">5m</div></div>
+          <div class="sim-task"><div class="t-light" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><div class="t-info"><div class="t-name">产品介绍页</div><div class="t-desc">已生成 HTML 文件</div></div><div class="t-time">1m</div></div>
+          <div class="sim-panel-footer"><div class="usage">日限额：已用 82% <span>· 点击切换</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="features" id="features">
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">核心功能</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">一眼掌握 AI 工作状态</h2></div>
+    <div class="features-grid" style="margin-top:48px;">
+      <div class="feature-card reveal"><div class="feature-icon green">🟢</div><h3>实时状态灯</h3><p>三色状态灯常驻刘海区——绿灯空闲、黄灯工作中、红灯等待确认。不占屏幕空间，抬眼即知。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon yellow">📋</div><h3>任务面板</h3><p>悬停刘海自动展开，最近会话、执行进度、时间耗时尽收眼底。支持自定义展示条数（3/6/10）。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon red">🔔</div><h3>消息中心</h3><p>角标动态显示 Comate 未读消息数量，点击铃铛直达消息中心。动画旋转提示新消息到达。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon blue">⚡</div><h3>一键直达</h3><p>点击任意任务行，自动打开对应的 Comate 会话窗口。零切换成本，从状态灯直达对话。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon purple">📊</div><h3>额度用量</h3><p>实时显示 AI 用量消耗，支持日/月周期切换。一眼掌握剩余额度，合理规划使用节奏。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon teal">⚙️</div><h3>极简配置</h3><p>右键即设：调整任务条数、查看用量、切换周期。无需复杂设置面板，ContextMenu 搞定一切。</p></div>
+    </div>
+  </div>
+</section>
+<section class="lights-section" id="lights">
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">状态灯语义</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">三种灯，三种心跳</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">每种状态灯都有独特的闪烁节奏，让你在余光中就能感知当前 AI 工作状态。</p></div>
+    <div class="lights-showcase reveal">
+      <div class="light-item"><div class="light-orb green"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div><h4>🟢 空闲</h4><p>所有任务已完成。灯常亮，安静守候。</p></div>
+      <div class="light-item"><div class="light-orb yellow"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><h4>🟡 工作中</h4><p>AI 正在执行任务。呼吸式慢闪，柔和而有存在感。</p></div>
+      <div class="light-item"><div class="light-orb red"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><h4>🔴 等待确认</h4><p>AI 需要你的决策。快闪，紧急提醒。</p></div>
+    </div>
+  </div>
+</section>
+<section class="how-section">
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">使用流程</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">三步上手</h2></div>
+    <div class="steps">
+      <div class="step reveal"><div class="step-num">1</div><div class="step-content"><h3>安装并启动</h3><p>将 ComateHUD.app 拖入「应用程序」文件夹，双击启动。HUD 自动常驻刘海区，首次启动请允许辅助功能权限。</p></div></div>
+      <div class="step reveal"><div class="step-num">2</div><div class="step-content"><h3>在 Comate 中发起任务</h3><p>正常使用 WPS Comate 发起任务——写代码、生成文档、分析数据。HUD 自动通过 SQLite 读取本地任务状态，无需额外配置。</p></div></div>
+      <div class="step reveal"><div class="step-num">3</div><div class="step-content"><h3>看灯、展开、点击</h3><p>看灯知道状态，悬停展开看详情，点击直接跳转。不需要切窗口，不需要查日志，AI 在干什么一目了然。</p></div></div>
+    </div>
+  </div>
+</section>
+<section class="tech-section" id="tech">
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">技术栈</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">纯原生，零依赖</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">100% Swift + SwiftUI 构建，无 Electron、无 WebView、无第三方框架。</p></div>
+    <div class="tech-grid">
+      <div class="tech-card reveal"><div class="tech-label">开发语言</div><div class="tech-value">Swift 5.9+</div><div class="tech-note">Apple 推荐的现代系统语言</div></div>
+      <div class="tech-card reveal"><div class="tech-label">UI 框架</div><div class="tech-value">SwiftUI</div><div class="tech-note">声明式 UI，原生渲染</div></div>
+      <div class="tech-card reveal"><div class="tech-label">窗口管理</div><div class="tech-value">NSPanel</div><div class="tech-note">刘海区域精确贴合</div></div>
+      <div class="tech-card reveal"><div class="tech-label">数据读取</div><div class="tech-value">SQLite (本地)</div><div class="tech-note">读取 Comate 聊天记录库</div></div>
+      <div class="tech-card reveal"><div class="tech-label">网络通信</div><div class="tech-value">URLSession</div><div class="tech-note">云端消息中心 &amp; 用量 API</div></div>
+      <div class="tech-card reveal"><div class="tech-label">系统集成</div><div class="tech-value">Deeplink</div><div class="tech-note">wpscomate:// 协议调起 Comate</div></div>
+      <div class="tech-card reveal"><div class="tech-label">构建产物</div><div class="tech-value">Universal Binary</div><div class="tech-note">arm64 + x86_64 双架构 lipo</div></div>
+      <div class="tech-card reveal"><div class="tech-label">包体大小</div><div class="tech-value">~1.3 MB</div><div class="tech-note">DMG 安装包大小</div></div>
+    </div>
+    <div class="arch-detail reveal">
+      <div class="arch-title">🏗 架构设计</div>
+      <ul>
+        <li><strong>ComateStore</strong> — 数据层：2s 定时轮询本地 SQLite，30s 刷新云端额度与消息中心，异步队列查询避免主线程阻塞</li>
+        <li><strong>NotchPanel</strong> — 窗口层：自定义 NSPanel 永远在主屏幕最顶层，精确计算刘海偏移量，展开/收起动画 120fps</li>
+        <li><strong>NotchRootView</strong> — UI 层：SwiftUI 声明式布局，收起态为紧凑胶囊，展开态为任务列表 + 额度面板</li>
+        <li><strong>SessionJournal</strong> — 日志层：解析 Comate 本地 session journald 文件，提取最近 5 轮对话摘要作为任务描述</li>
+        <li><strong>UsageAPI</strong> — 用量层：通过 <code>wps_sid</code> Cookie 调用 comate.wps.cn 接口，获取日/月额度使用情况</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section class="compat-section" id="compat">
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">兼容性</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">支持的系统和版本</h2></div>
+    <div class="reveal">
+      <table class="compat-table">
+        <thead><tr><th>项目</th><th>要求</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>操作系统</td><td>macOS 12.0 (Monterey) 或更高版本</td><td class="check">✓ 支持</td></tr>
+          <tr><td>处理器架构</td><td>Apple Silicon (M1/M2/M3/M4) &amp; Intel x86_64</td><td class="check">✓ Universal Binary</td></tr>
+          <tr><td>MacBook Pro (刘海屏)</td><td>2021 年及之后的 14"/16" 机型</td><td class="check">✓ 刘海区 HUD</td></tr>
+          <tr><td>MacBook Air / iMac (无刘海)</td><td>macOS 12+ 设备</td><td class="check">✓ 菜单栏 HUD</td></tr>
+          <tr><td>辅助功能权限</td><td>系统设置 → 隐私与安全性 → 辅助功能</td><td class="check">✓ 首次启动引导</td></tr>
+          <tr><td>WPS Comate</td><td>需已安装 WPS Comate 桌面版</td><td class="check">✓ 数据源</td></tr>
+          <tr><td>网络连接</td><td>消息中心与额度查询需联网（可选）</td><td class="check">✓ 本地优先</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<section class="version-section" id="versions">
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">版本历史</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">更新日志</h2></div>
+    <div class="version-list">
+      <div class="version-item reveal"><div class="vi-head"><span class="vi-ver">v1.2.0 <span class="vi-tag">LATEST</span></span><span class="vi-date">2026-09-23</span></div><div class="vi-changes"><span class="vc-label vc-new">✨ 新增</span> 全新应用图标 · 关于弹窗 · 设置迁移 · 黄灯呼吸优化<br/><span class="vc-label vc-opt">⚡ 优化</span> DB 异步查询 · 任务行点击修复 · 额度热区收窄<br/><span class="vc-label vc-fix">🔧 修复</span> build.sh 回退逻辑 · sid 注入风险 · journals 内存泄漏</div></div>
+      <div class="version-item reveal"><div class="vi-head"><span class="vi-ver">v1.1.0</span><span class="vi-date">2026-09-23</span></div><div class="vi-changes"><span class="vc-label vc-new">✨ 新增</span> 自定义应用图标 · 双架构 universal binary · build.sh 自动化构建<br/><span class="vc-label vc-opt">⚡ 优化</span> DMG 打包流程 · 安装说明文档<br/><span class="vc-label vc-fix">🔧 修复</span> arm64 编译回退逻辑 · lipo 合并路径错误</div></div>
+      <div class="version-item reveal"><div class="vi-head"><span class="vi-ver">v1.0.0</span><span class="vi-date">2026-09-22</span></div><div class="vi-changes"><span class="vc-label vc-new">✨ 新增</span> 首次发布 · 刘海区状态灯 · 任务面板展开 · 消息中心 · 额度用量<br/><span class="vc-label vc-new">🏗 架构</span> Swift + SwiftUI 原生构建 · NSPanel 悬浮窗口 · SQLite 本地读取</div></div>
+    </div>
+  </div>
+</section>
+<section class="powered-section">
+  <div class="container">
+    <div class="reveal"><div class="section-label">生态</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">基于 WPS Comate 应用开发能力</h2></div>
+    <div class="powered-card reveal">
+      <div class="powered-logo">C</div>
+      <h3>Comate 应用开发能力 (App Studio)</h3>
+      <p>Comate HUD 基于 <a href="https://comate.wps.cn" target="_blank" rel="noopener">WPS Comate</a> 的应用开发能力构建。利用 Comate 提供的本地数据库读取、Deeplink 调起、OAuth 认证等开放接口，实现了与 Comate 桌面客户端的深度集成——读取任务状态、打开会话窗口、获取未读消息、查询用量额度。</p>
+      <p style="margin-top:12px;font-size:13px;color:var(--text-dim);">Comate HUD 是一个独立的 macOS 原生应用，不属于 WPS 或 WPS Comate 的官方产品。它由社区开发者基于 Comate 开放能力构建，以第三方应用形式运行。</p>
+    </div>
+  </div>
+</section>
+<footer>
+  <div class="container">
+    <p style="margin-bottom:8px;">Comate HUD — 为 WPS Comate 而生的 macOS 状态指示器</p>
+    <p>macOS 12.0+ · Apple Silicon &amp; Intel · Swift · SwiftUI</p>
+    <p style="margin-top:12px;"><a href="#download">下载</a> · <a href="https://github.com/nicepkg/comate-notch" target="_blank" rel="noopener">GitHub</a></p>
+  </div>
+</footer>
+<script>
+window.addEventListener('load',function(){setTimeout(function(){document.getElementById('boot-cover').classList.add('hide')},800)});
+(function(){var o=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting)x.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(function(el){o.observe(el)})})();
+</script>
+</body>
+</html>
