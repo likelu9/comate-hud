@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .DS_Store
 ComateNotch/build/
 ComateNotch/dist/
@@ -6,3 +7,43 @@ ComateHUD/.publish/
 .wpscomate/
 .vscode/
 .idea/
+=======
+# ── Dependencies ──
+node_modules/
+.pnpm-store/
+
+# ── Build output ──
+dist/
+build/
+.output/
+.next/
+.nuxt/
+.vite/
+
+# ── Environment ──
+.env
+.env.local
+.env.*.local
+
+# ── IDE / OS ──
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ── Logs ──
+*.log
+npm-debug.log*
+
+# ── Temp ──
+tmp/
+temp/
+.cache/
+
+# ── Shell ──
+.bg-shell/
+
+# ── CloudSync meta ──
+.cloudsync_meta.json
+.cloudsync_zip_meta.json
+>>>>>>> cloudsync/main

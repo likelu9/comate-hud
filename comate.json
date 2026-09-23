@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "meta": {
+    "projectId": "3599569812562023"
+  },
+  "command": {
+    "install": "",
+    "dev": "cd ComateNotch && ./build.sh && open build/ComateNotch.app",
+    "build": "cd ComateNotch && ./build.sh",
+    "zip": "$system-zip frontend:./ComateNotch"
+  }
+}

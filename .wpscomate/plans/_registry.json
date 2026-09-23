@@ -1,0 +1,41 @@
+{
+  "version": 3,
+  "plans": [
+    {
+      "planId": "comate-notch-v3",
+      "suffix": "comate-notch-v3",
+      "title": "Comate Notch HUD 优化 v3",
+      "status": "active",
+      "createdAt": 1789547581155,
+      "updatedAt": 1789547581155,
+      "completedAt": null
+    },
+    {
+      "planId": "notch-design",
+      "suffix": "notch-design",
+      "title": "Comate Notch 收起态 UI 设计",
+      "status": "active",
+      "createdAt": 1789547720800,
+      "updatedAt": 1789549848407,
+      "completedAt": null
+    },
+    {
+      "planId": "usage-credits",
+      "suffix": "usage-credits",
+      "title": "悬浮窗接入模型用量（日/月限额 + 单任务智点）",
+      "status": "active",
+      "createdAt": 1789977337781,
+      "updatedAt": 1789979118709,
+      "completedAt": null
+    },
+    {
+      "planId": "comate-notch-dist",
+      "suffix": "comate-notch-dist",
+      "title": "ComateNotch 分发打包（DMG）+ 阻塞项修复",
+      "status": "active",
+      "createdAt": 1789984618228,
+      "updatedAt": 1790048241620,
+      "completedAt": null
+    }
+  ]
+}

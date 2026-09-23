@@ -1,0 +1,10 @@
+{
+  "name": "comate-run-log-dumper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "mkdir -p dist && cp src/extension.js dist/extension.js",
+    "prepare-dist": "npm run build"
+  }
+}

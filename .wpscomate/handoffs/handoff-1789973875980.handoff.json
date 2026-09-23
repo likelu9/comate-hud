@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "handoffId": "handoff-1789973875980",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789973875981,
+  "note": {
+    "completed": [
+      "新增 SessionJournal.swift：增量读取 ~/.wpscomate/agent/task-sessions/*.jsonl，产出 totalTokens / 未完成 toolCall / 末次错误 / 待回答 askUserQuestion / 末次 stopReason",
+      "ComateTask 扩展 waitingSince/waitingQuestion/faultSince/faultReason/totalTokens；redKind 区分 waitingConfirmation(红闪) 与 aborted(红常亮)",
+      "行内信息由「N 条消息」改为 token 消耗（万/亿格式化），无日志时回退消息数，云端任务回退「云端托管」",
+      "NotchRootView：StatusLight 支持 blinking，pulse/restartPulse 统一黄呼吸(2s)与红闪(0.55s)；等待确认时行悬停提示展示具体问题",
+      "build.sh 纳入 SessionJournal.swift",
+      "验证：编译通过；逻辑单测 14/15（1 项为 300s/299s 取整假失败）；展开面板实拍 token 显示正确；红灯在真实会话「制作技能」上命中（该会话确实停在未回答的提问）；收起态状态灯亮度按 ~0.55s 周期下沉，红闪确认"
+    ],
+    "remaining": [
+      "云端托管任务无会话日志，拿不到 token，只能回退（接口只给 status）",
+      "红常亮（aborted）只有单测覆盖，未在真实会话上实拍",
+      "行内 token 数目前是「会话累计」，若要「当前轮次消耗」需另算（journal 已按 message 逐条有 usage，可扩展）"
+    ],
+    "decisions": [
+      "状态信号源从 chat_history.db 启发式改为 SDK 会话 jsonl：每行 assistant 消息带 usage.totalTokens，toolCall/toolResult 可配对判断是否卡在提问",
+      "auq 未回答 = 存在 toolCall(name=askUserQuestion) 且无同 toolCallId 的 toolResult → 红闪；stopReason=aborted|error 或 errorMessage 命中 → 红常亮",
+      "判定不依赖时间阈值（除了兜底 24h 窗口），提问落库瞬间即可变色",
+      "时间戳以字符串存内部、访问时才转 Date，冷扫从 466ms 降到 173ms，增量刷新 0.1ms"
+    ],
+    "issues": [
+      "NSHomeDirectory() 不认 $HOME，用伪造 HOME 做隔离测试无效（实测读到的仍是真实库）",
+      "状态灯与 Comate logo 的橙色区域重叠，像素级采样易被 logo 干扰，需按色相（r-g）过滤",
+      "面板展开依赖 SwiftUI onHover，合成鼠标事件需连续小步移动（跳变不触发）"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/SessionJournal.swift",
+      "ComateNotch/Sources/ComateStore.swift",
+      "ComateNotch/Sources/NotchRootView.swift",
+      "ComateNotch/build.sh"
+    ]
+  },
+  "reason": "红灯双态（闪烁/常亮）与 token 显示落地并端到端验证完成"
+}

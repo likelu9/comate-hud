@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "handoffId": "handoff-1789980014965",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789980014966,
+  "note": {
+    "completed": [
+      "ComateStore 用量刷新改为按面板状态驱动：启动拉一次 → scheduleUsageTimer 按展开/收起切节拍",
+      "新增 setPanelExpanded(_:)（由 AppDelegate 的 onExpandChange 调用）：展开时立刻 refreshUsage(trigger: .expand)，并切换节拍",
+      "频次上限：静态常量 minFetchInterval=30s，shouldFetch(lastFetch:now:) 统一拦掉重复触发（连续悬停/节拍与展开撞车）",
+      "节拍：expandedUsageTick=60s / collapsedUsageTick=600s；usageTickInterval(expanded:) 纯函数",
+      "明细节流：shouldBackfill(trigger:lastBackfill:now:) —— 展开/启动一律拉 30 天明细（打开面板即见最新点数），定时节拍按 backfillInterval=300s 节流",
+      "refreshUsage(trigger:) 加 NSLog 诊断行（trigger/backfill），便于实机核对触发来源",
+      "逻辑单测扩到 52/52 通过（新增 9 条：节拍 60/600、频次上限 29s 拦/30s 放行、首次放行、展开与启动必拉明细、节拍 4分59秒不拉 / 5分拉）",
+      "实机验证（/tmp/nr.log、/tmp/nr2.log）：launch backfill=true → expand backfill=true → 30s 内二次展开被拦（行数不变）→ 30s 后展开放行 → 收起 70s 无 60s 请求 → --expanded 常驻时 timer 节拍精确 60s 且 backfill=false"
+    ],
+    "remaining": [
+      "sid 过期后无自动刷新链路（token_cookie 里有 access_token/refresh_token_expires_at），仍待用户决定是否接",
+      "云端任务的 session_id 与 chat_sessions.id 一致性仍未在真实数据上核对"
+    ],
+    "decisions": [
+      "展开=用户正在看：即时拉一次 + 60s 节拍；收起=没人看：10 分钟兜底（原实现是无条件 60s 轮询，收起时纯浪费）",
+      "频次上限取 30s 而非 60s：保证展开响应（不会因为刚过一个节拍就跳过），同时把最坏情况限制在 30s 一次",
+      "展开/启动一律连 30 天明细一起拉（约 5 请求/0.7s），让打开面板就能看到最新点数；定时节拍只拉限额 + 每 5 分钟补一次明细",
+      "诊断日志用 NSLog 而非 print：print 在重定向到文件时块缓冲，实测导致验证时看不到输出"
+    ],
+    "issues": [
+      "合成鼠标 hover 会被用户真实鼠标位置覆盖（实测 /tmp/winframe 显示鼠标已移开→面板收起，节拍变 600s），所以展开态 60s 节拍改用 --expanded 常驻验证；人工操作鼠标时测展开相关行为不可靠",
+      "刷新策略的纯逻辑（节拍/上限/回填）已单测覆盖，但「展开即拉」的真实触发只能靠日志观察，无自动化断言"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/ComateStore.swift",
+      "ComateNotch/Sources/AppDelegate.swift",
+      "ComateNotch/build.sh"
+    ]
+  },
+  "reason": "用量刷新策略改为「展开即时拉 + 频次上限 + 收起 10 分钟兜底」，逻辑单测 52/52 与实机日志验证通过"
+}

@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "handoffId": "handoff-1789896753287",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789896753291,
+  "note": {
+    "completed": [
+      "方案1成功：从 macOS Keychain 获取 Comate 的 wps_sid，调用云端消息中心 API 获取真实未读消息数",
+      "发现 wps_sid 存储位置：Keychain service=wps365, account=credential_wps_sid，值格式为 go-keyring-base64:<base64>",
+      "发现消息中心 API：GET https://comate.wps.cn/api/coserve/v1/messages?offset=0&limit=100&status=unread，Cookie 认证",
+      "修改 ComateStore.swift：新增 cloudUnreadCount 属性、fetchWpsSid() 方法、refreshCloudUnread() 方法",
+      "totalMessageCount 改为优先用云端真实未读数，兜底本地近似值",
+      "云端未读数每 30 秒刷新一次（本地数据仍 2 秒刷新）",
+      "编译成功，运行验证：刘海右侧显示「1 +」（真实未读数 1 + 加号）",
+      "新增点击交互：未读数字可点击，跳转到 Comate 云端消息中心页面",
+      "确认消息中心 URL：https://comate.wps.cn/web/notifications（浏览器验证，点击后跳转到此页面，显示全部/待处理/未读/已读标签+消息列表）",
+      "新增 openMessageCenter() 方法，NotchRootView 中未读数字 Text 改为 Button(action: openMessageCenter)"
+    ],
+    "remaining": [
+      "可考虑：未读数为 0 时是否显示数字（当前 cloudUnreadCount > 0 才显示，0 时回退本地值）",
+      "可考虑：点击未读数字后是否自动刷新未读数（当前 30 秒定时刷新，点击后不立即刷新）"
+    ],
+    "decisions": [
+      "wps_sid 从 Keychain 获取（Comate 是 Tauri 应用，用 KSO Account SDK 存 sid 到 Keychain，不在 .binarycookies 里）",
+      "云端 API 路径：/api/coserve/v1/messages?status=unread，返回 msgs 数组，count = msgs.count",
+      "云端刷新频率 30 秒（避免频繁请求，未读数不需要实时性）",
+      "totalMessageCount 优先云端、兜底本地：cloudUnreadCount > 0 时用云端值，否则用本地 attentionCount",
+      "消息中心页面 URL：https://comate.wps.cn/web/notifications（非 /web/cloud/messages，实际路由是 /web/notifications）",
+      "未读数字用 Button(.plain) 包裹 Text，点击调用 openMessageCenter() 用 NSWorkspace.shared.open 打开浏览器"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/ComateStore.swift",
+      "ComateNotch/Sources/NotchRootView.swift"
+    ]
+  }
+}

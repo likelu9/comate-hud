@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "handoffId": "notch-code-review-fixes",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1790131229632,
+  "note": {
+    "completed": [
+      "P0: 任务行双重点击修复（删外层 onTapGesture/onHover，ComateTaskRow 内部已处理）",
+      "P0: DB 查询移出主线程（持久 dbQueue + async，readTasksFromDB 返回 DBResult 回主线程发布）",
+      "P0: cloudTimer 补 isPaused 检查（动画期间暂停云端刷新）",
+      "P1: 死代码清理（timeStr/modelColor/runningTasks/lastError/sessionId 删除，print→NSLog）",
+      "P2: sid 合法性校验 isValidSid（防 HTTP 头注入，校验失败不缓存）",
+      "P2: journals 字典清理（>16 时按 activeJournalPaths 过滤回收旧 reader）",
+      "P2: 过期注释修正（热区改窄后的「整块」描述）",
+      "构建 universal binary 通过 + 实机验证：HUD 渲染/展开面板/任务列表/黄灯工作中/额度文案/铃铛右对齐/点击任务单开窗口（count=1）"
+    ],
+    "remaining": [
+      "黄灯 1.2s 频率用户尚未反馈是否满意",
+      "TODO.md 中的 P0-P2 待优化项（正式签名/自动更新/崩溃上报等）"
+    ],
+    "decisions": [
+      "runningTasks 删除而非保留：UI 无消费者，mergeRecentTasks 已按 isRunning 排序",
+      "journals 清理阈值 16：查询 LIMIT 12 + 余量，超限按 activeJournalPaths 白名单过滤",
+      "sid 校验失败返回 nil 不缓存：下次仍会重读 keychain，避免坏值永久驻留"
+    ],
+    "issues": [
+      "NSLog 中文内容在 log show 中被隐私遮蔽显示 <private>，验证只能靠时间戳数量和进程行为推断",
+      "view_image 对 URL 手动复制易出错（签名参数），应始终用 read 返回的完整 URL"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/ComateStore.swift",
+      "ComateNotch/Sources/NotchRootView.swift"
+    ]
+  },
+  "reason": "ComateNotch 代码审查修复完成：P0 四项 bug + P1 死代码 + P2 加固全部落地，构建与实机验证通过"
+}

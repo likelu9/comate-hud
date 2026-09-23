@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "handoffId": "recent-limit-menu",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789968270971,
+  "note": {
+    "completed": [
+      "右键菜单新增「最近记录条数」子菜单（3 / 6 / 10，选中项带勾选），选择结果持久化到 UserDefaults",
+      "ComateStore 新增 @Published var recentTaskLimit（默认 6，非法值回落 6，key = notch.recentTaskLimit），didSet 写盘",
+      "列表渲染改为 store.recentTasks.prefix(store.recentTaskLimit)",
+      "实测：defaults write 3 → 显示 3 条；write 10 → 显示 10 条（可滚动）；已删除测试值恢复默认 6"
+    ],
+    "remaining": [
+      "用户验证：右键菜单点击切换后是否即时生效并重启保留（写入路径未做自动化点击验证）",
+      "可选优化：选 10 条时列表底部会有半行被滚动区裁切（旧有行为），可加底部渐隐或行高自适应"
+    ],
+    "decisions": [
+      "菜单用 Menu + Button + Label(systemImage: checkmark) 而非 Picker，避免 SwiftUI 菜单内 Picker 渲染差异",
+      "条数上限 10 是安全的：recentTasks 本身最多保留 12 条（prefix(12)）"
+    ],
+    "issues": [
+      "菜单交互无法自动化验证，写入路径（didSet → UserDefaults.set）靠代码审阅保证"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/ComateStore.swift",
+      "ComateNotch/Sources/NotchRootView.swift",
+      "ComateNotch/Sources/NotchPanel.swift",
+      "ComateNotch/Sources/AppDelegate.swift"
+    ]
+  },
+  "reason": "右键菜单新增最近记录条数切换（3/6/10）并持久化"
+}

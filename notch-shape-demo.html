@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Dynamic Island — PDF 精确还原</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 44px;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  .label { color: white; font-size: 13px; opacity: 0.7; margin-bottom: 6px; text-align: center; }
+
+  /* ═══ Compact State: 168×28, r=14 ═══ */
+  .compact {
+    width: 168px; height: 28px;
+    background: rgba(0,0,0,0.90);
+    border-radius: 14px;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    color: white; font-size: 11px; font-weight: 500;
+  }
+
+  /* ═══ Expanded State: 780×180, r=16 ═══ */
+  .expanded {
+    width: 780px; height: 180px;
+    background: rgba(0,0,0,0.90);
+    border-radius: 16px;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    color: white; font-size: 14px; font-weight: 500;
+  }
+
+  .left { display: flex; align-items: center; gap: 12px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #34c759; box-shadow: 0 0 8px #34c759; }
+  .right { font-size: 20px; opacity: 0.5; }
+
+  /* ═══ SVG 路径可视化 ═══ */
+  .svg-container { margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<!-- Compact State -->
+<div>
+  <div class="label">Compact State: 168×28, r=14 (PDF Drawing 1)</div>
+  <div class="compact">
+    <div class="left"><div class="dot"></div><span>Comate</span></div>
+    <div class="right">＋</div>
+  </div>
+</div>
+
+<!-- Expanded State -->
+<div>
+  <div class="label">Expanded State: 780×180, r=16 (PDF Drawing 5)</div>
+  <div class="expanded">
+    <div class="left">
+      <div class="dot"></div>
+      <span>Comate</span>
+      <span style="opacity:0.5; font-size:12px;">除了激情褪去后的那一点点倦</span>
+    </div>
+    <div class="right">＋</div>
+  </div>
+</div>
+
+<!-- SVG 路径可视化 -->
+<div>
+  <div class="label">PDF 原始路径 (1:1)</div>
+  <svg class="svg-container" width="800" height="200" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="background:rgba(255,255,255,0.08);border-radius:8px">
+    <!-- Compact State SVG Path -->
+    <path d="
+      M 530 56
+      L 670 56
+      C 677.73 56, 684 62.27, 684 70
+      C 684 77.73, 677.73 84, 670 84
+      L 530 84
+      C 522.27 84, 516 77.73, 516 70
+      C 516 62.27, 522.27 56, 530 56
+      Z
+    " fill="rgba(0,0,0,0.6)"/>
+    <path d="
+      M 530 56
+      L 670 56
+      C 677.73 56, 684 62.27, 684 70
+      C 684 77.73, 677.73 84, 670 84
+      L 530 84
+      C 522.27 84, 516 77.73, 516 70
+      C 516 62.27, 522.27 56, 530 56
+      Z
+    " fill="none" stroke="#ff3b30" stroke-width="1"/>
+
+    <!-- Expanded State SVG Path -->
+    <path d="
+      M 72 245
+      L 820 245
+      C 828.84 245, 836 252.16, 836 261
+      L 836 409
+      C 836 417.84, 828.84 425, 820 425
+      L 72 425
+      C 63.16 425, 56 417.84, 56 409
+      L 56 261
+      C 56 252.16, 63.16 245, 72 245
+      Z
+    " fill="rgba(0,0,0,0.6)" transform="translate(-180, -180) scale(0.5)"/>
+    <path d="
+      M 72 245
+      L 820 245
+      C 828.84 245, 836 252.16, 836 261
+      L 836 409
+      C 836 417.84, 828.84 425, 820 425
+      L 72 425
+      C 63.16 425, 56 417.84, 56 409
+      L 56 261
+      C 56 252.16, 63.16 245, 72 245
+      Z
+    " fill="none" stroke="#34c759" stroke-width="1" transform="translate(-180, -180) scale(0.5)"/>
+
+    <!-- 标注 -->
+    <text x="10" y="14" fill="white" font-size="10" opacity="0.5">Compact: 168×28, r=14</text>
+    <text x="10" y="104" fill="white" font-size="10" opacity="0.5">Expanded: 780×180, r=16 (scaled 50%)</text>
+  </svg>
+</div>
+
+</body>
+</html>

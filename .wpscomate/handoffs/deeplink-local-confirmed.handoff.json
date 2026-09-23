@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "handoffId": "deeplink-local-confirmed",
+  "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+  "createdAt": 1789961066414,
+  "note": {
+    "completed": [
+      "用户实测确认本地任务 deeplink 格式：wpscomate://chat.comate/local?id=<完整db_id>（方案D，带 account_id 前缀，用 local 而非 jointtask）",
+      "修改 openSession：本地任务从 jointtask+去前缀id 改为 local+完整db_id",
+      "删除不再使用的 deeplinkId 计算属性（之前用于去掉 woa 任务 account_id 前缀，现在不需要了）",
+      "清理 SQL 查询里未使用的 srcRaw 变量",
+      "编译成功（swiftc，无 error），悬浮窗已重启"
+    ],
+    "remaining": [
+      "运行时验证：点击本地任务（特别是 1388246874- 前缀的 woa 任务）确认 local?id=<完整db_id> 能正确跳转——代码已改，需用户肉眼确认",
+      "云端任务 deeplink（cloud?id=）仍未经用户实测确认，待验证"
+    ],
+    "decisions": [
+      "本地任务 deeplink 最终格式：wpscomate://chat.comate/local?id=<完整db_id>，db_id 含 account_id 前缀（如 1388246874-b93356c7-...），用 local 路径而非 jointtask",
+      "之前 MEMORY.md 记录的 jointtask 格式是错的（或适用于其他场景），本地任务实际用 local 路径",
+      "deeplinkId 属性删除：不再需要去掉 account_id 前缀，直接用 task.id（完整 db_id）"
+    ],
+    "files_changed": [
+      "ComateNotch/Sources/ComateStore.swift"
+    ]
+  }
+}
