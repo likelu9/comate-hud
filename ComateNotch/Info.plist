@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>ComateHUD</string>
+    <key>CFBundleDisplayName</key>
+    <string>Comate HUD</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.wpscomate.hud</string>
+    <key>CFBundleVersion</key>
+    <string>3</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.2.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleExecutable</key>
+    <string>ComateHUD</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>12.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+    <!-- 「打开消息中心」通过 AppleScript 驱动 System Events 定位铃铛坐标。
+         缺这个键时，macOS 会直接拒绝发送 Apple Event（10.14+ 起强制要求）。 -->
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Comate HUD 需要控制「系统事件」来定位 WPS Comate 窗口中的消息铃铛，从而打开消息中心。</string>
+</dict>
+</plist>

@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "meta": {
+    "projectId": "3171466180955374",
+    "framework": "html"
+  },
+  "command": {
+    "install": "",
+    "dev": "",
+    "build": "",
+    "zip": "$system-zip frontend:."
+  }
+}

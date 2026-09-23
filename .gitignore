@@ -1,0 +1,8 @@
+.DS_Store
+ComateNotch/build/
+ComateNotch/dist/
+ComateHUD/ComateHUD-*.dmg
+ComateHUD/.publish/
+.wpscomate/
+.vscode/
+.idea/
