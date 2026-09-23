@@ -1,18 +1,12 @@
-<<<<<<< HEAD
+# ── macOS ──
 .DS_Store
+Thumbs.db
+
+# ── 构建产物 ──
 ComateNotch/build/
 ComateNotch/dist/
 ComateHUD/ComateHUD-*.dmg
 ComateHUD/.publish/
-.wpscomate/
-.vscode/
-.idea/
-=======
-# ── Dependencies ──
-node_modules/
-.pnpm-store/
-
-# ── Build output ──
 dist/
 build/
 .output/
@@ -20,30 +14,34 @@ build/
 .nuxt/
 .vite/
 
-# ── Environment ──
+# ── 依赖 ──
+node_modules/
+.pnpm-store/
+
+# ── 环境变量 ──
 .env
 .env.local
 .env.*.local
 
-# ── IDE / OS ──
+# ── 编辑器 ──
 .idea/
 .vscode/
-.DS_Store
-Thumbs.db
 
-# ── Logs ──
+# ── 日志 ──
 *.log
 npm-debug.log*
 
-# ── Temp ──
+# ── 临时文件 ──
 tmp/
 temp/
 .cache/
+.tmp/
+__pycache__/
 
 # ── Shell ──
 .bg-shell/
 
-# ── CloudSync meta ──
+# ── Comate 平台元数据 ──
+.wpscomate/
 .cloudsync_meta.json
 .cloudsync_zip_meta.json
->>>>>>> cloudsync/main

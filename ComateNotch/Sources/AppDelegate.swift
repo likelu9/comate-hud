@@ -78,8 +78,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hosting.autoresizingMask = [NSView.AutoresizingMask.minYMargin]
         container.addSubview(hosting)
         panel.contentView = container
-        panel.orderFrontRegardless()
         store.start()
+        // 应用上次保存的显示模式（否则启动后总是显示刘海面板）
+        switchDisplayMode(store.displayMode)
     }
 
     func applicationWillTerminate(_ notification: Notification) {

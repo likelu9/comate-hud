@@ -15,7 +15,6 @@ final class FloatingContentView: NSView {
 
     /// 收起态可交互区域（图标圆），AppKit 坐标（原点左下）
     var collapsedHitRect: NSRect = .zero
-    private var trackingArea: NSTrackingArea?
 
     private var isDragging = false
     private var dragStartMouse: NSPoint = .zero
@@ -34,47 +33,49 @@ final class FloatingContentView: NSView {
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-        if let t = trackingArea { removeTrackingArea(t) }
-        let t = NSTrackingArea(rect: bounds,
-                               options: [.mouseEnteredAndExited, .mouseMoved, .activeAlways, .inVisibleRect],
-                               owner: self, userInfo: nil)
-        addTrackingArea(t)
-        trackingArea = t
-    }
-
     /// 透明区域返回 nil → 点击穿透到下层窗口；可交互区域返回 self → 由本视图处理
     override func hitTest(_ point: NSPoint) -> NSView? {
         activeHitRect.contains(point) ? self : nil
     }
 
-    // MARK: - Hover
+    // MARK: - Hover（基于全局鼠标位置，不依赖 tracking area）
 
-    private func updateHover(at p: NSPoint) {
-        let inside = activeHitRect.contains(p)
-        if inside {
-            if !interaction.isExpanded {
-                interaction.isExpanded = true
-                updateTrackingAreas()
-            }
-        } else if interaction.isExpanded && !isDragging {
-            interaction.isExpanded = false
-            updateTrackingAreas()
+    /// 由全局/本地鼠标监听调用，用屏幕坐标判断是否进入图标或面板
+    func evaluateHoverFromScreen() {
+        guard let panel = panel else { return }
+        if isDragging { return }
+
+        let mouse = NSEvent.mouseLocation          // 屏幕坐标，原点左下
+        let winFrame = panel.frame
+
+        // 远离窗口时快速返回，并确保收起
+        let near = winFrame.insetBy(dx: -80, dy: -80)
+        if !near.contains(mouse) {
+            if interaction.isExpanded { setExpanded(false) }
+            return
+        }
+
+        // 图标中心（屏幕坐标）
+        let iconCenter = NSPoint(
+            x: winFrame.origin.x + winFrame.width / 2,
+            y: winFrame.origin.y + winFrame.height
+                - (FloatingPanel.iconTopOffset + FloatingPanel.collapsedSize / 2)
+        )
+        let radius = FloatingPanel.collapsedSize / 2 + 8
+        let inIcon = hypot(mouse.x - iconCenter.x, mouse.y - iconCenter.y) <= radius
+        // 展开态：整个面板矩形（顶部留 4pt 容差）
+        let inPanel = winFrame.insetBy(dx: -4, dy: -4).contains(mouse)
+
+        let inside = interaction.isExpanded ? inPanel : inIcon
+        if inside != interaction.isExpanded {
+            setExpanded(inside)
         }
     }
 
-    override func mouseEntered(with event: NSEvent) {
-        updateHover(at: convert(event.locationInWindow, from: nil))
-    }
-    override func mouseMoved(with event: NSEvent) {
-        updateHover(at: convert(event.locationInWindow, from: nil))
-    }
-    override func mouseExited(with event: NSEvent) {
-        if interaction.isExpanded && !isDragging {
-            interaction.isExpanded = false
-            updateTrackingAreas()
-        }
+    private func setExpanded(_ expanded: Bool) {
+        guard interaction.isExpanded != expanded else { return }
+        interaction.isExpanded = expanded
+        NSLog("[FloatingPanel] %@", expanded ? "expanded" : "collapsed")
     }
 
     // MARK: - 拖拽（屏幕坐标增量，精确且跟手）
@@ -101,7 +102,6 @@ final class FloatingContentView: NSView {
             isDragging = false
             panel?.savePosition()
         }
-        updateTrackingAreas()
     }
 }
 
@@ -111,6 +111,9 @@ final class FloatingPanel: NSPanel {
 
     private let store: ComateStore
     private let interaction = FloatingInteraction()
+    private var floatContent: FloatingContentView?
+    private var globalMouseMonitor: Any?
+    private var localMouseMonitor: Any?
 
     static let collapsedSize: CGFloat = 48
     static let expandedWidth: CGFloat = 300
@@ -139,7 +142,6 @@ final class FloatingPanel: NSPanel {
 
         var origin = NSPoint(x: iconCenter.x - w / 2,
                              y: iconCenter.y - (h - iconCenterFromTop))
-        // 初始化即钳制在屏幕内，避免出现在屏幕外
         origin.x = max(sf.minX + 4, min(origin.x, sf.maxX - w - 4))
         origin.y = max(sf.minY + 4, min(origin.y, sf.maxY - h - 4))
         let initialFrame = NSRect(x: origin.x, y: origin.y, width: w, height: h)
@@ -161,7 +163,6 @@ final class FloatingPanel: NSPanel {
         self.titleVisibility = .hidden
         self.title = ""
         self.isReleasedWhenClosed = false
-        // 关键：允许接收 mouseMoved 事件，tracking area 才能工作
         self.acceptsMouseMovedEvents = true
 
         // 内容视图
@@ -179,9 +180,24 @@ final class FloatingPanel: NSPanel {
         host.autoresizingMask = [.width, .height]
         content.addSubview(host)
         self.contentView = content
+        self.floatContent = content
 
-        NSLog("[FloatingPanel] frame=(%.0f,%.0f,%.0f,%.0f) iconRect=(%.0f,%.0f,%.0f,%.0f)",
-              origin.x, origin.y, w, h, iconX, iconY, Self.collapsedSize, Self.collapsedSize)
+        // 鼠标监听：全局（鼠标在别的 App 上）+ 本地（鼠标在本窗口上）
+        // 非激活 borderless 面板的 tracking area 不可靠，故用监听兜底
+        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
+            self?.floatContent?.evaluateHoverFromScreen()
+        }
+        localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+            self?.floatContent?.evaluateHoverFromScreen()
+            return event
+        }
+
+        NSLog("[FloatingPanel] frame=(%.0f,%.0f,%.0f,%.0f)", origin.x, origin.y, w, h)
+    }
+
+    deinit {
+        if let m = globalMouseMonitor { NSEvent.removeMonitor(m) }
+        if let m = localMouseMonitor { NSEvent.removeMonitor(m) }
     }
 
     /// 将窗口 origin 钳制在所属屏幕范围内
@@ -281,7 +297,7 @@ struct FloatingPanelContent: View {
         .frame(height: FloatingPanel.expandedContentHeight, alignment: .top)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.black.opacity(0.92))
+                .fill(Color(red: 0.06, green: 0.06, blue: 0.07))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
