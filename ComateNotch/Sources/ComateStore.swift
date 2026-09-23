@@ -62,17 +62,6 @@ struct ComateTask: Identifiable, Equatable {
     var sourceIcon: String {
         isCloud ? "icloud.fill" : "folder.fill"
     }
-    
-    /// 从 sessionFile 中提取 UUID（Comate 应用期望的 task_id）
-    var sessionId: String? {
-        guard let path = sessionFile else { return nil }
-        // 文件名格式: 2026-03-30T03-58-28-613Z_6772c9c6-e5d0-49b0-a7da-ccd1fd1a6462.jsonl
-        let filename = (path as NSString).lastPathComponent
-        guard let underscoreRange = filename.range(of: "_", options: .backwards) else { return nil }
-        let uuidPart = String(filename[underscoreRange.upperBound...])
-        let uuid = uuidPart.replacingOccurrences(of: ".jsonl", with: "")
-        return uuid.isEmpty ? nil : uuid
-    }
 
     /// 行内次要信息：近 30 天智点（与网页「模型用量」同源，按会话汇总）
     /// 30 天内没有消耗记录时给占位符，不硬凑一个「0 点」
@@ -170,11 +159,9 @@ struct ComateTask: Identifiable, Equatable {
 }
 
 final class ComateStore: ObservableObject {
-    @Published private(set) var runningTasks: [ComateTask] = []
     @Published private(set) var recentTasks: [ComateTask] = []
     /// 云端托管任务列表（从 comate.wps.cn API 获取，不落本地 SQLite）
     @Published private(set) var cloudTasks: [ComateTask] = []
-    @Published private(set) var lastError: String?
     @Published private(set) var lastRefreshed: Date = .now
     @Published private(set) var attentionCount: Int = 0
     /// 云端消息中心真实未读消息数（从 comate.wps.cn API 获取）
@@ -234,9 +221,13 @@ final class ComateStore: ObservableObject {
     /// 动画期间暂停刷新，避免 @Published 更新导致 SwiftUI 重绘竞争
     var isPaused = false
 
+    /// DB 查询与会话日志解析的专用串行队列：SQLite 查询 + 12 个日志增量解析
+    /// 首次可达几百毫秒，不能 block 主线程。journals 只在本队列访问，天然无竞争。
+    private let dbQueue = DispatchQueue(label: "comatenotch.db", qos: .utility)
+
     /// 会话日志读取器缓存（按文件路径）。日志可达十几 MB，靠增量解析把每次轮询压到
     /// 「只读新增的那几 KB」；首次读某个文件会全量扫一遍（实测 10MB ≈ 76ms）。
-    /// 只在 refresh 的串行队列里访问，天然无竞争。
+    /// 只在 dbQueue 里访问，天然无竞争。
     private var journals: [String: SessionJournal] = [:]
 
     /// 列表条数可选项与持久化 key
@@ -363,8 +354,11 @@ final class ComateStore: ObservableObject {
         let fresh = Self.readWpsSidFromKeychain()
         // 只在真的读了 keychain 时打日志（命中缓存不打），便于排查 fork 频率
         NSLog("[ComateNotch] 读取 keychain 凭据: %@", fresh == nil ? "无" : "成功")
-        if let fresh = fresh { cachedSid = fresh }
-        return fresh
+        if let fresh = fresh, Self.isValidSid(fresh) {
+            cachedSid = fresh
+            return fresh
+        }
+        return nil
     }
 
     /// 左下角限额显示周期：默认日限额，点击切换月限额，选择持久化
@@ -441,10 +435,11 @@ final class ComateStore: ObservableObject {
             guard let self = self, !self.isPaused else { return }
             self.refresh()
         }
-        // 云端数据刷新频率较低（30秒），避免频繁请求
+        // 云端数据刷新频率较低（30秒），避免频繁请求；动画期间同样暂停，避免重绘竞争
         cloudTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
-            self?.refreshCloudUnread()
-            self?.refreshCloudTasks()
+            guard let self = self, !self.isPaused else { return }
+            self.refreshCloudUnread()
+            self.refreshCloudTasks()
         }
         // 模型用量：启动拉一次，之后按面板状态切换节拍（展开 1 分钟 / 收起 10 分钟兑底）
         refreshUsage(trigger: .launch)
@@ -458,34 +453,48 @@ final class ComateStore: ObservableObject {
     }
 
     func refresh() {
-        guard FileManager.default.fileExists(atPath: dbPath) else {
-            DispatchQueue.main.async { self.lastError = "未找到 chat_history.db" }
-            return
+        guard FileManager.default.fileExists(atPath: dbPath) else { return }
+        dbQueue.async { [weak self] in
+            guard let self = self else { return }
+            let result = self.readTasksFromDB()
+            DispatchQueue.main.async {
+                self.mergeRecentTasks(local: result.recent, cloud: self.cloudTasks)
+                self.attentionCount = result.attentionCount
+                self.lastRefreshed = .now
+            }
         }
-        var running: [ComateTask] = []
+    }
+
+    /// DB 读取结果（在 dbQueue 上执行，结果回主线程发布）
+    private struct DBResult {
         var recent: [ComateTask] = []
-        var attentionCount = 0
-        var error: String?
+        var attentionCount: Int = 0
+    }
 
-        DispatchQueue(label: "comatenotch.db").sync {
-            var db: OpaquePointer?
-            guard sqlite3_open_v2(dbPath, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
-                error = "无法打开数据库"; return
-            }
-            defer { sqlite3_close(db) }
+    /// 查询 chat_history.db：任务列表 + 关注数。同步执行，只应在 dbQueue 上调用。
+    /// DB 不存在/不可读时返回空结果，面板显示「暂无任务」。
+    private func readTasksFromDB() -> DBResult {
+        var result = DBResult()
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(dbPath, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
+            NSLog("[ComateNotch] 无法打开数据库: %@", dbPath)
+            return result
+        }
+        defer { sqlite3_close(db) }
 
-            let sql = """
-            SELECT id, title, status, last_message_role, message_count, updated_at_ms,
-                   session_file, source, json_extract(context_usage, '$.updatedAt')
-            FROM chat_sessions ORDER BY updated_at_ms DESC LIMIT 12;
-            """
-            var stmt: OpaquePointer?
-            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
-                error = "SQL 预编译失败"; return
-            }
-            defer { sqlite3_finalize(stmt) }
+        let sql = """
+        SELECT id, title, status, last_message_role, message_count, updated_at_ms,
+               session_file, source, json_extract(context_usage, '$.updatedAt')
+        FROM chat_sessions ORDER BY updated_at_ms DESC LIMIT 12;
+        """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            NSLog("[ComateNotch] SQL 预编译失败")
+            return result
+        }
+        defer { sqlite3_finalize(stmt) }
 
-            while sqlite3_step(stmt) == SQLITE_ROW {
+        while sqlite3_step(stmt) == SQLITE_ROW {
                 let id     = String(cString: sqlite3_column_text(stmt, 0))
                 let title  = String(cString: sqlite3_column_text(stmt, 1))
                 let status = String(cString: sqlite3_column_text(stmt, 2))
@@ -503,6 +512,7 @@ final class ComateStore: ObservableObject {
                     ? Date(timeIntervalSince1970: TimeInterval(ctxMs) / 1000.0)
                     : Date.distantPast
                 let journal = sessionFile.flatMap { readJournal(path: $0) }
+                if let sf = sessionFile { activeJournalPaths.insert(sf) }
                 let fault = fault(from: journal)
                 let task = ComateTask(id: id, title: title, status: status,
                                        lastMessageRole: role,
@@ -516,8 +526,7 @@ final class ComateStore: ObservableObject {
                                        consumedTokens: journal?.consumedTokens,
                                        hasUnfinishedToolCall: !(journal?.pendingToolCalls.isEmpty ?? true),
                                        activityAt: max(heartbeat, date))
-                if task.isRunning { running.append(task) }
-                recent.append(task)
+                result.recent.append(task)
             }
 
             // 查询需要关注的会话数（近似"未读消息"）
@@ -530,19 +539,11 @@ final class ComateStore: ObservableObject {
             var aStmt: OpaquePointer?
             if sqlite3_prepare_v2(db, attSQL, -1, &aStmt, nil) == SQLITE_OK {
                 if sqlite3_step(aStmt) == SQLITE_ROW {
-                    attentionCount = Int(sqlite3_column_int(aStmt, 0))
+                    result.attentionCount = Int(sqlite3_column_int(aStmt, 0))
                 }
                 sqlite3_finalize(aStmt)
             }
-        }
-
-        DispatchQueue.main.async {
-            self.lastError = error
-            self.runningTasks = running
-            self.mergeRecentTasks(local: recent, cloud: self.cloudTasks)
-            self.attentionCount = attentionCount
-            self.lastRefreshed = .now
-        }
+        return result
     }
 
     /// 从 macOS Keychain 读取 Comate 的 wps_sid（阻塞调用，必须在后台队列执行）
@@ -577,8 +578,24 @@ final class ComateStore: ObservableObject {
         }
     }
 
-    /// 读会话日志（增量）。文件不存在或没有事件时返回 nil，调用方据此退回数据库判据
+    /// sid 合法性校验：只允许 cookie 值里安全的字符。sid 会拼进 Cookie 请求头，
+    /// 含换行/控制字符时可能被注入额外 HTTP 头（来源是自家 keychain，风险低但校验便宜）。
+    static func isValidSid(_ sid: String) -> Bool {
+        guard !sid.isEmpty, sid.count <= 512 else { return false }
+        return sid.allSatisfy { c in
+            (c.isLetter && c.isASCII) || (c.isNumber && c.isASCII) || "-_".contains(c)
+        }
+    }
+
+    /// 读会话日志（增量）。文件不存在或没有事件时返回 nil，调用方据此退回数据库判据。
+    /// 只在 dbQueue 上调用。顺带清理不再出现在查询结果里的旧 reader，
+    /// 避免长期运行后字典无限增长（每个 reader 只存偏移量，但路径多了也占内存）。
     private func readJournal(path: String) -> SessionJournal.Reading? {
+        // 查询结果固定 LIMIT 12，超出这个数的 reader 都是历史会话，可以回收
+        if journals.count > 16 {
+            let keep = Set(activeJournalPaths)
+            journals = journals.filter { keep.contains($0.key) }
+        }
         let journal = journals[path] ?? {
             let created = SessionJournal()
             journals[path] = created
@@ -587,6 +604,9 @@ final class ComateStore: ObservableObject {
         let reading = journal.refresh(path: path)
         return reading.lastEventAt == nil ? nil : reading
     }
+
+    /// 本轮查询涉及的会话日志路径（readTasksFromDB 里更新）
+    private var activeJournalPaths: Set<String> = []
 
     /// 把会话日志读数折成「异常时刻 + 原因」。卡住优先于报错：卡住说的是此刻的状态，
     /// 报错是上一轮的结论（可能已经被后续重试覆盖）。
@@ -840,7 +860,7 @@ final class ComateStore: ObservableObject {
             // 本地任务用 local deeplink，id 用数据库主键（含 account_id 前缀）
             urlString = "wpscomate://chat.comate/local?id=\(task.id)"
         }
-        print("[ComateNotch] 打开会话: id=\(task.id), source=\(task.source), url=\(urlString)")
+        NSLog("[ComateNotch] 打开会话: id=%@, source=%@, url=%@", task.id, task.source, urlString)
         if let url = URL(string: urlString) {
             NSWorkspace.shared.open(url)
         }

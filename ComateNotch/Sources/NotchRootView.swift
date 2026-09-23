@@ -255,7 +255,7 @@ struct NotchRootView: View {
     @State private var pulseOpacity: Double = 1.0
     @State private var bellHovered = false
     @State private var bellRotate = false
-    /// 页脚左下「周期切换」整块的悬停态
+    /// 页脚左下「周期切换」按钮的悬停态
     @State private var usageToggleHovered = false
 
     /// 实测：列表行 VStack 自然高度 + 该测量对应的行数（用于反推单行占高）
@@ -549,10 +549,6 @@ struct NotchRootView: View {
                     VStack(spacing: listSpacing) {
                         ForEach(store.recentTasks.prefix(store.recentTaskLimit)) { task in
                             taskRow(task)
-                                .onTapGesture { store.openSession(task) }
-                                .onHover { h in
-                                    if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-                                }
                         }
                     }
                     // 实测行 VStack 自然高度（与面板高度无关）
@@ -566,7 +562,7 @@ struct NotchRootView: View {
             }
 
             HStack(spacing: 6) {
-                // 周期切换：整块左下区域都是按钮（胶囊 + 文案一起点），点击切换展示的周期
+                // 周期切换：胶囊 + 文案一起点，热区仅覆盖内容本身（不占满整行）
                 Button(action: { store.toggleUsagePeriod() }) {
                     HStack(spacing: 6) {
                         usagePeriodIndicator
@@ -650,7 +646,7 @@ struct NotchRootView: View {
         }
     }
 
-    /// 额度周期指示：双段胶囊（日 | 月），高亮当前周期。纯视觉，点击由外层整块按钮接管
+    /// 额度周期指示：双段胶囊（日 | 月），高亮当前周期。纯视觉，点击由外层按钮接管
     private var usagePeriodIndicator: some View {
         HStack(spacing: 0) {
             ForEach(UsageAPI.Period.allCases, id: \.self) { period in
@@ -673,23 +669,6 @@ struct NotchRootView: View {
     private func taskRow(_ t: ComateTask) -> some View {
         ComateTaskRow(task: t) {
             store.openSession(t)
-        }
-    }
-
-    private func timeStr(_ d: Date) -> String {
-        let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f.string(from: d)
-    }
-
-    /// 模型对应的展示颜色
-    private func modelColor(_ name: String) -> String {
-        switch name {
-        case "GLM":     return "#4A90D9"   // 蓝
-        case "MiMo":    return "#FFB800"   // 黄
-        case "DeepSeek": return "#9B59B6"  // 紫
-        case "Qwen":    return "#34C759"   // 绿
-        case "Claude":  return "#E67E22"  // 橙
-        case "GPT":     return "#10A37F"   // 青绿
-        default:        return "#8E8E93"   // 灰
         }
     }
 }
