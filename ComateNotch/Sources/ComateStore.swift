@@ -182,6 +182,9 @@ final class ComateStore: ObservableObject {
         cloudUnreadCount > 0 ? cloudUnreadCount : attentionCount
     }
 
+    /// 绿灯窗口：任务完成后 15 分钟内保持绿色，之后回落到灰色表示「闲置、可开新任务」
+    private static let greenWindow: TimeInterval = 900
+
     /// 当前最优先的状态灯（用于收起态显示）
     /// 优先级：红 > 黄 > 绿 > 灰
     /// 与展开态每个任务的 light 同源，只是红灯额外加时效窗口：展开态回答的是「这个任务什么状态」
@@ -199,11 +202,14 @@ final class ComateStore: ObservableObject {
         }) { return .red }
         // 2. 黄色：有运行中/工作中的任务
         if recentTasks.contains(where: { $0.light == .yellow }) { return .yellow }
-        // 3. 绿色：有最近完成的任务（30 分钟内）
+        // 3. 绿色：有已完成的任务，且最近 15 分钟内还有任务活动
+        // 计时锚点取「最近一次任务活动」而非「完成时刻」：完成后 15 分钟内触发的新对话
+        // 会把窗口顺延（哪怕新对话还没跑完、此刻显示的是黄灯）。
         // 窗口需与详情区 task.light（done 即绿）保持视觉一致：完成后一段时间内顶部也显示绿，
         // 超过窗口才回落到灰色表示"闲置、可开新任务"。5 分钟太短，用户回头查看时已变灰。
-        let recentDoneThreshold = Date().addingTimeInterval(-1800)
-        if recentTasks.contains(where: { $0.isCompleted && $0.updatedAt > recentDoneThreshold }) { return .green }
+        let lastActivity = recentTasks.map { max($0.activityAt, $0.updatedAt) }.max() ?? .distantPast
+        if recentTasks.contains(where: { $0.isCompleted }),
+           now.timeIntervalSince(lastActivity) < Self.greenWindow { return .green }
         // 4. 灰色：全部空闲
         return .gray
     }

@@ -65,6 +65,8 @@ final class FloatingInteraction: ObservableObject {
     /// 拖拽底部手柄调整高度：开始 / 结束
     var onResizeBegin: (() -> Void)?
     var onResizeEnd: (() -> Void)?
+    /// 点击面板右下角设置按钮：弹出与右键一致的菜单
+    var onShowMenu: (() -> Void)?
 }
 
 /// 自定义内容视图：负责 hover 展开/收起、拖拽移动，并把透明区域的事件透传给下层窗口。
@@ -111,6 +113,24 @@ final class FloatingContentView: NSView {
 
     override func rightMouseDown(with event: NSEvent) {
         NSMenu.popUpContextMenu(buildContextMenu(), with: event, for: self)
+    }
+
+    /// 面板右下角设置按钮：等同右键。
+    /// 左键事件直接交给 popUpContextMenu 在非激活面板里不可靠，故合成一个右键按下事件，
+    /// 走与右键完全相同的弹出手径（该路径已验证可用），定位到当前鼠标处。
+    func showContextMenu() {
+        let menu = buildContextMenu()
+        NSLog("[ComateHUD] gear click → showContextMenu")
+        let win = window
+        let loc = win?.convertPoint(fromScreen: NSEvent.mouseLocation) ?? .zero
+        if let ev = NSEvent.mouseEvent(with: .rightMouseDown, location: loc,
+                                       modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                       windowNumber: win?.windowNumber ?? 0, context: nil,
+                                       eventNumber: 0, clickCount: 1, pressure: 1) {
+            NSMenu.popUpContextMenu(menu, with: ev, for: self)
+            return
+        }
+        menu.popUp(positioning: nil, at: convert(loc, from: nil), in: self)
     }
 
     private func buildContextMenu() -> NSMenu {
@@ -349,6 +369,7 @@ final class FloatingPanel: NSPanel {
         }
         interaction.onResizeBegin = { [weak self] in self?.beginLiveResize() }
         interaction.onResizeEnd = { [weak self] in self?.endLiveResize() }
+        interaction.onShowMenu = { [weak self] in self?.floatContent?.showContextMenu() }
 
         // 用户拖拽底部手柄 / 右键「恢复默认高度」→ 面板高度变化
         store.$customExpandedHeight
@@ -683,7 +704,7 @@ struct FloatingPanelContent: View {
             // 页脚吸底：面板被拖高时，额度/消息行贴在面板底部
             Spacer(minLength: 0)
 
-            HUDUsageFooter(store: store)
+            HUDUsageFooter(store: store, onSettings: { interaction.onShowMenu?() })
                 .background(
                     GeometryReader { g in
                         Color.clear

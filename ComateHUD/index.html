@@ -13,7 +13,7 @@
       --bg: #0a0a0f; --bg-card: #111118; --bg-card-hover: #16161f;
       --text: #f5f5f7; --text-secondary: #8e8e93; --text-dim: #55555d;
       --accent: #00d4aa; --accent-glow: rgba(0,212,170,0.25);
-      --red: #ff453a; --yellow: #ffd60a; --green: #30d158;
+      --red: #ff453a; --yellow: #ffd60a; --green: #30d158; --gray: #8e8e93;
       --purple: #bf5af2; --blue: #0a84ff; --radius: 20px; --max-w: 1080px;
     }
     html { scroll-behavior: smooth; }
@@ -49,6 +49,7 @@
     .hero-light .dot.green { background: var(--green); box-shadow: 0 0 16px var(--green); }
     .hero-light .dot.yellow { background: var(--yellow); box-shadow: 0 0 16px var(--yellow); animation: breathe 2s ease-in-out infinite; }
     .hero-light .dot.red { background: var(--red); box-shadow: 0 0 16px var(--red); animation: blink 0.55s ease-in-out infinite; }
+    .hero-light .dot.gray { background: var(--gray); box-shadow: 0 0 16px var(--gray); }
     .hero-light span { font-size: 12px; color: var(--text-dim); }
     @keyframes breathe { 0%,100%{opacity:1} 50%{opacity:.08} }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
@@ -121,6 +122,7 @@
     .light-orb.green { background: var(--green); box-shadow: 0 0 40px rgba(48,209,88,0.4); }
     .light-orb.yellow { background: var(--yellow); box-shadow: 0 0 40px rgba(255,214,10,0.4); animation: breathe 2s ease-in-out infinite; }
     .light-orb.red { background: var(--red); box-shadow: 0 0 40px rgba(255,69,58,0.4); animation: blink 0.55s ease-in-out infinite; }
+    .light-orb.gray { background: var(--gray); box-shadow: 0 0 40px rgba(142,142,147,0.35); }
     .light-orb svg { width: 28px; height: 28px; fill: white; opacity: 0.9; }
     .light-item h4 { font-size: 16px; font-weight: 600; }
     .light-item p { font-size: 13px; color: var(--text-secondary); text-align: center; max-width: 180px; }
@@ -237,7 +239,7 @@
     <h1 style="margin-top:28px;"><span class="gradient">Comate HUD</span><br/>让 AI 干活，你只管看灯</h1>
     <p class="subtitle">一款常驻 macOS 刘海区的轻量状态指示器，为 WPS Comate 而生。<br/>无需打开主窗口，任务状态一目了然。</p>
     <div class="hero-lights">
-      <div class="hero-light"><div class="dot green"></div><span>空闲</span></div>
+      <div class="hero-light"><div class="dot gray"></div><span>空闲</span></div>
       <div class="hero-light"><div class="dot yellow"></div><span>工作中</span></div>
       <div class="hero-light"><div class="dot red"></div><span>等待确认</span></div>
     </div>
@@ -286,7 +288,7 @@
   <div class="container">
     <div class="reveal" style="text-align:center;"><div class="section-label">核心功能</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">一眼掌握 AI 工作状态</h2></div>
     <div class="features-grid" style="margin-top:48px;">
-      <div class="feature-card reveal"><div class="feature-icon green">🟢</div><h3>实时状态灯</h3><p>三色状态灯常驻刘海区——绿灯空闲、黄灯工作中、红灯等待确认。不占屏幕空间，抬眼即知。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon green">🟢</div><h3>实时状态灯</h3><p>四种状态灯常驻刘海区——灰灯空闲、绿灯已完成、黄灯工作中、红灯等待确认。不占屏幕空间，抬眼即知。</p></div>
       <div class="feature-card reveal"><div class="feature-icon yellow">📋</div><h3>任务面板</h3><p>悬停刘海自动展开，最近会话、执行进度、时间耗时尽收眼底。支持自定义展示条数（3/6/10）。</p></div>
       <div class="feature-card reveal"><div class="feature-icon red">🔔</div><h3>消息中心</h3><p>角标动态显示 Comate 未读消息数量，点击铃铛直达消息中心。动画旋转提示新消息到达。</p></div>
       <div class="feature-card reveal"><div class="feature-icon blue">⚡</div><h3>一键直达</h3><p>点击任意任务行，自动打开对应的 Comate 会话窗口。零切换成本，从状态灯直达对话。</p></div>
@@ -299,9 +301,10 @@
 </section>
 <section class="lights-section" id="lights">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">状态灯语义</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">三种灯，三种心跳</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">每种状态灯都有独特的闪烁节奏，让你在余光中就能感知当前 AI 工作状态。</p></div>
+    <div class="reveal" style="text-align:center;"><div class="section-label">状态灯语义</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">四种状态，一眼看懂</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">每种状态都有独特的灯色与节奏，让你在余光中就能感知 AI 在干什么。</p></div>
     <div class="lights-showcase reveal">
-      <div class="light-item"><div class="light-orb green"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div><h4>🟢 空闲</h4><p>所有任务已完成。灯常亮，安静守候。</p></div>
+      <div class="light-item"><div class="light-orb gray"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/></svg></div><h4>⚪️ 空闲</h4><p>没有进行中的任务。灯常亮，安静守候。</p></div>
+      <div class="light-item"><div class="light-orb green"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div><h4>🟢 已完成</h4><p>任务刚跑完。绿灯保持 15 分钟，期间触发新对话会继续顺延。</p></div>
       <div class="light-item"><div class="light-orb yellow"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><h4>🟡 工作中</h4><p>AI 正在执行任务。呼吸式慢闪，柔和而有存在感。</p></div>
       <div class="light-item"><div class="light-orb red"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><h4>🔴 等待确认</h4><p>AI 需要你的决策。快闪，紧急提醒。</p></div>
     </div>

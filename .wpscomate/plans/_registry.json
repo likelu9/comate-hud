@@ -54,6 +54,15 @@
       "createdAt": 1790151177010,
       "updatedAt": 1790152207717,
       "completedAt": null
+    },
+    {
+      "planId": "hud-v130-batch3",
+      "suffix": "hud-v130-batch3",
+      "title": "Comate HUD 第三批改动：悬浮窗设置入口 / 关于文案高亮 / 灰绿灯切换 + 官网文案对齐",
+      "status": "active",
+      "createdAt": 1790155976385,
+      "updatedAt": 1790156292086,
+      "completedAt": null
     }
   ]
 }

@@ -96,9 +96,12 @@ struct HUDTaskRows: View {
 
 struct HUDUsageFooter: View {
     @ObservedObject var store: ComateStore
+    /// 设置按钮回调（仅悬浮窗展开态传入；nil = 不显示，刘海模式不受影响）
+    var onSettings: (() -> Void)? = nil
 
     @State private var usageToggleHovered = false
     @State private var bellHovered = false
+    @State private var settingsHovered = false
     @State private var bellRotate = false
 
     var body: some View {
@@ -164,6 +167,28 @@ struct HUDUsageFooter: View {
                 }
                 .animation(.easeInOut(duration: 0.12), value: bellHovered)
                 .help(store.isOpeningMessageCenter ? "正在打开消息中心…" : "打开消息中心")
+            }
+
+            // 设置：等同右键，弹出与右键一致的菜单（仅悬浮窗展开态传入）
+            if let onSettings = onSettings {
+                Button(action: onSettings) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.white.opacity(settingsHovered ? 0.9 : 0.55))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(
+                            Color.white.opacity(settingsHovered ? 0.12 : 0)
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                        )
+                }
+                .buttonStyle(.plain)
+                .onHover { h in
+                    settingsHovered = h
+                    if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                }
+                .animation(.easeInOut(duration: 0.12), value: settingsHovered)
+                .help("设置（等同右键菜单）")
             }
         }
     }
@@ -258,9 +283,21 @@ struct AboutHUDView: View {
                 statusLegend.padding(.top, 20)
                 featureList.padding(.top, 20)
                 Spacer(minLength: 10)
-                Text("当前应用通过 Comate 应用开发能力实现")
-                    .font(.system(size: 10.5))
-                    .foregroundStyle(Color.white.opacity(0.36))
+                HStack(spacing: 0) {
+                    Text("通过 ")
+                    Text("WPS Comate 应用开发能力 Vibe Coding")
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.white.opacity(0.88))
+                        .overlay(alignment: .bottom) {
+                            Rectangle()
+                                .fill(AboutDesign.brand)
+                                .frame(height: 1.5)
+                                .offset(y: 2)
+                        }
+                    Text(" 实现")
+                }
+                .font(.system(size: 10.5))
+                .foregroundStyle(Color.white.opacity(0.36))
                 HStack(spacing: 10) {
                     Button("访问官网", action: openWebsite)
                         .buttonStyle(HUDPrimaryButtonStyle())
@@ -323,10 +360,11 @@ struct AboutHUDView: View {
             .overlay(Capsule().strokeBorder(Color.white.opacity(0.07), lineWidth: 1))
     }
 
-    /// 三色状态图例，颜色取自真实任务灯色
+    /// 四色状态图例，颜色取自真实任务灯色（顺序与官网一致）
     private var statusLegend: some View {
         HStack(spacing: 0) {
             legendItem(TaskLight.gray.color, "空闲")
+            legendItem(TaskLight.green.color, "已完成")
             legendItem(TaskLight.yellow.color, "工作中")
             legendItem(TaskLight.red.color, "等待确认")
         }
