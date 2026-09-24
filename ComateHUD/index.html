@@ -245,15 +245,21 @@
     .compat-table .check { color: var(--green); font-weight: 600; }
     .version-section { padding: 112px 0; }
     .version-list { margin-top: 64px; max-width: 720px; margin-left: auto; margin-right: auto; }
-    .version-item { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 32px 28px; margin-bottom: 20px; }
-    .version-item .vi-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    /* 收起态行高紧凑，展开态才给段间距 */
+    .version-item { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px 28px; margin-bottom: 14px; }
+    .version-item[open] { padding: 30px 28px; margin-bottom: 20px; }
+    .version-item .vi-head { display: flex; justify-content: space-between; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
+    .version-item[open] .vi-head { margin-bottom: 16px; }
     .version-item .vi-ver { font-size: 18px; font-weight: 700; }
-    .version-item .vi-date { font-size: 13px; color: var(--text-dim); }
+    /* 更新日期与版本号同行，并加重显示 */
+    .version-item .vi-meta { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.2; }
+    .version-item .vi-date { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .version-item .vi-count { color: var(--text-dim); }
     .version-item .vi-changes { font-size: 14px; color: var(--text-secondary); line-height: 1.9; margin-top: 18px; }
     .version-item summary { cursor: pointer; list-style: none; }
     .version-item summary::-webkit-details-marker { display: none; }
-    .version-item summary .vi-date::after { content: '▾'; margin-left: 8px; font-size: 11px; color: var(--text-dim); }
-    .version-item[open] summary .vi-date::after { content: '▴'; }
+    .version-item summary .vi-meta::after { content: '▾'; font-size: 11px; color: var(--text-dim); }
+    .version-item[open] summary .vi-meta::after { content: '▴'; }
     .vc-group { margin-bottom: 16px; }
     .vc-group:last-child { margin-bottom: 0; }
     .vc-list { list-style: none; padding: 8px 0 0; margin: 0; }
@@ -377,7 +383,8 @@
       .compat-strip .cs-label { flex: 1 1 100%; text-align: center; margin: 0 0 2px; }
       .compat-tag { padding: 8px 14px; font-size: 12px; }
       .version-list { margin-top: 44px; }
-      .version-item { padding: 24px 20px; margin-bottom: 14px; }
+      .version-item { padding: 17px 20px; margin-bottom: 12px; }
+      .version-item[open] { padding: 24px 20px; }
       .appstats-kpi { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 44px; }
       .appstats-block { margin-top: 40px; }
       .appstats-block-title { margin-bottom: 16px; }
@@ -394,7 +401,7 @@
       .appstats-chart svg { height: 140px; }
       .av-name { flex-basis: 64px; }
       .stats-table .col-opt { display: none; }
-      .version-item .vi-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .version-item .vi-head { gap: 4px 10px; }
       .dl-actions { gap: 10px; margin-bottom: 0; align-items: flex-start; }
       .dl-actions .btn-download { padding: 13px 22px; font-size: 15px; }
       /* 移动端：按钮下方文案与按钮居中对齐；气泡改为底部浮层（点击打开，不用 hover） */
@@ -415,7 +422,7 @@
   <div class="container">
     <a href="#" class="brand"><img src="icon.png" alt="Comate HUD" /><strong>Comate HUD</strong></a>
     <div class="nav-links">
-      <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">如何实现</a><a href="#versions">更新日志</a><a href="#appstats" id="nav-appstats">应用统计</a><a href="#powered">能力提供</a><a href="#wishwall">许愿反馈</a>
+      <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">如何实现</a><a href="#appstats" id="nav-appstats">应用统计</a><a href="#powered">能力提供</a><a href="#versions">更新日志</a><a href="#wishwall">许愿反馈</a>
       <a href="#download" class="btn-sm">下载</a>
       <span id="pv-display" style="font-size:12px;color:var(--text-dim);margin-left:8px;white-space:nowrap;font-variant-numeric:tabular-nums;">-</span>
     </div>
@@ -638,14 +645,6 @@
     </div>
   </div>
 </section>
-<section class="version-section" id="versions">
-  <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">更新日志</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">每个版本改了什么</h2></div>
-    <div class="version-list">
-      <div id="version-list"></div>
-    </div>
-  </div>
-</section>
 <section class="appstats-section" id="appstats">
   <div class="container">
     <div class="reveal" style="text-align:center;"><div class="section-label">应用统计</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">谁在用 Comate HUD</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">安装设备每天上报一次活跃，按用户去重统计。</p></div>
@@ -679,6 +678,14 @@
       <h3>Comate 应用开发能力 (App Studio)</h3>
       <p>Comate HUD 基于 <a href="https://comate.wps.cn" target="_blank" rel="noopener">WPS Comate</a> 的应用开发能力构建。借助其开放的本地数据库读取、Deeplink 调起、OAuth 认证等接口，实现了与 Comate 桌面客户端的深度集成——读取任务状态、打开会话窗口、获取未读消息、查询用量额度。</p>
       <p style="margin-top:12px;font-size:13px;color:var(--text-dim);">Comate HUD 是独立的 macOS 原生应用，非 WPS 官方产品，由社区开发者基于 Comate 开放能力构建。</p>
+    </div>
+  </div>
+</section>
+<section class="version-section" id="versions">
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">更新日志</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">每个版本改了什么</h2></div>
+    <div class="version-list">
+      <div id="version-list"></div>
     </div>
   </div>
 </section>
@@ -750,7 +757,7 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
     data.versions.forEach(function(v,i){
       var tag = i===0?' <span class="vi-tag">LATEST</span>':'';
       vh += '<details class="version-item reveal"'+(i===0?' open':'')+'>';
-      vh += '<summary class="vi-head"><span class="vi-ver">v'+v.version+tag+'</span><span class="vi-date">'+v.date+' · '+v.changelog.length+' 项改动</span></summary>';
+      vh += '<summary class="vi-head"><span class="vi-ver">v'+v.version+tag+'</span><span class="vi-meta"><span class="vi-date">'+v.date+'</span><span class="vi-count">'+v.changelog.length+' 项改动</span></span></summary>';
       vh += '<div class="vi-changes">';
       var g = {};
       v.changelog.forEach(function(c){ if(!g[c.type])g[c.type]=[];g[c.type].push(c.text);});

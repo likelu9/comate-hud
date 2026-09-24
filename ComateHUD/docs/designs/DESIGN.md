@@ -1,7 +1,7 @@
 ---
-version: "1.4"
+version: "1.5"
 style: "minimal-dark-macos"
-target: "ComateHUD/index.html：① #appstats 区块（插在 #versions 与 #wishwall 之间）；② hero 内下载区 #download 重构（公共信息行 / MAC·WIN·GitHub 三按钮 / 按钮外体积元信息行 / macOS 安装说明 hover 气泡）；③ 全站文案精简（13 → 12 区块：删除 #how「使用流程」，其去重后并入 #features；#compat 表格降级为一行标签带）+ 全站排版节奏重排（区块 padding / 网格 gap / 卡片内边距 / 正文行高字号）"
+target: "ComateHUD/index.html：① #appstats 区块（插在 #versions 与 #wishwall 之间）；② hero 内下载区 #download 重构（公共信息行 / MAC·WIN·GitHub 三按钮 / 按钮外体积元信息行 / macOS 安装说明 hover 气泡）；③ 全站文案精简（13 → 12 区块：删除 #how「使用流程」，其去重后并入 #features；#compat 表格降级为一行标签带）+ 全站排版节奏重排（区块 padding / 网格 gap / 卡片内边距 / 正文行高字号）；④ 1.5 区块重排与信息精简（见 §10）：hero 版本记录改锚点行 #release-line、「技术栈」→「如何实现」并补三方应用背景、#compat 并入 #tech 且删除该区块与导航项、#versions 移到 #wishwall 正上方（导航同步）、更新日志条目收起态行高压缩 + 日期加重、versions.json 文案精简（41 → 30 条）"
 palette:
   primary: "#00d4aa"      # var(--accent)
   background: "#0a0a0f"   # var(--bg)
@@ -21,6 +21,8 @@ sections:
     title: "下载区（公共信息行 · MAC/WIN 按钮 · 体积元信息 · 安装说明气泡）"
   - id: "copy-spacing"
     title: "全站文案精简清单 + 排版节奏规范（12 区块 · 删除 #how · #compat 降级为标签带）"
+  - id: "revision-1.5"
+    title: "1.5 修订：区块重排与信息精简（锚点行版本记录 · 如何实现 · #compat 并入 #tech · #versions 移到 #wishwall 前）"
 references:
   - "references/stats-mockup.svg"
   - "references/download-section.svg"
@@ -532,7 +534,8 @@ fs.writeFileSync('versions.json', JSON.stringify(data, null, 2) + '\n');
 - 禁用 `oklch()` / `color-mix()` / `@layer`；颜色只用既有 `:root` 变量与既有白/黑/accent 透明度写法。
 - 移动端规则并入既有 `@media (max-width:768px)` 块，**不新开断点**。
 - 不新增字体族（沿用 `-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC"`）。
-- 不改任何 `id`、不改导航锚点（**`#compat` 必须保留**，导航「兼容性」与页脚链接依赖它）、不改 `.reveal` 观察器参数（`threshold:0.1` / `rootMargin:'0px 0px -40px 0px'`）。
+- 不改 `.reveal` 观察器参数（`threshold:0.1` / `rootMargin:'0px 0px -40px 0px'`）。
+- **锚点集合（1.5 修订后）**：`#features` / `#lights` / `#tech` / `#appstats` / `#powered` / `#versions` / `#wishwall` / `#download`。**`#compat` 已删除**（并入 `#tech`，导航项一并移除；页脚从未引用它）。
 
 ### 复用既有 token（不新增颜色）
 `--bg`(#0a0a0f) `--bg-card`(#111118) `--bg-card-hover` `--text`(#f5f5f7) `--text-secondary`(#8e8e93) `--text-dim`(#55555d) `--accent`(#00d4aa) `--accent-glow` `--radius`(20px) `--max-w`(1080px)
@@ -543,7 +546,7 @@ fs.writeFileSync('versions.json', JSON.stringify(data, null, 2) + '\n');
 | --- | --- |
 | 不加分隔线 / 不加背景分区 / 不加装饰图形 | 节奏**只靠留白层级**说话，与页面「最克制」的既有风格一致。加线会把「留白不足」换成「线条噪音」。 |
 | 不扩成 9 张功能卡 | 见 §3：9 卡在 3 列网格下是 3 行，比 6 卡**更密**，与诉求相反。 |
-| 不把 `#compat` 并入 `#tech` 删掉 section | 导航与页脚锚定 `#compat`，删了会断锚；改为「保留 section + 去掉 top padding」，视觉上读作 tech 的规格脚注。 |
+| ~~不把 `#compat` 并入 `#tech` 删掉 section~~ | **1.5 修订作废**：用户明确要求「兼容性不作为单独模块，合并进技术栈」。`#compat` section 已删除，标签带挂在 `#tech` 的 `.arch-detail` 之后（`.compat-strip { margin-top: 48px }`）。页脚无 `#compat` 链接，不会断锚。 |
 | 不动 `.compat-table` CSS 规则 | 它被 `#appstats` 的「今日活跃明细」表复用（`table class="compat-table stats-table"`），删除会连带破坏 appstats。只替换 `#compat` 里的 HTML。 |
 | 不改 `.reveal` 参数、不加新的 IntersectionObserver | 现有观察器按 `.reveal` 类扫描，新增/删除区块无需改 JS。 |
 | 不精简更新日志文案 | 来自 `versions.json`，属数据不属文案。 |
@@ -1183,3 +1186,89 @@ footer p { font-size: 14px; color: var(--text-dim); line-height: 1.8; }
 - [ ] `.reveal` 观察器参数与 JS 均未改动；`#compat` 的 `.compat-strip` 保留 `.reveal` 类并可正常淡入
 - [ ] `versions.json` 数据契约、下载计数逻辑、appstats 渲染逻辑零改动
 - [ ] 未改动 hero 下载区 `#download` 内部任何结构、文案与样式
+
+---
+
+## 10. 1.5 修订：区块重排与信息精简（本轮变更）
+
+> 本节优先级**高于上文冲突处**：§2.6 / §2.7 / §2.8 / §4 / 硬约束 / 否决项中与本轮冲突的表述，以本节为准（已就地标注作废的除外）。
+
+### 10.1 变更清单
+
+| # | 变更 | 落点 |
+| --- | --- | --- |
+| 1 | 更新日志文案简化：**41 条 → 30 条**，去掉构建脚本回退 / Cookie 校验 / DB 异步队列等内部细节，统一用户视角短句（单条最长 38 字） | `ComateHUD/versions.json` |
+| 2 | hero 下载区下方的 Release Notes 折叠改为**锚点行**：版本号与更新日期同行、日期加重，整行点击跳 `#versions`，首屏不再展开正文 | `#release-line`（替换 `#release-toggle` / `#release-body` / `#rn-summary`） |
+| 3 | 下载区元信息行去掉重复的日期标签，日期只出现在 ② 的锚点行 | `.dl-tags`（删除 `#dl-date` / `#dl-date-text`） |
+| 4 | 「技术栈」改名「**如何实现**」，补背景：作为第三方应用不修改 / 不注入 WPS Comate 本体，只读本地 SQLite + 官方 `wpscomate://` Deeplink | `#tech` 的 `.section-label` / `h2` / 副标题 |
+| 5 | 「兼容性」不再独立成区块：`#compat` section 删除，标签带并入 `#tech`（`.arch-detail` 之后），导航去掉「兼容性」 | `#tech` / `nav` |
+| 6 | `#versions` 移到 `#wishwall` **正上方**（读作「反馈了就会有更新」），导航同步；收起态条目行高压缩，日期改用 accent 加重 | `#versions` / `nav` |
+
+**区块顺序（DOM = 导航顺序）**：`features → lights → tech → appstats → powered → versions → wishwall`，另有 `#download`（hero 内）。
+
+### 10.2 文案
+
+| 位置 | 原文 | 现文案 |
+| --- | --- | --- |
+| `#tech` label | `技术栈` | `如何实现` |
+| `#tech` h2 | `纯原生，零依赖` | `不侵入 Comate 的旁路实现` |
+| `#tech` 副标题 | `100% Swift + SwiftUI，无 Electron、无 WebView、无第三方框架。` | `作为第三方应用，Comate HUD 不修改、不注入 WPS Comate 本体：只读它写在本地 SQLite 的会话记录，配合官方 <code>wpscomate://</code> Deeplink 完成跳转。100% Swift + SwiftUI，无 Electron、无 WebView、无第三方框架。`（`max-width` 520 → 620px，`<code>` 用 `.tech-section .reveal code` 行内样式） |
+| 导航 | `技术栈` + `兼容性` 两项 | `如何实现` 一项 |
+| 版本记录行 | `▸ v1.4.1 Release Notes`（可展开） | `最新版本 v1.4.1 · 2026-09-24  查看更新日志 ›`（不可展开，锚点） |
+
+### 10.3 净增 CSS
+
+```css
+/* 下载区下方的版本记录：版本号与更新日期同行，整行点击锚点跳到更新日志 */
+.release-line { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; font-size: 13px; line-height: 1.2; text-decoration: none; color: var(--text-dim); transition: color 0.2s; }
+.release-line[hidden] { display: none; }
+.release-line:hover { color: var(--text-secondary); }
+.release-line .rl-ver { font-size: 14px; font-weight: 700; color: var(--text); }
+.release-line .rl-sep { color: rgba(255,255,255,0.22); }
+.release-line .rl-date { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+.release-line .rl-more { display: inline-flex; align-items: center; gap: 3px; margin-left: 2px; }
+.release-line .rl-more svg { transition: transform 0.2s; }
+.release-line:hover .rl-more svg { transform: translateX(2px); }
+
+/* 兼容性标签带并入 #tech，作为规格脚注 */
+.compat-strip { /* …原规则不动… */ margin-top: 48px; }
+
+/* 更新日志条目：收起态紧凑、日期加重 */
+.version-item { padding: 20px 28px; margin-bottom: 14px; }          /* 原 32px / 20px */
+.version-item[open] { padding: 30px 28px; margin-bottom: 20px; }
+.version-item[open] .vi-head { margin-bottom: 16px; }              /* 收起态不给段间距 */
+.version-item .vi-head { gap: 4px 12px; flex-wrap: wrap; }
+.version-item .vi-meta { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.2; }
+.version-item .vi-date { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }   /* 原 13px / var(--text-dim) */
+.version-item .vi-count { color: var(--text-dim); }
+.version-item summary .vi-meta::after { content: '▾'; font-size: 11px; color: var(--text-dim); }
+.version-item[open] summary .vi-meta::after { content: '▴'; }
+```
+
+收起态条目实测高度：**102px → 62px**（padding 32→20 上下各 −12，`vi-head` 段间距 −16）。
+
+### 10.4 删除的规则（不留死代码）
+
+| 选择器 | 条数 | 说明 |
+| --- | --- | --- |
+| `.release-toggle` | 4 | 折叠交互整体移除 |
+| `.release-body`（含 `.rv` / `.cat`×4 / `.rn-*`×4） | 10 | 首屏不再渲染更新日志正文 |
+| `.compat-section` | 2 | 桌面 + 移动；section 已删 |
+| **保留** `.compat-table` | 10 | `#appstats` 今日明细表复用（`table class="compat-table stats-table"`），**不得删除** |
+
+### 10.5 移动端（`@media (max-width:768px)` 块内）
+
+```css
+.compat-strip { margin-top: 32px; gap: 10px 12px; }
+.version-item { padding: 17px 20px; margin-bottom: 12px; }
+.version-item[open] { padding: 24px 20px; }
+.version-item .vi-head { gap: 4px 10px; }   /* 改回单行：版本号与日期同行，不再强制竖排 */
+```
+
+`.release-line` 无需移动端规则（`inline-flex` + 容器居中，窄屏自然换行）。
+
+### 10.6 JS 契约
+
+- `#release-line` 初始带 `hidden`（与 `#dl-size` 同一约定，数据到达前不出现 `v—` 占位符），`fetch` 成功分支写入 `#rl-ver` / `#rl-date` 后 `rl.hidden = false`；`catch` 分支不做处理（保持隐藏，hero 的 MAC 按钮已退化为「前往更新日志」）。
+- 版本条目 summary 结构改为 `vi-ver` + `vi-meta(vi-date + vi-count)`，箭头由 `.vi-meta::after` 承担；`typeLabels` / `typeColors` 与 `#version-list` 渲染逻辑不变。
+- `versions[0]` 仍默认 `open`（首条展开，其余收起）。
