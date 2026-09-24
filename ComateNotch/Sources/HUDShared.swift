@@ -187,7 +187,7 @@ struct HUDUsageFooter: View {
                     .foregroundStyle(.white.opacity(settingsHovered ? 0.9 : 0.55))
                     // 有新版可用：贴图标右上角亮红点（挂在图标上而非热区，避免小按钮里红点飘到远端）
                     .overlay(alignment: .topTrailing) {
-                        if store.hasUpdate {
+                        if store.showsUpdateDot {
                             Circle()
                                 .fill(Color(hex: "#FF4D4F"))
                                 .frame(width: 5, height: 5)
@@ -208,7 +208,7 @@ struct HUDUsageFooter: View {
                 if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
             }
             .animation(.easeInOut(duration: 0.12), value: settingsHovered)
-            .help(store.hasUpdate
+            .help(store.showsUpdateDot
                   ? "设置（检测到新版 \(store.availableUpdate ?? "")）"
                   : "设置（等同右键菜单）")
         }
@@ -559,6 +559,12 @@ final class HUDContextMenu: NSObject {
         }
         let updateItem = NSMenuItem(title: updateTitle, action: #selector(menuCheckUpdate), keyEquivalent: "")
         updateItem.target = self
+        // 未读新版：红点画在勾选列。该列已被「开机自启动」占用，
+        // 因此不会凭空多出一个图标列、把整个菜单的标题右移
+        if store.showsUpdateDot {
+            updateItem.onStateImage = Self.updateDotImage
+            updateItem.state = .on
+        }
         menu.addItem(updateItem)
 
         // 关于紧贴在退出上方
@@ -574,6 +580,19 @@ final class HUDContextMenu: NSObject {
         return menu
     }
 
+    /// 菜单项里的红点（#FF4D4F，与设置按钮红点同色）。
+    /// 用 drawingHandler 而不是 lockFocus：前者按屏幕缩放绘制，Retina 下边缘不糊
+    private static let updateDotImage: NSImage = {
+        let side: CGFloat = 14
+        let dot: CGFloat = 7
+        return NSImage(size: NSSize(width: side, height: side), flipped: false) { _ in
+            let rect = NSRect(x: (side - dot) / 2, y: (side - dot) / 2, width: dot, height: dot)
+            NSColor(srgbRed: 1, green: 77.0 / 255, blue: 79.0 / 255, alpha: 1).setFill()
+            NSBezierPath(ovalIn: rect).fill()
+            return true
+        }
+    }()
+
     @objc private func menuSwitchMode(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String,
               let mode = ComateStore.DisplayMode(rawValue: raw) else { return }
@@ -586,13 +605,15 @@ final class HUDContextMenu: NSObject {
 
     @objc private func menuResetHeight() { store.resetCustomExpandedHeight() }
 
-    /// 有新版 → 打开发布页（GitHub Release 公开可访问；拿不到链接时退回官网）；
+    /// 有新版 → 先记为「已读」（红点消失、该版本不再提示），再打开发布页
+    /// （GitHub Release 公开可访问；拿不到链接时退回官网）；
     /// 否则立即重新检查一次（不受 6 小时节流限制）
     @objc private func menuCheckUpdate() {
         guard store.hasUpdate else {
             store.checkForUpdate(force: true)
             return
         }
+        store.acknowledgeUpdate()
         if let url = store.availableUpdateURL {
             NSWorkspace.shared.open(url)
         } else if let site = URL(string: AboutDesign.website) {

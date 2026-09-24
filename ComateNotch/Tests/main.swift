@@ -169,6 +169,25 @@ eq(makeTask(source: "cloud").sourceIcon, "icloud.fill", "云端任务用云图�
 eq(makeTask().sourceIcon, "folder.fill", "本地任务用文件夹图标")
 eq(makeTask().metaLabel, "—", "没有智点记录时给占位符而不是 0 点")
 
+// MARK: - 更新红点的「已读」判定
+
+section("UpdateChecker 红点是否该亮（已读版本）")
+let localVersion = "1.2.0"
+check(UpdateChecker.shouldShowDot(available: "1.4.2", acknowledged: nil, local: localVersion),
+      "从未点开过 → 亮")
+check(!UpdateChecker.shouldShowDot(available: "1.4.2", acknowledged: "1.4.2", local: localVersion),
+      "点开过同一版本 → 灭")
+check(UpdateChecker.shouldShowDot(available: "1.4.3", acknowledged: "1.4.2", local: localVersion),
+      "出现更新的版本 → 重新亮")
+check(!UpdateChecker.shouldShowDot(available: "1.4.2", acknowledged: "1.4.3", local: localVersion),
+      "已读版本更高时不倒退提示")
+check(!UpdateChecker.shouldShowDot(available: nil, acknowledged: nil, local: localVersion),
+      "没检测到新版 → 不亮")
+check(!UpdateChecker.shouldShowDot(available: "1.4.2", acknowledged: nil, local: "1.4.2"),
+      "与本地同版本 → 不亮")
+check(!UpdateChecker.shouldShowDot(available: "v1.4.2", acknowledged: "1.4.2", local: localVersion),
+      "带 v 前缀与已读版本视为同一版本")
+
 // MARK: - 汇总
 
 print("\n———————————————")

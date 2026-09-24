@@ -65,6 +65,14 @@ final class UpdateChecker {
         return Release(version: version, url: href.flatMap(URL.init(string:)))
     }
 
+    /// 红点是否该亮：只有比「已读版本」更新的版本才提示。
+    /// 已读为空时以本地版本为基准（此时任何检测到的新版都算未读）。
+    /// 纯函数、无副作用，便于 test.sh 直接验证。
+    static func shouldShowDot(available: String?, acknowledged: String?, local: String) -> Bool {
+        guard let available else { return false }
+        return HUDVersion.isNewer(available, than: acknowledged ?? local)
+    }
+
     private static func firstMatch(in text: String, pattern: String) -> String? {
         guard let re = try? NSRegularExpression(pattern: pattern) else { return nil }
         let range = NSRange(text.startIndex..<text.endIndex, in: text)

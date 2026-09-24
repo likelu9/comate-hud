@@ -19,12 +19,23 @@ final class ComateStore: ObservableObject {
     /// 新版本发布页（GitHub Release，公开可访问）；没有时菜单退回官网
     private(set) var availableUpdateURL: URL?
 
+    /// 用户点开过的版本号（nil = 从未点开）。该版本不再亮红点，直到出现更新的版本
+    @Published private(set) var acknowledgedUpdate: String? = ComateStore.loadAcknowledgedUpdate()
+
     /// 有可用新版本
     var hasUpdate: Bool { availableUpdate != nil }
+
+    /// 红点是否该亮（设置按钮与菜单项共用同一判定）
+    var showsUpdateDot: Bool {
+        UpdateChecker.shouldShowDot(available: availableUpdate,
+                                    acknowledged: acknowledgedUpdate,
+                                    local: UpdateChecker.localVersion)
+    }
 
     /// 更新检查节流间隔：6 小时。GitHub 未鉴权接口限额 60 次/时，远够用
     private static let updateCheckInterval: TimeInterval = 6 * 3600
     private static let lastUpdateCheckKey = "hud.lastUpdateCheck"
+    private static let updateAcknowledgedKey = "hud.updateAcknowledgedVersion"
     /// 展开态任务列表展示条数（右键菜单可调：3 / 6 / 10）
     /// 变更即写入 UserDefaults，重启后保持用户选择
     @Published var recentTaskLimit: Int = ComateStore.loadRecentTaskLimit() {
@@ -320,6 +331,10 @@ final class ComateStore: ObservableObject {
         return v > 0 ? CGFloat(v) : nil
     }
 
+    private static func loadAcknowledgedUpdate() -> String? {
+        UserDefaults.standard.string(forKey: updateAcknowledgedKey)
+    }
+
     private static func loadRecentTaskLimit() -> Int {
         let stored = UserDefaults.standard.integer(forKey: recentTaskLimitKey)
         return recentTaskLimitOptions.contains(stored) ? stored : 6
@@ -401,6 +416,14 @@ final class ComateStore: ObservableObject {
             self.availableUpdate = release.version
             self.availableUpdateURL = release.url
         }
+    }
+
+    /// 用户点开「检测到新版」菜单项 → 记下该版本，红点消失；
+    /// 之后出现更新的版本时红点自动恢复
+    func acknowledgeUpdate() {
+        guard let version = availableUpdate, version != acknowledgedUpdate else { return }
+        acknowledgedUpdate = version
+        UserDefaults.standard.set(version, forKey: ComateStore.updateAcknowledgedKey)
     }
 
     func refresh() {
