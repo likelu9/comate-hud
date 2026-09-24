@@ -5,7 +5,7 @@
   },
   "command": {
     "install": "",
-    "dev": "cd ComateNotch && ./build.sh && open build/ComateNotch.app",
+    "dev": "cd ComateNotch && ./build.sh && open build/ComateHUD.app",
     "build": "cd ComateNotch && ./build.sh",
     "zip": "$system-zip frontend:./ComateNotch"
   },
