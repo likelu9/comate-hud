@@ -14,7 +14,7 @@
 
 ## Validation
 - `cd ComateNotch && ./build.sh` 必须 exit 0，且 `lipo -info` 同时含 arm64 与 x86_64
-- 改官网后本地 8766 打开，控制台无 JS 报错（BaaS 接口本地 404 属预期）
+- 改官网后本地起 http.server 打开，控制台无 JS 报错（BaaS 接口本地 **401** 属预期：全表要求登录）
 - 改上报/统计链路时，用 `defaults read com.wpscomate.hud | grep activity` 检查日桶与 pending
 - 改动过的文件都要重读确认
 
@@ -26,6 +26,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) · 官网视觉 See [ComateHUD/docs/desig
 - 版本号只改 `ComateNotch/Info.plist`（`CFBundleShortVersionString` / `CFBundleVersion`）
 - 官网不用 CDN/外链资源；建表写在 `ComateHUD/db/migrations/NNN_*.json`
 - BaaS 请求必须带 `X-Project-Id: 3171466180955374`（官网项目 ≠ 根项目 `3599569812562023`）
+- BaaS 表**全表要求登录**（无 Cookie 一律 `401 未登录或登录已过期`）：客户端上报依赖 keychain 的 `wps_sid`，读不到就没有任何上报通道，只能跳过
+- 活跃上报取不到用户身份时退化为**设备维度 uid**（`anon-<设备指纹前 20 位>`，昵称留空），不再整条跳过；401/403 退避 6 小时再试
+- 官网「应用统计」：KPI / 趋势 / 版本分布对访客公开，**今日明细（含用户名 + 设备标识）仅 owner**；owner 判定优先认 `window.__APP_STUDIO_WM__.uid`，`localStorage` 名字白名单只是本地开发回退
 - keychain 读取要 fork `security`，只能在后台队列调用
 
 ## Prohibitions

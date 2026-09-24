@@ -1244,7 +1244,20 @@ function renderStatsToday(rows) {
   host.innerHTML = '<table class="compat-table stats-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
 }
 
+// 展示/收起统计内容位。失败时整块收起只留一行提示，避免骨架一直闪
+function statsShowBlocks(visible) {
+  // KPI 用内联 display 收起：.appstats-kpi 自带 display:grid，会盖掉 UA 的 [hidden]{display:none}
+  var kpi = actEl('appstats-kpi');
+  if (kpi) kpi.style.display = visible ? '' : 'none';
+  document.querySelectorAll('#appstats .appstats-block').forEach(function (b) {
+    // 明细块单独由 owner 身份决定，不跟着 visible 走
+    var show = visible && !(b.id === 'appstats-today-block' && !isOwner());
+    if (show) b.removeAttribute('hidden'); else b.setAttribute('hidden', '');
+  });
+}
+
 function statsLoading(owner) {
+  statsShowBlocks(true);
   var kpi = actEl('appstats-kpi');
   if (kpi) kpi.innerHTML = [0, 1, 2, 3].map(function () {
     return '<div class="appstats-card is-skeleton"><div class="sk-line sk-w1"></div><div class="sk-line sk-w2"></div><div class="sk-line sk-w3"></div></div>';
@@ -1256,6 +1269,7 @@ function statsLoading(owner) {
 }
 
 function statsError() {
+  statsShowBlocks(false);
   var hint = actEl('appstats-hint');
   if (!hint) return;
   hint.innerHTML = '';
@@ -1284,14 +1298,9 @@ async function loadActivity() {
   var owner = isOwner();
   var section = actEl('appstats');
   var nav = actEl('nav-appstats');
-  // 区块本身公开：聚合指标人人可看，明细块只对 owner 解隐
+  // 区块本身公开：聚合指标人人可看，明细块只对 owner 解隐（见 statsShowBlocks）
   if (section) section.removeAttribute('hidden');
   if (nav) nav.removeAttribute('hidden');
-  var detail = actEl('appstats-today-block');
-  if (detail) {
-    if (owner) detail.removeAttribute('hidden');
-    else detail.setAttribute('hidden', '');
-  }
   revealScan();
   statsLoading(owner);
   var res = await appbase.from(ACT_TABLE).select();

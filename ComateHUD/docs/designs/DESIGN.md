@@ -1,5 +1,5 @@
 ---
-version: "1.2"
+version: "1.3"
 style: "minimal-dark-macos"
 target: "ComateHUD/index.html：① #appstats 区块（插在 #versions 与 #wishwall 之间）；② hero 内下载区 #download 重构（公共信息行 / MAC·WIN·GitHub 三按钮 / 按钮外体积元信息行 / macOS 安装说明 hover 气泡）"
 palette:
@@ -34,7 +34,9 @@ release_contract:
 
 **风格**：最克制。无运营大屏感、无发光强调、无彩色状态灯。数字靠字重与留白说话，绿色只作点睛。
 **硬约束**：零外部资源（无 CDN/字体/图标/图表库/图片）；禁用 `oklch()` / `color-mix()` / `@layer`；颜色只用 hex / `rgb()` / `rgba()` / `hsl()`；SVG 纯手写内联。
-**owner-only**：整块与导航入口默认 `hidden`，非 owner / 未登录时零痕迹（不占位、不可 Tab 到、不注册动效）。
+**可见性（2026-09-24 调整）**：区块与导航入口**对所有人公开**（HTML 里不再带 `hidden`）；KPI / 趋势 / 版本分布属聚合指标，人人可见；**今日活跃明细含用户名与设备标识，仅 owner 可见**（`#appstats-today-block` 默认 `hidden`，owner 才解隐）。
+**登录前提**：BaaS 全表要求登录（实测无 Cookie 直接 401），未登录访客请求必然失败 → 不渲染数据，只给一行「登录 WPS 账号后刷新页面即可查看应用统计」。
+**owner 判定**：`platformUid() === '1388246874'`（平台注入的 `window.__APP_STUDIO_WM__.uid`）优先，`localStorage` 名字白名单仅作本地开发回退 —— 只认名字会漏判线上 owner。
 
 ### 复用既有 token（取自 index.html `:root`，禁止新增近似色）
 `--bg` `--bg-card` `--bg-card-hover` `--text` `--text-secondary` `--text-dim` `--accent` `--accent-glow` `--green` `--radius`(20px) `--max-w`(1080px)
@@ -62,15 +64,16 @@ release_contract:
    - 坐标：`x = i * 720/(n-1)`；`y = 180 - (v/max)*150 - 15`（`max` 取序列最大值，最小 1 防除零）
    - 轴标：10px `var(--text-dim)`，只显示首 / 中 / 末三个日期（`MM-DD`）
 3. **版本分布横条**：每版本一行 —— 左 13px `var(--text-secondary)` 版本名（`flex:0 0 88px`）→ 轨道 `height:6px;border-radius:999px;background:rgba(255,255,255,0.06)` → 填充 `background:var(--accent);border-radius:999px;width:<pct>%`（单色，不渐变）→ 右 12px `var(--text-dim)` `tabular-nums` 计数。行距 14px，按计数降序，最多 6 行，其余归入"其他"。
-4. **今日活跃明细表**：`.compat-table .stats-table`，数据源为 `active_day == 今日` 的行。列：用户 / 版本 / 启动 / 悬停 / 点击 / 设备 / 系统；`user_name` 空则显示 `uid` 前 8 位；数值列右对齐 + `tabular-nums`。
+4. **今日活跃明细表（仅 owner）**：`.compat-table .stats-table`，数据源为 `active_day == 今日` 的行。列：用户 / 版本 / 启动 / 悬停 / 点击 / 设备 / 系统；`user_name` 空则显示 `uid` 前 8 位；数值列右对齐 + `tabular-nums`。
 
 ## 2. 各状态表现
 
 | 状态 | 表现 |
 | --- | --- |
-| 未登录 / 非 owner | `<section id="appstats" hidden>` + `<a id="nav-appstats" hidden>` 写在 HTML 里（默认隐藏，避免闪烁与动效注册）；`isOwner()` 为 false 时**不做任何 DOM 操作**，不请求数据 |
+| 访客（已登录，非 owner） | 区块与导航入口可见；渲染 KPI / 趋势 / 版本分布；`#appstats-today-block` 保持 `hidden` |
+| 未登录访客（接口 401） | 区块仍在（标题 + 副标题 + 一行提示），KPI / 趋势 / 版本分布 / 明细**整块收起**，提示「登录 WPS 账号后刷新页面即可查看应用统计」，不给重试按钮 |
 | 加载中 | 4 个 KPI 骨架块（同卡面尺寸，内部 3 条 `rgba(255,255,255,0.06)` 占位条）+ `animation: boot-pulse 1.4s ease-in-out infinite`（复用既有 keyframes）；趋势区只渲染基线网格；高度与真实态一致，禁止布局跳动 |
-| 加载失败 | 区内单行 13px `var(--text-dim)` 文案（错误文本按 `errText()` 压成 ≤60 字）+ 一个 `.wish-ops button` 风格「重试」；不弹窗、不 toast、不阻塞滚动 |
+| 加载失败（已登录） | 内容位**整块收起**（`statsShowBlocks(false)`）+ 区内单行 13px `var(--text-dim)` 文案 + 一个 `.wish-ops button` 风格「重试」；不弹窗、不 toast、不阻塞滚动 |
 | 无数据 | 复用 `.wish-empty` 居中空态文案；趋势区保留基线网格但不画折线与点位；KPI 显示 `0` 而非 `–`；表格用 `.wish-empty` 替换 |
 
 ## 3. 移动端（768px）
@@ -85,13 +88,18 @@ release_contract:
 
 - **不**给整块加 `.reveal`（整块位移会让 KPI 与图表一起漂移，显重）；改为给 4 个子块各加 `.reveal`，即 4 段依次淡入。
 - 复用页面既有 observer 参数：`threshold:0.1`、`rootMargin:'0px 0px -40px 0px'`、`classList.add('visible')`。
-- **关键顺序**：owner 校验通过 → `removeAttribute('hidden')` → 再执行 `document.querySelectorAll('.reveal:not(.visible)')` 重新 observe（同 index.html 既有二次扫描写法）。否则隐藏期间被观察的元素永远拿不到 `visible`。
+- **关键顺序**：`removeAttribute('hidden')`（区块与导航）→ `revealScan()` 重新 observe `.reveal:not(.visible)`。区块现已默认可见，`revealScan()` 主要服务于「失败后重试成功」这条恢复路径。
+- **收起 KPI 用内联 `style.display`**，不能用 `hidden` 属性：`.appstats-kpi` 自带 `display:grid`，作者样式会盖掉 UA 的 `[hidden]{display:none}`。`.appstats-block` 无 display 声明，可以照常用 `hidden`。
 - 尊重 `prefers-reduced-motion`：该媒体查询已在页内，无需新增。
 
 ## 5. Acceptance Contract
 
 - [ ] 区块位于 `#versions` 与 `#wishwall` 之间；导航入口位于「更新日志」之后、`#download` 之前
-- [ ] 非 owner / 未登录：区块与导航入口均不可见、不占位、不发请求；页面其余部分零变化
+- [ ] 区块与导航入口在 HTML 里不带 `hidden`（默认可见）
+- [ ] 访客（非 owner）：可见 KPI / 趋势 / 版本分布，`#appstats-today-block` 不可见
+- [ ] 未登录访客：区块保留标题与一行登录提示，内容位全部收起（不残留骨架）
+- [ ] owner：明细块可见，用户名与设备列正常渲染
+- [ ] 收起 KPI 用内联 `style.display`（`display:grid` 会盖掉 UA 的 `[hidden]{display:none}`）
 - [ ] 无任何外部请求（Network 面板除既有 SDK/图片外无新增）；无图表库、无 canvas、无 base64 图
 - [ ] 源码中不出现 `oklch(` / `color-mix(` / `@layer`
 - [ ] 颜色全部来自既有 `:root` 变量或 `rgba(255,255,255,0.0x)` / `rgba(0,212,170,0.x)`
