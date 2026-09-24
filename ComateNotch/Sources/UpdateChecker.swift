@@ -24,9 +24,10 @@ enum HUDVersion {
     }
 }
 
-/// 更新检测：读 GitHub Releases 的 latest tag，与本地 CFBundleShortVersionString 比对。
+/// 更新检测：读 GitHub Releases 的最新 tag，与本地 CFBundleShortVersionString 比对。
 ///
-/// 走公开接口（无需 token，未鉴权限额 60 次/时，远高于 6 小时一次的轮询频率），
+/// 用 releases.atom 而不是 REST API：REST 未鉴权限额按 **IP** 计（60 次/时），
+/// 在共享出口 IP（公司网络 / 代理）下实测会直接 403；atom feed 同源公开、无此限额。
 /// 任何失败都静默返回 nil —— 更新提醒是增值信息，不该干扰任务状态这类主功能。
 final class UpdateChecker {
     struct Release {
@@ -37,11 +38,39 @@ final class UpdateChecker {
     }
 
     static let shared = UpdateChecker()
-    static let apiURL = URL(string: "https://api.github.com/repos/likelu9/comate-hud/releases/latest")!
+    static let feedURL = URL(string: "https://github.com/likelu9/comate-hud/releases.atom")!
 
     /// 本地版本号，来源 Info.plist（版本号的唯一真源）
     static var localVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
+    }
+
+    /// 从 feed 文本里取最新一条 release。纯函数，便于 test.sh 直接验证。
+    static func parseLatest(feed: String) -> Release? {
+        // feed 按时间倒序，第一条 entry 即最新
+        guard let entryStart = feed.range(of: "<entry>"),
+              let entryEnd = feed.range(of: "</entry>", range: entryStart.upperBound..<feed.endIndex)
+        else { return nil }
+        let entry = String(feed[entryStart.upperBound..<entryEnd.lowerBound])
+
+        // 优先从 releases/tag/<tag> 取版本，取不到再退回标题里的版本号
+        let href = firstMatch(in: entry, pattern: "href=\"([^\"]*releases/tag/[^\"]+)\"")
+        let tag = firstMatch(in: entry, pattern: "releases/tag/([^\"]+)\"")
+        let title = firstMatch(in: entry, pattern: "<title>([^<]*)</title>")
+        let version = [tag, title]
+            .compactMap { $0 }
+            .compactMap { firstMatch(in: $0, pattern: "([0-9]+(?:\\.[0-9]+)+)") }
+            .first
+        guard let version = version else { return nil }
+        return Release(version: version, url: href.flatMap(URL.init(string:)))
+    }
+
+    private static func firstMatch(in text: String, pattern: String) -> String? {
+        guard let re = try? NSRegularExpression(pattern: pattern) else { return nil }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        guard let m = re.firstMatch(in: text, range: range), m.numberOfRanges > 1,
+              let r = Range(m.range(at: 1), in: text) else { return nil }
+        return String(text[r])
     }
 
     /// 防重入：手动点「检查更新」与定时轮询可能同时触发
@@ -51,19 +80,14 @@ final class UpdateChecker {
         guard !inFlight else { return }
         inFlight = true
 
-        var req = URLRequest(url: Self.apiURL)
+        var req = URLRequest(url: Self.feedURL)
         req.timeoutInterval = 10
-        req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         req.setValue("ComateHUD/\(Self.localVersion)", forHTTPHeaderField: "User-Agent")
 
         URLSession.shared.dataTask(with: req) { [weak self] data, _, _ in
-            var release: Release?
-            if let data,
-               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let tag = obj["tag_name"] as? String {
-                release = Release(version: tag,
-                                  url: (obj["html_url"] as? String).flatMap(URL.init(string:)))
-            }
+            let release = data
+                .flatMap { String(data: $0, encoding: .utf8) }
+                .flatMap(Self.parseLatest(feed:))
             // inFlight 与回调都回主线程，避免跨线程读写该标志
             DispatchQueue.main.async {
                 self?.inFlight = false

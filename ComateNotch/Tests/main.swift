@@ -46,6 +46,37 @@ check(!HUDVersion.isNewer("v1.4.1-beta.1", than: "1.4.1"), "同号预发布不�
 check(HUDVersion.isNewer("2.0.0", than: "1.99.99"), "主版本优先于次版本")
 check(!HUDVersion.isNewer("", than: "1.0"), "空版本号不误判为更新")
 
+// MARK: - releases.atom 解析
+
+section("UpdateChecker 解析 releases.atom")
+let feedSample = """
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Release notes from comate-hud</title>
+  <entry>
+    <id>tag:github.com,2008:Repository/1/v1.4.2</id>
+    <link rel="alternate" type="text/html" href="https://github.com/likelu9/comate-hud/releases/tag/v1.4.2"/>
+    <title>Comate HUD v1.4.2</title>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1/v1.4.1</id>
+    <link rel="alternate" type="text/html" href="https://github.com/likelu9/comate-hud/releases/tag/v1.4.1"/>
+    <title>Comate HUD v1.4.1</title>
+  </entry>
+</feed>
+"""
+let parsed = UpdateChecker.parseLatest(feed: feedSample)
+eq(parsed?.version, "1.4.2", "取第一条 entry（feed 倒序 = 最新）")
+eq(parsed?.url?.absoluteString, "https://github.com/likelu9/comate-hud/releases/tag/v1.4.2",
+   "带出发布页链接")
+check(HUDVersion.isNewer(parsed?.version ?? "", than: "1.4.1"), "解析出的版本判定为有更新")
+check(UpdateChecker.parseLatest(feed: "") == nil, "空 feed 返回 nil 而不是崩")
+check(UpdateChecker.parseLatest(feed: "<feed><title>无 entry</title></feed>") == nil,
+      "没有 entry 时返回 nil")
+eq(UpdateChecker.parseLatest(
+    feed: "<entry><link rel=\"alternate\" href=\"https://github.com/x/y/releases/tag/v2.0.3\"/><title>Release</title></entry>"
+)?.version, "2.0.3", "标题里没有版本号时退回 tag")
+
 // MARK: - 面板高度公式
 
 section("NotchLayout 高度公式")
