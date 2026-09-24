@@ -84,15 +84,7 @@
     .mockup-titlebar .dot-y { width: 12px; height: 12px; border-radius: 50%; background: #febc2e; }
     .mockup-titlebar .dot-g { width: 12px; height: 12px; border-radius: 50%; background: #28c840; }
     .mockup-body { padding: 40px 32px 48px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
-    .sim-hud { display: flex; align-items: center; gap: 10px; background: #1a1a22; border-radius: 40px; padding: 10px 18px; box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.6); }
-    .sim-hud .logo { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: white; background: linear-gradient(135deg, #0a84ff, #bf5af2); }
-    .sim-hud .sim-light { width: 8px; height: 8px; border-radius: 50%; }
-    .sim-hud .sim-light.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
-    .sim-hud .sim-light.yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); animation: breathe 2s ease-in-out infinite; }
-    .sim-hud .sim-light.red { background: var(--red); box-shadow: 0 0 8px var(--red); animation: blink 0.55s ease-in-out infinite; }
-    .sim-hud .sim-badge { font-size: 11px; font-weight: 600; color: var(--text-secondary); background: rgba(255,255,255,0.06); padding: 3px 10px; border-radius: 999px; }
-    .sim-hud .sim-bell { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-secondary); }
-    .mockup-shot { width: 280px; height: auto; display: block; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
+    .mockup-shot { width: 280px; height: auto; display: block; border-radius: 19px; filter: drop-shadow(0 12px 40px rgba(0,0,0,0.6)); }
     .features { padding: 80px 0; }
     .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
     .feature-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 36px 28px; transition: all 0.3s cubic-bezier(0.22,1,0.36,1); position: relative; overflow: hidden; }
@@ -278,9 +270,6 @@
     <div class="mockup-wrapper">
       <div class="mockup-titlebar"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
       <div class="mockup-body">
-        <div class="sim-hud">
-          <div class="logo">C</div><div class="sim-light yellow"></div><div class="sim-badge">7 任务</div><div class="sim-bell">🔔</div>
-        </div>
         <img class="mockup-shot" src="./assets/hud-real.png" alt="Comate HUD 真实运行截图：刘海区展开的任务面板，含状态灯、最近任务列表与耗时" />
       </div>
     </div>
