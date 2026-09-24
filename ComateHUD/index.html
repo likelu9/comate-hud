@@ -92,17 +92,7 @@
     .sim-hud .sim-light.red { background: var(--red); box-shadow: 0 0 8px var(--red); animation: blink 0.55s ease-in-out infinite; }
     .sim-hud .sim-badge { font-size: 11px; font-weight: 600; color: var(--text-secondary); background: rgba(255,255,255,0.06); padding: 3px 10px; border-radius: 999px; }
     .sim-hud .sim-bell { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-secondary); }
-    .sim-panel { width: 280px; background: #111118; border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
-    .sim-panel-header { padding: 14px 16px 10px; font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
-    .sim-task { display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
-    .sim-task .t-light { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .sim-task .t-info { flex: 1; min-width: 0; }
-    .sim-task .t-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sim-task .t-desc { font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sim-task .t-time { font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
-    .sim-panel-footer { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; }
-    .sim-panel-footer .usage { font-size: 11px; color: var(--accent); }
-    .sim-panel-footer .usage span { color: var(--text-dim); }
+    .mockup-shot { width: 280px; height: auto; display: block; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
     .features { padding: 80px 0; }
     .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
     .feature-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 36px 28px; transition: all 0.3s cubic-bezier(0.22,1,0.36,1); position: relative; overflow: hidden; }
@@ -291,14 +281,7 @@
         <div class="sim-hud">
           <div class="logo">C</div><div class="sim-light yellow"></div><div class="sim-badge">7 任务</div><div class="sim-bell">🔔</div>
         </div>
-        <div class="sim-panel">
-          <div class="sim-panel-header">最近任务</div>
-          <div class="sim-task"><div class="t-light" style="background:var(--yellow);box-shadow:0 0 6px var(--yellow)"></div><div class="t-info"><div class="t-name">周报生成器</div><div class="t-desc">正在采集 IM 消息...</div></div><div class="t-time">12s</div></div>
-          <div class="sim-task"><div class="t-light" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><div class="t-info"><div class="t-name">代码审查 - API 模块</div><div class="t-desc">已完成，等待查看</div></div><div class="t-time">2m</div></div>
-          <div class="sim-task"><div class="t-light" style="background:var(--red);box-shadow:0 0 6px var(--red);animation:blink 0.55s infinite"></div><div class="t-info"><div class="t-name">部署脚本修复</div><div class="t-desc">需要你确认...</div></div><div class="t-time">5m</div></div>
-          <div class="sim-task"><div class="t-light" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><div class="t-info"><div class="t-name">产品介绍页</div><div class="t-desc">已生成 HTML 文件</div></div><div class="t-time">1m</div></div>
-          <div class="sim-panel-footer"><div class="usage">日限额：已用 82% <span>· 点击切换</span></div></div>
-        </div>
+        <img class="mockup-shot" src="./assets/hud-real.png" alt="Comate HUD 真实运行截图：刘海区展开的任务面板，含状态灯、最近任务列表与耗时" />
       </div>
     </div>
   </div>
