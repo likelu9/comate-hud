@@ -11,6 +11,11 @@ import Foundation
 /// - 桶持久化在 UserDefaults，每次计数变更即落盘 —— 进程被杀/断电也不丢，下次启动补报
 /// - 服务端按 uid + active_day 预查：没有就插入，已有则按「当天累计值」覆盖更新。
 ///   发的是累计总量而不是增量，所以重试、重复上报、多设备各报一次都不会把数字越加越大。
+///
+/// 身份：
+/// - BaaS 全表要求登录（实测无 Cookie 直接 401），所以读不到 wps_sid 就没有上报通道，只能跳过
+/// - 有凭据但 BaaS auth 取不到用户时，退化为设备维度 uid（anon-xxx），不编造昵称
+/// - 401/403 视为「凭据无权限」，退避一段时间再试，避免每 5 分钟撞一次
 final class ActivityReporter {
     static let shared = ActivityReporter()
 
@@ -27,6 +32,13 @@ final class ActivityReporter {
         case launch
         case hover
         case click
+    }
+
+    /// 单次上报结果。401/403 是「这个凭据没权限」，重试不会变好，要退避
+    private enum SendResult {
+        case ok
+        case authFailed
+        case failed
     }
 
     /// 一天的活跃事实累计
@@ -47,12 +59,16 @@ final class ActivityReporter {
     private var pending: [Bucket] = []
     private var lastAttempt = Date.distantPast
     private var flushing = false
+    /// 鉴权失败后的静默期截止时刻（只存内存：重启后允许再试一次）
+    private var authFailedUntil = Date.distantPast
 
     private static let bucketKey = "notch.activity.bucket"
     private static let pendingKey = "notch.activity.pending"
     private static let deviceIdKey = "notch.activity.deviceId"
     /// 失败后的重试间隔：一天只有一两次请求，失败就尽快补，不必等下一个节拍
     private static let retryInterval: TimeInterval = 300
+    /// 鉴权失败（401/403）后的静默期：重试同一个凭据不会变好，等 Comate 刷新登录态或换账号
+    private static let authBackoff: TimeInterval = 6 * 3600
     /// 单次上报超时
     private static let requestTimeout: TimeInterval = 15
 
@@ -99,8 +115,10 @@ final class ActivityReporter {
         let hasPending = !pending.isEmpty
         let retryDue = Date().timeIntervalSince(lastAttempt) >= Self.retryInterval
         let busy = flushing
+        let authBlocked = Date() < authFailedUntil
         lock.unlock()
         guard !busy else { return }
+        guard !authBlocked else { return }
         guard rolled || hasPending else { return }
         guard retryDue else { return }
         flush()
@@ -131,22 +149,32 @@ final class ActivityReporter {
             guard let self = self else { return }
             defer { self.lock.lock(); self.flushing = false; self.lock.unlock() }
             guard let sid = self.credentialProvider?() else {
-                NSLog("[ComateHUD] 活跃上报跳过：无凭据")
-                return
-            }
-            guard let identity = UserIdentity.shared.current(sid: sid) else {
-                NSLog("[ComateHUD] 活跃上报跳过：取不到用户身份")
+                // BaaS 全表要求登录（实测无 Cookie 直接 401），没有凭据就没有任何上报通道
+                NSLog("[ComateHUD] 活跃上报跳过：无凭据（未登录 Comate 桌面端）")
                 return
             }
             let deviceId = Self.deviceId()
+            // 取不到真实身份也要落行：uid 退化为设备维度（anon-<设备指纹前缀>），昵称留空。
+            // 之前这里直接 return，导致「有凭据但 BaaS auth 取不到用户」的装机一条记录都不落。
+            let identity: UserIdentity.Identity
+            if let real = UserIdentity.shared.current(sid: sid) {
+                identity = real
+            } else {
+                identity = UserIdentity.anonymous(deviceId: deviceId)
+                NSLog("[ComateHUD] 取不到用户身份，按设备维度上报: %@", identity.uid)
+            }
             let version = Self.appVersion()
             let osVersion = Self.osVersion()
             let group = DispatchGroup()
             for job in jobs {
                 group.enter()
                 self.send(job, identity: identity, sid: sid, deviceId: deviceId,
-                          version: version, osVersion: osVersion) { ok in
-                    if ok { self.markReported(day: job.day) }
+                          version: version, osVersion: osVersion) { result in
+                    switch result {
+                    case .ok:         self.markReported(day: job.day)
+                    case .authFailed: self.markAuthFailed()
+                    case .failed:     break
+                    }
                     group.leave()
                 }
             }
@@ -186,14 +214,28 @@ final class ActivityReporter {
         NSLog("[ComateHUD] 活跃上报成功: %@", day)
     }
 
+    /// 鉴权失败：静默一段时间再试，避免每 5 分钟撞一次 401
+    private func markAuthFailed() {
+        lock.lock()
+        authFailedUntil = Date().addingTimeInterval(Self.authBackoff)
+        lock.unlock()
+        NSLog("[ComateHUD] 活跃上报被拒（凭据无权限或已过期），静默 %d 小时后重试", Int(Self.authBackoff / 3600))
+    }
+
     // MARK: - 网络
+
+    /// HTTP 状态 → 上报结果。401/403 归为鉴权失败（重试同一个凭据不会变好）
+    private static func result(from status: Int, ok: Bool = false) -> SendResult {
+        if ok { return .ok }
+        if status == 401 || status == 403 { return .authFailed }
+        return .failed
+    }
 
     private func send(_ job: Bucket, identity: UserIdentity.Identity, sid: String,
                       deviceId: String, version: String, osVersion: String,
-                      completion: @escaping (Bool) -> Void) {
-        let row: [String: Any] = [
+                      completion: @escaping (SendResult) -> Void) {
+        var row: [String: Any] = [
             "uid": identity.uid,
-            "user_name": identity.nickname,
             "version": version,
             "active_day": job.day,
             "first_active_at": job.firstActiveAt,
@@ -203,23 +245,25 @@ final class ActivityReporter {
             "device_id": deviceId,
             "os_version": osVersion,
         ]
+        // 兜底身份没有昵称：不写 user_name，避免把设备伪装成人（PATCH 时也不会抹掉已有的名字）
+        if !identity.nickname.isEmpty { row["user_name"] = identity.nickname }
         // 预查：同一 uid + 同一天是否已有行（多设备/重装/当天二次启动都靠它收敛成一行）
         let filter = "filter.uid.eq=\(Self.encode(identity.uid))&filter.active_day.eq=\(Self.encode(job.day))"
         guard let queryURL = URL(string: "\(Self.baseURL)/api/manage/v1/db/rest/\(Self.table)?\(filter)") else {
-            completion(false); return
+            completion(.failed); return
         }
-        request(queryURL, method: "GET", body: nil, sid: sid) { json in
+        request(queryURL, method: "GET", body: nil, sid: sid) { json, status in
             guard let json = json, (json["code"] as? Int) == 0 else {
-                completion(false); return
+                completion(Self.result(from: status)); return
             }
             let rows = ((json["data"] as? [String: Any])?["rows"] as? [[String: Any]]) ?? []
             if rows.isEmpty {
                 // 无行 → 插入
                 guard let url = URL(string: "\(Self.baseURL)/api/manage/v1/db/rest/\(Self.table)") else {
-                    completion(false); return
+                    completion(.failed); return
                 }
-                self.request(url, method: "POST", body: [row], sid: sid) { res in
-                    completion((res?["code"] as? Int) == 0)
+                self.request(url, method: "POST", body: [row], sid: sid) { res, status in
+                    completion(Self.result(from: status, ok: (res?["code"] as? Int) == 0))
                 }
             } else {
                 // 已有行 → 覆盖为当前累计值（幂等：重发同样的值不会越加越大）
@@ -234,17 +278,17 @@ final class ActivityReporter {
                     ],
                 ]
                 guard let url = URL(string: "\(Self.baseURL)/api/manage/v1/db/rest/\(Self.table)") else {
-                    completion(false); return
+                    completion(.failed); return
                 }
-                self.request(url, method: "PATCH", body: body, sid: sid) { res in
-                    completion((res?["code"] as? Int) == 0)
+                self.request(url, method: "PATCH", body: body, sid: sid) { res, status in
+                    completion(Self.result(from: status, ok: (res?["code"] as? Int) == 0))
                 }
             }
         }
     }
 
     private func request(_ url: URL, method: String, body: Any?, sid: String,
-                         completion: @escaping ([String: Any]?) -> Void) {
+                         completion: @escaping ([String: Any]?, Int) -> Void) {
         var req = URLRequest(url: url)
         req.httpMethod = method
         req.timeoutInterval = Self.requestTimeout
@@ -254,19 +298,20 @@ final class ActivityReporter {
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
             req.httpBody = try? JSONSerialization.data(withJSONObject: body)
         }
-        URLSession.shared.dataTask(with: req) { data, _, error in
+        URLSession.shared.dataTask(with: req) { data, response, error in
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             if let error = error {
                 NSLog("[ComateHUD] 活跃上报请求失败: %@", error.localizedDescription)
-                completion(nil); return
+                completion(nil, status); return
             }
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                completion(nil); return
+                completion(nil, status); return
             }
             if (json["code"] as? Int) != 0 {
-                NSLog("[ComateHUD] 活跃上报被拒: %@", String(describing: json["msg"] ?? json))
+                NSLog("[ComateHUD] 活跃上报被拒: HTTP %d %@", status, String(describing: json["msg"] ?? json))
             }
-            completion(json)
+            completion(json, status)
         }.resume()
     }
 

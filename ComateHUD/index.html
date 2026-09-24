@@ -403,7 +403,7 @@
   <div class="container">
     <a href="#" class="brand"><img src="icon.png" alt="Comate HUD" /><strong>Comate HUD</strong></a>
     <div class="nav-links">
-      <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">技术栈</a><a href="#compat">兼容性</a><a href="#versions">更新日志</a><a href="#appstats" id="nav-appstats" hidden>应用统计</a><a href="#powered">能力提供</a><a href="#wishwall">许愿反馈</a>
+      <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">技术栈</a><a href="#compat">兼容性</a><a href="#versions">更新日志</a><a href="#appstats" id="nav-appstats">应用统计</a><a href="#powered">能力提供</a><a href="#wishwall">许愿反馈</a>
       <a href="#download" class="btn-sm">下载</a>
       <span id="pv-display" style="font-size:12px;color:var(--text-dim);margin-left:8px;white-space:nowrap;font-variant-numeric:tabular-nums;">-</span>
     </div>
@@ -636,9 +636,9 @@
     </div>
   </div>
 </section>
-<section class="appstats-section" id="appstats" hidden>
+<section class="appstats-section" id="appstats">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">应用统计</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">谁在用 Comate HUD</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">安装设备每天上报一次活跃，按用户去重统计。此区块仅你可见。</p></div>
+    <div class="reveal" style="text-align:center;"><div class="section-label">应用统计</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">谁在用 Comate HUD</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">安装设备每天上报一次活跃，按用户去重统计。</p></div>
     <div class="appstats-kpi reveal" id="appstats-kpi"></div>
     <div class="appstats-block reveal">
       <div class="appstats-block-title">近 30 日活跃用户趋势</div>
@@ -648,7 +648,7 @@
       <div class="appstats-block-title">版本分布（近 30 日活跃用户）</div>
       <div class="appstats-versions" id="appstats-versions"></div>
     </div>
-    <div class="appstats-block reveal">
+    <div class="appstats-block reveal" id="appstats-today-block" hidden>
       <div class="appstats-block-title">今日活跃明细</div>
       <div class="stats-scroll" id="appstats-today"></div>
     </div>
@@ -855,7 +855,8 @@ import { createClient } from './vendor/appbase.js';
 const PROJECT_ID = '3171466180955374';
 const WISH_TABLE = 'wish_feedback';
 const DL_TABLE = 'download_counter';
-// owner 白名单：命中才显示回复/删除入口（仅防误操作，非安全边界）
+// owner 身份：线上认平台注入的 uid，本地开发读不到再回退到名字白名单（仅防误操作，非安全边界）
+const OWNER_UID = '1388246874';
 const OWNER_NAMES = ['李柯陆'];
 const appbase = createClient({ projectId: PROJECT_ID });
 
@@ -863,10 +864,24 @@ let wishRows = [];
 
 function wishEl(id) { return document.getElementById(id); }
 
+// 平台注入的真实身份 uid；未登录或本地开发读不到时返回空串
+function platformUid() {
+  try {
+    var wm = window.__APP_STUDIO_WM__;
+    if (wm && wm.uid) return String(wm.uid);
+  } catch (e) {}
+  return '';
+}
+
 function ownerName() {
   try { return localStorage.getItem('comate-hud-who') || ''; } catch (e) { return ''; }
 }
-function isOwner() { return OWNER_NAMES.indexOf(ownerName()) >= 0; }
+// 只认名字会漏判：线上 owner 在许愿墙手填的昵称与白名单不一致（或从没填过）就拿不到回复/删除入口。
+// 所以 uid 优先，名字只作本地开发回退。
+function isOwner() {
+  if (platformUid() === OWNER_UID) return true;
+  return OWNER_NAMES.indexOf(ownerName()) >= 0;
+}
 
 // 把 SDK 的错误信息压成一行短文本（后端 404/500 会返回整页 HTML）
 function errText(error) {
@@ -1091,24 +1106,14 @@ loadDownloadCount();
   });
 })();
 
-// ---- 应用统计（owner-only）----
+// ---- 应用统计 ----
 // 数据来自 app_activity：每用户每天一行（服务端按 uid+active_day 去重），这里按 uid 聚合。
+// 聚合指标（KPI / 趋势 / 版本分布）对访客公开；今日明细含用户名与设备标识，仅 owner 可见。
 const ACT_TABLE = 'app_activity';
-const OWNER_UID = '1388246874';
 // 建表种子行与早期契约测试行，不参与统计
 const ACT_IGNORE_DEVICES = ['seed-row', 'curl-contract-test'];
 
 function actEl(id) { return document.getElementById(id); }
-
-// 线上页由平台注入真实身份；本地开发读不到，回退到许愿墙那套名字白名单
-function isStatsOwner() {
-  var uid = '';
-  try {
-    var wm = window.__APP_STUDIO_WM__;
-    if (wm && wm.uid) uid = String(wm.uid);
-  } catch (e) {}
-  return uid === OWNER_UID || isOwner();
-}
 
 // 活跃日口径与客户端一致：Asia/Shanghai 的 yyyyMMdd
 function dayKey(offsetDays) {
@@ -1239,14 +1244,14 @@ function renderStatsToday(rows) {
   host.innerHTML = '<table class="compat-table stats-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
 }
 
-function statsLoading() {
+function statsLoading(owner) {
   var kpi = actEl('appstats-kpi');
   if (kpi) kpi.innerHTML = [0, 1, 2, 3].map(function () {
     return '<div class="appstats-card is-skeleton"><div class="sk-line sk-w1"></div><div class="sk-line sk-w2"></div><div class="sk-line sk-w3"></div></div>';
   }).join('');
   renderStatsTrend([]);
   var v = actEl('appstats-versions'); if (v) v.innerHTML = '';
-  var t = actEl('appstats-today'); if (t) t.innerHTML = '<div class="appstats-empty">加载中…</div>';
+  if (owner) { var t = actEl('appstats-today'); if (t) t.innerHTML = '<div class="appstats-empty">加载中…</div>'; }
   var h = actEl('appstats-hint'); if (h) h.textContent = '';
 }
 
@@ -1254,6 +1259,11 @@ function statsError() {
   var hint = actEl('appstats-hint');
   if (!hint) return;
   hint.innerHTML = '';
+  // 未登录访客的请求必然 401：给一句可执行的说明，不给无用的「重试」
+  if (!platformUid()) {
+    hint.appendChild(document.createTextNode('登录 WPS 账号后刷新页面即可查看应用统计'));
+    return;
+  }
   hint.appendChild(document.createTextNode('活跃数据加载失败'));
   var btn = document.createElement('button');
   btn.type = 'button';
@@ -1271,20 +1281,26 @@ function revealScan() {
 }
 
 async function loadActivity() {
-  if (!isStatsOwner()) return;  // 非 owner：零痕迹，不发请求、不动 DOM
+  var owner = isOwner();
   var section = actEl('appstats');
   var nav = actEl('nav-appstats');
+  // 区块本身公开：聚合指标人人可看，明细块只对 owner 解隐
   if (section) section.removeAttribute('hidden');
   if (nav) nav.removeAttribute('hidden');
+  var detail = actEl('appstats-today-block');
+  if (detail) {
+    if (owner) detail.removeAttribute('hidden');
+    else detail.setAttribute('hidden', '');
+  }
   revealScan();
-  statsLoading();
+  statsLoading(owner);
   var res = await appbase.from(ACT_TABLE).select();
   if (res.error) { statsError(); return; }
   var rows = actRows(res.data && res.data.rows);
   renderStatsKpi(rows);
   renderStatsTrend(rows);
   renderStatsVersions(rows);
-  renderStatsToday(rows);
+  if (owner) renderStatsToday(rows);
   var hint = actEl('appstats-hint');
   if (hint) hint.textContent = '';
 }

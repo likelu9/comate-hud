@@ -8,13 +8,24 @@ import Foundation
 ///
 /// 为什么不用本地来源：Comate 客户端本地的 ksoaccount/default.ini 只有明文 userId，
 /// 用户名是 @ByteArray 加密串；Comate 的本地库/接口都没有用户信息端点。
-/// 所以以 BaaS auth 接口为准 —— 取不到就不上报（宁缺勿假，避免把别人的名字记到某个 uid 上）。
+/// 所以以 BaaS auth 接口为准 —— 取不到昵称不编造，但不再整条放弃：
+/// 调用方可以用 anonymous(deviceId:) 退化成设备维度身份，保证「装了就有一条活跃记录」。
 final class UserIdentity {
     static let shared = UserIdentity()
 
     struct Identity {
         let uid: String
         let nickname: String
+        /// 兜底身份（BaaS auth 取不到用户时用），昵称为空
+        let isAnonymous: Bool
+    }
+
+    /// 取不到真实身份时的兜底：用设备标识派生一个稳定 uid。
+    /// 为什么不编个名字：官网明细按 uid 去重，伪造昵称等于把设备伪装成人；昵称留空更诚实。
+    /// uid 长度受 app_activity.uid(32) 约束："anon-" + 20 位十六进制 = 25。
+    static func anonymous(deviceId: String) -> Identity {
+        let compact = deviceId.replacingOccurrences(of: "-", with: "").lowercased()
+        return Identity(uid: "anon-" + String(compact.prefix(20)), nickname: "", isAnonymous: true)
     }
 
     private static let baseURL = "https://o.wpsgo.com/app/app-base"
@@ -61,7 +72,7 @@ final class UserIdentity {
             else if let n = obj["user_id"] as? NSNumber { uid = n.stringValue }
             else { uid = nil }
             guard let id = uid, !id.isEmpty else { return }
-            result = Identity(uid: id, nickname: (obj["nickname"] as? String) ?? "")
+            result = Identity(uid: id, nickname: (obj["nickname"] as? String) ?? "", isAnonymous: false)
         }.resume()
         _ = sem.wait(timeout: .now() + Self.timeout + 1)
         if result == nil {
