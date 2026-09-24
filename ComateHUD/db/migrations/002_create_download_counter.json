@@ -1,0 +1,37 @@
+{
+  "version": "002_create_download_counter",
+  "description": "创建下载点击计数表：单行累计全局下载点击次数，所有访客可读、可累加",
+  "operations": [
+    {
+      "type": "schema",
+      "action": "create_table",
+      "table": "download_counter",
+      "params": {
+        "columns": [
+          { "name": "click_count", "type": "number" },
+          { "name": "note", "type": "text", "length": 128 }
+        ]
+      },
+      "access": {
+        "pattern": "custom",
+        "default_role": "member",
+        "rules": {
+          "create": { "effect": "allow" },
+          "read": { "effect": "allow" },
+          "update": { "effect": "allow" },
+          "delete": { "effect": "allow" }
+        }
+      }
+    },
+    {
+      "type": "data",
+      "action": "insert",
+      "table": "download_counter",
+      "params": {
+        "rows": [
+          { "click_count": 0, "note": "下载按钮点击累计（单行）" }
+        ]
+      }
+    }
+  ]
+}

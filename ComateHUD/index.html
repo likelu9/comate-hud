@@ -310,7 +310,7 @@
     <div class="nav-links">
       <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">技术栈</a><a href="#compat">兼容性</a><a href="#versions">更新日志</a><a href="#powered">能力提供</a><a href="#wishwall">许愿反馈</a>
       <a href="#download" class="btn-sm">下载</a>
-      <span id="pv-display" style="font-size:12px;color:var(--text-dim);margin-left:8px;">-</span>
+      <span id="pv-display" style="font-size:12px;color:var(--text-dim);margin-left:8px;white-space:nowrap;font-variant-numeric:tabular-nums;">-</span>
     </div>
   </div>
 </nav>
@@ -602,14 +602,6 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
     document.querySelectorAll('.reveal:not(.visible)').forEach(function(el){o2.observe(el)});
   }).catch(function(e){console.warn('Failed to load versions.json:',e)});
 })();
-// PV Counter (localStorage based)
-(function(){
-  var pv = parseInt(localStorage.getItem('comate-hud-pv') || '0', 10);
-  pv++;
-  localStorage.setItem('comate-hud-pv', pv);
-  var el = document.getElementById('pv-display');
-  if(el) el.textContent = '🔥 已有 ' + pv + ' 人体验';
-})();
 
 // HUD 面板演示：循环播放一次任务生命周期（工作中 → 等待确认 → 已完成 → 收起）
 (function(){
@@ -688,6 +680,7 @@ import { createClient } from './vendor/appbase.js';
 
 const PROJECT_ID = '3171466180955374';
 const WISH_TABLE = 'wish_feedback';
+const DL_TABLE = 'download_counter';
 // owner 白名单：命中才显示回复/删除入口（仅防误操作，非安全边界）
 const OWNER_NAMES = ['李柯陆'];
 const appbase = createClient({ projectId: PROJECT_ID });
@@ -835,6 +828,65 @@ window.addEventListener('resize', function () {
 
 loadWishes();
 setInterval(loadWishes, 30000);
+
+// ---- 下载点击计数（BaaS 全局累计，单行读写）----
+const dlEl = document.getElementById('pv-display');
+if (dlEl) dlEl.innerHTML = '🔥 已下载 <span class="dl-num">0</span> 次';
+const dlNum = dlEl ? dlEl.querySelector('.dl-num') : null;
+let dlCount = 0;
+
+// 数字滚动：从 from 递增到 to。数值越大时长封顶、单位速度越快，避免大数滚太久
+function rollNumber(from, to) {
+  if (!dlNum) return;
+  const delta = Math.abs(to - from);
+  const dur = delta <= 5 ? 450 : 600 + Math.min(1400, delta * 5);
+  const t0 = performance.now();
+  function frame(t) {
+    const p = Math.min(1, (t - t0) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);
+    dlNum.textContent = String(Math.round(from + (to - from) * eased));
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function dlFirstRow(data) {
+  return (data && data.rows && data.rows.length) ? data.rows[0] : null;
+}
+
+async function loadDownloadCount() {
+  const { data, error } = await appbase.from(DL_TABLE).select();
+  if (error) return;
+  const row = dlFirstRow(data);
+  if (!row) return;
+  dlCount = Number(row.click_count) || 0;
+  rollNumber(0, dlCount);
+}
+
+// 读当前值 → +1 写回。访客量级下并发丢更新的概率可忽略
+async function bumpDownloadCount() {
+  const { data, error } = await appbase.from(DL_TABLE).select();
+  if (error) return;
+  const row = dlFirstRow(data);
+  if (!row) return;
+  const next = (Number(row.click_count) || 0) + 1;
+  const { error: writeError } = await appbase.from(DL_TABLE).update({ click_count: next }).eq('_id', row._id);
+  if (writeError) return;
+  rollNumber(dlCount, next);
+  dlCount = next;
+}
+
+// 只有按钮真指向安装包时才计数（无版本可下时按钮会退化成锚点）
+const dlButton = document.getElementById('dl-btn');
+if (dlButton) {
+  dlButton.addEventListener('click', function () {
+    let real = false;
+    try { real = /\.dmg$/i.test(new URL(dlButton.href, location.href).pathname); } catch (e) {}
+    if (real) bumpDownloadCount();
+  });
+}
+
+loadDownloadCount();
 </script>
 </body>
 </html>
