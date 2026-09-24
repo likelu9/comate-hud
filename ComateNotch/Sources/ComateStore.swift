@@ -442,7 +442,14 @@ final class ComateStore: ObservableObject {
     }
 
     /// 页脚点击切换：在日/月之间来回切
+    /// 活跃上报用的凭据。复用 wpsSid 的 keychain 缓存与串行锁，避免上报路径再 fork 一次 security。
+    /// 必须在后台队列调用（读 keychain 会 fork security，首次可能弹授权框）。
+    func sidForActivityReport() -> String? {
+        wpsSid()
+    }
+
     func toggleUsagePeriod() {
+        ActivityReporter.shared.record(.click)
         setUsagePeriod(usagePeriod == .daily ? .monthly : .daily)
     }
 
@@ -505,12 +512,18 @@ final class ComateStore: ObservableObject {
     }
 
     func start() {
+        // 每日活跃上报：注入凭据来源（复用 keychain 缓存），记一次启动，并补报上次没发出去的桶
+        ActivityReporter.shared.credentialProvider = { [weak self] in self?.sidForActivityReport() }
+        ActivityReporter.shared.record(.launch)
+        ActivityReporter.shared.flush()
         refresh()
         refreshCloudUnread()
         refreshCloudTasks()
         timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             guard let self = self, !self.isPaused else { return }
             self.refresh()
+            // 跨天后的第一个节拍上报昨天的活跃桶（纯内存判断，只有真要发时才走网络）
+            ActivityReporter.shared.tick()
         }
         // 云端数据刷新频率较低（30秒），避免频繁请求；动画期间同样暂停，避免重绘竞争
         cloudTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
@@ -817,6 +830,7 @@ final class ComateStore: ObservableObject {
     func setPanelExpanded(_ expanded: Bool) {
         guard panelExpanded != expanded else { return }
         panelExpanded = expanded
+        if expanded { ActivityReporter.shared.record(.hover) }
         scheduleUsageTimer()
         if expanded { refreshUsage(trigger: .expand) }
     }
@@ -945,6 +959,7 @@ final class ComateStore: ObservableObject {
     /// 云端任务：wpscomate://chat.comate/cloud?id=<id>
     /// 本地任务：wpscomate://chat.comate/local?id=<db_id>（db_id 含 account_id 前缀，如 1388246874-<uuid>）
     func openSession(_ task: ComateTask) {
+        ActivityReporter.shared.record(.click)
         let urlString: String
         if task.isCloud {
             urlString = "wpscomate://chat.comate/cloud?id=\(task.id)"
@@ -967,6 +982,7 @@ final class ComateStore: ObservableObject {
 
     /// 打开 Comate 新建本地任务页面
     func openNewTask() {
+        ActivityReporter.shared.record(.click)
         if let url = URL(string: "wpscomate://chat.comate/new") {
             NSWorkspace.shared.open(url)
         }
@@ -975,6 +991,7 @@ final class ComateStore: ObservableObject {
     /// 打开 Comate 客户端消息中心：激活 Comate，通过 AX 定位左下角铃铛坐标，用 CGEvent 真实点击。
     /// 异步执行，带 loading 状态（isOpeningMessageCenter）和超时保护。
     func openMessageCenter() {
+        ActivityReporter.shared.record(.click)
         guard !isOpeningMessageCenter else { return }
         isOpeningMessageCenter = true
         // 2.5 秒后自动关闭 loading（兜底，防止脚本卡住）

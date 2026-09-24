@@ -30,6 +30,8 @@ SOURCES=(
     "$SRC/NotchRootView.swift"
     "$SRC/HUDShared.swift"
     "$SRC/FloatingPanel.swift"
+    "$SRC/ActivityReporter.swift"
+    "$SRC/UserIdentity.swift"
 )
 
 # 确定是否能编译双架构

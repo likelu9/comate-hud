@@ -1,6 +1,6 @@
 {
   "version": "003_create_app_activity",
-  "description": "创建应用活跃表：每用户每天一行（活跃日期、用户名+uid、版本号、设备标识、启动/hover/点击计数）。成员可创建、可读、可更新自己的行；删除仅限管理员，防止误删统计",
+  "description": "创建应用活跃表：每用户每天一行（活跃日期、用户名+uid、版本号、设备标识、启动/hover/点击计数）。所有成员可创建、可读、可更新（保证任意装机用户都能完成活跃上报）；删除一律禁止，防误删统计",
   "operations": [
     {
       "type": "schema",
@@ -26,7 +26,7 @@
         "rules": {
           "create": { "effect": "allow" },
           "read": { "effect": "allow" },
-          "update": { "effect": "allow", "condition": "create_id=$USER" },
+          "update": { "effect": "allow" },
           "delete": { "effect": "deny" }
         }
       }

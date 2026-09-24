@@ -65,7 +65,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onResizeEnd: { [weak panel] h in
                 panel?.setExpandedHeightImmediate(h)
             },
-            onShowMenu: { [weak container] in container?.showMenu() }
+            onShowMenu: { [weak container] in
+                ActivityReporter.shared.record(.click)
+                container?.showMenu()
+            }
         )
         // hostingView 固定为展开态尺寸并吸顶，不随窗口高度动画改变尺寸。
         // 否则 NSHostingView 每次窗口 resize 都要重排，且窗口变矮时内容会被
@@ -86,6 +89,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         if let obs = screenObserver { NotificationCenter.default.removeObserver(obs) }
+        // 退出前把当天的活跃桶发出去（最多等 3 秒）。发不出去也不丢：
+        // 桶已落盘，下次启动会补报。
+        ActivityReporter.shared.flushSync()
         store.stop()
     }
 
