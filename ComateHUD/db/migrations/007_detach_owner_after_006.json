@@ -1,0 +1,15 @@
+{
+  "version": "007_detach_owner_after_006",
+  "description": "006 对 wish_feedback / download_counter 调 define_table_roles 时，平台把 default_role=user 重新 materialize 到已有用户身上，owner 因此又拿回 user 角色（005 已摘过一次）。而 app_activity 的 user 角色带 visible_fields 白名单，FLS 是「受限优先」→ owner 读 app_activity 时 user_name / device_id 被藏，官网「今日明细」丢失姓名与设备列。实测确认后重新摘除。结论：define_table_roles 的 materialize 是**项目级**的，改任何一张表的 default_role=user 都会把 owner 挂上 user 角色，进而触发该项目内所有给 user 设了 FLS 的表的字段限制 —— 以后再执行 define_table_roles，必须跟一次 remove_role。",
+  "operations": [
+    {
+      "type": "auth",
+      "action": "remove_role",
+      "table": "app_activity",
+      "data": {
+        "user": "1388246874",
+        "role": "user"
+      }
+    }
+  ]
+}

@@ -34,7 +34,7 @@ ComateNotch/
 - `index.html` — 单文件站点（内联 CSS/JS），无框架、无构建、无 CDN
 - `vendor/appbase.js` — App Studio BaaS SDK（`createClient({ projectId })`）
 - `versions.json` — 版本清单唯一来源，驱动下载按钮、更新日志与版本卡片
-- `db/migrations/NNN_*.json` — 表结构：001 许愿 / 002 下载计数 / 003 活跃统计 / 004 活跃表对全体登录用户开放（含 `user` 角色字段白名单）/ 005 把 owner 从 `user` 角色摘出
+- `db/migrations/NNN_*.json` — 表结构：001 许愿 / 002 下载计数 / 003 活跃统计 / 004 活跃表对全体登录用户开放（含 `user` 角色字段白名单）/ 005 把 owner 从 `user` 角色摘出 / 006 许愿表与下载计数表对全体登录用户开放 / 007 006 后重新摘除 owner
 - `docs/designs/` — DESIGN.md 与参考图
 
 ### 数据流
@@ -46,4 +46,7 @@ ComateNotch/
 - 官网 BaaS 属项目 `3171466180955374`；workspace 根项目是 `3599569812562023`，两者不可混用
 - `app_activity`：`default_role: user`（任意已登录 WPS 用户，不限项目成员），`member` = 项目成员。两个角色都 create / read / update allow，delete 一律 deny（含 owner，刻意为之）
 - `user` 角色带字段白名单（`visible_fields`）：只放行聚合所需字段，藏 `user_name` / `device_id`。`member` 无 FLS，owner 看全量
-- ⚠️ 平台的 FLS 是「受限优先」：owner 只要还持有 `user` 角色就会被一起限掉，所以 005 必须把 owner 从 `user` 摘出（`remove_role`）
+- `wish_feedback`：`default_role: user`。`user`（任意登录用户）只 create / read —— 提交与浏览；update（作者回复）/ delete 仍限 `member`，否则任何登录用户都能改写他人许愿或伪造作者回复
+- `download_counter`：`default_role: user`。`user` 为 create / read / update（累加计数必须 update），delete 仍限 `member`
+- 这两张表**不设** `visible_fields`：字段本身就是公开内容。但 `define_table_roles` 的 materialize 是**项目级**的 —— 改任何表的 `default_role=user` 都会把 owner 挂上 `user` 角色，进而触发 `app_activity` 的字段白名单（005、007 就是为此把 owner 摘出）。改完必须实测 `app_activity.device_id` 读得回来
+- ⚠️ 平台的 FLS 是「受限优先」：owner 只要还持有 `user` 角色就会被一起限掉，所以 005 必须把 owner 从 `user` 摘出（`remove_role`）。给某表新加 `visible_fields` 时，要一并检查 owner 是否也挂在该角色上

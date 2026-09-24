@@ -1,0 +1,55 @@
+{
+  "version": "006_open_wish_and_download_to_all_users",
+  "description": "把 wish_feedback 与 download_counter 的 default_role 从 member 改为 user：任意已登录 WPS 用户（不限项目成员）都能提交许愿、累加下载计数。wish_feedback 的 user 角色只给 create/read —— update（作者回复）/ delete 仍限 member(owner)，否则任何登录用户都能改写他人许愿或伪造作者回复。download_counter 的 user 角色给 create/read/update（累加计数需要 update），delete 仍限 member。两张表的字段本身就是公开内容，不设字段级权限；无 FLS 时 define_table_roles 把 default_role materialize 到 owner 身上不产生副作用，因此不需要像 migration 005 那样 remove_role。注意 define_table_roles 是追加模式，不会清除既有规则。",
+  "operations": [
+    {
+      "type": "role_config",
+      "action": "define_table_roles",
+      "table": "wish_feedback",
+      "data": {
+        "default_role": "user",
+        "roles": {
+          "user": {
+            "permissions": [
+              { "action": "create", "effect": "allow" },
+              { "action": "read", "effect": "allow" }
+            ]
+          },
+          "member": {
+            "permissions": [
+              { "action": "create", "effect": "allow" },
+              { "action": "read", "effect": "allow" },
+              { "action": "update", "effect": "allow" },
+              { "action": "delete", "effect": "allow" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "role_config",
+      "action": "define_table_roles",
+      "table": "download_counter",
+      "data": {
+        "default_role": "user",
+        "roles": {
+          "user": {
+            "permissions": [
+              { "action": "create", "effect": "allow" },
+              { "action": "read", "effect": "allow" },
+              { "action": "update", "effect": "allow" }
+            ]
+          },
+          "member": {
+            "permissions": [
+              { "action": "create", "effect": "allow" },
+              { "action": "read", "effect": "allow" },
+              { "action": "update", "effect": "allow" },
+              { "action": "delete", "effect": "allow" }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
