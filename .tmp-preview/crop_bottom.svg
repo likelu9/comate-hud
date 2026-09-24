@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="700" viewBox="0 960 1080 700" role="img" aria-label="Comate HUD 下载区块设计示意图：默认态、安装说明气泡展开态、移动端就地展开态">
+<title>Comate HUD 下载区块设计示意图</title>
+<desc>三种状态：桌面默认态、MAC 安装说明气泡展开态、移动端 375px 点击就地展开态。所有颜色取自 index.html :root 既有 token。</desc>
+<defs><linearGradient id="fadeR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0a0a0f" stop-opacity="0"/><stop offset="1" stop-color="#0a0a0f" stop-opacity="1"/></linearGradient><radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#00d4aa" stop-opacity="0.25"/><stop offset="1" stop-color="#00d4aa" stop-opacity="0"/></radialGradient></defs>
+<rect x="0" y="0" width="1080" height="1660" fill="#0a0a0f"/>
+<circle cx="540" cy="300" r="360" fill="url(#glow)"/>
+<text x="540" y="54" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="20" font-weight="700" fill="#f5f5f7">Comate HUD · 下载区块设计示意图</text>
+<text x="540" y="78" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11.5" fill="#55555d">唯一 accent 填充元素 = MAC 主按钮　·　版本号 / 发布日期 / 体积全部由 versions.json 运行时注入　·　零外部资源，图标为手写内联 SVG</text>
+<text x="40" y="116" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="13" font-weight="600" fill="#00d4aa">① 默认态（桌面 ≥769px）</text>
+<rect x="40" y="132" width="1000" height="300" rx="16" fill="#0a0a0f" stroke="#ffffff0f" stroke-width="1"/>
+<text x="410.0" y="206" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="17" font-weight="700" fill="#f5f5f7">Comate HUD</text>
+<rect x="516.0" y="190.0" width="62.0" height="22.0" rx="11.0" fill="#ffffff0f" stroke="#ffffff1a" stroke-width="1"/>
+<text x="547.0" y="205.0" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="12.0" font-weight="600" fill="#f5f5f7">v1.4.0</text>
+<text x="588.0" y="206" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.0" fill="#55555d">· 2026-09-24</text>
+<rect x="227.0" y="232" width="190" height="50" rx="14" fill="#00d4aa"/>
+<g transform="translate(259.0,247) scale(0.8333333333333334)"><path fill="#0a0a0f" d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></g>
+<text x="289.0" y="262" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="600" fill="#0a0a0f">下载 macOS 版</text>
+<rect x="429.0" y="235.0" width="44" height="44" rx="12" fill="#ffffff0f" stroke="#ffffff1a" stroke-width="1"/>
+<g transform="translate(441.0,247.0) scale(0.8333333333333334)" fill="none" stroke="#8e8e93" stroke-width="2.04" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2"/></g>
+<circle cx="451.0" cy="253.58" r="0.8799999999999999" fill="#8e8e93"/>
+<rect x="485.0" y="232" width="224" height="50" rx="14" fill="#ffffff08" stroke="#ffffff29" stroke-width="1" stroke-dasharray="5 4"/>
+<g transform="translate(515.0,248) scale(0.75)"><path fill="#8e8e93" d="M2.6 4.9 10.4 3.7v7.6H2.6zM11.6 3.5 21.4 2.1v9.2h-9.8zM2.6 12.7h7.8v7.6L2.6 19.1zM11.6 12.7h9.8v9.2l-9.8-1.4z"/></g>
+<text x="545.0" y="262" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="500" fill="#8e8e93">Windows 版</text>
+<rect x="597.0" y="246" width="84" height="22" rx="11.0" fill="#ffffff0f" stroke="#ffffff1a" stroke-width="1"/>
+<text x="639.0" y="261.0" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11" font-weight="600" fill="#55555d">敬请期待</text>
+<rect x="721.0" y="232" width="132" height="50" rx="14" fill="#ffffff0f" stroke="#ffffff1a" stroke-width="1"/>
+<g transform="translate(753.0,248) scale(1.125)"><path fill="#f5f5f7" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></g>
+<text x="783.0" y="262" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="500" fill="#f5f5f7">GitHub</text>
+<g transform="translate(309.0,302.0) scale(0.5833333333333334)" fill="none" stroke="#55555d" stroke-width="2.742857142857143" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5l9 4.5 9-4.5M12 12v9"/></g>
+<text x="329.0" y="320" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" fill="#55555d">1.8 MB DMG</text>
+<g transform="translate(444.0,309) scale(0.5833333333333334)"><path fill="#55555d" d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></g>
+<text x="457.0" y="320" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" fill="#55555d">macOS 12.0+</text>
+<g transform="translate(591.0,302.0) scale(0.5833333333333334)" fill="none" stroke="#55555d" stroke-width="2.742857142857143" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.2"/><path d="M10 7V4.2M14 7V4.2M10 20v-2.8M14 20v-2.8M7 10H4.2M7 14H4.2M20 10h-2.8M20 14h-2.8"/></g>
+<text x="611.0" y="320" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" fill="#55555d">Apple Silicon &amp; Intel</text>
+<text x="540" y="366" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11.5" fill="#55555d">应用名 + 版本胶囊 + 日期 = 公共信息行（版本 / 日期由 JS 注入）</text>
+<text x="540" y="388" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11.5" fill="#55555d">按钮内不再出现版本与体积　·　体积与系统要求合并成按钮之外的一行元信息</text>
+<text x="540" y="410" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11.5" fill="#55555d">层级：MAC = accent 实心 + glow ｜ GitHub = 白面 hairline ｜ WIN = 虚线 hairline + 无 glow + cursor:not-allowed ｜ 说明 = ghost 图标</text>
+<text x="40" y="500" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="13" font-weight="600" fill="#00d4aa">② MAC 安装说明 · hover / focus 气泡展开态（桌面）</text>
+<rect x="40" y="516" width="1000" height="470" rx="16" fill="#0a0a0f" stroke="#ffffff0f" stroke-width="1"/>
+<rect x="227.0" y="546" width="190" height="50" rx="14" fill="#00d4aa"/>
+<g transform="translate(259.0,561) scale(0.8333333333333334)"><path fill="#0a0a0f" d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></g>
+<text x="289.0" y="576" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="600" fill="#0a0a0f">下载 macOS 版</text>
+<rect x="429.0" y="549.0" width="44" height="44" rx="12" fill="#00d4aa14" stroke="#00d4aa59" stroke-width="1"/>
+<g transform="translate(441.0,561.0) scale(0.8333333333333334)" fill="none" stroke="#00d4aa" stroke-width="2.04" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2"/></g>
+<circle cx="451.0" cy="567.58" r="0.8799999999999999" fill="#00d4aa"/>
+<rect x="485.0" y="546" width="224" height="50" rx="14" fill="#ffffff08" stroke="#ffffff29" stroke-width="1" stroke-dasharray="5 4"/>
+<g transform="translate(515.0,562) scale(0.75)"><path fill="#8e8e93" d="M2.6 4.9 10.4 3.7v7.6H2.6zM11.6 3.5 21.4 2.1v9.2h-9.8zM2.6 12.7h7.8v7.6L2.6 19.1zM11.6 12.7h9.8v9.2l-9.8-1.4z"/></g>
+<text x="545.0" y="576" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="500" fill="#8e8e93">Windows 版</text>
+<rect x="597.0" y="560" width="84" height="22" rx="11.0" fill="#ffffff0f" stroke="#ffffff1a" stroke-width="1"/>
+<text x="639.0" y="575.0" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11" font-weight="600" fill="#55555d">敬请期待</text>
+<rect x="721.0" y="546" width="132" height="50" rx="14" fill="#ffffff0f" stroke="#ffffff1a" stroke-width="1"/>
+<g transform="translate(753.0,562) scale(1.125)"><path fill="#f5f5f7" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></g>
+<text x="783.0" y="576" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="500" fill="#f5f5f7">GitHub</text>
+<rect x="231" y="610" width="440" height="253" rx="16" fill="#111118" stroke="#ffffff1a" stroke-width="1"/>
+<path d="M446 610 L451 604 L456 610 Z" fill="#111118" stroke="#ffffff1a" stroke-width="1"/>
+<text x="251" y="643" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" font-weight="600" fill="#00d4aa">【安装】</text>
+<text x="304" y="643" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">把左侧的 Comate HUD.app 拖到 Applications</text>
+<text x="251" y="665" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">文件夹即可。</text>
+<text x="251" y="687" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" font-weight="600" fill="#00d4aa">【首次打开】</text>
+<text x="330" y="687" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">本应用未使用 Apple 付费开发者证书签名，macOS</text>
+<text x="251" y="709" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">会拦截首次启动。任选一种方式放行：</text>
+<text x="251" y="739" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">方式一：右键点击 Comate HUD.app → 选择「打开」→</text>
+<text x="251" y="761" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">在弹窗中再点「打开」</text>
+<text x="251" y="791" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">方式二：打开「终端」，执行下面这行命令：</text>
+<rect x="251" y="799" width="400" height="38" rx="10" fill="#00000066" stroke="#ffffff14" stroke-width="1"/>
+<text x="263" y="823" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace" font-size="11" fill="#00d4aa">xattr -dr com.apple.quarantine /Applications/ComateHUD.app</text>
+<rect x="625" y="800" width="25" height="36" rx="10" fill="url(#fadeR)"/>
+<text x="627" y="823" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11" fill="#55555d">⇄</text>
+<text x="251" y="857" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">然后双击启动</text>
+<text x="540" y="908" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11.5" fill="#55555d">气泡 440px 水平居中于触发点，容器内左右各余 245px+ 不溢出；z-index:40 不被 hero 与下方区块裁剪</text>
+<text x="540" y="930" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11.5" fill="#55555d">命令块：等宽字体 + 深色底 + accent 文字，始终一整行（内部横向滚动），可整段选中复制</text>
+<text x="540" y="952" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11.5" fill="#55555d">打开路径：:hover ｜ :focus-within（键盘）｜ .is-open（点击，移动端主路径）　·　Esc 关闭并归还焦点</text>
+<text x="40" y="1030" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="13" font-weight="600" fill="#00d4aa">③ 移动端 375px（无 hover · 点击就地展开）</text>
+<rect x="40" y="1046" width="375" height="570" rx="16" fill="#0a0a0f" stroke="#ffffff0f" stroke-width="1"/>
+<text x="110.5" y="1102" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="700" fill="#f5f5f7">Comate HUD</text>
+<rect x="205.9" y="1087.6" width="55.800000000000004" height="19.8" rx="9.9" fill="#ffffff0f" stroke="#ffffff1a" stroke-width="1"/>
+<text x="233.8" y="1101.5" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="10.8" font-weight="600" fill="#f5f5f7">v1.4.0</text>
+<text x="270.7" y="1102" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="10.8" fill="#55555d">· 2026-09-24</text>
+<rect x="83.5" y="1112" width="174" height="50" rx="14" fill="#00d4aa"/>
+<g transform="translate(115.5,1127) scale(0.8333333333333334)"><path fill="#0a0a0f" d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></g>
+<text x="145.5" y="1142" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="600" fill="#0a0a0f">下载 macOS 版</text>
+<rect x="267.5" y="1115.0" width="104" height="44" rx="12" fill="#00d4aa14" stroke="#00d4aa59" stroke-width="1"/>
+<g transform="translate(309.5,1127.0) scale(0.8333333333333334)" fill="none" stroke="#00d4aa" stroke-width="2.04" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2"/></g>
+<circle cx="319.5" cy="1133.58" r="0.8799999999999999" fill="#00d4aa"/>
+<text x="330.5" y="1141.0" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="12.5" font-weight="600" fill="#00d4aa">安装说明</text>
+<rect x="115.5" y="1174" width="224" height="50" rx="14" fill="#ffffff08" stroke="#ffffff29" stroke-width="1" stroke-dasharray="5 4"/>
+<g transform="translate(145.5,1190) scale(0.75)"><path fill="#8e8e93" d="M2.6 4.9 10.4 3.7v7.6H2.6zM11.6 3.5 21.4 2.1v9.2h-9.8zM2.6 12.7h7.8v7.6L2.6 19.1zM11.6 12.7h9.8v9.2l-9.8-1.4z"/></g>
+<text x="175.5" y="1204" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="500" fill="#8e8e93">Windows 版</text>
+<rect x="227.5" y="1188" width="84" height="22" rx="11.0" fill="#ffffff0f" stroke="#ffffff1a" stroke-width="1"/>
+<text x="269.5" y="1203.0" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11" font-weight="600" fill="#55555d">敬请期待</text>
+<rect x="161.5" y="1236" width="132" height="50" rx="14" fill="#ffffff0f" stroke="#ffffff1a" stroke-width="1"/>
+<g transform="translate(193.5,1252) scale(1.125)"><path fill="#f5f5f7" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></g>
+<text x="223.5" y="1266" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="500" fill="#f5f5f7">GitHub</text>
+<rect x="64" y="1296" width="327" height="290" rx="16" fill="#111118" stroke="#ffffff1a" stroke-width="1"/>
+<text x="84" y="1330" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" font-weight="600" fill="#00d4aa">【安装】</text>
+<text x="136" y="1330" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">把左侧的 Comate HUD.app 拖到</text>
+<text x="84" y="1352" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">Applications 文件夹即可。</text>
+<text x="84" y="1374" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" font-weight="600" fill="#00d4aa">【首次打开】</text>
+<text x="162" y="1374" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">本应用未使用 Apple 付费开发者证书</text>
+<text x="84" y="1396" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">签名，macOS 会拦截首次启动。任选一种方式放行：</text>
+<text x="84" y="1426" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">方式一：右键点击 Comate HUD.app → 选择「打开」</text>
+<text x="84" y="1448" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">→ 在弹窗中再点「打开」</text>
+<text x="84" y="1478" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">方式二：打开「终端」，执行下面这行命令：</text>
+<rect x="84" y="1486" width="287" height="38" rx="10" fill="#00000066" stroke="#ffffff14" stroke-width="1"/>
+<text x="96" y="1510" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace" font-size="10.5" fill="#00d4aa">xattr -dr com.apple.quarantine /Applications/Comate</text>
+<rect x="345" y="1487" width="25" height="36" rx="10" fill="url(#fadeR)"/>
+<text x="359" y="1510" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="10" fill="#55555d">⇄</text>
+<text x="84" y="1545" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12.5" fill="#8e8e93">然后双击启动</text>
+<text x="460" y="1078" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="13" font-weight="600" fill="#00d4aa">移动端与键盘可达</text>
+<text x="460" y="1104" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· 触发点 = 图标 + 「安装说明」胶囊，44px 高，满足触控尺寸</text>
+<text x="460" y="1126" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· 点击就地展开 / 收起静态说明块（.is-open 驱动），不锁滚动</text>
+<text x="460" y="1148" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· 包裹层 display:contents，说明块 order:9 + flex-basis:100% 落到按钮行末行</text>
+<text x="460" y="1170" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· :hover 与 :focus-within 在移动端被显式压掉，不参与打开逻辑</text>
+<text x="460" y="1192" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· 375px 按钮行自然折成 3 行；代码块内部横向滚动，页面无横向滚动条</text>
+<text x="460" y="1222" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="600" fill="#8e8e93">键盘可达（桌面）</text>
+<text x="460" y="1248" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· Tab 聚焦触发点 → :focus-visible 出现 accent 外描边，气泡展开</text>
+<text x="460" y="1270" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· 再 Tab 进入 &lt;code tabindex=0&gt;，可用 Shift+←/→ 选中命令</text>
+<text x="460" y="1292" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· Esc 关闭气泡并归还焦点；离开 .dl-help 后自动收起</text>
+<text x="460" y="1314" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· 语义：&lt;button aria-expanded aria-controls&gt; + &lt;div role=region aria-label&gt;</text>
+<text x="460" y="1336" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11.5" fill="#55555d">· WIN 按钮 aria-disabled=true 且不可聚焦 —— 死控件不占 Tab 序列</text>
+<text x="540" y="1638" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" text-anchor="middle" font-size="11" fill="#55555d">全部颜色取自 index.html :root 既有 token（--bg / --bg-card / --text / --text-secondary / --text-dim / --accent）与 rgba(255,255,255,0.0x) / rgba(0,212,170,0.x)</text>
+</svg>
