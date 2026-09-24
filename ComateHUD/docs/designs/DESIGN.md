@@ -266,8 +266,8 @@ release_contract:
 .dl-help-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .dl-help-label { display: none; }              /* 桌面仅图标，移动端才显示文字 */
 
-.dl-help-pop { position: absolute; top: calc(100% + 14px); left: 50%; transform: translate(-50%, -6px); width: min(440px, calc(100vw - 48px)); padding: 18px 20px 20px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 18px 48px rgba(0,0,0,0.6); text-align: left; font-size: 13px; line-height: 1.75; color: var(--text-secondary); opacity: 0; visibility: hidden; pointer-events: none; z-index: 40; user-select: text; -webkit-user-select: text; transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.22,1,0.36,1), visibility 0s linear 0.18s; }
-.dl-help-pop::before { content: ''; position: absolute; top: -5px; left: 50%; margin-left: -5px; width: 10px; height: 10px; background: var(--bg-card); border-left: 1px solid rgba(255,255,255,0.1); border-top: 1px solid rgba(255,255,255,0.1); transform: rotate(45deg); }
+.dl-help-pop { position: absolute; bottom: calc(100% + 14px); left: 50%; transform: translate(-50%, 6px); width: min(440px, calc(100vw - 48px)); max-height: calc(100vh - 40px); overflow-y: auto; padding: 18px 20px 20px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 18px 48px rgba(0,0,0,0.6); text-align: left; font-size: 13px; line-height: 1.75; color: var(--text-secondary); opacity: 0; visibility: hidden; pointer-events: none; z-index: 40; user-select: text; -webkit-user-select: text; transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.22,1,0.36,1), visibility 0s linear 0.18s; }
+.dl-help-pop::before { content: ''; position: absolute; bottom: -5px; left: 50%; margin-left: -5px; width: 10px; height: 10px; background: var(--bg-card); border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); transform: rotate(45deg); }
 .dl-help:hover .dl-help-pop,
 .dl-help:focus-within .dl-help-pop,
 .dl-help.is-open .dl-help-pop { opacity: 1; visibility: visible; pointer-events: auto; transform: translate(-50%, 0); transition-delay: 0s; }
@@ -318,7 +318,7 @@ release_contract:
 | 状态 | 表现 |
 | --- | --- |
 | **① 默认态** | 公共信息行（应用名 + `v1.4.0` 胶囊 + `2026-09-24`）→ 按钮行（accent 实心 MAC / ghost 说明图标 / 虚线 WIN + 敬请期待 / 白面 GitHub）→ 元信息行（`1.8 MB DMG · macOS 12.0+ · Apple Silicon & Intel`）。气泡 `opacity:0 / visibility:hidden`。 |
-| **② MAC 气泡展开态** | 触发点 hover 或键盘 focus 时：触发点转 accent 描边（`rgba(0,212,170,0.35)` + `rgba(0,212,170,0.08)` 底 + accent 图标），气泡在按钮行下方 14px 处淡入上浮（`translateY(-6px→0)`，180ms）；带 10px 旋转方块小箭头指向触发点；【安装】/【首次打开】标签为 accent 600 字重，正文 `--text-secondary`；终端命令为深色代码块 + 等宽 + accent 文字，可整行选中。鼠标从图标移入气泡不中断（同一 hover 容器）。 |
+| **② MAC 气泡展开态** | 触发点 hover 或键盘 focus 时：触发点转 accent 描边（`rgba(0,212,170,0.35)` + `rgba(0,212,170,0.08)` 底 + accent 图标），气泡在按钮行**上方** 14px 处淡入下沉（`translateY(6px→0)`，180ms）；带 10px 旋转方块小箭头（位于气泡下沿）指向触发点；【安装】/【首次打开】标签为 accent 600 字重，正文 `--text-secondary`；终端命令为深色代码块 + 等宽 + accent 文字，可整行选中。鼠标从图标移入气泡不中断（同一 hover 容器）。<br>**实现修正（v1.4.12）**：原设计向下弹出，实测在 900px 及更矮视口下会被视口下沿截断 129–309px（下载区位于 hero 下半部，下方空间不足）。改为向上弹出 + `max-height: calc(100vh - 40px)` 兜底，720/800/900/1080px 高度下均完整可见。 |
 | **③ WIN 敬请期待态** | 虚线 hairline 边框 + `rgba(255,255,255,0.03)` 平面底 + 无 glow + 无 hover 位移/变色 + `cursor:not-allowed`；文案 `Windows 版` 用 `--text-secondary`，其后「敬请期待」胶囊用 `--text-dim`；`aria-disabled="true"`，不可点击、不在 Tab 序列中。 |
 | ④ 降级 · 无安装包（`download` 为空） | MAC 按钮退化为 `.btn-secondary` + 「前往更新日志」+ `href="#versions"`，移除 `download` 属性；`#dl-size` 整条隐藏；公共信息行与 WIN/GitHub/说明气泡不受影响。 |
 | ⑤ 降级 · 体积未知（`size` 缺失或 `-`） | `#dl-size` 整条 `hidden`（**绝不回落硬编码、绝不显示 `— DMG`**）；元信息行剩余两项居中，间距不变。当前 `versions[0].size` 就是 `-`，发版脚本写入后自动出现。 |

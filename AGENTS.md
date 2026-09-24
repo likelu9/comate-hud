@@ -7,7 +7,8 @@
 
 ## Commands
 - 构建客户端: `cd ComateNotch && ./build.sh` → `build/ComateHUD.app` + `dist/ComateHUD-<ver>.dmg`
-- 发版: `cd ComateNotch && ./release.sh <version> <build>`（构建 + 复制 DMG + 更新 versions.json + 部署官网）
+- 发版: `cd ComateNotch && ./release.sh <version> <build>`（构建 + 复制 DMG + **实测 DMG 体积写入 versions.json** + 部署官网）
+  - 体积唯一来源 = release.sh Step 2.5 的 `stat` 实测值（≥1MiB 显示 `X.Y MB`）；重跑同一版本号只回填 size，不新增条目
 - 官网本地预览: `cd ComateHUD && python3 -m http.server 8766`
 - 官网发布: `bash <comate-cli skill>/scripts/comate.sh code publish --workspace ComateHUD --version <站内版本> --json`
 
