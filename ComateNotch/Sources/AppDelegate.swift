@@ -7,9 +7,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var floatingPanel: FloatingPanel?
     private var store = ComateStore()
     private var screenObserver: NSObjectProtocol?
+    /// 本进程是否真的接管了 HUD。重复实例在启动检查后立刻退出，
+    /// 此时绝不能去 flush 活跃上报桶 —— 桶归已在运行的那个实例所有，重复 flush 会重复上报
+    private var didBecomePrimary = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+
+        // 单实例：已在运行则请它把面板重新置前后自己退出（避免两份 HUD 叠加、双份定时器与上报）
+        if let other = Self.otherRunningInstance() {
+            DistributedNotificationCenter.default().postNotificationName(
+                .hudShowRequest, object: nil, userInfo: nil, deliverImmediately: true)
+            other.activate(options: [])
+            NSApp.terminate(nil)
+            return
+        }
+        didBecomePrimary = true
+
+        // 用户重复双击 App 时，由新实例发来置前请求；按当前模式重新置前面板即可
+        // （switchDisplayMode 幂等，不会重建窗口）。观察者随进程存活，不需要移除
+        _ = DistributedNotificationCenter.default().addObserver(
+            forName: .hudShowRequest, object: nil, queue: .main) { [weak self] _ in
+            guard let self = self else { return }
+            self.switchDisplayMode(self.store.displayMode)
+        }
+
         let panel = NotchPanel()
         self.panel = panel
 
@@ -83,11 +105,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         container.addSubview(hosting)
         panel.contentView = container
         store.start()
+        // 首次启动默认开启开机自启（仅一次，之后完全由菜单里的开关控制）
+        LaunchAtLogin.applyDefaultOnFirstLaunch()
         // 应用上次保存的显示模式（否则启动后总是显示刘海面板）
         switchDisplayMode(store.displayMode)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        // 重复实例：没接管 HUD，也就没有自己的活跃桶要发
+        guard didBecomePrimary else { return }
         if let obs = screenObserver { NotificationCenter.default.removeObserver(obs) }
         // 退出前把当天的活跃桶发出去（最多等 3 秒）。发不出去也不丢：
         // 桶已落盘，下次启动会补报。
@@ -120,4 +146,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             floatingPanel?.orderFrontRegardless()
         }
     }
+
+    /// 同 bundle id 的其他运行实例（排除自己）
+    private static func otherRunningInstance() -> NSRunningApplication? {
+        guard let bundleID = Bundle.main.bundleIdentifier else { return nil }
+        let me = ProcessInfo.processInfo.processIdentifier
+        return NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .first { $0.processIdentifier != me }
+    }
+}
+
+extension Notification.Name {
+    /// 跨进程：重复启动的新实例请已运行的实例把面板重新置前
+    static let hudShowRequest = Notification.Name("com.wpscomate.hud.showRequest")
 }

@@ -185,6 +185,16 @@ struct HUDUsageFooter: View {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 9))
                     .foregroundStyle(.white.opacity(settingsHovered ? 0.9 : 0.55))
+                    // 有新版可用：贴图标右上角亮红点（挂在图标上而非热区，避免小按钮里红点飘到远端）
+                    .overlay(alignment: .topTrailing) {
+                        if store.hasUpdate {
+                            Circle()
+                                .fill(Color(hex: "#FF4D4F"))
+                                .frame(width: 5, height: 5)
+                                .overlay(Circle().stroke(Color.black.opacity(0.4), lineWidth: 0.5))
+                                .offset(x: 3, y: -3)
+                        }
+                    }
                     .frame(width: FooterHit.sideWidth, height: FooterHit.height)
                     .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
                     .background(
@@ -198,7 +208,9 @@ struct HUDUsageFooter: View {
                 if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
             }
             .animation(.easeInOut(duration: 0.12), value: settingsHovered)
-            .help("设置（等同右键菜单）")
+            .help(store.hasUpdate
+                  ? "设置（检测到新版 \(store.availableUpdate ?? "")）"
+                  : "设置（等同右键菜单）")
         }
     }
 
@@ -528,6 +540,27 @@ final class HUDContextMenu: NSObject {
             menu.addItem(reset)
         }
 
+        // 开机自启动：勾选态直接读 LaunchAgent plist（菜单每次弹出重建，与磁盘天然一致）
+        menu.addItem(.separator())
+        let loginItem = NSMenuItem(title: "开机自启动", action: #selector(menuToggleLaunchAtLogin), keyEquivalent: "")
+        loginItem.target = self
+        loginItem.state = LaunchAtLogin.isEnabled ? .on : .off
+        menu.addItem(loginItem)
+
+        // 更新：未检测到新版时是「检查更新」，检测到新版时直接显示版本号并跳发布页
+        menu.addItem(.separator())
+        let updateTitle: String
+        if let v = store.availableUpdate {
+            updateTitle = "检测到新版 \(v)"
+        } else if store.updateChecked {
+            updateTitle = "已是最新版本 v\(UpdateChecker.localVersion)"
+        } else {
+            updateTitle = "检查更新"
+        }
+        let updateItem = NSMenuItem(title: updateTitle, action: #selector(menuCheckUpdate), keyEquivalent: "")
+        updateItem.target = self
+        menu.addItem(updateItem)
+
         // 关于紧贴在退出上方
         menu.addItem(.separator())
         let about = NSMenuItem(title: "关于 Comate HUD", action: #selector(menuAbout), keyEquivalent: "")
@@ -552,6 +585,30 @@ final class HUDContextMenu: NSObject {
     @objc private func menuSetLimit(_ sender: NSMenuItem) { store.recentTaskLimit = sender.tag }
 
     @objc private func menuResetHeight() { store.resetCustomExpandedHeight() }
+
+    /// 有新版 → 打开发布页（GitHub Release 公开可访问；拿不到链接时退回官网）；
+    /// 否则立即重新检查一次（不受 6 小时节流限制）
+    @objc private func menuCheckUpdate() {
+        guard store.hasUpdate else {
+            store.checkForUpdate(force: true)
+            return
+        }
+        if let url = store.availableUpdateURL {
+            NSWorkspace.shared.open(url)
+        } else if let site = URL(string: AboutDesign.website) {
+            NSWorkspace.shared.open(site)
+        }
+    }
+
+    /// 开机自启动开关。写盘前先确认路径稳定，否则重启后不会生效
+    @objc private func menuToggleLaunchAtLogin() {
+        let target = !LaunchAtLogin.isEnabled
+        if target, !LaunchAtLogin.isPathStable {
+            LaunchAtLogin.warnPathUnstable()
+            return
+        }
+        LaunchAtLogin.setEnabled(target)
+    }
 
     @objc private func menuAbout() { onShowAbout() }
 

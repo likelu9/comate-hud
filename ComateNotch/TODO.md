@@ -1,7 +1,7 @@
 # ComateNotch 待优化清单
 
-**版本**: v1.1.0  
-**日期**: 2026-09-22  
+**版本**: v1.4.1 (build 9)  
+**日期**: 2026-09-25  
 
 ---
 
@@ -28,6 +28,13 @@
 - build.sh 支持 universal 双架构 (arm64 + x86_64) + ad-hoc 签名
 - DMG 打包完成 (932KB)，含 Applications 符号链接 + 安装说明
 
+### Phase5 - 客户端增强（1.4.1）
+- 更新检测：读 GitHub Releases 的 latest tag，与本地版本语义比较；设置按钮亮红点，菜单显示「检查更新 / 检测到新版 vX.Y.Z」，点击跳发布页（`Sources/UpdateChecker.swift`）
+- 开机自启：写用户级 LaunchAgent（`~/Library/LaunchAgents/com.wpscomate.hud.plist`），首次启动默认开启，菜单里可勾选切换（`Sources/LaunchAtLogin.swift`）
+- 单实例保护：同 bundle id 已在运行则请它把面板重新置前，新实例直接退出，避免两份 HUD 叠加与双份活跃上报（`Sources/AppDelegate.swift`）
+- 技术债：任务模型拆到 `TaskModel.swift`，面板布局公式拆到 `NotchLayout.swift`，新增 `test.sh`（47 项断言）
+- 文档防漂移：新增 `scripts/check-docs.sh` 并在 `build.sh` 里强制校验（版本号同源 / SOURCES 完整 / 官网不硬编码）
+
 ---
 
 ## 待优化 📋
@@ -37,34 +44,31 @@
 | # | 项目 | 说明 | 工作量 |
 |---|------|------|--------|
 | 1 | **签名证书** | 当前 ad-hoc 签名，用户需在「系统设置 → 隐私与安全性 → 安全性」中手动放行（新版 macOS 右键打开已不再提供「打开」选项）。申请 Apple Developer 证书后可正式签名 + 公证 | 1天 |
-| 2 | **自动更新** | 当前无自更新机制。可接入 Sparkle 框架实现版本检查与增量更新 | 2天 |
-| 3 | **崩溃上报** | 无崩溃日志收集。建议接入 Sentry 或自建崩溃上报 | 1天 |
+| 2 | **崩溃上报** | 无崩溃日志收集。建议接入 Sentry 或自建崩溃上报 | 1天 |
 
 ### P1 - 中优先级
 
 | # | 项目 | 说明 | 工作量 |
 |---|------|------|--------|
-| 4 | **多显示器适配** | 当前固定在主显示器刘海区域，多显示器用户需支持跟随/固定选择 | 0.5天 |
-| 5 | **登录项** | 无开机自启。需添加 SMLoginItemSetEnabled 或 Launch Agent | 0.5天 |
-| 6 | **菜单栏图标** | 当前 LSUIElement 隐藏了 Dock 图标，但菜单栏无入口。可添加 NSStatusItem 作为常驻入口 | 1天 |
-| 7 | **单实例保护** | 当前靠 AppDelegate 管理，需确保第二个实例启动时激活已有窗口 | 0.5天 |
+| 3 | **多显示器适配** | 当前固定在主显示器刘海区域，多显示器用户需支持跟随/固定选择 | 0.5天 |
+| 4 | **菜单栏图标** | 当前 LSUIElement 隐藏了 Dock 图标，但菜单栏无入口。可添加 NSStatusItem 作为常驻入口 | 1天 |
 
 ### P2 - 低优先级
 
 | # | 项目 | 说明 | 工作量 |
 |---|------|------|--------|
-| 8 | **面板动画** | 展开/收起无过渡动画，可添加弹簧动画提升体验 | 0.5天 |
-| 9 | **设置面板** | 无可视化设置，用户无法调整刷新频率、热区位置等 | 1天 |
-| 10 | **国际化** | 当前中文硬编码，如需国际化需抽离字符串 | 0.5天 |
-| 11 | **日志系统** | 当前 print 日志，建议接入 os_log 或 SwiftyBeaver | 0.5天 |
+| 5 | **面板动画** | 展开/收起无过渡动画，可添加弹簧动画提升体验 | 0.5天 |
+| 6 | **设置面板** | 无可视化设置，用户无法调整刷新频率、热区位置等 | 1天 |
+| 7 | **国际化** | 当前中文硬编码，如需国际化需抽离字符串 | 0.5天 |
+| 8 | **日志系统** | 当前 print 日志，建议接入 os_log 或 SwiftyBeaver | 0.5天 |
 
 ---
 
 ## 技术债务
 
-- `ComateStore.swift` 单文件 600+ 行，可拆分为 Store/API/Cache 模块
-- `NotchRootView.swift` 视图逻辑与业务逻辑混合，可抽取 ViewModel
-- 无单元测试覆盖，建议补充核心逻辑测试
+- `ComateStore.swift` 957 行：任务模型（`TaskLight` / `RedKind` / `ComateTask`）已拆到 `TaskModel.swift`。再拆「模型用量」「云端任务」两段需要把一批 `private` 状态放宽为 internal —— Swift 扩展不能新增存储属性，状态只能留在原文件，收益与风险需要单独评估
+- `NotchRootView.swift` 624 行：布局公式与常量已拆到 `NotchLayout.swift`；`ComateLogo` / `ComateOfficialPath1,2` / `StatusLight` / `NotchShape` / `ComateTaskRow` / `ComatePlusButton` 等独立视图仍混在同一文件，可再拆
+- `test.sh` 已覆盖版本比较 / 布局公式 / 状态灯判定（47 项断言）；仍缺 UI 层与数据读取层（SQLite 查询、会话日志解析）的自动化覆盖
 
 ---
 
@@ -72,7 +76,9 @@
 
 | 路径 | 说明 |
 |------|------|
-| `ComateNotch/build/ComateNotch.app` | 构建产物（universal binary） |
-| `ComateNotch/dist/ComateNotch-1.1.0.dmg` | 分发包 |
+| `ComateNotch/build/ComateHUD.app` | 构建产物（universal binary） |
+| `ComateNotch/dist/ComateHUD-<版本>.dmg` | 分发包（版本号取自 Info.plist） |
 | `ComateNotch/Resources/AppIcon.icns` | 应用图标 |
-| `ComateNotch/build.sh` | 构建脚本（支持双架构 + 签名） |
+| `ComateNotch/build.sh` | 构建脚本（双架构 + 签名 + 文档校验） |
+| `ComateNotch/test.sh` | 纯逻辑测试（不启动 UI） |
+| `ComateNotch/scripts/check-docs.sh` | 文档 / 版本号一致性校验 |

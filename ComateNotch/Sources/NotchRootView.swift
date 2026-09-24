@@ -258,27 +258,21 @@ struct NotchRootView: View {
     @State private var measuredRowCount: Int = 0
     /// 实测：页脚高度
     @State private var footerHeight: CGFloat = 0
-    /// 首次测量完成前的兜底高度
-    private let fallbackExpandedHeight: CGFloat = 280
     /// 拖拽状态
     @State private var isResizing = false
     @State private var resizeHovered = false
     @State private var dragBaseHeight: CGFloat = 0
 
-    // 布局常量：必须与 expandedContent 的 padding / spacing 保持一致
-    private let horizontalPadding: CGFloat = 12
-    private let listSpacing: CGFloat = 3
-    private let blockSpacing: CGFloat = 6
-    /// 面板底部留白：页脚下方必须留出比拖拽手柄命中区更高的空白，
-    /// 否则手柄会盖住页脚按钮的命中区（12 > resizeHitHeight）
-    private let bottomPadding: CGFloat = 12
-    /// 拖拽手柄的可视条高度（含条下方留白）
-    private let resizeHandleHeight: CGFloat = 14
-    /// 拖拽手柄的命中区高度：只取面板最底部这一条，避开页脚
-    private let resizeHitHeight: CGFloat = 10
-    /// 无任务时列表占位文案的高度
-    private let emptyPlaceholderHeight: CGFloat = 24
-    private var topInset: CGFloat { notchHeight / 2 + 24 }
+    /// 布局计算与常量都集中在 NotchLayout（高度公式与 padding 必须同源，
+    /// 否则改了一处漏一处就会表现为「内容被裁掉一截」）
+    private var layout: NotchLayout { NotchLayout(notchHeight: notchHeight) }
+    private var horizontalPadding: CGFloat { NotchLayout.horizontalPadding }
+    private var listSpacing: CGFloat { NotchLayout.listSpacing }
+    private var bottomPadding: CGFloat { NotchLayout.bottomPadding }
+    private var resizeHandleHeight: CGFloat { NotchLayout.resizeHandleHeight }
+    private var resizeHitHeight: CGFloat { NotchLayout.resizeHitHeight }
+    private var emptyPlaceholderHeight: CGFloat { NotchLayout.emptyPlaceholderHeight }
+    private var topInset: CGFloat { layout.topInset }
 
     /// 当前实际展示的记录条数
     private var displayedRowCount: Int { min(store.recentTaskLimit, store.recentTasks.count) }
@@ -286,15 +280,12 @@ struct NotchRootView: View {
     /// 单行占高（行高 + 行间距）：由实测行高反推。
     /// 它只取决于行本身，与当前展示多少条无关，所以切换条数时依然有效。
     private var rowUnit: CGFloat {
-        guard measuredRowCount > 0, rowsHeight > 0 else { return 0 }
-        return (rowsHeight + listSpacing) / CGFloat(measuredRowCount)
+        NotchLayout.rowUnit(rowsHeight: rowsHeight, measuredRowCount: measuredRowCount)
     }
 
     /// 指定条数时面板应有的高度（即内容自适应高度）
     private func contentHeight(forRows rows: Int) -> CGFloat {
-        guard rowUnit > 0, footerHeight > 0 else { return fallbackExpandedHeight }
-        let n = CGFloat(max(rows, 1))
-        return topInset + rowUnit * n - listSpacing + blockSpacing + footerHeight + bottomPadding
+        layout.contentHeight(forRows: rows, rowUnit: rowUnit, footerHeight: footerHeight)
     }
 
     /// 自然高度：跟随当前条数
@@ -303,20 +294,19 @@ struct NotchRootView: View {
     private var minExpandedHeight: CGFloat { contentHeight(forRows: 1) }
     /// 最大高度 = 10 条记录的高度
     private var maxExpandedHeight: CGFloat {
-        contentHeight(forRows: ComateStore.recentTaskLimitOptions.max() ?? 10)
+        contentHeight(forRows: NotchLayout.maxRowCount)
     }
 
     /// 展开态实际高度：自定义高度被夹在 [1 条, 10 条] 之间；未自定义时跟随内容
     private var targetExpandedHeight: CGFloat {
-        let custom = store.customExpandedHeight ?? naturalContentHeight
-        return min(max(custom, minExpandedHeight), maxExpandedHeight)
+        layout.clampedHeight(store.customExpandedHeight ?? naturalContentHeight,
+                             rowUnit: rowUnit, footerHeight: footerHeight)
     }
 
     /// 列表可视高度：装得下就贴合内容，装不下则裁剪并可滚动
     private var listViewportHeight: CGFloat {
-        guard footerHeight > 0 else { return rowsHeight }
-        let avail = targetExpandedHeight - topInset - blockSpacing - footerHeight - bottomPadding
-        return max(min(rowsHeight, avail), 0)
+        layout.listViewportHeight(targetExpandedHeight: targetExpandedHeight,
+                                  rowsHeight: rowsHeight, footerHeight: footerHeight)
     }
 
     /// 拖拽底部手柄调整展开高度（顶部锚定不动，向下拖变高）

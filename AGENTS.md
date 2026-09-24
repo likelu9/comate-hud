@@ -6,7 +6,9 @@
 - `ComateHUD/` — 静态官网（原生 HTML/CSS/JS + versions.json + db/migrations），部署为 App Studio 项目 `3171466180955374`
 
 ## Commands
-- 构建客户端: `cd ComateNotch && ./build.sh` → `build/ComateHUD.app` + `dist/ComateHUD-<ver>.dmg`
+- 构建客户端: `cd ComateNotch && ./build.sh` → `build/ComateHUD.app` + `dist/ComateHUD-<ver>.dmg`（构建开头会跑 `scripts/check-docs.sh`）
+- 纯逻辑测试: `cd ComateNotch && ./test.sh`（编译 Sources（除 UI 入口）+ `Tests/main.swift` 跑断言，不启动 UI、不写用户目录、不发网络请求）
+- 文档 / 版本校验: `bash ComateNotch/scripts/check-docs.sh`（版本号同源 / TODO.md 声明 / SOURCES 完整 / DMG 存在）
 - 发版: `cd ComateNotch && ./release.sh <version> <build>`（构建 + 复制 DMG + **实测 DMG 体积写入 versions.json** + 部署官网）
   - 体积唯一来源 = release.sh Step 2.5 的 `stat` 实测值（≥1MiB 显示 `X.Y MB`）；重跑同一版本号只回填 size，不新增条目
 - 官网本地预览: `cd ComateHUD && python3 -m http.server 8766`
@@ -14,6 +16,8 @@
 
 ## Validation
 - `cd ComateNotch && ./build.sh` 必须 exit 0，且 `lipo -info` 同时含 arm64 与 x86_64
+- `cd ComateNotch && ./test.sh` 必须 exit 0（纯逻辑断言全绿）
+- `bash ComateNotch/scripts/check-docs.sh` 必须 exit 0（build.sh 已内置，单独改文档后可单跑）
 - 改官网后本地起 http.server 打开，控制台无 JS 报错（BaaS 接口本地 **401** 属预期：全表要求登录）
 - 改上报/统计链路时，用 `defaults read com.wpscomate.hud | grep activity` 检查日桶与 pending
 - 改动过的文件都要重读确认
@@ -22,8 +26,9 @@
 See [ARCHITECTURE.md](ARCHITECTURE.md) · 官网视觉 See [ComateHUD/docs/designs/DESIGN.md](ComateHUD/docs/designs/DESIGN.md)
 
 ## Conventions
-- 客户端新增 Swift 文件必须加进 `ComateNotch/build.sh` 的 `SOURCES` 数组，否则不会被编译
-- 版本号只改 `ComateNotch/Info.plist`（`CFBundleShortVersionString` / `CFBundleVersion`）
+- 客户端新增 Swift 文件必须加进 `ComateNotch/build.sh` 的 `SOURCES` 数组，否则不会被编译（`scripts/check-docs.sh` 会拦截漏登记）
+- 版本号只改 `ComateNotch/Info.plist`（`CFBundleShortVersionString` / `CFBundleVersion`）；改完必须同步 `ComateNotch/TODO.md` 顶部版本声明与 `ComateHUD/versions.json` 的 `latest` / `versions[0]`，否则 `build.sh` 会在开头校验失败
+- 新增可脱离界面验证的逻辑（判定规则、公式、解析）时，同步在 `ComateNotch/Tests/main.swift` 补断言，别只靠肉眼验证
 - 官网不用 CDN/外链资源；建表写在 `ComateHUD/db/migrations/NNN_*.json`
 - BaaS 请求必须带 `X-Project-Id: 3171466180955374`（官网项目 ≠ 根项目 `3599569812562023`）
 - BaaS 表**全表要求登录**（无 Cookie 一律 `401 未登录或登录已过期`）：客户端上报依赖 keychain 的 `wps_sid`，读不到就没有任何上报通道，只能跳过

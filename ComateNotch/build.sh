@@ -13,6 +13,9 @@ VER=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$PLIST")
 BUILD_NUM=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$PLIST")
 echo "==> 版本: $VER ($BUILD_NUM)"
 
+# 文档 / 版本号一致性：版本号同源、TODO.md 声明、SOURCES 完整、DMG 存在
+bash "$ROOT/scripts/check-docs.sh"
+
 echo "==> 清理旧产物"
 rm -rf "$BUILD"
 mkdir -p "$BUILD/arm64" "$BUILD/x86_64"
@@ -24,14 +27,18 @@ SOURCES=(
     "$SRC/ComateHUDApp.swift"
     "$SRC/AppDelegate.swift"
     "$SRC/ComateStore.swift"
+    "$SRC/TaskModel.swift"
     "$SRC/UsageAPI.swift"
     "$SRC/SessionJournal.swift"
     "$SRC/NotchPanel.swift"
     "$SRC/NotchRootView.swift"
+    "$SRC/NotchLayout.swift"
     "$SRC/HUDShared.swift"
     "$SRC/FloatingPanel.swift"
     "$SRC/ActivityReporter.swift"
     "$SRC/UserIdentity.swift"
+    "$SRC/UpdateChecker.swift"
+    "$SRC/LaunchAtLogin.swift"
 )
 
 # 确定是否能编译双架构
