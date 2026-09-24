@@ -74,12 +74,6 @@
 
     /* ---- 下载区块：公共信息行 / 按钮行 / 元信息行 / 安装说明气泡 ---- */
     .dl-block { scroll-margin-top: 96px; }
-    .dl-head { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
-    .dl-head .dl-app { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
-    .dl-head .dl-ver { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .dl-head .dl-date { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-    .dl-head .dl-date::before { content: '·'; margin-right: 8px; color: var(--text-dim); }
-    .dl-head .dl-ver[hidden], .dl-head .dl-date[hidden] { display: none; }
     .dl-actions { position: relative; margin-bottom: 26px; }
     /* Win 版「敬请期待」放按钮下方：绝对定位，不影响按钮行几何（Mac/Win 保持同一基线） */
     .dl-win-wrap { position: relative; display: inline-flex; }
@@ -377,8 +371,6 @@
       .av-name { flex-basis: 64px; }
       .stats-table .col-opt { display: none; }
       .version-item .vi-head { flex-direction: column; align-items: flex-start; gap: 4px; }
-      .dl-head { margin-bottom: 14px; gap: 8px; }
-      .dl-head .dl-app { font-size: 15px; }
       .dl-actions { gap: 10px; margin-bottom: 0; align-items: flex-start; }
       .dl-actions .btn-download { padding: 13px 22px; font-size: 15px; }
       /* 移动端按钮折行后：说明改为按钮下方常规流，避免与下一个按钮重叠 */
@@ -421,11 +413,6 @@
       <div class="hero-light"><div class="dot red"></div><span>等待确认</span></div>
     </div>
     <div class="dl-block" id="download">
-      <div class="dl-head">
-        <span class="dl-app">Comate HUD</span>
-        <span class="dl-ver" id="dl-version" hidden></span>
-        <span class="dl-date" id="dl-date" hidden></span>
-      </div>
       <div class="hero-actions dl-actions">
         <a id="dl-btn" href="#" class="btn-download btn-primary" download>
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></svg>
@@ -469,6 +456,10 @@
         <span class="dl-tag">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.2"/><path d="M10 7V4.2M14 7V4.2M10 20v-2.8M14 20v-2.8M7 10H4.2M7 14H4.2M20 10h-2.8M20 14h-2.8"/></svg>
           Apple Silicon &amp; Intel
+        </span>
+        <span class="dl-tag" id="dl-date" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3.2v3.4M16 3.2v3.4"/></svg>
+          <span id="dl-date-text"></span>
         </span>
       </div>
       <details class="release-toggle">
@@ -704,15 +695,14 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
   var typeColors = {new:'new',opt:'opt',fix:'fix',arch:'new'};
   fetch('versions.json').then(function(r){return r.json()}).then(function(data){
     var v = data.versions[0];
-    // 下载区：公共信息行（版本 / 日期）+ 体积 + MAC 主按钮（文案静态，不含版本与体积）
+    // 下载区：体积 + 发布日期 + MAC 主按钮（文案静态，不含版本与体积）
     var dlBtn = document.getElementById('dl-btn');
     var dlText = document.getElementById('dl-text');
-    var dlVer = document.getElementById('dl-version');
     var dlDate = document.getElementById('dl-date');
+    var dlDateText = document.getElementById('dl-date-text');
     var dlSize = document.getElementById('dl-size');
     var dlSizeText = document.getElementById('dl-size-text');
-    if(dlVer){ dlVer.textContent = 'v' + v.version; dlVer.hidden = false; }
-    if(dlDate){ dlDate.textContent = v.date || ''; dlDate.hidden = !v.date; }
+    if(dlDate && dlDateText){ dlDateText.textContent = v.date || ''; dlDate.hidden = !v.date; }
     // 体积唯一来源 versions[0].size；空或 '-' → 整条隐藏，绝不回落硬编码
     var sizeText = String(v.size == null ? '' : v.size).trim();
     var hasSize = sizeText !== '' && sizeText !== '-';
