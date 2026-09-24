@@ -1241,7 +1241,7 @@ footer p { font-size: 14px; color: var(--text-dim); line-height: 1.8; }
 .version-item .vi-meta { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.2; }
 .version-item .vi-date { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }   /* 原 13px / var(--text-dim) */
 .version-item .vi-count { color: var(--text-dim); }
-.version-item summary .vi-meta::after { content: '▾'; font-size: 11px; color: var(--text-dim); }
+.version-item summary .vi-meta::after { content: '▾'; font-size: 11px; color: var(--text-secondary); }   /* 收起态是主状态，箭头提亮到 secondary */
 .version-item[open] summary .vi-meta::after { content: '▴'; }
 ```
 
