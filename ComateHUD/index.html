@@ -290,6 +290,38 @@
       0% { transform: translateX(var(--track, 100%)); }
       100% { transform: translateX(calc(-100% - 8px)); }
     }
+    /* ---- 应用统计（owner-only）---- */
+    .appstats-section { padding: 80px 0; }
+    .appstats-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; }
+    .appstats-card { position: relative; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px 22px; }
+    .appstats-card .k-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+    .appstats-card .k-value { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; color: var(--text); font-variant-numeric: tabular-nums; margin-top: 6px; }
+    .appstats-card .k-note { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+    .appstats-card.is-today::before { content: ''; position: absolute; left: 0; top: 24px; width: 3px; height: 14px; border-radius: 2px; background: var(--accent); }
+    .appstats-card.is-skeleton { min-height: 118px; }
+    .sk-line { height: 10px; border-radius: 6px; background: rgba(255,255,255,0.06); margin-bottom: 10px; animation: appstats-pulse 1.4s ease-in-out infinite; }
+    .sk-line.sk-w1 { width: 52%; }
+    .sk-line.sk-w2 { width: 34%; height: 22px; }
+    .sk-line.sk-w3 { width: 62%; }
+    @keyframes appstats-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+    .appstats-block { margin-top: 40px; }
+    .appstats-block-title { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+    .appstats-chart svg { width: 100%; height: 180px; display: block; }
+    .appstats-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-dim); margin-top: 8px; }
+    .appstats-versions { display: flex; flex-direction: column; gap: 14px; }
+    .av-row { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+    .av-name { flex: 0 0 88px; color: var(--text-secondary); }
+    .av-track { flex: 1; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+    .av-fill { height: 100%; border-radius: 999px; background: var(--accent); }
+    .av-count { flex: 0 0 90px; text-align: right; font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+    .appstats-empty { padding: 32px 0; text-align: center; font-size: 13px; color: var(--text-dim); }
+    .appstats-hint { margin-top: 16px; font-size: 13px; color: var(--text-dim); text-align: center; }
+    .appstats-hint button { margin-left: 10px; padding: 6px 14px; font-size: 13px; color: var(--text); background: transparent; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; cursor: pointer; }
+    .appstats-hint button:hover { border-color: var(--accent); color: var(--accent); }
+    .stats-scroll { overflow-x: auto; }
+    .stats-table { margin-top: 0; }
+    .stats-table th.num, .stats-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
     @media (max-width: 768px) {
       .hero { padding: 120px 0 60px; }
       .lights-showcase { gap: 32px; }
@@ -298,6 +330,12 @@
       .steps::before { left: 23px; }
       nav .nav-links { display: none; }
       .compat-table th, .compat-table td { padding: 12px 14px; }
+      .appstats-kpi { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .appstats-card { padding: 20px 16px; }
+      .appstats-card .k-value { font-size: 26px; }
+      .appstats-chart svg { height: 140px; }
+      .av-name { flex-basis: 64px; }
+      .stats-table .col-opt { display: none; }
       .version-item .vi-head { flex-direction: column; align-items: flex-start; gap: 4px; }
     }
   </style>
@@ -308,7 +346,7 @@
   <div class="container">
     <a href="#" class="brand"><img src="icon.png" alt="Comate HUD" /><strong>Comate HUD</strong></a>
     <div class="nav-links">
-      <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">技术栈</a><a href="#compat">兼容性</a><a href="#versions">更新日志</a><a href="#powered">能力提供</a><a href="#wishwall">许愿反馈</a>
+      <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">技术栈</a><a href="#compat">兼容性</a><a href="#versions">更新日志</a><a href="#appstats" id="nav-appstats" hidden>应用统计</a><a href="#powered">能力提供</a><a href="#wishwall">许愿反馈</a>
       <a href="#download" class="btn-sm">下载</a>
       <span id="pv-display" style="font-size:12px;color:var(--text-dim);margin-left:8px;white-space:nowrap;font-variant-numeric:tabular-nums;">-</span>
     </div>
@@ -501,6 +539,25 @@
     <div class="version-list">
       <div id="version-list"></div>
     </div>
+  </div>
+</section>
+<section class="appstats-section" id="appstats" hidden>
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">应用统计</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">谁在用 Comate HUD</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">安装设备每天上报一次活跃，按用户去重统计。此区块仅你可见。</p></div>
+    <div class="appstats-kpi reveal" id="appstats-kpi"></div>
+    <div class="appstats-block reveal">
+      <div class="appstats-block-title">近 30 日活跃用户趋势</div>
+      <div class="appstats-chart" id="appstats-chart"></div>
+    </div>
+    <div class="appstats-block reveal">
+      <div class="appstats-block-title">版本分布（近 30 日活跃用户）</div>
+      <div class="appstats-versions" id="appstats-versions"></div>
+    </div>
+    <div class="appstats-block reveal">
+      <div class="appstats-block-title">今日活跃明细</div>
+      <div class="stats-scroll" id="appstats-today"></div>
+    </div>
+    <div class="appstats-hint" id="appstats-hint"></div>
   </div>
 </section>
 <section class="powered-section" id="powered">
