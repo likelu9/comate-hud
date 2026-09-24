@@ -141,17 +141,25 @@
     .hud-bell:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); }
     .hud-bell svg { width: calc(9px * var(--s)); height: calc(9px * var(--s)); fill: currentColor; flex: none; }
     .desktop-hint { margin: 20px auto 0; text-align: center; font-size: 13px; color: var(--text-dim); }
+    /* 面板固定 280pt 居中，菜单栏两侧需要给它让位：
+       桌面宽 < 982px（视口 < 1030px）时完整菜单会顶到面板，逐级隐藏 */
+    @media (max-width: 1040px) {
+      .mb-extra, .mb-date { display: none; }
+    }
     @media (max-width: 760px) {
       .mac-desktop { --s: 0.9; }
-      .mb-side { gap: 12px; }
-      .mb-extra { display: none; }
+      .mb-side { gap: calc(14px * var(--s)); }
       .hud-row:nth-child(4) { display: none; }
       .hud-zone { height: calc(179px * var(--s) + 44px); }
       .hud[data-state="expanded"] { height: calc(179px * var(--s)); }
     }
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
       .mac-desktop { --s: 0.82; }
-      .mb-app, .mb-extra, .mb-ico-extra { display: none; }
+      .mb-app, .mb-ico { display: none; }
+    }
+    @media (max-width: 400px) {
+      .mac-desktop { --s: 0.72; }
+      .mb-clock { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
       .hud, .hud-body, .hud-dot, .hud-light { transition: none !important; animation: none !important; }
@@ -348,9 +356,9 @@
         <div class="mb-side">
           <svg class="mb-ico" viewBox="0 0 24 24"><path d="M2.5 8.6a14 14 0 0 1 19 0"/><path d="M6 12.2a9 9 0 0 1 12 0"/><path d="M9.4 15.8a4 4 0 0 1 5.2 0"/><circle cx="12" cy="19" r="1.1" fill="#fff" stroke="none"/></svg>
           <svg class="mb-ico" viewBox="0 0 24 24"><rect x="2" y="8" width="17" height="8" rx="2.2"/><path d="M21 11v2"/><rect x="4" y="10" width="11" height="4" rx="1" fill="#fff" stroke="none"/></svg>
-          <svg class="mb-ico mb-ico-extra" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.2"/><path d="M15.6 15.6L20 20"/></svg>
-          <svg class="mb-ico mb-ico-extra" viewBox="0 0 24 24"><path d="M4 8.5h16M4 15.5h16"/><circle cx="9.2" cy="8.5" r="2.3" fill="#fff" stroke="none"/><circle cx="14.8" cy="15.5" r="2.3" fill="#fff" stroke="none"/></svg>
-          <span class="mb-clock">9月24日 周三 10:24</span>
+          <svg class="mb-ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.2"/><path d="M15.6 15.6L20 20"/></svg>
+          <svg class="mb-ico" viewBox="0 0 24 24"><path d="M4 8.5h16M4 15.5h16"/><circle cx="9.2" cy="8.5" r="2.3" fill="#fff" stroke="none"/><circle cx="14.8" cy="15.5" r="2.3" fill="#fff" stroke="none"/></svg>
+          <span class="mb-clock"><span class="mb-date">9月24日 周三 </span>10:24</span>
         </div>
       </div>
 
@@ -365,7 +373,7 @@
               <div class="hud-row" data-demo-row>
                 <i class="hud-dot yellow"></i>
                 <div class="hud-main">
-                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h4.2c.4 0 .78.16 1.06.44l1.34 1.26c.28.28.66.44 1.06.44h7.34A1.5 1.5 0 0 1 21 7.64V18.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span>官网 v1.4 改版文案校对</span></div>
+                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M2.5 8V17.8A2.2 2.2 0 0 0 4.7 20H19.3A2.2 2.2 0 0 0 21.5 17.8V9.6A2.2 2.2 0 0 0 19.3 7.4H12.4C11.8 7.4 11.2 7.2 10.8 6.8L9.6 5.6C9.2 5.2 8.6 5 8 5H4.7A2.2 2.2 0 0 0 2.5 7.2Z"/></svg><span>官网 v1.4 改版文案校对</span></div>
                   <div class="hud-meta"><span class="hud-status" style="color:#FFB800">工作中</span><span class="hud-sub">30天 280.6 点</span><span class="hud-sub hud-meta-time">15 秒前</span></div>
                 </div>
                 <svg class="hud-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5"/></svg>
@@ -373,7 +381,7 @@
               <div class="hud-row">
                 <i class="hud-dot green"></i>
                 <div class="hud-main">
-                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h4.2c.4 0 .78.16 1.06.44l1.34 1.26c.28.28.66.44 1.06.44h7.34A1.5 1.5 0 0 1 21 7.64V18.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span>Comate 任务进度组件</span></div>
+                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M2.5 8V17.8A2.2 2.2 0 0 0 4.7 20H19.3A2.2 2.2 0 0 0 21.5 17.8V9.6A2.2 2.2 0 0 0 19.3 7.4H12.4C11.8 7.4 11.2 7.2 10.8 6.8L9.6 5.6C9.2 5.2 8.6 5 8 5H4.7A2.2 2.2 0 0 0 2.5 7.2Z"/></svg><span>Comate 任务进度组件</span></div>
                   <div class="hud-meta"><span class="hud-status" style="color:#34C759">已完成</span><span class="hud-sub">30天 2.46 万 点</span><span class="hud-sub">4 分钟前</span></div>
                 </div>
                 <svg class="hud-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5"/></svg>
@@ -381,7 +389,7 @@
               <div class="hud-row">
                 <i class="hud-dot"></i>
                 <div class="hud-main">
-                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h4.2c.4 0 .78.16 1.06.44l1.34 1.26c.28.28.66.44 1.06.44h7.34A1.5 1.5 0 0 1 21 7.64V18.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span>整理本周工作周报</span></div>
+                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M2.5 8V17.8A2.2 2.2 0 0 0 4.7 20H19.3A2.2 2.2 0 0 0 21.5 17.8V9.6A2.2 2.2 0 0 0 19.3 7.4H12.4C11.8 7.4 11.2 7.2 10.8 6.8L9.6 5.6C9.2 5.2 8.6 5 8 5H4.7A2.2 2.2 0 0 0 2.5 7.2Z"/></svg><span>整理本周工作周报</span></div>
                   <div class="hud-meta"><span class="hud-status" style="color:#8E8E93">空闲</span><span class="hud-sub">30天 34.3 点</span><span class="hud-sub">22 小时前</span></div>
                 </div>
                 <svg class="hud-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5"/></svg>
@@ -389,7 +397,7 @@
               <div class="hud-row">
                 <i class="hud-dot"></i>
                 <div class="hud-main">
-                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h4.2c.4 0 .78.16 1.06.44l1.34 1.26c.28.28.66.44 1.06.44h7.34A1.5 1.5 0 0 1 21 7.64V18.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span>生成 v1.4.0 发布说明</span></div>
+                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M2.5 8V17.8A2.2 2.2 0 0 0 4.7 20H19.3A2.2 2.2 0 0 0 21.5 17.8V9.6A2.2 2.2 0 0 0 19.3 7.4H12.4C11.8 7.4 11.2 7.2 10.8 6.8L9.6 5.6C9.2 5.2 8.6 5 8 5H4.7A2.2 2.2 0 0 0 2.5 7.2Z"/></svg><span>生成 v1.4.0 发布说明</span></div>
                   <div class="hud-meta"><span class="hud-status" style="color:#8E8E93">空闲</span><span class="hud-sub">—</span><span class="hud-sub">1 天前</span></div>
                 </div>
                 <svg class="hud-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5"/></svg>
@@ -405,9 +413,8 @@
           </div>
         </div>
       </div>
-
-      <p class="desktop-hint">把鼠标移到刘海上，面板会像真机一样展开</p>
     </div>
+    <p class="desktop-hint">把鼠标移到刘海上，面板会像真机一样展开</p>
   </div>
 </section>
 <section class="features" id="features">
