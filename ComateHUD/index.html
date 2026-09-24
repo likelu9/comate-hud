@@ -74,10 +74,10 @@
 
     /* ---- 下载区块：公共信息行 / 按钮行 / 元信息行 / 安装说明气泡 ---- */
     .dl-block { scroll-margin-top: 96px; }
-    .dl-actions { position: relative; margin-bottom: 26px; }
-    /* Win 版「敬请期待」放按钮下方：绝对定位，不影响按钮行几何（Mac/Win 保持同一基线） */
-    .dl-win-wrap { position: relative; display: inline-flex; }
-    .dl-win-note { position: absolute; top: calc(100% + 6px); left: 0; right: 0; text-align: center; font-size: 12px; line-height: 1.2; color: var(--text-dim); white-space: nowrap; }
+    .dl-actions { position: relative; margin-bottom: 0; }
+    /* 按钮行下方辅助行：「敬请期待」与安装说明触发点同行居中 */
+    .dl-subline { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 14px; }
+    .dl-win-note { font-size: 12px; line-height: 1.2; color: var(--text-dim); white-space: nowrap; }
     .dl-actions .btn-download { white-space: nowrap; }
     .dl-actions .btn-download svg { flex: none; }
     .dl-tags { margin-top: 16px; gap: 16px; }
@@ -86,11 +86,10 @@
     .dl-tag svg.solid { fill: currentColor; stroke: none; }
     .dl-tag[hidden] { display: none; }
     .dl-help { position: relative; display: inline-flex; align-items: center; }
-    .dl-help-trigger { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 44px; height: 44px; padding: 0; border-radius: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; }
-    .dl-help-trigger svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-    .dl-help-trigger:hover, .dl-help.is-open .dl-help-trigger { background: rgba(0,212,170,0.08); border-color: rgba(0,212,170,0.35); color: var(--accent); }
-    .dl-help-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .dl-help-label { display: none; }
+    .dl-help-trigger { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: none; color: var(--text-dim); font: inherit; font-size: 12px; line-height: 1.2; cursor: pointer; transition: color 0.2s; }
+    .dl-help-trigger svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .dl-help-trigger:hover, .dl-help.is-open .dl-help-trigger { color: var(--accent); }
+    .dl-help-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
     .dl-help-pop { position: absolute; bottom: calc(100% + 14px); left: 50%; transform: translate(-50%, 6px); width: min(500px, calc(100vw - 48px)); max-height: calc(100vh - 40px); overflow-y: auto; padding: 18px 20px 20px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 18px 48px rgba(0,0,0,0.6); text-align: left; font-size: 13px; line-height: 1.75; color: var(--text-secondary); opacity: 0; visibility: hidden; pointer-events: none; z-index: 40; user-select: text; -webkit-user-select: text; transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.22,1,0.36,1), visibility 0s linear 0.18s; }
     .dl-help-pop::before { content: ''; position: absolute; bottom: -5px; left: 50%; margin-left: -5px; width: 10px; height: 10px; background: var(--bg-card); border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); transform: rotate(45deg); }
     .dl-help:hover .dl-help-pop,
@@ -373,14 +372,11 @@
       .version-item .vi-head { flex-direction: column; align-items: flex-start; gap: 4px; }
       .dl-actions { gap: 10px; margin-bottom: 0; align-items: flex-start; }
       .dl-actions .btn-download { padding: 13px 22px; font-size: 15px; }
-      /* 移动端按钮折行后：说明改为按钮下方常规流，避免与下一个按钮重叠 */
-      .dl-win-wrap { flex-direction: column; align-items: center; }
-      .dl-win-note { position: static; margin-top: 6px; }
+      /* 移动端：辅助行换行展示，气泡在触发点下方整行展开（点击打开，不用 hover） */
+      .dl-subline { flex-wrap: wrap; gap: 8px 14px; margin-top: 12px; }
       .dl-tags { gap: 10px 14px; }
-      .dl-help-trigger { width: auto; height: 44px; padding: 0 14px; align-self: center; }
-      .dl-help-label { display: inline; }
       .dl-help { display: contents; }
-      .dl-help-pop { position: static; order: 9; flex: 1 1 100%; width: 100%; max-width: none; max-height: none; overflow-y: visible; margin-top: 2px; transform: none; opacity: 1; visibility: visible; pointer-events: auto; display: none; }
+      .dl-help-pop { position: static; flex: 1 1 100%; width: 100%; max-width: none; max-height: none; overflow-y: visible; margin-top: 4px; transform: none; opacity: 1; visibility: visible; pointer-events: auto; display: none; }
       /* 移动端宽度不足：命令改为换行展示，避免横向滚动才能看全 */
       .dl-help-code { white-space: normal; word-break: break-all; overflow-x: visible; }
       .dl-help-pop::before { display: none; }
@@ -418,6 +414,13 @@
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></svg>
           <span id="dl-text">Mac 版</span>
         </a>
+        <span id="dl-win" class="btn-download btn-coming" aria-disabled="true" aria-describedby="dl-win-note">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.6 4.9 10.4 3.7v7.6H2.6zM11.6 3.5 21.4 2.1v9.2h-9.8zM2.6 12.7h7.8v7.6L2.6 19.1zM11.6 12.7h9.8v9.2l-9.8-1.4z"/></svg>
+          <span>Win 版</span>
+        </span>
+      </div>
+      <div class="dl-subline">
+        <span class="dl-win-note" id="dl-win-note">敬请期待</span>
         <span class="dl-help" id="dl-help">
           <button class="dl-help-trigger" id="dl-help-trigger" type="button" aria-expanded="false" aria-controls="dl-help-pop" aria-label="macOS 安装说明" title="macOS 安装说明">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2"/><circle cx="12" cy="7.9" r="1.05" fill="currentColor" stroke="none"/></svg>
@@ -432,17 +435,6 @@
             <p class="dl-help-sub dl-help-note">然后双击启动</p>
           </div>
         </span>
-        <span class="dl-win-wrap">
-          <span id="dl-win" class="btn-download btn-coming" aria-disabled="true" aria-describedby="dl-win-note">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.6 4.9 10.4 3.7v7.6H2.6zM11.6 3.5 21.4 2.1v9.2h-9.8zM2.6 12.7h7.8v7.6L2.6 19.1zM11.6 12.7h9.8v9.2l-9.8-1.4z"/></svg>
-            <span>Win 版</span>
-          </span>
-          <span class="dl-win-note" id="dl-win-note">敬请期待</span>
-        </span>
-        <a href="https://github.com/likelu9/comate-hud" class="btn-download btn-secondary" target="_blank" rel="noopener">
-          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-          <span>GitHub</span>
-        </a>
       </div>
       <div class="hero-tags dl-tags">
         <span class="dl-tag" id="dl-size" hidden>
