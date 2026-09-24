@@ -1,14 +1,18 @@
 #!/bin/bash
 # ============================================================
 # Comate HUD 版本发布脚本
-# 用法: ./release.sh <version> <build_num>
-# 示例: ./release.sh 1.3.0 4
+# 用法: ./release.sh <version> <build_num> [site_version]
+# 示例: ./release.sh 1.4.1 9 1.4.15
 #
 # 流程:
 #   1. 读取 versions.json，添加新版本条目
 #   2. 运行 build.sh 构建新 DMG
 #   3. 更新 versions.json 的 latest 字段
 #   4. 重新部署前端页面到 Comate
+#
+# 版本号有两个独立空间，别混用：
+#   <version>       客户端版本（Info.plist / DMG 名 / versions.json），跟 App 一起发
+#   [site_version]  官网站内版本（平台递增计数器，取 code status 的 latest_version +1），省略时用 <version>
 # ============================================================
 set -euo pipefail
 
@@ -21,13 +25,15 @@ BUILD_SCRIPT="$ROOT_DIR/ComateNotch/build.sh"
 # --- 参数检查 ---
 VERSION="${1:-}"
 BUILD_NUM="${2:-}"
+SITE_VERSION="${3:-${VERSION}}"
 if [[ -z "$VERSION" || -z "$BUILD_NUM" ]]; then
-  echo "❌ 用法: $0 <version> <build_num>"
-  echo "   示例: $0 1.3.0 4"
+  echo "❌ 用法: $0 <version> <build_num> [site_version]"
+  echo "   示例: $0 1.4.1 9 1.4.15"
   exit 1
 fi
 
 echo "==> Comate HUD v${VERSION} (build ${BUILD_NUM}) 发布流程"
+echo "    官网站内版本: ${SITE_VERSION}"
 echo ""
 
 # --- Step 1: 构建新版本 ---
@@ -112,7 +118,7 @@ echo ""
 echo "==> Step 4: 部署前端页面"
 bash /Users/likelu/.wpscomate/agent/skills/official/comate-cli/scripts/comate.sh code publish \
   --workspace "$HUD_DIR" \
-  --version "${VERSION}" \
+  --version "${SITE_VERSION}" \
   --description "Comate HUD v${VERSION} - macOS AI 任务状态灯产品介绍与下载页" \
   --json 2>&1 | tail -10
 echo ""
@@ -126,5 +132,5 @@ echo "下载 DMG:   ComateNotch/dist/ComateHUD-${VERSION}.dmg"
 echo ""
 echo "后续操作:"
 echo "  1. 编辑 ComateHUD/versions.json 填写 changelog"
-echo "  2. 重新运行: bash $0 ${VERSION} ${BUILD_NUM}"
+echo "  2. 重新运行: bash $0 ${VERSION} ${BUILD_NUM} ${SITE_VERSION}"
 echo "============================================"
