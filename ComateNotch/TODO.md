@@ -29,7 +29,7 @@
 - DMG 打包完成 (932KB)，含 Applications 符号链接 + 安装说明
 
 ### Phase5 - 客户端增强（1.4.1）
-- 更新检测：读 GitHub Releases 的 latest tag，与本地版本语义比较；设置按钮亮红点，菜单显示「检查更新 / 检测到新版 vX.Y.Z」，点击跳发布页（`Sources/UpdateChecker.swift`）
+- 更新检测：读 GitHub Releases 的 latest tag，与本地版本语义比较；设置按钮与菜单项「检测到新版 vX.Y.Z」同时亮红点（菜单红点走勾选列），点该项即记为已读并跳发布页——同一版本不再提示，出现更新版本时红点恢复（`Sources/UpdateChecker.swift`）
 - 开机自启：写用户级 LaunchAgent（`~/Library/LaunchAgents/com.wpscomate.hud.plist`），首次启动默认开启，菜单里可勾选切换（`Sources/LaunchAtLogin.swift`）
 - 单实例保护：同 bundle id 已在运行则请它把面板重新置前，新实例直接退出，避免两份 HUD 叠加与双份活跃上报（`Sources/AppDelegate.swift`）
 - 技术债：任务模型拆到 `TaskModel.swift`，面板布局公式拆到 `NotchLayout.swift`，新增 `test.sh`（47 项断言）
