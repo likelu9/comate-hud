@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1280" width="1080" height="1280" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif">
+  <rect width="1080" height="1280" fill="#0a0a0f"/>
+
+  <!-- ===== Header ===== -->
+  <text x="40" y="52" font-size="22" font-weight="800" letter-spacing="-0.02em" fill="#f5f5f7">文案精简 + 排版节奏 · 全站规范</text>
+  <text x="40" y="78" font-size="13" fill="#8e8e93">Comate HUD 官网 · minimal-dark-macos · 13 → 12 区块 · 信息密度下降，信息量不变</text>
+  <line x1="40" y1="92" x2="1040" y2="92" stroke="rgba(255,255,255,0.08)"/>
+
+  <!-- ===== Panel A: spacing scale ===== -->
+  <rect x="40" y="112" width="1000" height="248" rx="16" fill="#0f0f16" stroke="rgba(255,255,255,0.07)"/>
+  <text x="64" y="144" font-size="15" font-weight="700" fill="#f5f5f7">① 间距刻度 s1–s10</text>
+  <text x="64" y="164" font-size="11" fill="#55555d">本次规范引用的所有数值都落在这个刻度上</text>
+
+  <!-- col 1 -->
+  <text x="64" y="200" font-size="12" fill="#8e8e93">s1 · 4px</text>
+  <rect x="126" y="189" width="6" height="14" rx="3" fill="#00d4aa" opacity="0.55"/>
+  <text x="142" y="200" font-size="10" fill="#55555d">行内微调</text>
+
+  <text x="64" y="234" font-size="12" fill="#8e8e93">s2 · 8px</text>
+  <rect x="126" y="223" width="12" height="14" rx="3" fill="#00d4aa" opacity="0.55"/>
+  <text x="148" y="234" font-size="10" fill="#55555d">图标与文字</text>
+
+  <text x="64" y="268" font-size="12" fill="#8e8e93">s3 · 12px</text>
+  <rect x="126" y="257" width="19" height="14" rx="3" fill="#00d4aa" opacity="0.55"/>
+  <text x="155" y="268" font-size="10" fill="#55555d">紧凑行距 / 标签 gap</text>
+
+  <text x="64" y="302" font-size="12" fill="#8e8e93">s4 · 16px</text>
+  <rect x="126" y="291" width="25" height="14" rx="3" fill="#00d4aa" opacity="0.55"/>
+  <text x="161" y="302" font-size="10" fill="#55555d">卡片内小间距</text>
+
+  <text x="64" y="336" font-size="12" fill="#8e8e93">s5 · 20px</text>
+  <rect x="126" y="325" width="31" height="14" rx="3" fill="#00d4aa" opacity="0.55"/>
+  <text x="167" y="336" font-size="10" fill="#55555d">卡片网格 gap</text>
+
+  <!-- col 2 -->
+  <text x="564" y="200" font-size="12" fill="#8e8e93">s6 · 28px</text>
+  <rect x="626" y="189" width="43" height="14" rx="3" fill="#00d4aa" opacity="0.7"/>
+  <text x="679" y="200" font-size="10" fill="#55555d">主卡片网格 gap</text>
+
+  <text x="564" y="234" font-size="12" fill="#8e8e93">s7 · 40px</text>
+  <rect x="626" y="223" width="62" height="14" rx="3" fill="#00d4aa" opacity="0.7"/>
+  <text x="698" y="234" font-size="10" fill="#55555d">卡片内边距</text>
+
+  <text x="564" y="268" font-size="12" fill="#8e8e93">s8 · 56px</text>
+  <rect x="626" y="257" width="87" height="14" rx="3" fill="#00d4aa" opacity="0.8"/>
+  <text x="723" y="268" font-size="10" fill="#55555d">区块内块间距</text>
+
+  <text x="564" y="302" font-size="12" fill="#8e8e93">s9 · 64px</text>
+  <rect x="626" y="291" width="99" height="14" rx="3" fill="#00d4aa" opacity="0.85"/>
+  <text x="735" y="302" font-size="10" fill="#55555d">区块标题 → 内容</text>
+
+  <text x="564" y="336" font-size="12" fill="#8e8e93">s10 · 112px</text>
+  <rect x="626" y="325" width="174" height="14" rx="3" fill="#00d4aa"/>
+  <text x="810" y="336" font-size="10" fill="#55555d">区块上下 padding</text>
+
+  <!-- ===== Panel B: section rhythm ===== -->
+  <rect x="40" y="380" width="1000" height="300" rx="16" fill="#0f0f16" stroke="rgba(255,255,255,0.07)"/>
+  <text x="64" y="412" font-size="15" font-weight="700" fill="#f5f5f7">② 区块相邻间距：从「一律 160px」到三档节奏</text>
+  <text x="64" y="432" font-size="11" fill="#55555d">现状所有 section 都是 80px 0，相邻间距恒为 160px —— 所有边界一样重，读者找不到话题切换点</text>
+
+  <!-- reference line: 160px (before) -->
+  <line x1="486" y1="446" x2="486" y2="656" stroke="rgba(255,255,255,0.22)" stroke-dasharray="4 4"/>
+  <text x="486" y="672" font-size="10" fill="#55555d" text-anchor="middle">现状 160px</text>
+
+  <!-- rows -->
+  <text x="64" y="462" font-size="11" fill="#8e8e93">hero → mockup</text>
+  <rect x="230" y="451" width="269" height="12" rx="3" fill="#00d4aa" opacity="0.55"/>
+  <text x="509" y="462" font-size="11" fill="#8e8e93">168</text>
+
+  <text x="64" y="484" font-size="11" fill="#8e8e93">mockup → features</text>
+  <rect x="230" y="473" width="384" height="12" rx="3" fill="#00d4aa" opacity="0.85"/>
+  <text x="624" y="484" font-size="11" fill="#8e8e93">240</text>
+
+  <text x="64" y="506" font-size="11" fill="#8e8e93">features → lights</text>
+  <rect x="230" y="495" width="358" height="12" rx="3" fill="#00d4aa" opacity="0.85"/>
+  <text x="598" y="506" font-size="11" fill="#8e8e93">224</text>
+
+  <text x="64" y="528" font-size="11" fill="#8e8e93">lights → tech</text>
+  <rect x="230" y="517" width="358" height="12" rx="3" fill="#00d4aa" opacity="0.85"/>
+  <text x="598" y="528" font-size="11" fill="#8e8e93">224</text>
+
+  <text x="64" y="550" font-size="11" fill="#00d4aa">tech → compat</text>
+  <rect x="230" y="539" width="179" height="12" rx="3" fill="#00d4aa" opacity="0.35"/>
+  <text x="419" y="550" font-size="11" fill="#8e8e93">112 · compat top 归零，读作 tech 的规格脚注</text>
+
+  <text x="64" y="572" font-size="11" fill="#8e8e93">compat → versions</text>
+  <rect x="230" y="561" width="358" height="12" rx="3" fill="#00d4aa" opacity="0.85"/>
+  <text x="598" y="572" font-size="11" fill="#8e8e93">224</text>
+
+  <text x="64" y="594" font-size="11" fill="#8e8e93">versions → appstats</text>
+  <rect x="230" y="583" width="333" height="12" rx="3" fill="#00d4aa" opacity="0.55"/>
+  <text x="573" y="594" font-size="11" fill="#8e8e93">208 · appstats top 收到 96</text>
+
+  <text x="64" y="616" font-size="11" fill="#8e8e93">appstats → powered</text>
+  <rect x="230" y="605" width="358" height="12" rx="3" fill="#00d4aa" opacity="0.85"/>
+  <text x="598" y="616" font-size="11" fill="#8e8e93">224</text>
+
+  <text x="64" y="638" font-size="11" fill="#8e8e93">powered → wish</text>
+  <rect x="230" y="627" width="358" height="12" rx="3" fill="#00d4aa" opacity="0.85"/>
+  <text x="598" y="638" font-size="11" fill="#8e8e93">224</text>
+
+  <text x="64" y="660" font-size="11" fill="#8e8e93">wish → footer</text>
+  <rect x="230" y="649" width="307" height="12" rx="3" fill="#00d4aa" opacity="0.55"/>
+  <text x="547" y="660" font-size="11" fill="#8e8e93">192</text>
+
+  <!-- ===== Panel C: compat strip ===== -->
+  <rect x="40" y="710" width="1000" height="220" rx="16" fill="#0f0f16" stroke="rgba(255,255,255,0.07)"/>
+  <text x="64" y="742" font-size="15" font-weight="700" fill="#f5f5f7">③ compat 标签带（原 6 行表格 → 一行 5 标签）</text>
+  <text x="64" y="762" font-size="11" fill="#55555d">#compat 保留 section 与 id（导航 / 页脚锚点），删除 h2 与 table；padding-top 归零</text>
+
+  <text x="98" y="838" font-size="12" font-weight="600" letter-spacing="1.5" fill="#00d4aa">兼容性</text>
+
+  <rect x="168" y="816" width="118" height="34" rx="17" fill="#111118" stroke="rgba(255,255,255,0.12)"/>
+  <circle cx="186" cy="833" r="6" fill="#8e8e93" opacity="0.8"/>
+  <text x="198" y="838" font-size="12" fill="#8e8e93">macOS 12.0+</text>
+
+  <rect x="298" y="816" width="166" height="34" rx="17" fill="#111118" stroke="rgba(255,255,255,0.12)"/>
+  <rect x="310" y="827" width="12" height="12" rx="2" fill="none" stroke="#8e8e93" stroke-width="1.6" opacity="0.8"/>
+  <text x="330" y="838" font-size="12" fill="#8e8e93">Apple Silicon &amp; Intel</text>
+
+  <rect x="476" y="816" width="206" height="34" rx="17" fill="#111118" stroke="rgba(255,255,255,0.12)"/>
+  <rect x="488" y="826" width="16" height="11" rx="2" fill="none" stroke="#8e8e93" stroke-width="1.6" opacity="0.8"/>
+  <path d="M486 840h20" stroke="#8e8e93" stroke-width="1.6" opacity="0.8"/>
+  <text x="510" y="838" font-size="12" fill="#8e8e93">MacBook / iMac（含非刘海）</text>
+
+  <rect x="694" y="816" width="121" height="34" rx="17" fill="#111118" stroke="rgba(255,255,255,0.12)"/>
+  <path d="M706 828l7 3v6c0 3.6-2.9 6.4-7 7.6-4.1-1.2-7-4-7-7.6v-6z" fill="none" stroke="#8e8e93" stroke-width="1.6" opacity="0.8"/>
+  <text x="720" y="838" font-size="12" fill="#8e8e93">辅助功能权限</text>
+
+  <rect x="827" y="816" width="166" height="34" rx="17" fill="#111118" stroke="rgba(255,255,255,0.12)"/>
+  <rect x="839" y="827" width="12" height="12" rx="3" fill="none" stroke="#8e8e93" stroke-width="1.6" opacity="0.8"/>
+  <text x="859" y="838" font-size="12" fill="#8e8e93">WPS Comate 1.6.17+</text>
+
+  <text x="64" y="900" font-size="11" fill="#55555d">删除：「网络连接」行（软建议、无门槛值）＋ 整列「状态」（6 个 ✓ 自我背书、零信息量）</text>
+
+  <!-- ===== Panel D: feature card anatomy ===== -->
+  <rect x="40" y="960" width="1000" height="290" rx="16" fill="#0f0f16" stroke="rgba(255,255,255,0.07)"/>
+  <text x="64" y="992" font-size="15" font-weight="700" fill="#f5f5f7">④ 功能卡解剖（.feature-card）</text>
+  <text x="64" y="1012" font-size="11" fill="#55555d">卡片数量、标题、图标、配色类全部不变 —— 只放大内边距与行高</text>
+
+  <!-- card mock -->
+  <rect x="80" y="1032" width="340" height="192" rx="20" fill="#111118" stroke="rgba(255,255,255,0.16)"/>
+  <rect x="112" y="1072" width="52" height="52" rx="14" fill="rgba(48,209,88,0.12)"/>
+  <circle cx="138" cy="1098" r="9" fill="#30d158" opacity="0.85"/>
+  <text x="112" y="1160" font-size="19" font-weight="700" fill="#f5f5f7">实时状态灯</text>
+  <text x="112" y="1186" font-size="15" fill="#8e8e93">四种状态灯常驻刘海。</text>
+  <text x="112" y="1208" font-size="15" fill="#8e8e93">抬眼即知，不用切窗口。</text>
+
+  <!-- padding annotation -->
+  <line x1="80" y1="1146" x2="112" y2="1146" stroke="#00d4aa" stroke-width="1.2"/>
+  <line x1="80" y1="1142" x2="80" y2="1150" stroke="#00d4aa" stroke-width="1.2"/>
+  <line x1="112" y1="1142" x2="112" y2="1150" stroke="#00d4aa" stroke-width="1.2"/>
+  <text x="96" y="1136" font-size="10" fill="#00d4aa" text-anchor="middle">32</text>
+
+  <line x1="250" y1="1032" x2="250" y2="1072" stroke="#00d4aa" stroke-width="1.2"/>
+  <line x1="246" y1="1032" x2="254" y2="1032" stroke="#00d4aa" stroke-width="1.2"/>
+  <line x1="246" y1="1072" x2="254" y2="1072" stroke="#00d4aa" stroke-width="1.2"/>
+  <text x="264" y="1056" font-size="10" fill="#00d4aa">40</text>
+
+  <!-- change list -->
+  <text x="480" y="1050" font-size="12" fill="#55555d">卡片 padding<tspan dx="18" fill="#f5f5f7">36px 28px → 40px 32px</tspan></text>
+  <text x="480" y="1080" font-size="12" fill="#55555d">网格 gap<tspan dx="39" fill="#f5f5f7">20px → 28px</tspan></text>
+  <text x="480" y="1110" font-size="12" fill="#55555d">图标尺寸<tspan dx="39" fill="#f5f5f7">48px → 52px</tspan></text>
+  <text x="480" y="1140" font-size="12" fill="#55555d">标题 h3<tspan dx="51" fill="#f5f5f7">18px → 19px</tspan></text>
+  <text x="480" y="1170" font-size="12" fill="#55555d">正文 p<tspan dx="57" fill="#f5f5f7">14px / 1.65 → 15px / 1.75</tspan></text>
+  <text x="480" y="1200" font-size="12" fill="#55555d">区块 padding<tspan dx="9" fill="#f5f5f7">80px 0 → 112px 0</tspan></text>
+  <text x="480" y="1230" font-size="12" fill="#55555d">标题→内容<tspan dx="21" fill="#f5f5f7">48px → 64px</tspan></text>
+
+  <line x1="464" y1="1032" x2="464" y2="1244" stroke="rgba(255,255,255,0.07)"/>
+</svg>

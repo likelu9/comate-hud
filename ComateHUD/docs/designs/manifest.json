@@ -1,0 +1,206 @@
+{
+  "schema": "wps-design-manifest/1",
+  "version": "1.4",
+  "project": "ComateHUD",
+  "product": "Comate HUD 官网",
+  "artifact": {
+    "type": "静态单页官网",
+    "stack": "单文件 index.html（HTML + <style> + 原生 JS，无框架无构建）",
+    "source": "ComateHUD/index.html",
+    "line_count_at_spec_time": 1308,
+    "sections_before": 13,
+    "sections_after": 12
+  },
+  "style": {
+    "name": "minimal-dark-macos",
+    "mode": "dark",
+    "principles": [
+      "留白层级代替分隔线：不加 section 边框 / 不加背景分区 / 不加装饰图形",
+      "唯一 accent 只作点睛，不做运营大促感",
+      "零外部资源，图标一律手写内联 SVG",
+      "信息密度下降，信息量不变"
+    ]
+  },
+  "design_docs": {
+    "hub": "docs/designs/DESIGN.md",
+    "sections": [
+      {
+        "id": "appstats",
+        "title": "应用统计区块",
+        "scope": "#appstats 区块（位于 #versions 与 #wishwall 之间）",
+        "status": "已实现"
+      },
+      {
+        "id": "download",
+        "title": "下载区块",
+        "scope": "hero 内 #download（公共信息行 / MAC·WIN·GitHub 三按钮 / 按钮外体积元信息行 / macOS 安装说明 hover 气泡）",
+        "status": "已实现"
+      },
+      {
+        "id": "copy-spacing",
+        "title": "全站文案精简 + 排版节奏",
+        "scope": "全站文案（#download 内部除外）+ 全站区块 padding / 网格 gap / 卡片内边距 / 字号行高；删除 #how（13 → 12 区块）；#compat 表格 → 一行标签带",
+        "status": "待实现",
+        "key_decisions": [
+          "features 不扩成 9 张卡：how-section 的 3 步 9 句中 8 句与其他区块重复，唯一有效句并入「实时状态灯」卡",
+          "#compat 保留 section 与 id（导航/页脚锚点），但 top padding 归零，读作 #tech 的规格脚注",
+          "区块间距从「一律 160px」拆成 112 / 168 / 192 / 208 / 224 / 240 三档节奏"
+        ]
+      }
+    ]
+  },
+  "tokens": {
+    "colors": {
+      "bg": "#0a0a0f",
+      "bgCard": "#111118",
+      "bgCardHover": "#16161f",
+      "text": "#f5f5f7",
+      "textSecondary": "#8e8e93",
+      "textDim": "#55555d",
+      "accent": "#00d4aa",
+      "accentGlow": "rgba(0,212,170,0.25)",
+      "hairline": "rgba(255,255,255,0.06)"
+    },
+    "geometry": {
+      "maxWidth": "1080px",
+      "containerPaddingX": "24px",
+      "radius": "20px",
+      "radiusSmall": "14px",
+      "radiusCard": "16px",
+      "radiusPill": "999px"
+    },
+    "fonts": {
+      "heading": "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC'",
+      "body": "同上（继承 body，不另设字体）"
+    },
+    "spacingScale": {
+      "s1": "4px",
+      "s2": "8px",
+      "s3": "12px",
+      "s4": "16px",
+      "s5": "20px",
+      "s6": "28px",
+      "s7": "40px",
+      "s8": "56px",
+      "s9": "64px",
+      "s10": "112px"
+    },
+    "sectionRhythm": {
+      "A_strong_112": {
+        "padding": "112px 0",
+        "adjacentGap": "224px",
+        "sections": ["#features", "#lights", "#tech", "#versions", "#powered", "#wish"]
+      },
+      "B_bridge": {
+        "hero": "168px 0 96px",
+        "mockup": "72px 0 128px",
+        "footer": "64px 0"
+      },
+      "C_tight": {
+        "#compat": "0 0 112px",
+        "#appstats": "96px 0 112px"
+      },
+      "before": "所有 section 一律 80px 0（相邻间距恒为 160px）"
+    },
+    "type": {
+      "bodyLineHeight": 1.7,
+      "cardBody": "15px / 1.75",
+      "sectionSubtitle": "16px / 1.7",
+      "h2": "clamp(28px, 4vw, 40px) / 1.15",
+      "sectionLabel": "13px / letter-spacing 0.12em / uppercase",
+      "archList": "14px / 2.0",
+      "changelogList": "14px / 1.9",
+      "measure": {
+        "sectionSubtitle": "560px",
+        "versionList": "720px",
+        "poweredCard": "600px",
+        "lightItem": "200px"
+      }
+    }
+  },
+  "sections_order": [
+    "nav",
+    "hero",
+    "mockup-section",
+    "features",
+    "lights-section",
+    "tech-section",
+    "compat-section",
+    "version-section",
+    "appstats-section",
+    "powered-section",
+    "wish-section",
+    "footer"
+  ],
+  "removed": [
+    {
+      "id": "how-section",
+      "title": "使用流程",
+      "reason": "3 步 × 3 句 = 9 句，其中 8 句与下载区安装说明 / #features / #compat / #tech 重复；唯一有效句「不需要切窗口」并入 #features「实时状态灯」卡",
+      "css_removed": [
+        ".how-section",
+        ".steps",
+        ".steps::before",
+        ".step",
+        ".step-num",
+        ".step-content h3",
+        ".step-content p"
+      ],
+      "html_removed": "index.html 561-570 行整块"
+    }
+  ],
+  "resources": [
+    {
+      "path": "docs/designs/references/stats-mockup.svg",
+      "for": "appstats",
+      "type": "视觉稿"
+    },
+    {
+      "path": "docs/designs/references/download-section.svg",
+      "for": "download",
+      "type": "视觉稿"
+    },
+    {
+      "path": "docs/designs/references/copy-rhythm.svg",
+      "for": "copy-spacing",
+      "type": "视觉稿（间距刻度 / 区块相邻间距对照 / compat 标签带 / 功能卡解剖）"
+    }
+  ],
+  "constraints": {
+    "external_resources": "none",
+    "forbidden_css": ["oklch(", "color-mix(", "@layer"],
+    "breakpoints": ["768px"],
+    "preserve_ids": [
+      "download",
+      "features",
+      "lights",
+      "tech",
+      "compat",
+      "versions",
+      "appstats",
+      "powered",
+      "wishwall"
+    ],
+    "preserve_css": [
+      ".compat-table",
+      ".compat-table th, .compat-table td",
+      ".compat-table th",
+      ".compat-table td",
+      ".compat-table tr:last-child td",
+      ".compat-table .check",
+      ".stats-table"
+    ],
+    "untouched": [
+      "ComateHUD/versions.json",
+      "ComateNotch/release.sh",
+      "index.html 内全部 JS（更新日志渲染 / 下载计数 / appstats 渲染 / .reveal 观察器）",
+      "hero 下载区 #download 内部",
+      ":root 全部 token"
+    ]
+  },
+  "release_contract": {
+    "size_source": "versions.json → versions[0].size",
+    "writer": "ComateNotch/release.sh（发版时用 stat 计算 DMG 字节数并格式化写入）",
+    "fallback": "size 为 \"-\" / 空 → 官网整条隐藏体积，绝不回落硬编码"
+  }
+}

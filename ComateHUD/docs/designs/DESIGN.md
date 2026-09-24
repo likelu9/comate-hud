@@ -1,7 +1,7 @@
 ---
-version: "1.3"
+version: "1.4"
 style: "minimal-dark-macos"
-target: "ComateHUD/index.html：① #appstats 区块（插在 #versions 与 #wishwall 之间）；② hero 内下载区 #download 重构（公共信息行 / MAC·WIN·GitHub 三按钮 / 按钮外体积元信息行 / macOS 安装说明 hover 气泡）"
+target: "ComateHUD/index.html：① #appstats 区块（插在 #versions 与 #wishwall 之间）；② hero 内下载区 #download 重构（公共信息行 / MAC·WIN·GitHub 三按钮 / 按钮外体积元信息行 / macOS 安装说明 hover 气泡）；③ 全站文案精简（13 → 12 区块：删除 #how「使用流程」，其去重后并入 #features；#compat 表格降级为一行标签带）+ 全站排版节奏重排（区块 padding / 网格 gap / 卡片内边距 / 正文行高字号）"
 palette:
   primary: "#00d4aa"      # var(--accent)
   background: "#0a0a0f"   # var(--bg)
@@ -19,9 +19,12 @@ sections:
     title: "应用统计"
   - id: "download"
     title: "下载区（公共信息行 · MAC/WIN 按钮 · 体积元信息 · 安装说明气泡）"
+  - id: "copy-spacing"
+    title: "全站文案精简清单 + 排版节奏规范（12 区块 · 删除 #how · #compat 降级为标签带）"
 references:
   - "references/stats-mockup.svg"
   - "references/download-section.svg"
+  - "references/copy-rhythm.svg"
 release_contract:
   size_source: "versions.json → versions[0].size"
   writer: "ComateNotch/release.sh（发版时用 stat 计算 DMG 字节数并格式化写入）"
@@ -509,3 +512,674 @@ fs.writeFileSync('versions.json', JSON.stringify(data, null, 2) + '\n');
 - [ ] 构建失败 / DMG 缺失时 `size` 保持 `'-'`，官网体积行整条隐藏且**不出现任何假数据**
 - [ ] `versions.json` 的 `versions[0].size` 已回填为 `1.8 MB`，与 `ComateHUD-1.4.0.dmg`（1887772 字节）一致
 - [ ] 把 `size` 改成 `12.4 MB` 后刷新，元信息行首项变为「`12.4 MB` DMG」，行宽与基线不跳变
+
+---
+
+# 全站文案精简 + 排版节奏 · 设计规范
+
+> **范围**：`ComateHUD/index.html` 全站**文案**与全站**垂直节奏 / 网格间距 / 字号行高**。
+> **不在范围内**：hero 下载区 `#download` 内部（已由上文「下载区块 · 设计规范」覆盖）、`#appstats` 的数据渲染逻辑（已由上文「应用统计区块 · 设计规范」覆盖）、更新日志文案（来自 `versions.json`，非手写）。
+> **视觉稿**：`docs/designs/references/copy-rhythm.svg`（间距刻度 / 区块节奏 / compat 标签带 / 功能卡解剖，四联图）。
+
+## 0. Design Contract
+
+**目标**：把「信息流偏密」改成「一眼扫过、留白说话」。两条硬指标同时成立 ——
+1. **文案**：中等力度精简。**不砍信息点**（数字 / 功能名 / 机制说明全留），只砍重复表达、可从上下文推断的废话、过度承诺的形容词。2 句压 1 句，3 并列压 2。
+2. **排版**：正文行高 1.6 → 1.7~1.75；区块上下 padding 80 → 112；网格 gap 16~20 → 20~28；卡片内边距 +4~8px。**信息密度下降，信息量不变。**
+
+### 硬约束（沿用既有约定）
+- 纯静态单文件页，零外部资源（无 CDN / 无外部字体 / 无图标库 / 无图片，图标一律手写内联 SVG）。
+- 禁用 `oklch()` / `color-mix()` / `@layer`；颜色只用既有 `:root` 变量与既有白/黑/accent 透明度写法。
+- 移动端规则并入既有 `@media (max-width:768px)` 块，**不新开断点**。
+- 不新增字体族（沿用 `-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC"`）。
+- 不改任何 `id`、不改导航锚点（**`#compat` 必须保留**，导航「兼容性」与页脚链接依赖它）、不改 `.reveal` 观察器参数（`threshold:0.1` / `rootMargin:'0px 0px -40px 0px'`）。
+
+### 复用既有 token（不新增颜色）
+`--bg`(#0a0a0f) `--bg-card`(#111118) `--bg-card-hover` `--text`(#f5f5f7) `--text-secondary`(#8e8e93) `--text-dim`(#55555d) `--accent`(#00d4aa) `--accent-glow` `--radius`(20px) `--max-w`(1080px)
+中性色仅 `rgba(255,255,255,0.03 / 0.06 / 0.08 / 0.1)`。
+
+### 不做什么（明确否决项）
+| 否决 | 理由 |
+| --- | --- |
+| 不加分隔线 / 不加背景分区 / 不加装饰图形 | 节奏**只靠留白层级**说话，与页面「最克制」的既有风格一致。加线会把「留白不足」换成「线条噪音」。 |
+| 不扩成 9 张功能卡 | 见 §3：9 卡在 3 列网格下是 3 行，比 6 卡**更密**，与诉求相反。 |
+| 不把 `#compat` 并入 `#tech` 删掉 section | 导航与页脚锚定 `#compat`，删了会断锚；改为「保留 section + 去掉 top padding」，视觉上读作 tech 的规格脚注。 |
+| 不动 `.compat-table` CSS 规则 | 它被 `#appstats` 的「今日活跃明细」表复用（`table class="compat-table stats-table"`），删除会连带破坏 appstats。只替换 `#compat` 里的 HTML。 |
+| 不改 `.reveal` 参数、不加新的 IntersectionObserver | 现有观察器按 `.reveal` 类扫描，新增/删除区块无需改 JS。 |
+| 不精简更新日志文案 | 来自 `versions.json`，属数据不属文案。 |
+
+---
+
+## 1. 文案精简总则（5 条）
+
+| # | 规则 | 示例 |
+| --- | --- | --- |
+| 1 | **删版本溯源前缀**：`v1.3.0 新增：` 交给更新日志，正文不重复 | 「任意悬浮模式」「外接显示器适配」两卡各去掉 `v1.3.0 新增：` |
+| 2 | **删过度承诺 / 过度形容词** | `柔和而有存在感`、`安静守候`、`紧急`、`轻量无冗余`、`不必从零搭建`、`定当持续更新为报` |
+| 3 | **删可从上下文推断的废话** | 「未读**消息**角标」中的「消息」（区块标题 + 铃铛图标已承载）；「100% Swift + SwiftUI **构建**」的「构建」 |
+| 4 | **2 句压 1 句 / 3 并列压 2** | powered 免责声明 2 句 → 1 句；powered 卡片「它做的」4 项并列 → 3 项 |
+| 5 | **保留全部具体信息** | 数字（15 分钟 / 2s / 30s / 5 轮 / 120fps / 1.6.17 / macOS 12.0）、功能名（NSPanel / SQLite / URLSession / Deeplink）、机制（定时轮询 / 异步队列 / 读写权限策略 / 失败重试）—— 一个不删 |
+
+### 篇幅硬指标（可验收）
+
+| 对象 | 上限 | 换算依据 |
+| --- | --- | --- |
+| 功能卡正文 `.feature-card p` | **≤ 2 行 / ≤ 32 字** | 1080px 三列卡内容宽 `(1032−2×28)/3 − 2×32 = 261px`，15px 中文 ≈ 17 字/行 |
+| 区块副标题 | **≤ 2 行 / ≤ 64 字** | `max-width:560px` @16px ≈ 34 字/行 |
+| 架构条目 `.arch-detail li` | **≤ 2 行 / ≤ 84 字** | 内容宽 `720 − 2×36 = 648px` @14px ≈ 44 字/行 |
+| 全站总字数 | **−18% ~ −25%** | 不含 JS 渲染的更新日志 |
+
+> 这三条是本次精简的**验收口径**：正文一旦超过 2 行，说明还有可砍的重复表达。
+
+---
+
+## 2. 逐区块文案对照表（原文 → 精简后）
+
+> 「原文」逐字取自当前 `index.html`。「精简后」可直接作为实现文案。
+
+### 2.1 hero（badge / h1 / 副标题 / 灯图例）
+
+| 位置 | 原文 | 精简后 | 动作 |
+| --- | --- | --- | --- |
+| badge | `macOS 原生 · Swift · SwiftUI` | 不变 | 3 个具体词，无水分 |
+| h1 | `Comate HUD` + `让 AI 干活，你只管看灯` | 不变 | 已是全站最短最有力的一句 |
+| 副标题 | `一款常驻 macOS 刘海区的轻量状态指示器，为 WPS Comate 而生。`<br>`无需打开主窗口，任务状态一目了然。` | `常驻 macOS 刘海区的状态指示器，为 WPS Comate 而生。`<br>`不用打开主窗口，状态抬眼即知。` | 删 `一款`（虚词）、`轻量`（过度形容词）、`任务`（可推断）；`一目了然` → `抬眼即知`（与 h1「看灯」呼应，且更短） |
+| 灯图例 | `空闲` / `已完成` / `工作中` / `等待确认` | 不变 | 2~4 字，已是极限 |
+
+### 2.2 mockup-section
+
+| 位置 | 原文 | 精简后 |
+| --- | --- | --- |
+| `.desktop-hint` | `把鼠标移到刘海上，面板会像真机一样展开` | `悬停刘海，面板会像真机一样展开` |
+
+### 2.3 features「核心功能」
+
+| 卡片 | 原文 | 精简后 |
+| --- | --- | --- |
+| 实时状态灯 | `四种状态灯常驻刘海：灰灯空闲、绿灯已完成、黄灯工作中、红灯等待确认。抬眼即知。` | `四种状态灯常驻刘海。抬眼即知，不用切窗口。` |
+| 任务面板 | `悬停刘海展开最近任务与耗时，右键可调展示条数；点击任意任务行，直达对应会话窗口。` | `悬停展开最近任务与耗时，点击任务行直达会话窗口；右键可调条数。` |
+| 消息中心 | `未读消息角标实时更新，点击铃铛直达消息中心。` | `未读角标实时更新，点铃铛直达消息中心。` |
+| 额度用量 | `实时显示 AI 用量消耗，支持日/月周期切换。` | `实时显示 AI 用量，支持日/月切换。` |
+| 任意悬浮模式 | `v1.3.0 新增：图标 + 状态灯常驻桌面任意位置，hover 展开面板，可跨屏拖拽。` | `图标 + 状态灯常驻桌面任意位置，hover 展开，可跨屏拖拽。` |
+| 外接显示器适配 | `v1.3.0 新增：插拔显示器自动重新定位到主屏，无需重启。` | `插拔显示器自动重新定位主屏，无需重启。` |
+
+**关键动作：与 `#lights` 去重**。卡片 1 原本把 4 种灯色全列了一遍，而下方 `#lights` 区块正是逐色解释 —— 同一信息出现两次。卡片 1 只保留「四种状态灯常驻刘海」这一**结论**，颜色枚举交给 `#lights`（它有声光电的视觉承载）。这是本次最大的一处去重（−20 字）。
+
+### 2.4 lights-section「状态含义」
+
+| 位置 | 原文 | 精简后 |
+| --- | --- | --- |
+| 副标题 | `每种状态都有独特的灯色与节奏，让你在余光中就能感知 AI 在干什么。` | `每种状态有独特的灯色与节奏，余光就能感知 AI 在干什么。` |
+| 空闲 | `⚪️ 空闲` / `没有进行中的任务。灯常亮，安静守候。` | `空闲` / `没有进行中的任务。灯常亮。` |
+| 已完成 | `🟢 已完成` / `任务刚跑完。绿灯保持 15 分钟，期间触发新对话会继续顺延。` | `已完成` / `任务刚跑完。绿灯保持 15 分钟，期间有新对话则顺延。` |
+| 工作中 | `🟡 工作中` / `AI 正在执行任务。呼吸式慢闪，柔和而有存在感。` | `工作中` / `AI 正在执行任务。呼吸式慢闪。` |
+| 等待确认 | `🔴 等待确认` / `AI 需要你的决策。快闪，紧急提醒。` | `等待确认` / `AI 需要你的决策。快闪提醒。` |
+
+**关键动作：删掉 `<h4>` 里的 emoji**。`.light-orb` 就在正上方，灯色已由视觉承载，`⚪️🟢🟡🔴` 是纯冗余（同时与「下载区移除 emoji」的既有决定保持一致）。`15 分钟` 这个数字必须保留。
+
+### 2.5 how-section「使用流程」→ 删除（详见 §3）
+
+### 2.6 tech-section「技术栈」
+
+| 位置 | 原文 | 精简后 |
+| --- | --- | --- |
+| 副标题 | `100% Swift + SwiftUI 构建，无 Electron、无 WebView、无第三方框架。` | `100% Swift + SwiftUI，无 Electron、无 WebView、无第三方框架。` |
+| 开发语言 note | `Apple 推荐的现代系统语言` | `Apple 官方语言` |
+| UI 框架 note | `声明式 UI，原生渲染` | 不变 |
+| 窗口管理 note | `刘海区域精确贴合` | 不变 |
+| 数据读取 note | `读取 Comate 聊天记录库` | 不变 |
+| 网络通信 note | `云端消息中心 & 用量 API` | 不变 |
+| 系统集成 note | `wpscomate:// 协议调起 Comate` | 不变 |
+| 构建产物 note | `arm64 + x86_64 双架构 lipo` | 不变 |
+| 打包分发 note | `脚本一键构建，拖拽即装，轻量无冗余` | `脚本一键构建，拖拽即装` |
+| 架构标题 | `🏗 架构设计` | `架构设计`（去 emoji，与全站一致） |
+
+**架构设计 5 条**（保留 5 条，只压措辞；数字与机制全留）
+
+| 组件 | 原文 | 精简后 |
+| --- | --- | --- |
+| ComateStore | `数据层：2s 定时轮询本地 SQLite，30s 刷新云端额度与消息中心，异步队列查询避免主线程阻塞` | `数据层：2s 轮询本地 SQLite，30s 刷新云端额度与消息；异步队列查询，不阻塞主线程` |
+| NotchPanel | `窗口层：自定义 NSPanel 永远在主屏幕最顶层，精确计算刘海偏移量，展开/收起动画 120fps` | `窗口层：NSPanel 常驻主屏最顶层，精确计算刘海偏移；展开/收起 120fps` |
+| NotchRootView | `UI 层：SwiftUI 声明式布局，收起态为紧凑胶囊，展开态为任务列表 + 额度面板` | `UI 层：SwiftUI 声明式布局；收起为紧凑胶囊，展开为任务列表 + 额度面板` |
+| SessionJournal | `日志层：解析 Comate 本地 session journald 文件，提取最近 5 轮对话摘要作为任务描述` | `日志层：解析本地 session journald，取最近 5 轮对话摘要作为任务描述` |
+| UsageAPI | `用量层：通过 wps_sid Cookie 调用 comate.wps.cn 接口，获取日/月额度使用情况` | `用量层：以 wps_sid Cookie 调用 comate.wps.cn，获取日/月额度` |
+
+### 2.7 compat-section「兼容性」→ 表格降级为一行标签带（详见 §4）
+
+### 2.8 version-section「更新日志」
+
+| 位置 | 原文 | 精简后 |
+| --- | --- | --- |
+| h2 | `每个版本改了什么` | 不变 |
+| 版本条目正文 | JS 从 `versions.json` 渲染 | **不改**（数据非文案） |
+
+### 2.9 appstats-section「应用统计」
+
+| 位置 | 原文 | 精简后 |
+| --- | --- | --- |
+| h2 | `谁在用 Comate HUD` | 不变 |
+| 副标题 | `安装设备每天上报一次活跃，按用户去重统计。` | 不变（一句话把口径说清，无水分） |
+| 区块标题 1 | `近 30 日活跃用户趋势` | `近 30 日活跃趋势` |
+| 区块标题 2 | `版本分布（近 30 日活跃用户）` | `版本分布`（「活跃用户」已由副标题的口径声明与标题 1 承载） |
+| 区块标题 3 | `今日活跃明细` | 不变 |
+
+### 2.10 powered-section「能力提供」
+
+| 位置 | 原文 | 精简后 |
+| --- | --- | --- |
+| 副标题 | `不用会写代码——你负责想，Comate 负责做。从一个念头，到一个能上线的复杂应用。` | `不用会写代码——你负责想，Comate 负责做。从一个念头，到上线。` |
+| 卡 1 标题 | `「给部门做个内部报修系统」` | 不变 |
+| 卡 1 场景 | `要填单、要能看进度、要只有本部门能看，数据还得存下来。` | `要填单、要看进度、要只有本部门可见，数据得存下来。` |
+| 卡 1 它做的 | `它做的：云端建表 + 读写权限策略 + 前端表单与列表 + 部署上线。你不用建库，也不用写接口。` | `它做的：云端建表 + 权限策略 + 表单与列表 + 部署上线。不用建库，不用写接口。` |
+| 卡 2 标题 | `「多维表里的工单，超时了自动催到 IM」` | `「多维表工单超时，自动催到 IM」` |
+| 卡 2 场景 | `按项目负责人私聊提醒，几点催、催几轮，我说了算。` | `按项目负责人私聊提醒，几点催、催几轮我说了算。` |
+| 卡 2 它做的 | `它做的：多维表数据源接入 + IM 消息推送 + 定时任务 + 失败重试。跨系统的活，它自己接。` | `它做的：多维表接入 + IM 推送 + 定时任务 + 失败重试。` |
+| 卡 3 标题 | `「把散在邮件、云文档里的数据拼成经营看板」` | `「把邮件、云文档的数据拼成经营看板」` |
+| 卡 3 场景 | `每周人工汇总要半天，还总担心漏。` | `每周人工汇总要半天，还容易漏。` |
+| 卡 3 它做的 | `它做的：多源采集 + 清洗聚合 + 可视化看板 + 定时回写云文档。半天的人工，变成自动跑。` | `它做的：多源采集 + 清洗聚合 + 看板 + 定时回写云文档。半天的人工，变成自动跑。` |
+| 总结句 | `这个官网、你正在用的 Comate HUD，都是这么来的。还想要别的？去许愿墙说一声。` | `这个官网、你正在用的 Comate HUD，都这么来的。还想要别的？去许愿墙说一声。` |
+| powered-card 正文 | `Comate HUD 基于 WPS Comate 的应用开发能力构建。借助它开放的本地数据库读取、Deeplink 调起、OAuth 认证等接口，HUD 实现了与 Comate 桌面客户端的深度集成——读取任务状态、打开会话窗口、获取未读消息、查询用量额度，接入即可用，不必从零搭建。` | `Comate HUD 基于 WPS Comate 的应用开发能力构建。借助其开放的本地数据库读取、Deeplink 调起、OAuth 认证等接口，实现了与 Comate 桌面客户端的深度集成——读取任务状态、打开会话窗口、获取未读消息、查询用量额度。` |
+| 免责声明 | `Comate HUD 是一个独立的 macOS 原生应用，不属于 WPS 或 WPS Comate 的官方产品。它由社区开发者基于 Comate 开放能力构建，以第三方应用形式运行。` | `Comate HUD 是独立的 macOS 原生应用，非 WPS 官方产品，由社区开发者基于 Comate 开放能力构建。` |
+
+**免责声明是唯一「必须保量」的一段**：2 句压 1 句，但 4 个法律事实（独立 / 非官方 / 社区开发者 / 基于开放能力）一个不能少。删掉的是「以第三方应用形式运行」这句重复表述（与「独立」同义）。
+
+### 2.11 wish-section「许愿反馈」
+
+| 位置 | 原文 | 精简后 |
+| --- | --- | --- |
+| 副标题 | `留下你的名字，提交你的愿望和建议，所有留言会在弹幕中展示。` | `留下名字，提交愿望与建议，留言会在弹幕中展示。` |
+| 名字 placeholder | `你是谁（英雄请留名，定当持续更新为报）` | `你是谁（英雄请留名）` |
+| 文本域 placeholder | `想法建议你尽管提，我...让Comate来改 >_<` | `想法建议尽管提，交给 Comate 来改` |
+
+`定当持续更新为报` 是**过度承诺**，直接删；文本域的玩笑话保留语气但压短（并顺手修掉 `我...` 的省略号与缺失空格）。
+
+### 2.12 footer
+
+| 位置 | 原文 | 精简后 |
+| --- | --- | --- |
+| 第 1 行 | `Comate HUD — 为 WPS Comate 而生的 macOS 状态指示器` | 不变 |
+| 第 2 行 | `macOS 12.0+ · Apple Silicon &amp; Intel · Swift · SwiftUI` | `macOS 12.0+ · Swift + SwiftUI`（架构信息已由 §4 的 compat 标签带承载，此处去重） |
+| 第 3 行 | 下载 · 许愿反馈 · GitHub | 不变 |
+
+### 2.13 nav
+
+8 个锚点 + 下载按钮 + PV 全部不变。**`#how` 从来没有导航入口**，删除 `how-section` 不影响任何锚点。
+
+---
+
+## 3. features 吸收 how-section：判断与理由
+
+### 结论：**不扩成 9 张卡，也不保留「3 步」引导条 —— 完全解散，只并入 1 个短句。**
+
+### 理由
+
+**理由 1 · 内容类型不同，混放会摧毁「一眼扫过」**
+6 张卡回答「它**能做什么**」（能力矩阵：可并列、可乱序、可任意增删）；3 步回答「我**该怎么做**」（线性流程：有先后顺序）。把两者放进同一个 3 列网格，用户的扫描模式会从「一眼扫过找关键词」退化成「逐条读完才发现这是流程」—— 直接抵消本次「降低拥挤感」的目标。
+
+**理由 2 · 9 张卡不是「不拥挤」，是更拥挤**
+6 卡在 3 列网格下是 2 行；9 卡是 3 行。多出整整一行卡片（≈ 300px），视觉密度**上升** 50%，与诉求方向相反。
+
+**理由 3 · 3 步里有 2/3 是重复内容（逐句审计）**
+
+| how 原文（逐句） | 判定 | 去向 |
+| --- | --- | --- |
+| 步骤 1 标题 `安装并启动` | 删 | — |
+| `将 ComateHUD.app 拖入「应用程序」文件夹，双击启动。` | **删（完整重复）** | 下载区「安装说明」气泡【安装】已逐字覆盖 |
+| `HUD 自动常驻刘海区` | **删（重复）** | 卡片 1「四种状态灯常驻刘海」 |
+| `首次启动请允许辅助功能权限。` | **删（重复）** | §4 compat 标签「辅助功能权限」 |
+| 步骤 2 标题 `在 Comate 中发起任务` | 删 | — |
+| `正常使用 WPS Comate 发起任务——写代码、生成文档、分析数据。` | **删（废话）** | 产品前提，读者已知；「写代码/生成文档/分析数据」是举例堆砌 |
+| `HUD 自动通过 SQLite 读取本地任务状态，无需额外配置。` | **删（重复）** | tech「数据读取 / SQLite（本地）」+ 卡片 2 已述「自动」 |
+| 步骤 3 标题 `看灯、展开、点击` | 删 | — |
+| `看灯知道状态，悬停展开看详情，点击直接跳转。` | **删（重复）** | 就是卡片 1 + 卡片 2 的重述 |
+| `不需要切窗口，不需要查日志，AI 在干什么一目了然。` | **✅ 保留 1 句** | 并入卡片 1 收尾 → `抬眼即知，不用切窗口。` |
+
+**审计结果：3 步 × 3 句 = 9 句，其中 8 句可删，1 句有价值。** 这 1 句已按上表并入「实时状态灯」卡（该卡因此从「颜色枚举」换成「结论 + 收益」，见 §2.3）。`how-section` 的 `<section>`、`.steps` / `.step` / `.step-num` / `.step-content` 规则**整块删除**（全站无其他引用）。
+
+### 备选方案（默认不做，供二次决策）
+如果你仍希望保留「上手路径」这一拍，**正确形态不是 3 张卡，而是 features 网格下方的一行极简流程带**：
+- 内容：`安装并启动 → 发起任务 → 看灯展开点击`，3 段，每段 ≤ 6 字，**无段落文字、无图标、无卡片**
+- 形态：单行 flex、居中、`gap: 24px`、13px `--text-dim`、段间用 `→`（`rgba(255,255,255,0.16)` 色）分隔，整体高 ≈ 20px
+- 定位：作为 features 的「脚注」而非「第二个区块」，不加 `.reveal`、不加 section-label、不加 h2
+
+代价：多 20px 高度与一次「区块内第二拍」的节奏切换；收益：新用户知道从哪开始（但 hero 的下载按钮 + 安装说明气泡其实已经回答了这个）。**判断：收益不抵代价，默认不做。**
+
+---
+
+## 4. compat 一行标签带的形态
+
+### 保留的信息（5 项，全部是不可推断的硬门槛）
+
+| 原表格行 | 原「要求」列 | 新标签文案 | 图标（手写内联 SVG） |
+| --- | --- | --- | --- |
+| 操作系统 | macOS 12.0 (Monterey) 或更高版本 | `macOS 12.0+` | apple（`fill`，直接复用导航 `.mb-apple` 的 path） |
+| 处理器架构 | Apple Silicon (M1/M2/M3/M4) & Intel x86_64 | `Apple Silicon & Intel` | chip（`stroke`，复用 `.dl-tag` 的芯片 path） |
+| 设备机型 | MacBook Pro / Air / iMac 系列（含刘海屏与非刘海屏机型） | `MacBook / iMac（含非刘海）` | laptop（`stroke`：`rect x=3 y=5 w=18 h=12 rx=2` + `M2 19h20`） |
+| 辅助功能权限 | 系统设置 → 隐私与安全性 → 辅助功能 | `辅助功能权限` | shield-check（`stroke`） |
+| WPS Comate | 建议 1.6.17 或更高版本 | `WPS Comate 1.6.17+` | puzzle（`stroke`） |
+
+### 删除的信息（2 项 + 整列）
+
+| 删除项 | 理由 |
+| --- | --- |
+| 原「网络连接」行：`建议保持网络连接畅通，以获取消息中心与额度信息` | 「建议保持畅通」是软建议、无门槛值；且「本地优先」这个真正有价值的信息已由 tech 的「数据读取 / SQLite（本地）」承载 |
+| 原「状态」列：`✓ 支持` / `✓ Universal Binary` / `✓ 刘海区 & 菜单栏 HUD` / `✓ 首次启动引导` / `✓ 数据源` / `✓ 本地优先` | **整列删除**。这一列是自我背书（6 个对勾），不承载任何门槛信息，且「✓ 支持」对所有行都成立 = 零信息量 |
+| 原 h2：`支持的系统和版本` | 删除。一行标签带不需要大标题；`.section-label`「兼容性」内联在标签带首位即可 |
+
+### HTML 结构（替换 `#compat` 内全部内容）
+
+```html
+<section class="compat-section" id="compat">
+  <div class="container">
+    <div class="compat-strip reveal">
+      <span class="cs-label">兼容性</span>
+
+      <span class="compat-tag">
+        <svg class="solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></svg>
+        macOS 12.0+
+      </span>
+
+      <span class="compat-tag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.2"/><path d="M10 7V4.2M14 7V4.2M10 20v-2.8M14 20v-2.8M7 10H4.2M7 14H4.2M20 10h-2.8M20 14h-2.8"/></svg>
+        Apple Silicon &amp; Intel
+      </span>
+
+      <span class="compat-tag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M2 19h20"/></svg>
+        MacBook / iMac（含非刘海）
+      </span>
+
+      <span class="compat-tag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6z"/><path d="M9.5 12.2l1.8 1.8 3.4-3.6"/></svg>
+        辅助功能权限
+      </span>
+
+      <span class="compat-tag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5a2 2 0 0 1 4 0V6h3.5A1.5 1.5 0 0 1 18 7.5V11h1.5a2 2 0 0 1 0 4H18v3.5A1.5 1.5 0 0 1 16.5 20H13v-1.5a2 2 0 0 0-4 0V20H7.5A1.5 1.5 0 0 1 6 18.5V15H4.5a2 2 0 0 1 0-4H6V7.5A1.5 1.5 0 0 1 7.5 6H9z"/></svg>
+        WPS Comate 1.6.17+
+      </span>
+    </div>
+  </div>
+</section>
+```
+
+### CSS
+
+```css
+.compat-section { padding: 0 0 112px; }            /* top 0 → 读作 #tech 的规格脚注 */
+.compat-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 14px; }
+.compat-strip .cs-label { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-right: 8px; }
+.compat-tag { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; font-size: 13px; line-height: 1.2; color: var(--text-secondary); background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
+.compat-tag svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
+.compat-tag svg.solid { fill: currentColor; stroke: none; }
+```
+
+**宽度预算**：1080px 容器内容宽 1032px。5 个标签实测约 855px + 4×14px gap + 前导 label 约 90px ≈ **1000px ≤ 1032px** → 桌面**恰好一行**，余量约 30px（标签文案再长一点会换行，`flex-wrap` 兜底，换行后居中、不溢出）。≤900px 视口自动折成 2 行。
+
+**`.compat-table` 规则全部保留**（`#appstats` 的今日明细表复用），只删 `#compat` 里的 `<table>` HTML。
+
+---
+
+## 5. 排版规范：间距刻度与区块节奏
+
+### 5.1 间距刻度（本规范引用的所有数值都落在这个刻度上）
+
+| token | 值 | 用途 |
+| --- | --- | --- |
+| s1 | 4px | 行内微调 |
+| s2 | 8px | 图标与文字 |
+| s3 | 12px | 紧凑行距、标签 gap |
+| s4 | 16px | 卡片内小间距 |
+| s5 | 20px | 卡片网格 gap |
+| s6 | 28px | 主卡片网格 gap |
+| s7 | 40px | 卡片内边距 |
+| s8 | 56px | 区块内块间距 |
+| s9 | 64px | 区块标题 → 内容 |
+| s10 | 112px | 区块上下 padding |
+
+### 5.2 区块节奏：三档（这是本次「不拥挤」的核心）
+
+| 档 | 区块（`padding`） | 相邻间距 | 判据 |
+| --- | --- | --- | --- |
+| **A · 强分隔 112/112** | `#features` `#lights` `#tech` `#versions` `#powered` `#wish` | **224px** | 每次都是**主题切换**（能力 → 状态语义 → 规格 → 数据 → 生态 → 互动），需要最大留白把上一话题「关掉」 |
+| **B · 过渡带** | `hero` 168/96、`mockup-section` 72/128、`footer` 64/64 | hero→mockup **168px**，mockup→features **240px** | `mockup` 是 hero 的实物延续 → 上距收紧到 72（+hero 96 = 168）；它是「看得到的产品」到「读得到的功能」的桥 → 下距放大到 128（+features 112 = 240），让 features 的开场更从容 |
+| **C · 紧凑衔接** | `#compat` **0**/112、`#appstats` 96/112 | tech→compat **112px**，versions→appstats **208px** | `#compat` 是 tech 的规格脚注 → **top padding 归零**，读作同一话题的尾注；`#appstats` 与 `#versions` 同属「数据」语境 → top 从 112 收到 96 |
+
+> **对比现状**：现在 12 个 section 全是 `80px 0`，相邻间距一律 160px —— 这就是「节奏平、信息流密」的根源：**所有边界一样重，读者找不到话题切换点**。三档节奏把 160px 的单一间距拆成 112 / 168 / 208 / 224 / 240 五种，视觉上自然分段。
+
+### 5.3 间距改动总表
+
+| 位置 | 现状 | 改为 |
+| --- | --- | --- |
+| 区块 padding（标准 A 档） | `80px 0` | `112px 0` |
+| `hero` | `160px 0 80px` | `168px 0 96px` |
+| `mockup-section` | `60px 0 100px` | `72px 0 128px` |
+| `compat-section` | `80px 0` | `0 0 112px` |
+| `appstats-section` | `80px 0` | `96px 0 112px` |
+| `footer` | `48px 0` | `64px 0` |
+| **区块标题 → 首个内容**（网格 / 列表 `margin-top`） | 40~48px | **64px** |
+| `.section-label` `margin-bottom` | 12px | **20px** |
+| 副标题 `margin-top`（`h2` 后） | 16px | **20px** |
+| `.hero h1` `margin-bottom` | 24px | 32px |
+| `.hero .subtitle` `margin-bottom` | 40px | **56px** |
+| `.hero-lights` `gap` / `margin-bottom` | 40px / 48px | **48px / 64px** |
+| `.hero-light` `gap` | 10px | 12px |
+| `.features-grid` `gap` | 20px | **28px** |
+| `.tech-grid` `gap` | 16px | **20px** |
+| `.lights-showcase` `gap` / `margin-top` | 60px / 48px | **72px / 64px** |
+| `.light-item` `gap` | 16px | 20px |
+| `.appstats-kpi` `gap` / `margin-top` | 16px / 40px | **20px / 64px** |
+| `.appstats-block` `margin-top` | 40px | **56px** |
+| `.appstats-versions` `gap` | 14px | **20px** |
+| `.av-row` `gap` | 12px | 16px |
+| `.feature-card` padding | `36px 28px` | **`40px 32px`** |
+| `.feature-icon` size / `margin-bottom` | 48px / 20px | **52px / 24px** |
+| `.tech-card` padding | `24px 20px` | **`28px 24px`** |
+| `.arch-detail` padding / `margin-top` | `32px 28px` / 40px | **`40px 36px` / 48px** |
+| `.arch-detail li` `margin-bottom` | 4px | **12px** |
+| `.version-list` `margin-top` | 40px | **64px** |
+| `.version-item` padding / `margin-bottom` | `28px 24px` / 16px | **`32px 28px` / 20px** |
+| `.version-item .vi-head` `margin-bottom` | 12px | 16px |
+| `.vc-group` `margin-bottom` | 10px | **16px** |
+| `.appstats-card` padding | `24px 22px` | **`28px 26px`** |
+| `.appstats-block-title` `margin-bottom` | 16px | **24px** |
+| `.powered-card` padding / `margin-top` | `40px 32px` / 40px | **`48px 44px` / 56px** |
+| powered 总结句 `margin-top` | 32px | **48px** |
+| `.wish-form` `margin-top` / `gap` | 40px / 10px | **64px / 14px** |
+| `.wish-barrage` `margin-top` | 32px | **48px** |
+| `.desktop-hint` `margin-top` | 20px | 28px |
+
+### 5.4 行宽（measure）—— 长文本区块最受益
+
+| 位置 | 现状 | 改为 | 理由 |
+| --- | --- | --- | --- |
+| 区块副标题 | `max-width: 520px` | **560px** | 16px 下 ≈ 34 字/行，中文阅读最佳区间 |
+| `.version-list` | `max-width: 640px` | **720px** | 更新日志是唯一的长文本列表，640px 会频繁折行成 3~4 行短句 |
+| `.powered-card p` | `max-width: 560px` | **600px** | 同上 |
+| `.light-item p` | `max-width: 180px` | **200px** | 字号提到 14px 后需要更宽才不会挤成 3 行 |
+| `.release-body` | `max-width: 480px` | **520px** | 与 `.version-list` 拉齐观感 |
+| `.arch-detail` | `max-width: 720px` | 不变 | 已合适 |
+
+### 5.5 字号 / 行高
+
+| 用途 | 现状 | 改为 |
+| --- | --- | --- |
+| `body` 基线 `line-height` | 1.6 | **1.7** |
+| 卡片正文 `.feature-card p` | 14px / 1.65 | **15px / 1.75** |
+| `.powered-card p` | 14px / 1.7 | **15px / 1.8** |
+| 区块副标题（内联 15px） | 15px | **16px / 1.7** |
+| hero 副标题 | `clamp(17px,2.4vw,21px)` / 1.7 | 同尺寸 / **1.8** |
+| 次要说明 `.tech-note` `.vi-date` `.av-count` | 12px | **13px** |
+| 微型 label `.tech-label` `.k-label` | 11px | **12px** |
+| `.arch-detail` | 13px / 1.9 | **14px / 2.0** |
+| 更新日志 `.vi-changes` `.vc-list li` | 13px / 1.8 | **14px / 1.9** |
+| `.vc-list li` 行间距 | 0 | **`margin-bottom: 6px`** |
+| `.feature-card h3` | 18px | **19px** |
+| `.light-item h4` / `p` | 16px / 13px | **17px / 14px** |
+| `.desktop-hint` | 13px | 14px |
+| `footer p` | 13px | **14px**，行距 `8px → 10px` |
+| `h2` | `clamp(28px,4vw,40px)` | **尺寸不变**（上限已足够），仅补 `line-height: 1.15` |
+| `.section-label` | 13px / `letter-spacing:.1em` | 13px / **`.12em`**（字距稍松，小字更透气） |
+
+> **注意**：`.feature-card h3` 从 18 → 19px 是**唯一一处字号放大**，因为卡片正文放大到 15px 后，18px 标题的相对层级被削弱。其余字号只调行高与次要说明，不放大主体。
+
+---
+
+## 6. 可执行 CSS（覆盖到 index.html `<style>`）
+
+> 以下按「原规则整行替换」给出，不新增选择器层级、不引入 `!important`。
+
+### 6.1 区块 padding 与标题块
+
+```css
+.hero { padding: 168px 0 96px; }
+.mockup-section { padding: 72px 0 128px; }
+.features { padding: 112px 0; }
+.lights-section { padding: 112px 0; }
+.tech-section { padding: 112px 0; }
+.compat-section { padding: 0 0 112px; }
+.version-section { padding: 112px 0; }
+.appstats-section { padding: 96px 0 112px; }
+.powered-section { padding: 112px 0; }
+.wish-section { padding: 112px 0 128px; }
+footer { padding: 64px 0; }
+/* 删除：.how-section 及其下 .steps / .steps::before / .step / .step-num / .step-content h3 / .step-content p 共 7 条 */
+
+.section-label { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
+.hero h1 { font-size: clamp(42px,7vw,72px); font-weight: 800; line-height: 1.08; letter-spacing: -0.04em; margin-bottom: 32px; }
+.hero .subtitle { font-size: clamp(17px,2.4vw,21px); color: var(--text-secondary); max-width: 640px; margin: 0 auto 56px; line-height: 1.8; }
+.hero-lights { display: flex; justify-content: center; gap: 48px; margin-bottom: 64px; }
+.hero-light { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 60px; }
+.desktop-hint { margin: 28px auto 0; text-align: center; font-size: 14px; color: var(--text-dim); }
+.release-body { margin-top: 14px; padding: 24px 28px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.9; text-align: left; max-width: 520px; margin-left: auto; margin-right: auto; }
+```
+
+### 6.2 features
+
+```css
+.features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; margin-top: 64px; }
+.feature-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 40px 32px; transition: all 0.3s cubic-bezier(0.22,1,0.36,1); position: relative; overflow: hidden; }
+.feature-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 24px; }
+.feature-card h3 { font-size: 19px; font-weight: 700; margin-bottom: 14px; }
+.feature-card p { font-size: 15px; color: var(--text-secondary); line-height: 1.75; }
+```
+> **HTML 同步改动**：`<div class="features-grid" style="margin-top:48px;">` 的 inline `margin-top` **移除**（改由 CSS 的 `margin-top: 64px` 统一控制，避免双份来源）。
+
+### 6.3 lights
+
+```css
+.lights-showcase { display: flex; justify-content: center; gap: 72px; margin-top: 64px; flex-wrap: wrap; }
+.light-item { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.light-item h4 { font-size: 17px; font-weight: 600; }
+.light-item p { font-size: 14px; color: var(--text-secondary); line-height: 1.75; text-align: center; max-width: 200px; }
+```
+
+### 6.4 tech
+
+```css
+.tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 64px; }
+.tech-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 28px 24px; text-align: center; }
+.tech-card .tech-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 10px; }
+.tech-card .tech-note { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-top: 8px; }
+.arch-detail { max-width: 720px; margin: 48px auto 0; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 40px 36px; font-size: 14px; line-height: 2; color: var(--text-secondary); text-align: left; }
+.arch-detail .arch-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+.arch-detail ul { padding-left: 20px; }
+.arch-detail li { margin-bottom: 12px; }
+.arch-detail li:last-child { margin-bottom: 0; }
+```
+
+### 6.5 compat
+
+见 §4（`.compat-section` + `.compat-strip` + `.cs-label` + `.compat-tag`）。
+
+### 6.6 versions
+
+```css
+.version-list { margin-top: 64px; max-width: 720px; margin-left: auto; margin-right: auto; }
+.version-item { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 32px 28px; margin-bottom: 20px; }
+.version-item .vi-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.version-item .vi-date { font-size: 13px; color: var(--text-dim); }
+.version-item .vi-changes { font-size: 14px; color: var(--text-secondary); line-height: 1.9; margin-top: 18px; }
+.vc-group { margin-bottom: 16px; }
+.vc-group:last-child { margin-bottom: 0; }
+.vc-list { list-style: none; padding: 8px 0 0; margin: 0; }
+.vc-list li { position: relative; padding-left: 14px; font-size: 14px; color: var(--text-secondary); line-height: 1.9; margin-bottom: 6px; }
+.vc-list li:last-child { margin-bottom: 0; }
+```
+> `.vc-list li::before` 的 `top: 10px` 需随行高变化微调为 **`top: 11px`**（保持圆点与首行视觉居中）。
+
+### 6.7 appstats
+
+```css
+.appstats-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 64px; }
+.appstats-card { position: relative; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 28px 26px; }
+.appstats-card .k-note { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+.appstats-block { margin-top: 56px; }
+.appstats-block-title { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+.appstats-chart svg { width: 100%; height: 200px; display: block; }
+.appstats-versions { display: flex; flex-direction: column; gap: 20px; }
+.av-row { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+.av-name { flex: 0 0 96px; color: var(--text-secondary); }
+.av-count { flex: 0 0 90px; text-align: right; font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.appstats-hint { margin-top: 24px; font-size: 13px; color: var(--text-dim); text-align: center; }
+```
+
+### 6.8 powered / wish / footer
+
+```css
+.powered-card { max-width: 720px; margin: 56px auto 0; background: linear-gradient(135deg, rgba(0,212,170,0.06) 0%, rgba(10,132,255,0.06) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 48px 44px; }
+.powered-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+.powered-card p { font-size: 15px; color: var(--text-secondary); line-height: 1.8; max-width: 600px; margin: 0 auto; }
+
+.wish-form { max-width: 560px; margin: 64px auto 0; display: flex; flex-direction: column; gap: 14px; }
+.wish-hint { font-size: 12px; color: var(--text-dim); text-align: center; min-height: 20px; }
+footer p { font-size: 14px; color: var(--text-dim); line-height: 1.8; }
+```
+> `.wish-row input` / `.wish-row textarea` 的 `padding: 10px 14px → 12px 16px`、`font-size: 14px → 15px`；`.wish-barrage { margin-top: 48px }`。
+> powered 的 3 张卡复用 `.features-grid`（已由 §6.2 得到 `gap:28px` / `margin-top:64px`），其 HTML inline `style="margin-top:40px;text-align:left;"` 的 `margin-top` 改为 `64px`（保留 `text-align:left`）。
+> powered 总结句：inline `margin-top:32px;font-size:14px;` → `margin-top:48px;font-size:15px;line-height:1.8`。
+
+---
+
+## 7. 移动端（并入既有 `@media (max-width:768px)` 块，不新开断点）
+
+桌面留白放大后，移动端不能等比放大（会变成滚动灾难），按「桌面值 × 0.65」收敛：
+
+```css
+@media (max-width: 768px) {
+  .hero { padding: 128px 0 72px; }
+  .mockup-section { padding: 56px 0 88px; }
+  .features, .lights-section, .tech-section, .version-section, .powered-section, .wish-section { padding: 72px 0; }
+  .compat-section { padding: 0 0 72px; }
+  .appstats-section { padding: 64px 0 72px; }
+  footer { padding: 48px 0; }
+
+  .section-label { margin-bottom: 14px; }
+  .hero h1 { margin-bottom: 24px; }
+  .hero .subtitle { margin-bottom: 40px; }
+  .hero-lights { gap: 24px; margin-bottom: 44px; }
+
+  .features-grid { gap: 20px; margin-top: 44px; }
+  .feature-card { padding: 28px 24px; }
+  .feature-icon { width: 46px; height: 46px; margin-bottom: 18px; }
+
+  .lights-showcase { gap: 32px; margin-top: 44px; }
+  .light-item { gap: 16px; }
+  .light-item p { font-size: 13px; max-width: 160px; }
+
+  .tech-grid { gap: 14px; margin-top: 44px; }
+  .tech-card { padding: 22px 18px; }
+  .arch-detail { margin-top: 32px; padding: 28px 22px; font-size: 13px; line-height: 1.9; }
+  .arch-detail li { margin-bottom: 10px; }
+
+  /* compat 标签带：label 独占一行，标签居中换行 */
+  .compat-strip { gap: 10px 12px; }
+  .compat-strip .cs-label { flex: 1 1 100%; text-align: center; margin: 0 0 2px; }
+  .compat-tag { padding: 8px 14px; font-size: 12px; }
+
+  .version-list { margin-top: 44px; }
+  .version-item { padding: 24px 20px; margin-bottom: 14px; }
+
+  .appstats-kpi { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 44px; }
+  .appstats-block { margin-top: 40px; }
+  .appstats-block-title { margin-bottom: 16px; }
+  .appstats-versions { gap: 16px; }
+
+  .powered-card { margin-top: 40px; padding: 32px 24px; }
+  .wish-form { margin-top: 44px; }
+  .wish-barrage { margin-top: 36px; }
+}
+```
+**必须删除的两条既有移动端规则**：`.steps::before { left: 23px; }`（随 how-section 一起删）；`.lights-showcase { gap: 32px; }`（已被上面合并保留）。
+**保留不动**：`.compat-table th, .compat-table td { padding: 12px 14px; }`（服务于 `#appstats` 明细表）。
+
+移动端复核点：
+- 375px：`.feature-card` 内容宽 `327 − 48 = 279px`，15px 正文 ≈ 18 字/行 → 卡文 2 行内成立；
+- `.compat-strip` 5 个标签折成 3 行（label 独占首行），总高 ≈ 130px，可接受；
+- 无新增横向滚动条（标签 `white-space:nowrap` + 容器 `flex-wrap`）。
+
+---
+
+## 8. 与既有代码的衔接（改动点清单，行号以当前 `index.html` 1308 行为准）
+
+| 位置 | 动作 |
+| --- | --- |
+| CSS 41 / 45 / 46 / 47 | `.hero` padding、`.hero .subtitle`、`.hero-lights`、`.hero-light` 按 §6.1 替换 |
+| CSS 43 | `.hero h1` `margin-bottom` 24 → 32px |
+| CSS 28 | `.section-label` `letter-spacing` → `.12em`、`margin-bottom` → 20px |
+| CSS 72 | `.release-body` `max-width` 480 → 520px |
+| CSS 115 / 175 | `.mockup-section` padding、`.desktop-hint` 字号与 `margin-top` |
+| CSS 199–213 | `.features` / `.features-grid` / `.feature-card` / `.feature-icon` / `.feature-card h3` / `.feature-card p` 按 §6.2 替换 |
+| CSS 214–224 | `.lights-section` / `.lights-showcase` / `.light-item` / `.light-item h4` / `.light-item p` 按 §6.3 替换 |
+| **CSS 225–231** | **`.how-section` / `.steps` / `.steps::before` / `.step` / `.step-num` / `.step-content h3` / `.step-content p` 共 7 条整块删除** |
+| CSS 232–242 | `.tech-section` / `.tech-grid` / `.tech-card` / `.tech-label` / `.tech-note` / `.arch-detail` / `.arch-title` / `ul` / `li` 按 §6.4 替换 |
+| CSS 243–249 | `.compat-section` 改为 `padding: 0 0 112px`；**`.compat-table` 及其 5 条子规则全部保留**（`#appstats` 复用）；新增 `.compat-strip` / `.cs-label` / `.compat-tag` 三组规则 |
+| CSS 250–268 | `.version-section` / `.version-list` / `.version-item` / `.vi-date` / `.vi-changes` / `.vc-group` / `.vc-list` / `.vc-list li` 按 §6.6 替换；`.vc-list li::before` 的 `top` 10 → 11px |
+| CSS 271–274 | `.powered-section` padding、`.powered-card` padding/`margin-top`、`.powered-card h3`、`.powered-card p` 按 §6.8 替换 |
+| CSS 279–280 | `footer` padding、`footer p` 字号行高 |
+| CSS 284–292 | `.wish-section` padding、`.wish-form`、`.wish-hint`；`.wish-row input/textarea` padding 与字号；`.wish-barrage` `margin-top` |
+| CSS 326–356 | `.appstats-section` / `.appstats-kpi` / `.appstats-card` / `.k-note` / `.appstats-block` / `.appstats-block-title` / `.appstats-chart svg` / `.appstats-versions` / `.av-row` / `.av-name` / `.av-count` / `.appstats-hint` 按 §6.7 替换 |
+| CSS 358–385（`@media`） | 按 §7 合并/替换；**删除 `.steps::before` 一条** |
+| HTML 402 | hero 副标题按 §2.1 替换（保留 `<br/>`） |
+| HTML 462 | `.desktop-hint` 文案按 §2.2 替换 |
+| HTML 539 | features 区块标题块**不变** |
+| **HTML 540** | `features-grid` 的 inline `style="margin-top:48px;"` **删除**（改由 CSS 控制） |
+| HTML 541–546 | 6 张功能卡文案按 §2.3 替换（卡片数量、图标、`.feature-icon` 配色类**全部不变**） |
+| HTML 549–557 | `lights-showcase` 4 项 `<h4>` 去 emoji、`<p>` 按 §2.4 替换 |
+| **HTML 561–570** | **`<section class="how-section">` 整块删除（10 行）** |
+| HTML 573–574 | tech 副标题按 §2.6 替换；8 张 `tech-card` 的 note 按 §2.6 替换（label/value 全不变） |
+| HTML 577–583 | `.arch-detail` 的 `.arch-title` 去 emoji；5 条 `<li>` 按 §2.6 替换（`<strong>` / `<code>` 结构保留） |
+| **HTML 598–611** | **`#compat` 内的 `<h2>` + `<table>` 整体替换为 §4 的 `.compat-strip`（section 与 `id="compat"` 保留）** |
+| HTML 616 | versions h2 不变 |
+| HTML 624 | appstats 副标题不变 |
+| HTML 627 / 631 / 635 | 3 个 `.appstats-block-title` 文案按 §2.9 替换 |
+| HTML 644–646 | powered 副标题、3 张卡标题/场景/「它做的」按 §2.10 替换 |
+| HTML 648 | powered 总结句按 §2.10 替换（`margin-top:32px` → `48px`，`font-size:14px` → `15px`） |
+| HTML 653 / 655 | `.powered-card` 正文与免责声明按 §2.10 替换 |
+| HTML 661–664 | wish 副标题、两个 placeholder 按 §2.11 替换 |
+| HTML 676–678 | footer 第 2 行按 §2.12 替换 |
+| JS | **不动**。更新日志渲染、下载计数、appstats 渲染、`.reveal` 观察器、`versions.json` 契约均无改动 |
+| 全站 | 无新增外部请求；无新增颜色；无新增字体 |
+
+---
+
+## 9. Acceptance Contract
+
+**文案**
+- [ ] 全站搜索 `v1.3.0 新增` 零命中；功能卡正文不再出现版本溯源
+- [ ] 全站搜索 `柔和而有存在感` / `安静守候` / `轻量无冗余` / `不必从零搭建` / `定当持续更新为报` / `一目了然` / `紧急提醒` 零命中
+- [ ] 6 张功能卡数量、标题、图标、`.feature-icon` 配色类**与现状完全一致**，仅正文措辞变化
+- [ ] 卡片 1「实时状态灯」正文**不再枚举 4 种颜色**（颜色枚举只在 `#lights` 出现一次）；`#lights` 的 `<h4>` 内 emoji 全部消失
+- [ ] `#lights` 4 条仍保留 `15 分钟` 这个数字；`.arch-detail` 5 条仍保留 `2s` / `30s` / `5 轮` / `120fps` / `wps_sid` 这些具体值
+- [ ] powered 免责声明仍完整表达 4 个事实：独立应用 / 非 WPS 官方 / 社区开发者 / 基于 Comate 开放能力
+- [ ] 每张功能卡正文 ≤ 2 行（1080px 视口）；每个区块副标题 ≤ 2 行
+- [ ] 全站总字数较改前下降 18%~25%（更新日志不计）
+
+**结构**
+- [ ] `index.html` 中不存在 `<section class="how-section">`；不存在 `.steps` / `.step` / `.step-num` / `.step-content` 任何引用（HTML 与 CSS 双向确认）
+- [ ] 页面区块数 13 → **12**；区块顺序为 nav → hero → mockup → features → lights → tech → compat → versions → appstats → powered → wish → footer
+- [ ] 导航 8 个锚点 + 页脚链接**全部有效**：`#features` `#lights` `#tech` `#compat` `#versions` `#appstats` `#powered` `#wishwall` `#download` 逐个点击均正确滚动
+- [ ] `#compat` section 与 `id="compat"` **仍然存在**，不与固定导航重叠
+- [ ] `#compat` 内不再有 `<table>` 与 `<h2>`；`.compat-table` 的 5 条 CSS 规则**仍存在**（`#appstats` 今日明细表正常渲染）
+- [ ] compat 标签带含 5 个标签，覆盖：OS 版本、CPU 架构、设备机型、辅助功能权限、WPS Comate 版本；**原「状态」列（✓ 支持 等 6 个对勾）全部消失**
+- [ ] 新增的 5 个图标全部为手写内联 SVG，无 emoji、无图标库、无外部图片
+
+**排版**
+- [ ] 12 个区块的 `padding` 呈**三档**：112/112（6 个 A 档）、`#compat` top = **0**、`#appstats` top = **96**、hero/mockup/footer 为过渡值 —— 不再出现「全部 80px」
+- [ ] 所有「区块标题 → 首个内容」的间距统一为 **64px**（含 `.features-grid` 的 inline `margin-top` 已移除）
+- [ ] `.features-grid` `gap: 28px`、`.tech-grid` `gap: 20px`、`.appstats-kpi` `gap: 20px`
+- [ ] `.feature-card` padding `40px 32px`、`.tech-card` `28px 24px`、`.arch-detail` `40px 36px`、`.powered-card` `48px 44px`、`.appstats-card` `28px 26px`、`.version-item` `32px 28px`
+- [ ] `body` `line-height: 1.7`；`.feature-card p` 为 `15px / 1.75`；`.arch-detail` 为 `14px / 2.0`；更新日志正文为 `14px / 1.9`
+- [ ] `.version-list` `max-width: 720px`、副标题 `max-width: 560px`、`.powered-card p` `max-width: 600px`
+- [ ] `.arch-detail li` `margin-bottom: 12px`；`.vc-group` `margin-bottom: 16px` —— 密集列表不再是「贴着排」
+- [ ] 未新增任何分隔线、背景分区、装饰图形；页面仍无 section 级边框
+
+**工程约束**
+- [ ] 未改动 `:root` 任何 token；未新增颜色值（新规则只用既有变量与 `rgba(255,255,255,0.03/0.06/0.08/0.1)`）
+- [ ] 源码中不出现 `oklch(` / `color-mix(` / `@layer`
+- [ ] 无任何新增外部请求（Network 面板无变化）；无新增字体族
+- [ ] 移动端规则全部写在既有 `@media (max-width:768px)` 块内，**未新增断点**；`.steps::before` 的移动端规则已删除
+- [ ] 375px / 768px / 1080px 三档宽度下**均无横向滚动条**（compat 标签带 `flex-wrap` 生效、`#appstats` 明细表仅自身横向滚动）
+- [ ] `.reveal` 观察器参数与 JS 均未改动；`#compat` 的 `.compat-strip` 保留 `.reveal` 类并可正常淡入
+- [ ] `versions.json` 数据契约、下载计数逻辑、appstats 渲染逻辑零改动
+- [ ] 未改动 hero 下载区 `#download` 内部任何结构、文案与样式

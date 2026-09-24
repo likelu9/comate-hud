@@ -222,13 +222,6 @@
     .light-orb svg { width: 28px; height: 28px; fill: white; opacity: 0.9; }
     .light-item h4 { font-size: 16px; font-weight: 600; }
     .light-item p { font-size: 13px; color: var(--text-secondary); text-align: center; max-width: 180px; }
-    .how-section { padding: 80px 0; }
-    .steps { display: flex; flex-direction: column; gap: 32px; margin-top: 48px; position: relative; }
-    .steps::before { content: ''; position: absolute; left: 24px; top: 48px; bottom: 24px; width: 2px; background: linear-gradient(to bottom, var(--accent), var(--purple)); opacity: 0.2; }
-    .step { display: flex; align-items: flex-start; gap: 24px; padding: 24px 0; }
-    .step-num { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: var(--accent); position: relative; z-index: 1; }
-    .step-content h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-    .step-content p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
     .tech-section { padding: 80px 0; }
     .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 40px; }
     .tech-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 24px 20px; text-align: center; }
@@ -240,7 +233,12 @@
     .arch-detail .arch-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
     .arch-detail ul { padding-left: 18px; }
     .arch-detail li { margin-bottom: 4px; }
-    .compat-section { padding: 80px 0; }
+    .compat-section { padding: 0 0 112px; }
+    .compat-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 14px; }
+    .compat-strip .cs-label { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-right: 8px; }
+    .compat-tag { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; font-size: 13px; line-height: 1.2; color: var(--text-secondary); background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
+    .compat-tag svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
+    .compat-tag svg.solid { fill: currentColor; stroke: none; }
     .compat-table { width: 100%; margin-top: 40px; border-collapse: separate; border-spacing: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
     .compat-table th, .compat-table td { padding: 16px 20px; text-align: left; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
     .compat-table th { background: rgba(255,255,255,0.03); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
@@ -401,7 +399,7 @@
   <div class="container">
     <span class="badge">macOS 原生 · Swift · SwiftUI</span>
     <h1 style="margin-top:28px;"><span class="gradient">Comate HUD</span><br/>让 AI 干活，你只管看灯</h1>
-    <p class="subtitle">一款常驻 macOS 刘海区的轻量状态指示器，为 WPS Comate 而生。<br/>无需打开主窗口，任务状态一目了然。</p>
+    <p class="subtitle">常驻 macOS 刘海区的状态指示器，为 WPS Comate 而生。<br/>不用打开主窗口，状态抬眼即知。</p>
     <div class="hero-lights">
       <div class="hero-light"><div class="dot gray"></div><span>空闲</span></div>
       <div class="hero-light"><div class="dot green"></div><span>已完成</span></div>
@@ -531,83 +529,82 @@
         </div>
       </div>
     </div>
-    <p class="desktop-hint">把鼠标移到刘海上，面板会像真机一样展开</p>
+    <p class="desktop-hint">悬停刘海，面板会像真机一样展开</p>
   </div>
 </section>
 <section class="features" id="features">
   <div class="container">
     <div class="reveal" style="text-align:center;"><div class="section-label">核心功能</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">一眼掌握 AI 工作状态</h2></div>
-    <div class="features-grid" style="margin-top:48px;">
-      <div class="feature-card reveal"><div class="feature-icon green">🟢</div><h3>实时状态灯</h3><p>四种状态灯常驻刘海：灰灯空闲、绿灯已完成、黄灯工作中、红灯等待确认。抬眼即知。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon yellow">📋</div><h3>任务面板</h3><p>悬停刘海展开最近任务与耗时，右键可调展示条数；点击任意任务行，直达对应会话窗口。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon red">🔔</div><h3>消息中心</h3><p>未读消息角标实时更新，点击铃铛直达消息中心。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon blue">📊</div><h3>额度用量</h3><p>实时显示 AI 用量消耗，支持日/月周期切换。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon green">🪟</div><h3>任意悬浮模式</h3><p>v1.3.0 新增：图标 + 状态灯常驻桌面任意位置，hover 展开面板，可跨屏拖拽。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon blue">🖥</div><h3>外接显示器适配</h3><p>v1.3.0 新增：插拔显示器自动重新定位到主屏，无需重启。</p></div>
+    <div class="features-grid">
+      <div class="feature-card reveal"><div class="feature-icon green">🟢</div><h3>实时状态灯</h3><p>四种状态灯常驻刘海。抬眼即知，不用切窗口。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon yellow">📋</div><h3>任务面板</h3><p>悬停展开最近任务与耗时，点击任务行直达会话窗口；右键可调条数。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon red">🔔</div><h3>消息中心</h3><p>未读角标实时更新，点铃铛直达消息中心。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon blue">📊</div><h3>额度用量</h3><p>实时显示 AI 用量，支持日/月切换。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon green">🪟</div><h3>任意悬浮模式</h3><p>图标 + 状态灯常驻桌面任意位置，hover 展开，可跨屏拖拽。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon blue">🖥</div><h3>外接显示器适配</h3><p>插拔显示器自动重新定位主屏，无需重启。</p></div>
     </div>
   </div>
 </section>
 <section class="lights-section" id="lights">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">状态含义</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">四种状态，一眼看懂</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">每种状态都有独特的灯色与节奏，让你在余光中就能感知 AI 在干什么。</p></div>
+    <div class="reveal" style="text-align:center;"><div class="section-label">状态含义</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">四种状态，一眼看懂</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">每种状态有独特的灯色与节奏，余光就能感知 AI 在干什么。</p></div>
     <div class="lights-showcase reveal">
-      <div class="light-item"><div class="light-orb gray"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/></svg></div><h4>⚪️ 空闲</h4><p>没有进行中的任务。灯常亮，安静守候。</p></div>
-      <div class="light-item"><div class="light-orb green"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div><h4>🟢 已完成</h4><p>任务刚跑完。绿灯保持 15 分钟，期间触发新对话会继续顺延。</p></div>
-      <div class="light-item"><div class="light-orb yellow"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><h4>🟡 工作中</h4><p>AI 正在执行任务。呼吸式慢闪，柔和而有存在感。</p></div>
-      <div class="light-item"><div class="light-orb red"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><h4>🔴 等待确认</h4><p>AI 需要你的决策。快闪，紧急提醒。</p></div>
-    </div>
-  </div>
-</section>
-<section class="how-section">
-  <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">使用流程</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">三步上手</h2></div>
-    <div class="steps">
-      <div class="step reveal"><div class="step-num">1</div><div class="step-content"><h3>安装并启动</h3><p>将 ComateHUD.app 拖入「应用程序」文件夹，双击启动。HUD 自动常驻刘海区，首次启动请允许辅助功能权限。</p></div></div>
-      <div class="step reveal"><div class="step-num">2</div><div class="step-content"><h3>在 Comate 中发起任务</h3><p>正常使用 WPS Comate 发起任务——写代码、生成文档、分析数据。HUD 自动通过 SQLite 读取本地任务状态，无需额外配置。</p></div></div>
-      <div class="step reveal"><div class="step-num">3</div><div class="step-content"><h3>看灯、展开、点击</h3><p>看灯知道状态，悬停展开看详情，点击直接跳转。不需要切窗口，不需要查日志，AI 在干什么一目了然。</p></div></div>
+      <div class="light-item"><div class="light-orb gray"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/></svg></div><h4>空闲</h4><p>没有进行中的任务。灯常亮。</p></div>
+      <div class="light-item"><div class="light-orb green"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div><h4>已完成</h4><p>任务刚跑完。绿灯保持 15 分钟，期间有新对话则顺延。</p></div>
+      <div class="light-item"><div class="light-orb yellow"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><h4>工作中</h4><p>AI 正在执行任务。呼吸式慢闪。</p></div>
+      <div class="light-item"><div class="light-orb red"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><h4>等待确认</h4><p>AI 需要你的决策。快闪提醒。</p></div>
     </div>
   </div>
 </section>
 <section class="tech-section" id="tech">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">技术栈</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">纯原生，零依赖</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">100% Swift + SwiftUI 构建，无 Electron、无 WebView、无第三方框架。</p></div>
+    <div class="reveal" style="text-align:center;"><div class="section-label">技术栈</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">纯原生，零依赖</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">100% Swift + SwiftUI，无 Electron、无 WebView、无第三方框架。</p></div>
     <div class="tech-grid">
-      <div class="tech-card reveal"><div class="tech-label">开发语言</div><div class="tech-value">Swift 5.9+</div><div class="tech-note">Apple 推荐的现代系统语言</div></div>
+      <div class="tech-card reveal"><div class="tech-label">开发语言</div><div class="tech-value">Swift 5.9+</div><div class="tech-note">Apple 官方语言</div></div>
       <div class="tech-card reveal"><div class="tech-label">UI 框架</div><div class="tech-value">SwiftUI</div><div class="tech-note">声明式 UI，原生渲染</div></div>
       <div class="tech-card reveal"><div class="tech-label">窗口管理</div><div class="tech-value">NSPanel</div><div class="tech-note">刘海区域精确贴合</div></div>
       <div class="tech-card reveal"><div class="tech-label">数据读取</div><div class="tech-value">SQLite (本地)</div><div class="tech-note">读取 Comate 聊天记录库</div></div>
       <div class="tech-card reveal"><div class="tech-label">网络通信</div><div class="tech-value">URLSession</div><div class="tech-note">云端消息中心 &amp; 用量 API</div></div>
       <div class="tech-card reveal"><div class="tech-label">系统集成</div><div class="tech-value">Deeplink</div><div class="tech-note">wpscomate:// 协议调起 Comate</div></div>
       <div class="tech-card reveal"><div class="tech-label">构建产物</div><div class="tech-value">Universal Binary</div><div class="tech-note">arm64 + x86_64 双架构 lipo</div></div>
-      <div class="tech-card reveal"><div class="tech-label">打包分发</div><div class="tech-value">DMG 安装包</div><div class="tech-note">脚本一键构建，拖拽即装，轻量无冗余</div></div>
+      <div class="tech-card reveal"><div class="tech-label">打包分发</div><div class="tech-value">DMG 安装包</div><div class="tech-note">脚本一键构建，拖拽即装</div></div>
     </div>
     <div class="arch-detail reveal">
-      <div class="arch-title">🏗 架构设计</div>
+      <div class="arch-title">架构设计</div>
       <ul>
-        <li><strong>ComateStore</strong> — 数据层：2s 定时轮询本地 SQLite，30s 刷新云端额度与消息中心，异步队列查询避免主线程阻塞</li>
-        <li><strong>NotchPanel</strong> — 窗口层：自定义 NSPanel 永远在主屏幕最顶层，精确计算刘海偏移量，展开/收起动画 120fps</li>
-        <li><strong>NotchRootView</strong> — UI 层：SwiftUI 声明式布局，收起态为紧凑胶囊，展开态为任务列表 + 额度面板</li>
-        <li><strong>SessionJournal</strong> — 日志层：解析 Comate 本地 session journald 文件，提取最近 5 轮对话摘要作为任务描述</li>
-        <li><strong>UsageAPI</strong> — 用量层：通过 <code>wps_sid</code> Cookie 调用 comate.wps.cn 接口，获取日/月额度使用情况</li>
+        <li><strong>ComateStore</strong> — 数据层：2s 轮询本地 SQLite，30s 刷新云端额度与消息；异步队列查询，不阻塞主线程</li>
+        <li><strong>NotchPanel</strong> — 窗口层：NSPanel 常驻主屏最顶层，精确计算刘海偏移；展开/收起 120fps</li>
+        <li><strong>NotchRootView</strong> — UI 层：SwiftUI 声明式布局；收起为紧凑胶囊，展开为任务列表 + 额度面板</li>
+        <li><strong>SessionJournal</strong> — 日志层：解析本地 session journald，取最近 5 轮对话摘要作为任务描述</li>
+        <li><strong>UsageAPI</strong> — 用量层：以 <code>wps_sid</code> Cookie 调用 comate.wps.cn，获取日/月额度</li>
       </ul>
     </div>
   </div>
 </section>
 <section class="compat-section" id="compat">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">兼容性</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">支持的系统和版本</h2></div>
-    <div class="reveal">
-      <table class="compat-table">
-        <thead><tr><th>项目</th><th>要求</th><th>状态</th></tr></thead>
-        <tbody>
-          <tr><td>操作系统</td><td>macOS 12.0 (Monterey) 或更高版本</td><td class="check">✓ 支持</td></tr>
-          <tr><td>处理器架构</td><td>Apple Silicon (M1/M2/M3/M4) &amp; Intel x86_64</td><td class="check">✓ Universal Binary</td></tr>
-          <tr><td>设备机型</td><td>MacBook Pro / MacBook Air / iMac 系列（含刘海屏与非刘海屏机型）</td><td class="check">✓ 刘海区 &amp; 菜单栏 HUD</td></tr>
-          <tr><td>辅助功能权限</td><td>系统设置 → 隐私与安全性 → 辅助功能</td><td class="check">✓ 首次启动引导</td></tr>
-          <tr><td>WPS Comate</td><td>建议 1.6.17 或更高版本</td><td class="check">✓ 数据源</td></tr>
-          <tr><td>网络连接</td><td>建议保持网络连接畅通，以获取消息中心与额度信息</td><td class="check">✓ 本地优先</td></tr>
-        </tbody>
-      </table>
+    <div class="compat-strip reveal">
+      <span class="cs-label">兼容性</span>
+      <span class="compat-tag">
+        <svg class="solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></svg>
+        macOS 12.0+
+      </span>
+      <span class="compat-tag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.2"/><path d="M10 7V4.2M14 7V4.2M10 20v-2.8M14 20v-2.8M7 10H4.2M7 14H4.2M20 10h-2.8M20 14h-2.8"/></svg>
+        Apple Silicon &amp; Intel
+      </span>
+      <span class="compat-tag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M2 19h20"/></svg>
+        MacBook / iMac（含非刘海）
+      </span>
+      <span class="compat-tag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6z"/><path d="M9.5 12.2l1.8 1.8 3.4-3.6"/></svg>
+        辅助功能权限
+      </span>
+      <span class="compat-tag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5a2 2 0 0 1 4 0V6h3.5A1.5 1.5 0 0 1 18 7.5V11h1.5a2 2 0 0 1 0 4H18v3.5A1.5 1.5 0 0 1 16.5 20H13v-1.5a2 2 0 0 0-4 0V20H7.5A1.5 1.5 0 0 1 6 18.5V15H4.5a2 2 0 0 1 0-4H6V7.5A1.5 1.5 0 0 1 7.5 6H9z"/></svg>
+        WPS Comate 1.6.17+
+      </span>
     </div>
   </div>
 </section>
@@ -624,11 +621,11 @@
     <div class="reveal" style="text-align:center;"><div class="section-label">应用统计</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">谁在用 Comate HUD</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">安装设备每天上报一次活跃，按用户去重统计。</p></div>
     <div class="appstats-kpi reveal" id="appstats-kpi"></div>
     <div class="appstats-block reveal">
-      <div class="appstats-block-title">近 30 日活跃用户趋势</div>
+      <div class="appstats-block-title">近 30 日活跃趋势</div>
       <div class="appstats-chart" id="appstats-chart"></div>
     </div>
     <div class="appstats-block reveal">
-      <div class="appstats-block-title">版本分布（近 30 日活跃用户）</div>
+      <div class="appstats-block-title">版本分布</div>
       <div class="appstats-versions" id="appstats-versions"></div>
     </div>
     <div class="appstats-block reveal" id="appstats-today-block" hidden>
@@ -640,30 +637,30 @@
 </section>
 <section class="powered-section" id="powered">
   <div class="container">
-    <div class="reveal"><div class="section-label">能力提供</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">有想法，就够了</h2><p style="color:var(--text-secondary);max-width:560px;margin:16px auto 0;font-size:15px;">不用会写代码——你负责想，Comate 负责做。从一个念头，到一个能上线的复杂应用。</p></div>
-    <div class="features-grid reveal" style="margin-top:40px;text-align:left;">
-      <div class="feature-card"><div class="feature-icon green">🔐</div><h3>「给部门做个内部报修系统」</h3><p>要填单、要能看进度、要只有本部门能看，数据还得存下来。</p><p style="margin-top:10px;font-size:13px;color:var(--text-dim);">它做的：云端建表 + 读写权限策略 + 前端表单与列表 + 部署上线。你不用建库，也不用写接口。</p></div>
-      <div class="feature-card"><div class="feature-icon yellow">🔔</div><h3>「多维表里的工单，超时了自动催到 IM」</h3><p>按项目负责人私聊提醒，几点催、催几轮，我说了算。</p><p style="margin-top:10px;font-size:13px;color:var(--text-dim);">它做的：多维表数据源接入 + IM 消息推送 + 定时任务 + 失败重试。跨系统的活，它自己接。</p></div>
-      <div class="feature-card"><div class="feature-icon purple">📈</div><h3>「把散在邮件、云文档里的数据拼成经营看板」</h3><p>每周人工汇总要半天，还总担心漏。</p><p style="margin-top:10px;font-size:13px;color:var(--text-dim);">它做的：多源采集 + 清洗聚合 + 可视化看板 + 定时回写云文档。半天的人工，变成自动跑。</p></div>
+    <div class="reveal"><div class="section-label">能力提供</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">有想法，就够了</h2><p style="color:var(--text-secondary);max-width:560px;margin:16px auto 0;font-size:15px;">不用会写代码——你负责想，Comate 负责做。从一个念头，到上线。</p></div>
+    <div class="features-grid reveal" style="margin-top:64px;text-align:left;">
+      <div class="feature-card"><div class="feature-icon green">🔐</div><h3>「给部门做个内部报修系统」</h3><p>要填单、要看进度、要只有本部门可见，数据得存下来。</p><p style="margin-top:10px;font-size:13px;color:var(--text-dim);">它做的：云端建表 + 权限策略 + 表单与列表 + 部署上线。不用建库，不用写接口。</p></div>
+      <div class="feature-card"><div class="feature-icon yellow">🔔</div><h3>「多维表工单超时，自动催到 IM」</h3><p>按项目负责人私聊提醒，几点催、催几轮我说了算。</p><p style="margin-top:10px;font-size:13px;color:var(--text-dim);">它做的：多维表接入 + IM 推送 + 定时任务 + 失败重试。</p></div>
+      <div class="feature-card"><div class="feature-icon purple">📈</div><h3>「把邮件、云文档的数据拼成经营看板」</h3><p>每周人工汇总要半天，还容易漏。</p><p style="margin-top:10px;font-size:13px;color:var(--text-dim);">它做的：多源采集 + 清洗聚合 + 看板 + 定时回写云文档。半天的人工，变成自动跑。</p></div>
     </div>
-    <p class="reveal" style="margin-top:32px;font-size:14px;color:var(--text-secondary);">这个官网、你正在用的 Comate HUD，都是这么来的。还想要别的？去许愿墙说一声。</p>
+    <p class="reveal" style="margin-top:48px;font-size:15px;line-height:1.8;color:var(--text-secondary);">这个官网、你正在用的 Comate HUD，都这么来的。还想要别的？去许愿墙说一声。</p>
     <div class="powered-card reveal">
       <div class="powered-logo"><img src="assets/comate-app-icon.png" alt="WPS Comate" /></div>
       <h3>Comate 应用开发能力 (App Studio)</h3>
-      <p>Comate HUD 基于 <a href="https://comate.wps.cn" target="_blank" rel="noopener">WPS Comate</a> 的应用开发能力构建。借助它开放的本地数据库读取、Deeplink 调起、OAuth 认证等接口，HUD 实现了与 Comate 桌面客户端的深度集成——读取任务状态、打开会话窗口、获取未读消息、查询用量额度，接入即可用，不必从零搭建。</p>
-      <p style="margin-top:12px;font-size:13px;color:var(--text-dim);">Comate HUD 是一个独立的 macOS 原生应用，不属于 WPS 或 WPS Comate 的官方产品。它由社区开发者基于 Comate 开放能力构建，以第三方应用形式运行。</p>
+      <p>Comate HUD 基于 <a href="https://comate.wps.cn" target="_blank" rel="noopener">WPS Comate</a> 的应用开发能力构建。借助其开放的本地数据库读取、Deeplink 调起、OAuth 认证等接口，实现了与 Comate 桌面客户端的深度集成——读取任务状态、打开会话窗口、获取未读消息、查询用量额度。</p>
+      <p style="margin-top:12px;font-size:13px;color:var(--text-dim);">Comate HUD 是独立的 macOS 原生应用，非 WPS 官方产品，由社区开发者基于 Comate 开放能力构建。</p>
     </div>
   </div>
 </section>
 <section class="wish-section" id="wishwall">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">许愿反馈</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">许个愿，让 HUD 更好</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">留下你的名字，提交你的愿望和建议，所有留言会在弹幕中展示。</p></div>
+    <div class="reveal" style="text-align:center;"><div class="section-label">许愿反馈</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">许个愿，让 HUD 更好</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">留下名字，提交愿望与建议，留言会在弹幕中展示。</p></div>
     <div class="wish-form reveal">
       <div class="wish-row">
-        <input id="wish-name" type="text" placeholder="你是谁（英雄请留名，定当持续更新为报）" maxlength="20" />
+        <input id="wish-name" type="text" placeholder="你是谁（英雄请留名）" maxlength="20" />
       </div>
       <div class="wish-row">
-        <textarea id="wish-text" placeholder="想法建议你尽管提，我...让Comate来改 &gt;_&lt;" maxlength="100" rows="2"></textarea>
+        <textarea id="wish-text" placeholder="想法建议尽管提，交给 Comate 来改" maxlength="100" rows="2"></textarea>
         <button id="wish-submit">发送</button>
       </div>
       <div class="wish-hint" id="wish-hint"></div>
@@ -674,7 +671,7 @@
 <footer>
   <div class="container">
     <p style="margin-bottom:8px;">Comate HUD — 为 WPS Comate 而生的 macOS 状态指示器</p>
-    <p>macOS 12.0+ · Apple Silicon &amp; Intel · Swift · SwiftUI</p>
+    <p>macOS 12.0+ · Swift + SwiftUI</p>
     <p style="margin-top:12px;"><a href="#download">下载</a> · <a href="#wishwall">许愿反馈</a> · <a href="https://github.com/likelu9/comate-hud" target="_blank" rel="noopener">GitHub</a></p>
   </div>
 </footer>
