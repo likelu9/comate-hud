@@ -38,8 +38,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         container.menuBuilder = HUDContextMenu(
             store: store,
             onSwitchMode: { [weak self] mode in self?.switchDisplayMode(mode) },
-            onShowMainWindow: {
-                NSApp.setActivationPolicy(.regular)
+            onShowMainWindow: { [weak self] in
+                self?.store.openComateApp()
                 NSApp.activate(ignoringOtherApps: true)
             },
             onShowAbout: { AboutHUDWindow.show() })
