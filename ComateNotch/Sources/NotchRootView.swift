@@ -479,7 +479,12 @@ struct NotchRootView: View {
                 // 实测页脚高度（用于反推内容高度）
             .background(
                 GeometryReader { g in
-                    Color.clear.preference(key: FooterHeightKey.self, value: g.size.height)
+                    Color.clear
+                        .onAppear { NSLog("[DBGLAYOUT] footer=%@ target=%.1f footerH=%.1f listH=%.1f rowsH=%.1f", NSStringFromRect(g.frame(in: .global)), targetExpandedHeight, footerHeight, listViewportHeight, rowsHeight) }
+                        .onChange(of: g.frame(in: .global)) { r in
+                            NSLog("[DBGLAYOUT] footer=%@ target=%.1f footerH=%.1f listH=%.1f rowsH=%.1f", NSStringFromRect(r), targetExpandedHeight, footerHeight, listViewportHeight, rowsHeight)
+                        }
+                        .preference(key: FooterHeightKey.self, value: g.size.height)
                 }
             )
         }
