@@ -36,6 +36,8 @@ tmp/
 temp/
 .cache/
 .tmp/
+.tmp-preview/
+svgprev/
 __pycache__/
 
 # ── Shell ──
@@ -43,5 +45,6 @@ __pycache__/
 
 # ── Comate 平台元数据 ──
 .wpscomate/
+.inspect/
 .cloudsync_meta.json
 .cloudsync_zip_meta.json
