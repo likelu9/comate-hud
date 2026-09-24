@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Comate HUD - 轻量状态指示器</title>
-  <meta name="description" content="Comate HUD 是一款原生 macOS 刘海区状态指示器，为 WPS Comate 而生。无需打开主窗口，任务状态一目了然。基于 WPS Comate 应用开发能力构建。" />
+  <meta name="description" content="Comate HUD 是原生 macOS 刘海区状态指示器，为 WPS Comate 而生。不用打开主窗口，状态抬眼即知。基于 WPS Comate 应用开发能力构建。" />
   <meta name="theme-color" content="#0a0a0f" />
   <link rel="icon" type="image/png" href="icon.png" />
   <style>
@@ -357,14 +357,42 @@
     .stats-table th.num, .stats-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
     @media (max-width: 768px) {
-      .hero { padding: 120px 0 60px; }
-      .lights-showcase { gap: 32px; }
+      .hero { padding: 128px 0 72px; }
+      .mockup-section { padding: 56px 0 88px; }
+      .features, .lights-section, .tech-section, .version-section, .powered-section, .wish-section { padding: 72px 0; }
+      .compat-section { padding: 0 0 72px; }
+      .appstats-section { padding: 64px 0 72px; }
+      footer { padding: 48px 0; }
+      .section-label { margin-bottom: 14px; }
+      .hero h1 { margin-bottom: 24px; }
+      .hero .subtitle { margin-bottom: 40px; }
+      .hero-lights { gap: 24px; margin-bottom: 44px; }
+      .features-grid { gap: 20px; margin-top: 44px; }
+      .feature-card { padding: 28px 24px; }
+      .feature-icon { width: 46px; height: 46px; margin-bottom: 18px; }
+      .lights-showcase { gap: 32px; margin-top: 44px; }
+      .light-item { gap: 16px; }
+      .light-item p { font-size: 13px; max-width: 160px; }
+      .tech-grid { gap: 14px; margin-top: 44px; }
+      .tech-card { padding: 22px 18px; }
+      .arch-detail { margin-top: 32px; padding: 28px 22px; font-size: 13px; line-height: 1.9; }
+      .arch-detail li { margin-bottom: 10px; }
+      .compat-strip { gap: 10px 12px; }
+      .compat-strip .cs-label { flex: 1 1 100%; text-align: center; margin: 0 0 2px; }
+      .compat-tag { padding: 8px 14px; font-size: 12px; }
+      .version-list { margin-top: 44px; }
+      .version-item { padding: 24px 20px; margin-bottom: 14px; }
+      .appstats-kpi { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 44px; }
+      .appstats-block { margin-top: 40px; }
+      .appstats-block-title { margin-bottom: 16px; }
+      .appstats-versions { gap: 16px; }
+      .powered-card { margin-top: 40px; padding: 32px 24px; }
+      .wish-form { margin-top: 44px; }
+      .wish-barrage { margin-top: 36px; }
       .light-orb { width: 56px; height: 56px; }
       .light-orb svg { width: 22px; height: 22px; }
-      .steps::before { left: 23px; }
       nav .nav-links { display: none; }
       .compat-table th, .compat-table td { padding: 12px 14px; }
-      .appstats-kpi { grid-template-columns: repeat(2, 1fr); gap: 12px; }
       .appstats-card { padding: 20px 16px; }
       .appstats-card .k-value { font-size: 26px; }
       .appstats-chart svg { height: 140px; }
