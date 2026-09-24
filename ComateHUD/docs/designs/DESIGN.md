@@ -172,8 +172,8 @@ release_contract:
 
           <div class="dl-help-pop" id="dl-help-pop" role="region" aria-label="macOS 安装说明">
             <p class="dl-help-row"><span class="dl-help-k">【安装】</span>把左侧的 Comate HUD.app 拖到 Applications 文件夹即可。</p>
-            <p class="dl-help-row"><span class="dl-help-k">【首次打开】</span>本应用未使用 Apple 付费开发者证书签名，macOS 会拦截首次启动。任选一种方式放行：</p>
-            <p class="dl-help-sub">方式一：右键点击 Comate HUD.app → 选择「打开」→ 在弹窗中再点「打开」</p>
+            <p class="dl-help-row"><span class="dl-help-k">【首次打开】</span>本应用未使用 Apple 付费开发者证书签名，macOS 会拦截首次启动（提示「未打开“ComateHUD”」，Apple 无法验证其安全性）。双击后任选一种方式放行：</p>
+            <p class="dl-help-sub">方式一：打开「系统设置」→「隐私与安全性」，下滑到「安全性」区域，找到「已阻止“ComateHUD”以保护 Mac」，点「仍要打开」，在二次弹窗「打开“ComateHUD”？」中再点「仍要打开」，输入系统密码即可。</p>
             <p class="dl-help-sub">方式二：打开「终端」，执行下面这行命令：</p>
             <code class="dl-help-code" id="dl-help-cmd" tabindex="0" aria-label="终端命令，可选中复制">xattr -dr com.apple.quarantine /Applications/ComateHUD.app</code>
             <p class="dl-help-sub dl-help-note">然后双击启动</p>
@@ -496,7 +496,7 @@ fs.writeFileSync('versions.json', JSON.stringify(data, null, 2) + '\n');
 - [ ] 按钮共三个且层级清晰：MAC = `.btn-primary`（唯一 accent 实心 + glow）；WIN = `.btn-coming`（与 Mac 版同一套实心按钮，仅降对比度 + 无 glow + `cursor:not-allowed` + `aria-disabled`；「敬请期待」在按钮下方小字，**未使用虚线边框、未使用 opacity 做不可用态**）；GitHub = `.btn-secondary`；三按钮等高同圆角；说明触发点为 44×44 ghost 图标
 - [ ] WIN 按钮点击无任何反应、不进 Tab 序列、无 hover 视觉反馈
 - [ ] 触发点 hover 时气泡淡入上浮（180ms）且带指向触发点的小箭头；鼠标从图标移入气泡**不消失**，气泡内文本可整段选中
-- [ ] 气泡内容与用户原话逐字一致：【安装】、【首次打开】、方式一、方式二 + 命令 `xattr -dr com.apple.quarantine /Applications/ComateHUD.app`；命令为等宽字体 + 深色代码块 + 内部横向滚动，**始终一整行**（复制不产生多余换行）
+- [ ] 气泡内容与用户原话一致：【安装】、【首次打开】、方式一（「系统设置 → 隐私与安全性 → 安全性 → 仍要打开」放行路径，右键打开在新版 macOS 已无「打开」选项）、方式二 + 命令 `xattr -dr com.apple.quarantine /Applications/ComateHUD.app`；命令为等宽字体 + 深色代码块 + 内部横向滚动，**始终一整行**（复制不产生多余换行）
 - [ ] 气泡在 1080 / 1024 / 900 / 769px 宽度下均不横向溢出、不被 hero 裁剪、不被下方 mockup 区块遮挡（`z-index:40` 生效）
 - [ ] 键盘：`Tab` 到触发点即展开（`focus-visible` accent 外描边）、`Tab` 可进入 `<code>` 选中命令、`Esc` 关闭并归还焦点、`aria-expanded` 与可见性同步
 - [ ] 移动端（≤768px，含 375px）：触发点显示「图标 + 安装说明」文字；点击就地展开静态说明块、再点收起；`:hover`/`:focus-within` 在移动端**不能**打开气泡

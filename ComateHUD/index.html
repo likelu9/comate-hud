@@ -425,8 +425,8 @@
           </button>
           <div class="dl-help-pop" id="dl-help-pop" role="region" aria-label="macOS 安装说明">
             <p class="dl-help-row"><span class="dl-help-k">【安装】</span>把左侧的 Comate HUD.app 拖到 Applications 文件夹即可。</p>
-            <p class="dl-help-row"><span class="dl-help-k">【首次打开】</span>本应用未使用 Apple 付费开发者证书签名，macOS 会拦截首次启动。 任选一种方式放行：</p>
-            <p class="dl-help-sub">方式一：右键点击 Comate HUD.app → 选择「打开」→ 在弹窗中再点「打开」</p>
+            <p class="dl-help-row"><span class="dl-help-k">【首次打开】</span>本应用未使用 Apple 付费开发者证书签名，macOS 会拦截首次启动（提示「未打开“ComateHUD”」，Apple 无法验证其安全性）。双击后任选一种方式放行：</p>
+            <p class="dl-help-sub">方式一：打开「系统设置」→「隐私与安全性」，下滑到「安全性」区域，找到「已阻止“ComateHUD”以保护 Mac」，点「仍要打开」，在二次弹窗「打开“ComateHUD”？」中再点「仍要打开」，输入系统密码即可。</p>
             <p class="dl-help-sub">方式二：打开「终端」，执行下面这行命令：</p>
             <code class="dl-help-code" id="dl-help-cmd" tabindex="0" aria-label="终端命令，可选中复制">xattr -dr com.apple.quarantine /Applications/ComateHUD.app</code>
             <p class="dl-help-sub dl-help-note">然后双击启动</p>

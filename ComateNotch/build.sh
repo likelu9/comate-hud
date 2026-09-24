@@ -91,12 +91,19 @@ Comate HUD —— 安装说明
 把左侧的 Comate HUD.app 拖到右侧的 Applications 文件夹即可。
 
 【首次打开】
-本应用未使用 Apple 付费开发者证书签名，macOS 会拦截首次启动。
-任选一种方式放行：
+本应用未使用 Apple 付费开发者证书签名，macOS 会拦截首次启动
+（提示「未打开“ComateHUD”」，Apple 无法验证其安全性）。
+双击后按下面任一种方式放行：
 
-  方式一：右键点击 Comate HUD.app → 选择「打开」→ 在弹窗中再点「打开」
+  方式一（推荐，图形界面）：
+      1. 双击 Comate HUD.app，出现「未打开“ComateHUD”」提示后关闭该弹窗
+      2. 打开「系统设置」→「隐私与安全性」
+      3. 下滑到「安全性」区域，找到「已阻止“ComateHUD”以保护 Mac」
+      4. 点「仍要打开」，在二次弹窗「打开“ComateHUD”？」中再点「仍要打开」
+      5. 输入系统密码，即可正常使用
 
-  方式二：打开「终端」，执行下面这行命令：
+  方式二（终端命令）：
+      打开「终端」，执行下面这行命令：
       xattr -dr com.apple.quarantine /Applications/ComateHUD.app
       然后双击启动
 
