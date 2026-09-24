@@ -105,107 +105,40 @@ final class FloatingContentView: NSView {
     // MARK: - 右键菜单
     // 非激活 borderless 面板里 SwiftUI 的 contextMenu 不可靠，故用 AppKit 原生 NSMenu。
     // menu(for:) 覆盖整个窗口（AppKit 会沿 superview 向上找菜单）；
-    // rightMouseDown 兼顾 hitTest 直接命中本视图（图标区）的情况。两者共用同一份菜单构建代码。
+    // rightMouseDown 兼顾 hitTest 直接命中本视图（图标区）的情况。
+    // 菜单定义来自 HUDContextMenu —— 与刘海模式共用同一份，保证两模式功能完全对齐。
 
     override func menu(for event: NSEvent) -> NSMenu? {
-        buildContextMenu()
+        menuBuilder()?.build()
     }
 
     override func rightMouseDown(with event: NSEvent) {
-        NSMenu.popUpContextMenu(buildContextMenu(), with: event, for: self)
+        guard let menu = menuBuilder()?.build() else { return }
+        NSMenu.popUpContextMenu(menu, with: event, for: self)
     }
 
-    /// 面板右下角设置按钮：等同右键。
-    /// 左键事件直接交给 popUpContextMenu 在非激活面板里不可靠，故合成一个右键按下事件，
-    /// 走与右键完全相同的弹出手径（该路径已验证可用），定位到当前鼠标处。
+    /// 面板右下角设置按钮：等同右键，弹出与右键完全一致的菜单
     func showContextMenu() {
-        let menu = buildContextMenu()
-        let win = window
-        let loc = win?.convertPoint(fromScreen: NSEvent.mouseLocation) ?? .zero
-        if let ev = NSEvent.mouseEvent(with: .rightMouseDown, location: loc,
-                                       modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
-                                       windowNumber: win?.windowNumber ?? 0, context: nil,
-                                       eventNumber: 0, clickCount: 1, pressure: 1) {
-            NSMenu.popUpContextMenu(menu, with: ev, for: self)
-            return
-        }
-        menu.popUp(positioning: nil, at: convert(loc, from: nil), in: self)
+        guard let menu = menuBuilder()?.build() else { return }
+        popUpHUDMenu(menu)
     }
 
-    private func buildContextMenu() -> NSMenu {
-        guard let store = panel?.store else { return NSMenu() }
-        let menu = NSMenu()
+    /// 菜单构建器缓存：NSMenuItem.target 是 weak，构建器被释放后菜单项就点不动了
+    private var cachedMenuBuilder: HUDContextMenu?
 
-        let about = NSMenuItem(title: "关于 Comate HUD", action: #selector(menuAbout), keyEquivalent: "")
-        about.target = self
-        menu.addItem(about)
-        menu.addItem(.separator())
-
-        let modeItem = NSMenuItem(title: "显示模式", action: nil, keyEquivalent: "")
-        let modeMenu = NSMenu()
-        for mode in ComateStore.DisplayMode.allCases {
-            let item = NSMenuItem(title: mode.label, action: #selector(menuSwitchMode(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = mode.rawValue
-            if store.displayMode == mode { item.state = .on }
-            modeMenu.addItem(item)
-        }
-        modeItem.submenu = modeMenu
-        menu.addItem(modeItem)
-
-        let mainItem = NSMenuItem(title: "显示主窗口", action: #selector(menuShowMain), keyEquivalent: "")
-        mainItem.target = self
-        menu.addItem(mainItem)
-        menu.addItem(.separator())
-
-        let limitItem = NSMenuItem(title: "最近记录条数", action: nil, keyEquivalent: "")
-        let limitMenu = NSMenu()
-        for n in ComateStore.recentTaskLimitOptions {
-            let item = NSMenuItem(title: "最近 \(n) 条", action: #selector(menuSetLimit(_:)), keyEquivalent: "")
-            item.target = self
-            item.tag = n
-            if store.recentTaskLimit == n { item.state = .on }
-            limitMenu.addItem(item)
-        }
-        limitItem.submenu = limitMenu
-        menu.addItem(limitItem)
-        menu.addItem(.separator())
-
-        if store.hasCustomExpandedHeight {
-            let reset = NSMenuItem(title: "恢复默认高度", action: #selector(menuResetHeight), keyEquivalent: "")
-            reset.target = self
-            menu.addItem(reset)
-            menu.addItem(.separator())
-        }
-
-        let quit = NSMenuItem(title: "退出 Comate HUD", action: #selector(menuQuit), keyEquivalent: "")
-        quit.target = self
-        menu.addItem(quit)
-        return menu
-    }
-
-    @objc private func menuAbout() { AboutHUDWindow.show() }
-
-    @objc private func menuSwitchMode(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String,
-              let mode = ComateStore.DisplayMode(rawValue: raw) else { return }
-        panel?.onSwitchMode?(mode)
-    }
-
-    @objc private func menuShowMain() {
-        panel?.store.openComateApp()
-        NSApp.activate(ignoringOtherApps: true)
-    }
-
-    @objc private func menuSetLimit(_ sender: NSMenuItem) {
-        panel?.store.recentTaskLimit = sender.tag
-    }
-
-    @objc private func menuResetHeight() { panel?.store.resetCustomExpandedHeight() }
-
-    @objc private func menuQuit() {
-        panel?.store.stop()
-        NSApp.terminate(nil)
+    private func menuBuilder() -> HUDContextMenu? {
+        if let cachedMenuBuilder = cachedMenuBuilder { return cachedMenuBuilder }
+        guard let store = panel?.store else { return nil }
+        let builder = HUDContextMenu(
+            store: store,
+            onSwitchMode: { [weak self] mode in self?.panel?.onSwitchMode?(mode) },
+            onShowMainWindow: { [weak self] in
+                self?.panel?.store.openComateApp()
+                NSApp.activate(ignoringOtherApps: true)
+            },
+            onShowAbout: { AboutHUDWindow.show() })
+        cachedMenuBuilder = builder
+        return builder
     }
 
     // MARK: - Hover（基于全局鼠标位置，不依赖 tracking area）

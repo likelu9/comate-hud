@@ -94,12 +94,21 @@ struct HUDTaskRows: View {
     }
 }
 
-// MARK: - 页脚：额度周期切换 + 消息铃铛（刘海模式 / 悬浮模式共用）
+// MARK: - 页脚：额度周期切换 + 消息铃铛 + 设置（刘海模式 / 悬浮模式共用）
+
+/// 页脚三个按钮的统一热区。原来只有图标本身那么大（约 13pt 高），难点中，
+/// 这里统一高度、并给右侧两个按钮一个统一的最小宽度。
+private enum FooterHit {
+    static let height: CGFloat = 20
+    static let sideWidth: CGFloat = 30
+    static let corner: CGFloat = 5
+}
 
 struct HUDUsageFooter: View {
     @ObservedObject var store: ComateStore
-    /// 设置按钮回调（仅悬浮窗展开态传入；nil = 不显示，刘海模式不受影响）
-    var onSettings: (() -> Void)? = nil
+    /// 设置按钮动作。必填而非可选：设置是功能而不是装饰，
+    /// 两种显示模式都必须提供，避免再出现「某个模式没有设置按钮」
+    let onSettings: () -> Void
 
     @State private var usageToggleHovered = false
     @State private var bellHovered = false
@@ -119,10 +128,10 @@ struct HUDUsageFooter: View {
                             .opacity(usageToggleHovered ? 1.0 : 0.85))
                 }
                 .padding(.horizontal, 6)
-                .padding(.vertical, 4)
-                .contentShape(RoundedRectangle(cornerRadius: 5))
+                .frame(height: FooterHit.height)
+                .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
                 .background(
-                    RoundedRectangle(cornerRadius: 5)
+                    RoundedRectangle(cornerRadius: FooterHit.corner)
                         .fill(Color.white.opacity(usageToggleHovered ? 0.1 : 0))
                 )
             }
@@ -155,11 +164,11 @@ struct HUDUsageFooter: View {
                             .font(.system(size: 9, weight: .semibold, design: .rounded))
                     }
                     .foregroundStyle(.white.opacity(bellHovered || store.isOpeningMessageCenter ? 0.9 : 0.55))
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
+                    .frame(minWidth: FooterHit.sideWidth, minHeight: FooterHit.height)
+                    .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
                     .background(
                         Color.white.opacity(bellHovered ? 0.12 : 0)
-                            .clipShape(RoundedRectangle(cornerRadius: 5))
+                            .clipShape(RoundedRectangle(cornerRadius: FooterHit.corner))
                     )
                 }
                 .buttonStyle(.plain)
@@ -171,27 +180,25 @@ struct HUDUsageFooter: View {
                 .help(store.isOpeningMessageCenter ? "正在打开消息中心…" : "打开消息中心")
             }
 
-            // 设置：等同右键，弹出与右键一致的菜单（仅悬浮窗展开态传入）
-            if let onSettings = onSettings {
-                Button(action: onSettings) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 9))
-                        .foregroundStyle(.white.opacity(settingsHovered ? 0.9 : 0.55))
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .background(
-                            Color.white.opacity(settingsHovered ? 0.12 : 0)
-                                .clipShape(RoundedRectangle(cornerRadius: 5))
-                        )
-                }
-                .buttonStyle(.plain)
-                .onHover { h in
-                    settingsHovered = h
-                    if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-                }
-                .animation(.easeInOut(duration: 0.12), value: settingsHovered)
-                .help("设置（等同右键菜单）")
+            // 设置：等同右键，弹出与右键一致的菜单（两种模式都有）
+            Button(action: onSettings) {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.white.opacity(settingsHovered ? 0.9 : 0.55))
+                    .frame(width: FooterHit.sideWidth, height: FooterHit.height)
+                    .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
+                    .background(
+                        Color.white.opacity(settingsHovered ? 0.12 : 0)
+                            .clipShape(RoundedRectangle(cornerRadius: FooterHit.corner))
+                    )
             }
+            .buttonStyle(.plain)
+            .onHover { h in
+                settingsHovered = h
+                if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+            }
+            .animation(.easeInOut(duration: 0.12), value: settingsHovered)
+            .help("设置（等同右键菜单）")
         }
     }
 

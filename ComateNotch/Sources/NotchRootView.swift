@@ -241,9 +241,8 @@ struct NotchRootView: View {
     var onResizeBegin: ((CGFloat) -> Void)?
     /// 拖拽结束：按最终高度收一次窗口
     var onResizeEnd: ((CGFloat) -> Void)?
-    var onShowMainWindow: (() -> Void)?
-    var onSwitchMode: ((ComateStore.DisplayMode) -> Void)?
-    var onQuit: (() -> Void)?
+    /// 设置按钮：弹出与右键完全一致的菜单（菜单定义与悬浮模式共用同一份）
+    var onShowMenu: (() -> Void)?
 
     /// 收起态与展开态同宽：宽度全程不变，动画只改变 y 与高度，
     /// 左右边缘完全不动（否则两态差 1px 会看起来"右边没对齐"）。
@@ -253,8 +252,6 @@ struct NotchRootView: View {
     @State private var expandTimer: Timer?
     @State private var isAnimating = false
     @State private var expanded: Bool = false
-    /// 「关于」弹窗显示状态
-    @State private var showAbout = false
 
     /// 实测：列表行 VStack 自然高度 + 该测量对应的行数（用于反推单行占高）
     @State private var rowsHeight: CGFloat = 0
@@ -437,57 +434,6 @@ struct NotchRootView: View {
                 }
             }
         }
-        .contextMenu {
-            Button("关于 Comate HUD") {
-                showAbout = true
-            }
-            Divider()
-            // 显示模式切换
-            Menu("显示模式") {
-                ForEach(ComateStore.DisplayMode.allCases, id: \.rawValue) { mode in
-                    Button {
-                        onSwitchMode?(mode)
-                    } label: {
-                        if store.displayMode == mode {
-                            Label(mode.label, systemImage: "checkmark")
-                        } else {
-                            Text(mode.label)
-                        }
-                    }
-                }
-            }
-            Button("显示主窗口") {
-                store.openComateApp()
-                onShowMainWindow?()
-            }
-            Divider()
-            // 列表展示条数：3 / 6 / 10，选中项带勾选标记，选择结果持久化
-            Menu("最近记录条数") {
-                ForEach(ComateStore.recentTaskLimitOptions, id: \.self) { n in
-                    Button {
-                        store.recentTaskLimit = n
-                    } label: {
-                        if store.recentTaskLimit == n {
-                            Label("最近 \(n) 条", systemImage: "checkmark")
-                        } else {
-                            Text("最近 \(n) 条")
-                        }
-                    }
-                }
-            }
-            Divider()
-            // 已自定义高度时提供恢复默认（默认 = 跟随内容自适应）
-            if store.hasCustomExpandedHeight {
-                Button("恢复默认高度") {
-                    store.resetCustomExpandedHeight()
-                }
-            }
-            Divider()
-            Button("退出 Comate HUD") {
-                store.stop()
-                NSApp.terminate(nil)
-            }
-        }
         .onAppear {
             NSLog("[NotchRootView] onAppear: initialExpanded=%@ expanded_before=%@", String(describing: initialExpanded), String(describing: expanded))
             expanded = initialExpanded
@@ -501,10 +447,6 @@ struct NotchRootView: View {
         // 显式撑满 hostingView 画布并左上对齐：
         // 根视图比画布小的话 NSHostingView 会垂直居中，导致 HUD 整体下移。
         .frame(width: expandedWidth, height: canvasHeight, alignment: .topLeading)
-        .sheet(isPresented: $showAbout) {
-            AboutHUDView(onClose: { showAbout = false })
-                .environment(\.colorScheme, .dark)
-        }
     }
 
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）
@@ -533,7 +475,7 @@ struct NotchRootView: View {
             // 而不是跟着列表最后一条记录往下跑
             Spacer(minLength: 0)
 
-            HUDUsageFooter(store: store)
+            HUDUsageFooter(store: store, onSettings: { onShowMenu?() })
                 // 实测页脚高度（用于反推内容高度）
             .background(
                 GeometryReader { g in
