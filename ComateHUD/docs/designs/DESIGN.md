@@ -123,14 +123,14 @@ release_contract:
 ### 三条不可协商的原则
 1. **数据唯一来源 = `versions.json` 的 `versions[0]`**。应用名是常量；版本号、发布日期、体积**全部由 JS 运行时注入**，HTML 里不得出现任何具体版本号或体积（含 `~1.4 MB` 这类硬编码）。发版脚本负责把 `size` 写进 `versions.json`，官网自动跟随。
 2. **体积在按钮之外**，与系统要求合并成一行元信息；按钮文案里不再出现版本与体积。
-3. **按钮文案静态化**：MAC 按钮文案固定为「下载 macOS 版」（不再随版本变长而变宽），版本信息上移到公共信息行。
+3. **按钮文案静态化**：MAC 按钮文案固定为「Mac 版」、WIN 为「Win 版」（不再随版本变长而变宽），版本信息上移到公共信息行。
 
 ### 主次层级（唯一权威顺序）
 | 层级 | 元素 | 处理 |
 | --- | --- | --- |
 | 1 · 唯一 CTA | MAC 下载按钮 | `.btn-download.btn-primary`：accent 实心 + `0 0 24px var(--accent-glow)` + hover 抬升 |
 | 2 · 次要出口 | GitHub 按钮 | `.btn-download.btn-secondary`：`rgba(255,255,255,0.06)` 面 + hairline 描边，无 glow |
-| 3 · 不可用 | WIN 按钮 | `.btn-coming`：虚线 hairline + 平面底 + 无 glow + 无 hover 反馈 |
+| 3 · 不可用 | WIN 按钮 | `.btn-coming`：与 Mac 版同一套实心按钮（同填充形式/圆角/字号/无边框），仅整体降对比度 + 无 glow + 无 hover 反馈；「敬请期待」在按钮正下方小字 |
 | 4 · 工具 | 安装说明触发点 | 44×44 ghost 图标按钮，仅在 hover / focus 时染 accent |
 
 ## 1. HTML 结构骨架（类名层级）
@@ -152,7 +152,7 @@ release_contract:
       <div class="hero-actions dl-actions">
         <a id="dl-btn" href="#" class="btn-download btn-primary" download>
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></svg>
-          <span id="dl-text">下载 macOS 版</span>
+          <span id="dl-text">Mac 版</span>
         </a>
 
         <span class="dl-help" id="dl-help">
@@ -172,10 +172,12 @@ release_contract:
           </div>
         </span>
 
-        <span id="dl-win" class="btn-download btn-coming" aria-disabled="true">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.6 4.9 10.4 3.7v7.6H2.6zM11.6 3.5 21.4 2.1v9.2h-9.8zM2.6 12.7h7.8v7.6L2.6 19.1zM11.6 12.7h9.8v9.2l-9.8-1.4z"/></svg>
-          <span>Windows 版</span>
-          <span class="btn-coming-tag">敬请期待</span>
+        <span class="dl-win-wrap">
+          <span id="dl-win" class="btn-download btn-coming" aria-disabled="true" aria-describedby="dl-win-note">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.6 4.9 10.4 3.7v7.6H2.6zM11.6 3.5 21.4 2.1v9.2h-9.8zM2.6 12.7h7.8v7.6L2.6 19.1zM11.6 12.7h9.8v9.2l-9.8-1.4z"/></svg>
+            <span>Win 版</span>
+          </span>
+          <span class="dl-win-note" id="dl-win-note">敬请期待</span>
         </span>
 
         <a href="https://github.com/likelu9/comate-hud" class="btn-download btn-secondary" target="_blank" rel="noopener">
@@ -235,10 +237,12 @@ release_contract:
 .dl-actions .btn-download svg { flex: none; }
 
 /* 次级：GitHub 复用既有 .btn-secondary，不改 */
-/* 不可用：WIN —— 替换原 .btn-coming 的 { opacity:.5; pointer-events:none } */
-.btn-coming { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.16); color: var(--text-secondary); box-shadow: none; cursor: not-allowed; }
-.btn-coming svg { opacity: 0.5; }
-.btn-coming-tag { margin-left: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); color: var(--text-dim); }
+/* 不可用：WIN —— 与 Mac 版同一套实心按钮（同填充形式/圆角/字号/无边框），仅整体降对比度 */
+.btn-coming { background: rgba(0,212,170,0.12); color: rgba(0,212,170,0.6); box-shadow: none; cursor: not-allowed; }
+.btn-coming svg { opacity: 0.6; }
+/* 「敬请期待」移到按钮正下方：绝对定位，不参与按钮行几何（Mac/Win 保持同一基线） */
+.dl-win-wrap { position: relative; display: inline-flex; }
+.dl-win-note { position: absolute; top: calc(100% + 6px); left: 0; right: 0; text-align: center; font-size: 12px; line-height: 1.2; color: var(--text-dim); white-space: nowrap; }
 ```
 - WIN 的不可用观感由**四个信号**叠加：① 虚线 hairline 边框（不是实心面）；② 无 glow、无抬升、无 hover 响应；③ 图标与文字降为 `--text-secondary` / `--text-dim`；④ 独立的「敬请期待」胶囊标签。**不使用 `opacity: 0.5`**（会让描边与文字一起糊掉，且没有语义）。
 - 因为改成 `<span>` 而非 `<a href="javascript:void(0)">`，`cursor: not-allowed` 能真实生效，同时它天然不可点、不进 Tab 序列。
@@ -311,7 +315,7 @@ release_contract:
 ```
 - `.dl-help { display: contents }` 让包裹层不生成盒子：触发点留在按钮行内（紧跟 MAC 按钮），说明块以 `order:9 + flex-basis:100%` 落到**按钮行的最后一行**、占满整宽 —— 即「点击就地展开」的静态说明块。
 - 移动端无 hover，气泡语义整体作废：`:hover` / `:focus-within` 均不再能打开它，只有 `.is-open`（点击切换）能。
-- 375px 下按钮行自然折成 3 行（MAC + 安装说明 / Windows 版 / GitHub），说明块再占一行；代码块在自身内部横向滚动 → 页面无横向滚动条。
+- 375px 下按钮行折成 2 行（Mac 版 + 安装说明 / Win 版 + GitHub），Win 版下方一行小字「敬请期待」，说明块再占一行；代码块在自身内部横向滚动 → 页面无横向滚动条。
 
 ## 3. 三种状态（+ 两个降级态）
 
@@ -319,7 +323,7 @@ release_contract:
 | --- | --- |
 | **① 默认态** | 公共信息行（应用名 + `v1.4.0` 胶囊 + `2026-09-24`）→ 按钮行（accent 实心 MAC / ghost 说明图标 / 虚线 WIN + 敬请期待 / 白面 GitHub）→ 元信息行（`1.8 MB DMG · macOS 12.0+ · Apple Silicon & Intel`）。气泡 `opacity:0 / visibility:hidden`。 |
 | **② MAC 气泡展开态** | 触发点 hover 或键盘 focus 时：触发点转 accent 描边（`rgba(0,212,170,0.35)` + `rgba(0,212,170,0.08)` 底 + accent 图标），气泡在按钮行**上方** 14px 处淡入下沉（`translateY(6px→0)`，180ms）；带 10px 旋转方块小箭头（位于气泡下沿）指向触发点；【安装】/【首次打开】标签为 accent 600 字重，正文 `--text-secondary`；终端命令为深色代码块 + 等宽 + accent 文字，可整行选中。鼠标从图标移入气泡不中断（同一 hover 容器）。<br>**实现修正（v1.4.12）**：原设计向下弹出，实测在 900px 及更矮视口下会被视口下沿截断 129–309px（下载区位于 hero 下半部，下方空间不足）。改为向上弹出 + `max-height: calc(100vh - 40px)` 兜底，720/800/900/1080px 高度下均完整可见。 |
-| **③ WIN 敬请期待态** | 虚线 hairline 边框 + `rgba(255,255,255,0.03)` 平面底 + 无 glow + 无 hover 位移/变色 + `cursor:not-allowed`；文案 `Windows 版` 用 `--text-secondary`，其后「敬请期待」胶囊用 `--text-dim`；`aria-disabled="true"`，不可点击、不在 Tab 序列中。 |
+| **③ WIN 敬请期待态** | 与 Mac 版**同一套实心按钮**（同 `padding` / `border-radius:14px` / `font:16px 600` / 无可见边框；`.btn-download` 基类统一 `border:1px solid transparent` 保证三按钮等高 56px）+ 无 glow + 无 hover 位移/变色 + `cursor:not-allowed`；填充 `rgba(0,212,170,0.12)`、文字 `rgba(0,212,170,0.6)`，**仅整体降对比度**（不使用虚线边框、不使用 opacity 淡化整体）；文案 `Win 版`；「敬请期待」改为按钮正下方 12px `--text-dim` 小字（`.dl-win-note`，`aria-describedby` 关联）；`aria-disabled="true"`，不可点击、不在 Tab 序列中。 |
 | ④ 降级 · 无安装包（`download` 为空） | MAC 按钮退化为 `.btn-secondary` + 「前往更新日志」+ `href="#versions"`，移除 `download` 属性；`#dl-size` 整条隐藏；公共信息行与 WIN/GitHub/说明气泡不受影响。 |
 | ⑤ 降级 · 体积未知（`size` 缺失或 `-`） | `#dl-size` 整条 `hidden`（**绝不回落硬编码、绝不显示 `— DMG`**）；元信息行剩余两项居中，间距不变。当前 `versions[0].size` 就是 `-`，发版脚本写入后自动出现。 |
 | ⑥ 降级 · `versions.json` 请求失败 | `catch` 分支：MAC 按钮 → `.btn-secondary` + 「前往更新日志」+ `href="#versions"`；`#dl-size` 隐藏；`#dl-version` / `#dl-date` 保持初始 `hidden`（不出现 `v—` 这类占位符）。不弹窗、不 toast。 |
@@ -481,7 +485,7 @@ fs.writeFileSync('versions.json', JSON.stringify(data, null, 2) + '\n');
 - [ ] 版本号、发布日期、体积三者均来自 `versions[0]`；把 `versions.json` 的 `size` 改成 `12.4 MB`、`version` 改成 `1.12.3` 后刷新，公共信息行与元信息行自动跟随，**布局不破**（胶囊变宽、行不折断）
 - [ ] 体积渲染在**按钮之外**（元信息行），与 `macOS 12.0+`、`Apple Silicon & Intel` 同一行；emoji 全部消失，三个图标均为手写内联 SVG
 - [ ] `size` 为 `-` / 空时 `#dl-size` 整条不显示，且页面不出现 `— DMG` 或任何回落的旧体积
-- [ ] 按钮共三个且层级清晰：MAC = `.btn-primary`（唯一 accent 实心 + glow）；WIN = `.btn-coming`（虚线 hairline + 平面底 + 无 glow + `cursor:not-allowed` + `aria-disabled`，**未使用 opacity 做不可用态**）；GitHub = `.btn-secondary`；说明触发点为 44×44 ghost 图标
+- [ ] 按钮共三个且层级清晰：MAC = `.btn-primary`（唯一 accent 实心 + glow）；WIN = `.btn-coming`（与 Mac 版同一套实心按钮，仅降对比度 + 无 glow + `cursor:not-allowed` + `aria-disabled`；「敬请期待」在按钮下方小字，**未使用虚线边框、未使用 opacity 做不可用态**）；GitHub = `.btn-secondary`；三按钮等高同圆角；说明触发点为 44×44 ghost 图标
 - [ ] WIN 按钮点击无任何反应、不进 Tab 序列、无 hover 视觉反馈
 - [ ] 触发点 hover 时气泡淡入上浮（180ms）且带指向触发点的小箭头；鼠标从图标移入气泡**不消失**，气泡内文本可整段选中
 - [ ] 气泡内容与用户原话逐字一致：【安装】、【首次打开】、方式一、方式二 + 命令 `xattr -dr com.apple.quarantine /Applications/ComateHUD.app`；命令为等宽字体 + 深色代码块 + 内部横向滚动，**始终一整行**（复制不产生多余换行）
