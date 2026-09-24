@@ -455,3 +455,133 @@ enum AboutHUDWindow {
         window = nil
     }
 }
+
+// MARK: - 右键 / 设置按钮菜单（刘海 HUD 与任意悬浮共用同一份定义）
+
+/// 两种显示模式的右键菜单与设置按钮共用这一个构建器：菜单项、顺序、勾选态只有一份定义，
+/// 不会再出现「某个模式少一个入口」的漂移。
+///
+/// 两种模式的窗口都是非激活 borderless NSPanel，SwiftUI 的 contextMenu 在其中不可靠，
+/// 故统一走 AppKit NSMenu：右键由内容视图的 menu(for:) 兜住，设置按钮合成一次右键事件弹出，
+/// 两条入口走完全同一条路径。
+final class HUDContextMenu: NSObject {
+    private let store: ComateStore
+    private let onSwitchMode: (ComateStore.DisplayMode) -> Void
+    private let onShowMainWindow: () -> Void
+    private let onShowAbout: () -> Void
+
+    init(store: ComateStore,
+         onSwitchMode: @escaping (ComateStore.DisplayMode) -> Void,
+         onShowMainWindow: @escaping () -> Void,
+         onShowAbout: @escaping () -> Void) {
+        self.store = store
+        self.onSwitchMode = onSwitchMode
+        self.onShowMainWindow = onShowMainWindow
+        self.onShowAbout = onShowAbout
+    }
+
+    /// 每次弹出都重新构建：勾选态、「恢复默认高度」的显隐取决于当前 store 状态
+    func build() -> NSMenu {
+        let menu = NSMenu()
+
+        let modeItem = NSMenuItem(title: "显示模式", action: nil, keyEquivalent: "")
+        let modeMenu = NSMenu()
+        for mode in ComateStore.DisplayMode.allCases {
+            let item = NSMenuItem(title: mode.label, action: #selector(menuSwitchMode(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = mode.rawValue
+            if store.displayMode == mode { item.state = .on }
+            modeMenu.addItem(item)
+        }
+        modeItem.submenu = modeMenu
+        menu.addItem(modeItem)
+
+        let mainItem = NSMenuItem(title: "显示主窗口", action: #selector(menuShowMain), keyEquivalent: "")
+        mainItem.target = self
+        menu.addItem(mainItem)
+        menu.addItem(.separator())
+
+        let limitItem = NSMenuItem(title: "最近记录条数", action: nil, keyEquivalent: "")
+        let limitMenu = NSMenu()
+        for n in ComateStore.recentTaskLimitOptions {
+            let item = NSMenuItem(title: "最近 \(n) 条", action: #selector(menuSetLimit(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = n
+            if store.recentTaskLimit == n { item.state = .on }
+            limitMenu.addItem(item)
+        }
+        limitItem.submenu = limitMenu
+        menu.addItem(limitItem)
+
+        // 仅已自定义高度时提供恢复默认
+        if store.hasCustomExpandedHeight {
+            menu.addItem(.separator())
+            let reset = NSMenuItem(title: "恢复默认高度", action: #selector(menuResetHeight), keyEquivalent: "")
+            reset.target = self
+            menu.addItem(reset)
+        }
+
+        // 关于紧贴在退出上方
+        menu.addItem(.separator())
+        let about = NSMenuItem(title: "关于 Comate HUD", action: #selector(menuAbout), keyEquivalent: "")
+        about.target = self
+        menu.addItem(about)
+
+        let quit = NSMenuItem(title: "退出 Comate HUD", action: #selector(menuQuit), keyEquivalent: "")
+        quit.target = self
+        menu.addItem(quit)
+
+        return menu
+    }
+
+    @objc private func menuSwitchMode(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let mode = ComateStore.DisplayMode(rawValue: raw) else { return }
+        onSwitchMode(mode)
+    }
+
+    @objc private func menuShowMain() { onShowMainWindow() }
+
+    @objc private func menuSetLimit(_ sender: NSMenuItem) { store.recentTaskLimit = sender.tag }
+
+    @objc private func menuResetHeight() { store.resetCustomExpandedHeight() }
+
+    @objc private func menuAbout() { onShowAbout() }
+
+    @objc private func menuQuit() {
+        store.stop()
+        NSApp.terminate(nil)
+    }
+}
+
+/// 承载菜单的内容视图：右键沿 superview 向上找到这里，设置按钮直接弹出同一份菜单。
+final class HUDMenuHostView: NSView {
+    /// 强引用构建器：NSMenuItem.target 是 weak，构建器一旦被释放菜单项就点不动了
+    var menuBuilder: HUDContextMenu?
+
+    override func menu(for event: NSEvent) -> NSMenu? { menuBuilder?.build() }
+
+    /// 设置按钮：与右键走完全相同的弹出手径
+    func showMenu() {
+        guard let menu = menuBuilder?.build() else { return }
+        popUpHUDMenu(menu)
+    }
+}
+
+extension NSView {
+    /// 在当前鼠标位置弹出菜单。
+    /// 非激活 borderless 面板里直接 popUp 不可靠，故合成一次右键按下事件，
+    /// 复用与真实右键完全一致的路径（该路径已验证可用）。
+    func popUpHUDMenu(_ menu: NSMenu) {
+        let win = window
+        let loc = win?.convertPoint(fromScreen: NSEvent.mouseLocation) ?? .zero
+        if let ev = NSEvent.mouseEvent(with: .rightMouseDown, location: loc,
+                                       modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                       windowNumber: win?.windowNumber ?? 0, context: nil,
+                                       eventNumber: 0, clickCount: 1, pressure: 1) {
+            NSMenu.popUpContextMenu(menu, with: ev, for: self)
+            return
+        }
+        menu.popUp(positioning: nil, at: convert(loc, from: nil), in: self)
+    }
+}
