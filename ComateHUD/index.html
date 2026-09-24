@@ -242,7 +242,8 @@
     .powered-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 560px; margin: 0 auto; }
     .powered-card a { color: var(--accent); text-decoration: none; }
     .powered-card a:hover { text-decoration: underline; }
-    .powered-logo { width: 56px; height: 56px; border-radius: 14px; margin: 0 auto 20px; background: linear-gradient(135deg, #0a84ff, #bf5af2); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: white; box-shadow: 0 0 30px rgba(10,132,255,0.3); }
+    .powered-logo { width: 56px; height: 56px; margin: 0 auto 20px; }
+    .powered-logo img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4)); }
     footer { padding: 48px 0; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; }
     footer p { font-size: 13px; color: var(--text-dim); }
     footer a { color: var(--text-secondary); text-decoration: none; }
@@ -421,14 +422,12 @@
   <div class="container">
     <div class="reveal" style="text-align:center;"><div class="section-label">核心功能</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">一眼掌握 AI 工作状态</h2></div>
     <div class="features-grid" style="margin-top:48px;">
-      <div class="feature-card reveal"><div class="feature-icon green">🟢</div><h3>实时状态灯</h3><p>四种状态灯常驻刘海区——灰灯空闲、绿灯已完成、黄灯工作中、红灯等待确认。不占屏幕空间，抬眼即知。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon yellow">📋</div><h3>任务面板</h3><p>悬停刘海自动展开，最近会话、执行进度、时间耗时尽收眼底。支持自定义展示条数（3/6/10）。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon red">🔔</div><h3>消息中心</h3><p>角标动态显示 Comate 未读消息数量，点击铃铛直达消息中心。动画旋转提示新消息到达。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon blue">⚡</div><h3>一键直达</h3><p>点击任意任务行，自动打开对应的 Comate 会话窗口。零切换成本，从状态灯直达对话。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon purple">📊</div><h3>额度用量</h3><p>实时显示 AI 用量消耗，支持日/月周期切换。一眼掌握剩余额度，合理规划使用节奏。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon teal">⚙️</div><h3>极简配置</h3><p>右键即设：调整任务条数、查看用量、切换周期。无需复杂设置面板，ContextMenu 搞定一切。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon green">🪟</div><h3>任意悬浮模式</h3><p>v1.3.0 新增：Comate 图标 + 状态灯常驻桌面任意位置，hover 从图标下边缘展开任务面板。仅图标区域可拖拽（支持跨屏），面板位置自动避让屏幕边缘，高度可拖拽调整。</p></div>
-      <div class="feature-card reveal"><div class="feature-icon blue">🖥</div><h3>外接显示器适配</h3><p>v1.3.0 新增：插拔外接显示器时自动重新定位到主屏幕，无需重启应用。双屏模式下 HUD 始终跟随主屏。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon green">🟢</div><h3>实时状态灯</h3><p>四种状态灯常驻刘海：灰灯空闲、绿灯已完成、黄灯工作中、红灯等待确认。抬眼即知。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon yellow">📋</div><h3>任务面板</h3><p>悬停刘海展开最近任务与耗时，右键可调展示条数；点击任意任务行，直达对应会话窗口。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon red">🔔</div><h3>消息中心</h3><p>未读消息角标实时更新，点击铃铛直达消息中心。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon blue">📊</div><h3>额度用量</h3><p>实时显示 AI 用量消耗，支持日/月周期切换。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon green">🪟</div><h3>任意悬浮模式</h3><p>v1.3.0 新增：图标 + 状态灯常驻桌面任意位置，hover 展开面板，可跨屏拖拽。</p></div>
+      <div class="feature-card reveal"><div class="feature-icon blue">🖥</div><h3>外接显示器适配</h3><p>v1.3.0 新增：插拔显示器自动重新定位到主屏，无需重启。</p></div>
     </div>
   </div>
 </section>
@@ -464,7 +463,7 @@
       <div class="tech-card reveal"><div class="tech-label">网络通信</div><div class="tech-value">URLSession</div><div class="tech-note">云端消息中心 &amp; 用量 API</div></div>
       <div class="tech-card reveal"><div class="tech-label">系统集成</div><div class="tech-value">Deeplink</div><div class="tech-note">wpscomate:// 协议调起 Comate</div></div>
       <div class="tech-card reveal"><div class="tech-label">构建产物</div><div class="tech-value">Universal Binary</div><div class="tech-note">arm64 + x86_64 双架构 lipo</div></div>
-      <div class="tech-card reveal"><div class="tech-label">包体大小</div><div class="tech-value">~1.4 MB</div><div class="tech-note">DMG 安装包大小</div></div>
+      <div class="tech-card reveal"><div class="tech-label">打包分发</div><div class="tech-value">DMG 安装包</div><div class="tech-note">脚本一键构建，拖拽即装，轻量无冗余</div></div>
     </div>
     <div class="arch-detail reveal">
       <div class="arch-title">🏗 架构设计</div>
@@ -487,11 +486,10 @@
         <tbody>
           <tr><td>操作系统</td><td>macOS 12.0 (Monterey) 或更高版本</td><td class="check">✓ 支持</td></tr>
           <tr><td>处理器架构</td><td>Apple Silicon (M1/M2/M3/M4) &amp; Intel x86_64</td><td class="check">✓ Universal Binary</td></tr>
-          <tr><td>MacBook Pro (刘海屏)</td><td>2021 年及之后的 14"/16" 机型</td><td class="check">✓ 刘海区 HUD</td></tr>
-          <tr><td>MacBook Air / iMac (无刘海)</td><td>macOS 12+ 设备</td><td class="check">✓ 菜单栏 HUD</td></tr>
+          <tr><td>设备机型</td><td>MacBook Pro / MacBook Air / iMac 系列（含刘海屏与非刘海屏机型）</td><td class="check">✓ 刘海区 &amp; 菜单栏 HUD</td></tr>
           <tr><td>辅助功能权限</td><td>系统设置 → 隐私与安全性 → 辅助功能</td><td class="check">✓ 首次启动引导</td></tr>
-          <tr><td>WPS Comate</td><td>需已安装 WPS Comate 桌面版</td><td class="check">✓ 数据源</td></tr>
-          <tr><td>网络连接</td><td>消息中心与额度查询需联网（可选）</td><td class="check">✓ 本地优先</td></tr>
+          <tr><td>WPS Comate</td><td>建议 1.6.17 或更高版本</td><td class="check">✓ 数据源</td></tr>
+          <tr><td>网络连接</td><td>建议保持网络连接畅通，以获取消息中心与额度信息</td><td class="check">✓ 本地优先</td></tr>
         </tbody>
       </table>
     </div>
@@ -515,7 +513,7 @@
     </div>
     <p class="reveal" style="margin-top:32px;font-size:14px;color:var(--text-secondary);">这个官网、你正在用的 Comate HUD，都是这么来的。还想要别的？去许愿墙说一声。</p>
     <div class="powered-card reveal">
-      <div class="powered-logo">C</div>
+      <div class="powered-logo"><img src="assets/comate-app-icon.png" alt="WPS Comate" /></div>
       <h3>Comate 应用开发能力 (App Studio)</h3>
       <p>Comate HUD 基于 <a href="https://comate.wps.cn" target="_blank" rel="noopener">WPS Comate</a> 的应用开发能力构建。借助它开放的本地数据库读取、Deeplink 调起、OAuth 认证等接口，HUD 实现了与 Comate 桌面客户端的深度集成——读取任务状态、打开会话窗口、获取未读消息、查询用量额度，接入即可用，不必从零搭建。</p>
       <p style="margin-top:12px;font-size:13px;color:var(--text-dim);">Comate HUD 是一个独立的 macOS 原生应用，不属于 WPS 或 WPS Comate 的官方产品。它由社区开发者基于 Comate 开放能力构建，以第三方应用形式运行。</p>
@@ -524,13 +522,13 @@
 </section>
 <section class="wish-section" id="wishwall">
   <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">许愿反馈</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">许个愿，让 HUD 更好</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">实名或匿名提交你的愿望和建议，所有留言会在弹幕中展示。</p></div>
+    <div class="reveal" style="text-align:center;"><div class="section-label">许愿反馈</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">许个愿，让 HUD 更好</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">留下你的名字，提交你的愿望和建议，所有留言会在弹幕中展示。</p></div>
     <div class="wish-form reveal">
       <div class="wish-row">
-        <input id="wish-name" type="text" placeholder="你的名字（可选，留空匿名）" maxlength="20" />
+        <input id="wish-name" type="text" placeholder="你是谁（英雄请留名，定当持续更新为报）" maxlength="20" />
       </div>
       <div class="wish-row">
-        <textarea id="wish-text" placeholder="写下你的愿望或建议..." maxlength="100" rows="2"></textarea>
+        <textarea id="wish-text" placeholder="想法建议你尽管提，我...让Comate来改 &gt;_&lt;" maxlength="100" rows="2"></textarea>
         <button id="wish-submit">发送</button>
       </div>
       <div class="wish-hint" id="wish-hint"></div>
@@ -732,7 +730,8 @@ async function submitWish() {
   const hint = wishEl('wish-hint');
   const btn = wishEl('wish-submit');
   const text = (textInput.value || '').trim();
-  const name = (nameInput.value || '').trim() || '匿名';
+  const name = (nameInput.value || '').trim();
+  if (!name) { if (hint) hint.textContent = '英雄请留名'; return; }
   if (!text) { if (hint) hint.textContent = '先写点什么再发送吧'; return; }
   if (btn) btn.disabled = true;
   if (hint) hint.textContent = '发送中…';
