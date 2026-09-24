@@ -1,5 +1,5 @@
 ---
-version: "1.1"
+version: "1.2"
 style: "minimal-dark-macos"
 target: "ComateHUD/index.html：① #appstats 区块（插在 #versions 与 #wishwall 之间）；② hero 内下载区 #download 重构（公共信息行 / MAC·WIN·GitHub 三按钮 / 按钮外体积元信息行 / macOS 安装说明 hover 气泡）"
 palette:
@@ -19,6 +19,13 @@ sections:
     title: "应用统计"
   - id: "download"
     title: "下载区（公共信息行 · MAC/WIN 按钮 · 体积元信息 · 安装说明气泡）"
+references:
+  - "references/stats-mockup.svg"
+  - "references/download-section.svg"
+release_contract:
+  size_source: "versions.json → versions[0].size"
+  writer: "ComateNotch/release.sh（发版时用 stat 计算 DMG 字节数并格式化写入）"
+  fallback: "size 为 \"-\" / 空 → 官网整条隐藏体积，绝不回落硬编码"
 ---
 
 # 应用统计区块 · 设计规范
@@ -235,7 +242,9 @@ sections:
 ```
 - WIN 的不可用观感由**四个信号**叠加：① 虚线 hairline 边框（不是实心面）；② 无 glow、无抬升、无 hover 响应；③ 图标与文字降为 `--text-secondary` / `--text-dim`；④ 独立的「敬请期待」胶囊标签。**不使用 `opacity: 0.5`**（会让描边与文字一起糊掉，且没有语义）。
 - 因为改成 `<span>` 而非 `<a href="javascript:void(0)">`，`cursor: not-allowed` 能真实生效，同时它天然不可点、不进 Tab 序列。
-- 按钮行宽度：MAC(≈190) + 触发点(44) + WIN(≈224) + GitHub(≈132) + 3×12 gap ≈ **626px**，且**不随版本号变长而变宽**（版本已移出按钮）→ 769px 以上绝不换行。
+- 按钮行宽度预算：MAC(≈196) + gap12 + 触发点(44) + gap12 + WIN(≈224–243，取决于「敬请期待」胶囊实测宽度) + gap12 + GitHub(≈148) ≈ **645–667px**，且**不随版本号变长而变宽**（版本已移出按钮）。
+  769px 视口下 `.container` 内容宽 = 769 − 48 = **721px** > 667px → 769px 以上绝不换行；≤768px 交给移动端规则（允许换行）。
+  视觉稿 `references/download-section.svg` 按窄值 626–645px 绘制，规范预算按上界 667px 校验。
 
 ### 2.3 元信息行（体积 + 系统要求，按钮之外）
 ```css
@@ -271,7 +280,9 @@ sections:
 .dl-help-code:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 ```
 **定位安全区（1080px 容器不溢出）**
-- 气泡以**触发点中心**为锚水平居中（`left:50% + translateX(-50%)`）。桌面行宽 ≈626px 居中后，触发点中心距容器中心约 51px，440px 宽气泡占用容器中心 ±220px → 落在容器 1032px 内容宽度的 245–685px 区间，左右各余 245px 以上；769px 视口下同样安全。
+- 气泡以**触发点中心**为锚水平居中（`left:50% + translateX(-50%)`）。触发点位于按钮行左起 208–264px，故其中心在**行中心偏左约 83–104px**（最坏情况按偏左 **120px** 预算）。
+  桌面容器内容宽 1032px：触发点中心 ≈ 516 − 104 = **412px**，440px 气泡占 192–632px → 左余 192px、右余 400px，**远在容器内**。
+  769px 视口：触发点中心 ≈ 384 − 104 = **280px**，气泡占 60–500px，仍在 24–745px 安全区内。
 - 兜底：`width: min(440px, calc(100vw - 48px))`，任何宽度都不会横向溢出。
 - **不被裁剪**：`.hero` 没有 `overflow: hidden`，`.hero::before` 是 `pointer-events:none` 的纯装饰径向渐变，气泡可越过 hero 下边界；`z-index: 40` 高于后续 `.mockup-section`（`.reveal` 的 transform 会生成层叠上下文，但层叠层级为 0 < 40），气泡下沿压到 mockup 区块之上仍然可见。
 - 关闭态用 `visibility:hidden + pointer-events:none`（不是 `display:none`），因此有 180ms 淡出与上浮位移，且隐藏时不接收鼠标、不进无障碍树。
@@ -353,7 +364,60 @@ if (dlSize) dlSize.hidden = true;
 if (dlBtn) { dlBtn.href = '#versions'; dlBtn.removeAttribute('download'); }
 if (dlText) dlText.textContent = '前往更新日志';
 ```
-**发版数据契约**：`versions[0].size`（形如 `1.8 MB`）是官网体积的唯一真值，由发版脚本每次构建后写入 `versions.json`；官网任何位置不得出现写死的体积或版本号。`~` 前缀允许保留（沿用 1.3.0 的 `~1.4 MB` 写法），原样展示，不做二次格式化。
+### 4.1 发版数据契约：`size` 每次发版自动写入（release.sh 改造）
+
+**现状缺口（必须修）**：`ComateNotch/release.sh` 的 Step 3 里，`node -e` 新增版本条目时把 `size` **写死为 `'-'`**，且当版本已存在时直接 `process.exit(0)` 跳过。结果是：**每次发版后官网体积都不会更新**（当前 `versions[0]` 就还是 `'-'`，而 `ComateHUD-1.4.0.dmg` 实际 1887772 字节 ≈ `1.8 MB`）。这正是用户「以后发版后都需要默认更新」诉求的根因。
+
+**唯一真值**：`versions[0].size`（形如 `1.8 MB`）。官网任何位置不得出现写死的体积或版本号；`~` 前缀允许保留（沿用 1.3.0 的 `~1.4 MB` 写法），原样展示，不做二次格式化。
+
+**改造规格（`ComateNotch/release.sh`，Step 2 之后 / Step 3 之前插入）**
+```bash
+# --- Step 2.5: 计算 DMG 实际体积（官网体积的唯一真值来源）---
+SIZE_STR="-"
+if [[ -f "$DMG_DST" ]]; then
+  DMG_BYTES=$(stat -f%z "$DMG_DST")            # macOS 用 -f%z；GNU 环境为 stat -c%s
+  SIZE_STR=$(awk -v b="$DMG_BYTES" 'BEGIN{
+    if (b >= 1048576)      printf "%.1f MB", b/1048576;
+    else if (b >= 1024)    printf "%.0f KB", b/1024;
+    else                   printf "%d B", b;
+  }')
+  echo "✅ 安装包体积: $SIZE_STR ($DMG_BYTES bytes) -> versions.json"
+else
+  echo "⚠ 未找到 DMG，size 保持 '-'（官网将隐藏体积行，不写假数据）"
+fi
+```
+并把 Step 3 的 `node -e` 改为：
+```js
+// 版本已存在时：只回填 size（幂等重跑），不重复插入
+var idx = data.versions.findIndex(function (x) { return x.version === '${VERSION}'; });
+if (idx >= 0) {
+  data.versions[idx].size = '${SIZE_STR}';
+  console.log('✅ 已回填 v${VERSION} size -> ${SIZE_STR}');
+} else {
+  data.versions.unshift({
+    version: '${VERSION}',
+    build: ${BUILD_NUM},
+    date: new Date().toISOString().split('T')[0],
+    platform: 'macOS',
+    size: '${SIZE_STR}',                       // ← 不再写死 '-'
+    download: 'ComateHUD-${VERSION}.dmg',
+    minOS: '12.0',
+    changelog: [{ type: 'new', text: '待填写更新内容' }]
+  });
+}
+data.latest = '${VERSION}';
+fs.writeFileSync('versions.json', JSON.stringify(data, null, 2) + '\n');
+```
+
+**边界规则**
+| 情况 | `size` 取值 | 官网表现 |
+| --- | --- | --- |
+| DMG 存在，≥ 1 MiB | `1.8 MB`（1 位小数，1024 进制） | 元信息行首项显示「`1.8 MB` DMG」 |
+| DMG 存在，< 1 MiB | `932 KB`（整数） | 同上，原样展示 |
+| DMG 缺失（构建失败） | 保持 `'-'` | `#dl-size` 整条隐藏（降级态⑤），**不显示假数据** |
+| 历史条目（1.0.0 / 1.1.0） | 维持原值不动 | 仅影响更新日志，不影响下载区 |
+
+**一次性回填（本次改造需顺带完成）**：`ComateHUD/versions.json` 的 `versions[0]`（1.4.0）`size` 由 `'-'` 改为 `'1.8 MB'`，与 `ComateHUD-1.4.0.dmg`（1887772 字节）一致；否则本次上线官网体积仍为空。
 
 **气泡交互 JS（新增，独立 IIFE）**
 ```js
@@ -399,12 +463,14 @@ if (dlText) dlText.textContent = '前往更新日志';
 | --- | --- |
 | CSS 第 55–72 行 | 保留 `.hero-actions` / `.btn-download` / `.btn-primary` / `.btn-secondary` / `.hero-tags` 不动；**替换** `.btn-coming` 的 `{ opacity:.5; cursor:not-allowed; pointer-events:none }` 为第 2.2 节写法；追加 `.dl-*` 全部新规则 |
 | CSS 第 64–65 行 `.hero-tags` | 保留基类，`.hero-tags span` 的 12px/`--text-dim` 继续生效（与 `.dl-tag` 同值，无冲突） |
-| CSS 第 326–338 行 `@media (max-width:768px)` | 在块内追加第 2.5 节规则，**不新开断点** |
+| CSS 第 326–341 行 `@media (max-width:768px)` | 在块内追加第 2.5 节规则，**不新开断点** |
 | HTML 第 367–385 行 | 用第 1 节结构整体替换；`id="download"` 移到 `.dl-block`；三个按钮文案/图标按新结构；`.hero-tags` 内 emoji 换成内联 SVG 并加 `#dl-size` |
-| HTML 第 379–380 行 `.release-toggle` | 结构保留，仅把 inline `style="margin-top:12px"` 移除（由 `.dl-tags { margin-top:16px }` 与既有 `.release-toggle` 间距统一控制，避免双份间距） |
-| JS 第 611–640 行 | `fetch` 成功分支里「Hero download button」段落按第 4 节重写；`rn-summary` / `release-body` / `version-list` 逻辑**不动**；`catch` 分支按第 4 节追加 |
+| HTML 第 378–381 行 `.release-toggle` | 结构保留，仅把 inline `style="margin-top:12px"` 移除（由 `.dl-tags { margin-top:16px }` 与既有 `.release-toggle` 间距统一控制，避免双份间距） |
+| JS 第 613–625 行 | `fetch` 成功分支里「Hero download button」段落按第 4 节重写（现有 `dlText.textContent = '下载 Comate HUD v' + v.version + ' (' + v.size + ')'` 整段删除）；`rn-summary` / `release-body` / `version-list` 逻辑**不动**；第 661 行 `catch` 分支按第 4 节追加 |
 | JS 第 939–947 行下载计数 | **不动**：仍以 `#dl-btn` 的 `.dmg` 结尾判定是否计数；降级态按钮指向 `#versions` 时自然不计数 |
 | 新增 | 气泡交互 IIFE（第 4 节） |
+| `ComateNotch/release.sh` Step 3 | `size` 不再写死 `'-'`：插入 Step 2.5 计算 DMG 字节数并格式化，版本已存在时改为**回填 size**（幂等重跑），见第 4.1 节 |
+| `ComateHUD/versions.json` | `versions[0]`（1.4.0）`size` 由 `'-'` 回填为 `'1.8 MB'`（1887772 字节），见第 4.1 节 |
 | 全站 | `#download` 锚点、页脚链接、导航 `.btn-sm` 均无需改动 |
 
 **不要做的事**：不要给下载区加 `.reveal`（hero 在首屏，淡入会导致 CTA 迟到）；不要给气泡加 `position: fixed` 或 JS 定位；不要引入任何图标字体 / 图标库 / 外部字体；不要在 HTML 里写死版本号或体积。
@@ -427,3 +493,7 @@ if (dlText) dlText.textContent = '前往更新日志';
 - [ ] 颜色只来自既有 `:root` 变量与 `rgba(255,255,255,0.03~0.16)` / `rgba(0,0,0,0.4)` / `rgba(0,212,170,0.08~0.35)`
 - [ ] 下载计数逻辑仍正常（点真实 DMG 才 +1）；`#download` 锚点（导航 + 页脚）跳转位置正确，不被固定导航遮挡
 - [ ] 移动端规则写在既有 `@media (max-width:768px)` 块内，未新增断点；未改动 `index.html` 既有 token、既有类名语义、hero 其他部分与其他区块
+- [ ] **发版自动更新**：`bash ComateNotch/release.sh <ver> <build>` 跑完后，`versions.json` 的 `versions[0].size` 等于 DMG 实际体积的格式化值（1.4.0 为 `1.8 MB`），**不再是 `'-'`**；重复跑同一版本号不新增条目、只回填 size
+- [ ] 构建失败 / DMG 缺失时 `size` 保持 `'-'`，官网体积行整条隐藏且**不出现任何假数据**
+- [ ] `versions.json` 的 `versions[0].size` 已回填为 `1.8 MB`，与 `ComateHUD-1.4.0.dmg`（1887772 字节）一致
+- [ ] 把 `size` 改成 `12.4 MB` 后刷新，元信息行首项变为「`12.4 MB` DMG」，行宽与基线不跳变
