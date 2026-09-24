@@ -320,6 +320,7 @@
     .appstats-hint button:hover { border-color: var(--accent); color: var(--accent); }
     .stats-scroll { overflow-x: auto; }
     .stats-table { margin-top: 0; }
+    .stats-table th, .stats-table td { white-space: nowrap; }
     .stats-table th.num, .stats-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
     @media (max-width: 768px) {
@@ -1006,16 +1007,18 @@ function statsTrendSvg(rows) {
   var vals = days.map(function (d) { return byDay[d] ? Object.keys(byDay[d]).length : 0; });
   var max = Math.max.apply(null, vals.concat([1]));
   var W = 720, H = 180, n = days.length, pad = 15;
-  var pts = vals.map(function (v, i) {
-    return (i * W / (n - 1)).toFixed(1) + ',' + (H - pad - (v / max) * (H - pad * 2)).toFixed(1);
+  // 先算坐标对，避免用字符串反解（全零序列时 vals.indexOf(max) 会是 -1）
+  var xy = vals.map(function (v, i) {
+    return [i * W / (n - 1), H - pad - (v / max) * (H - pad * 2)];
   });
+  var pts = xy.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); });
   var grid = [0, 60, 120, 180].map(function (y) {
     return '<line x1="0" y1="' + y + '" x2="720" y2="' + y + '" stroke="rgba(255,255,255,0.04)" vector-effect="non-scaling-stroke"/>';
   }).join('');
   var dot = '';
-  if (max > 0) {
-    var p = pts[vals.indexOf(max)].split(',');
-    dot = '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="3" fill="var(--accent)"/>';
+  var peakIdx = vals.indexOf(max);
+  if (max > 0 && peakIdx >= 0) {
+    dot = '<circle cx="' + xy[peakIdx][0].toFixed(1) + '" cy="' + xy[peakIdx][1].toFixed(1) + '" r="3" fill="var(--accent)"/>';
   }
   return '<svg viewBox="0 0 720 180" preserveAspectRatio="none" role="img" aria-label="近 30 日每日活跃用户趋势">' +
     '<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">' +
