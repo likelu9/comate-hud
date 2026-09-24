@@ -77,14 +77,85 @@
     .release-body .rn-list { list-style: none; padding: 4px 0 0; margin: 0; }
     .release-body .rn-list li { position: relative; padding-left: 14px; line-height: 1.9; }
     .release-body .rn-list li::before { content: ''; position: absolute; left: 2px; top: 11px; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.25); }
+    /* ==== macOS 桌面 + 代码渲染 HUD 面板 ====
+       面板尺寸/字号/间距全部按 NotchRootView.swift 的真实数值 × --s，
+       改 --s 即可整体缩放，不要单独改某一处数值。 */
     .mockup-section { padding: 60px 0 100px; }
-    .mockup-wrapper { max-width: 900px; margin: 0 auto; background: var(--bg-card); border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.06); overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.5); }
-    .mockup-titlebar { display: flex; align-items: center; gap: 8px; padding: 14px 18px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .mockup-titlebar .dot-r { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; }
-    .mockup-titlebar .dot-y { width: 12px; height: 12px; border-radius: 50%; background: #febc2e; }
-    .mockup-titlebar .dot-g { width: 12px; height: 12px; border-radius: 50%; background: #28c840; }
-    .mockup-body { padding: 40px 32px 48px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
-    .mockup-shot { width: 280px; height: auto; display: block; border-radius: 19px; filter: drop-shadow(0 12px 40px rgba(0,0,0,0.6)); }
+    .mac-desktop { --s: 1; position: relative; max-width: 1000px; margin: 0 auto; aspect-ratio: 1000 / 625; border-radius: 18px; overflow: hidden; user-select: none; -webkit-user-select: none; background: #0a0a0f url('./assets/wallpaper-macos.webp') center / cover no-repeat; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 90px rgba(0,0,0,0.6); }
+    /* 菜单栏：高度 = notchHeight，所以菜单文字与刘海行里的 logo 自然对齐 */
+    .mac-menubar { position: absolute; top: 0; left: 0; right: 0; height: calc(34px * var(--s)); display: flex; align-items: center; justify-content: space-between; padding: 0 calc(14px * var(--s)); background: rgba(0,0,0,0.14); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); color: #fff; font-size: calc(13px * var(--s)); font-weight: 500; }
+    .mb-side { display: flex; align-items: center; gap: calc(17px * var(--s)); }
+    .mb-apple { width: calc(15px * var(--s)); height: calc(15px * var(--s)); fill: #fff; opacity: 0.95; flex: none; }
+    .mb-app { font-weight: 700; }
+    .mb-ico { width: calc(16px * var(--s)); height: calc(16px * var(--s)); fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; flex: none; }
+    .mb-ico.fill { fill: #fff; stroke: none; }
+    .mb-clock { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    /* 面板 hover 热区：比面板本身大一圈，展开后仍在热区内，鼠标不会因为移到列表底部而误收起 */
+    .hud-zone { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: calc(280px * var(--s) + 120px); height: calc(215px * var(--s) + 44px); display: flex; justify-content: center; align-items: flex-start; z-index: 2; }
+    /* 面板本体：notchHeight=34 / expandedWidth=280 / 底部圆角 14 */
+    .hud { position: relative; width: calc(280px * var(--s)); height: calc(34px * var(--s)); background: #000; border-radius: 0 0 calc(14px * var(--s)) calc(14px * var(--s)); overflow: hidden; box-shadow: 0 12px 34px rgba(0,0,0,0.45); transition: height 0.25s cubic-bezier(0.22,1,0.36,1); }
+    .hud[data-state="expanded"] { height: calc(215px * var(--s)); }
+    /* 刘海行：左翼 logo+状态灯，右翼 + 按钮（wingWidth=36 → 左 18 / 右 16） */
+    .hud-notch { position: relative; height: calc(34px * var(--s)); }
+    .hud-badge { position: absolute; left: calc(9px * var(--s)); top: 50%; transform: translateY(-50%); width: calc(18px * var(--s)); height: calc(18px * var(--s)); }
+    .hud-logo { width: 100%; height: 100%; display: block; }
+    .hud-light { position: absolute; left: calc(13.5px * var(--s)); top: calc(13.5px * var(--s)); width: calc(6px * var(--s)); height: calc(6px * var(--s)); border-radius: 50%; background: #8E8E93; box-shadow: 0 0 calc(6px * var(--s)) rgba(142,142,147,0.7); }
+    .hud[data-light="yellow"] .hud-light { background: #FFB800; box-shadow: 0 0 calc(5px * var(--s)) rgba(255,184,0,0.75), 0 0 calc(11px * var(--s)) rgba(255,184,0,0.45); animation: hud-breathe 1.2s ease-in-out infinite; }
+    .hud[data-light="red"] .hud-light { background: #FF3B30; box-shadow: 0 0 calc(5px * var(--s)) rgba(255,59,48,0.85), 0 0 calc(11px * var(--s)) rgba(255,59,48,0.55); animation: hud-blink 0.55s ease-in-out infinite; }
+    .hud[data-light="green"] .hud-light { background: #34C759; box-shadow: 0 0 calc(5px * var(--s)) rgba(52,199,89,0.75), 0 0 calc(11px * var(--s)) rgba(52,199,89,0.45); }
+    @keyframes hud-breathe { 0%,100% { opacity: 1 } 50% { opacity: 0.25 } }
+    @keyframes hud-blink { 0%,100% { opacity: 1 } 50% { opacity: 0.35 } }
+    .hud-plus { position: absolute; right: calc(16px * var(--s)); top: 50%; transform: translateY(-50%); width: calc(20px * var(--s)); height: calc(20px * var(--s)); display: flex; align-items: center; justify-content: center; background: none; border: 0; padding: 0; cursor: pointer; }
+    .hud-plus svg { width: calc(16px * var(--s)); height: calc(16px * var(--s)); fill: none; stroke: rgba(255,255,255,0.55); stroke-width: 1.3; stroke-linecap: round; transition: stroke 0.12s, transform 0.12s; }
+    .hud-plus:hover svg { stroke: rgba(255,255,255,0.85); transform: scale(1.15); }
+    /* 内容区：topInset = notchHeight/2 + 24 = 41 → 刘海行 34 + 7 */
+    .hud-body { padding: calc(7px * var(--s)) calc(12px * var(--s)) calc(6px * var(--s)); opacity: 0; transition: opacity 0.18s ease; }
+    .hud[data-state="expanded"] .hud-body { opacity: 1; transition-delay: 0.1s; }
+    .hud-rows { display: flex; flex-direction: column; gap: calc(3px * var(--s)); }
+    .hud-row { display: flex; align-items: center; gap: calc(8px * var(--s)); height: calc(33px * var(--s)); padding: 0 calc(6px * var(--s)); border-radius: calc(8px * var(--s)); background: rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s; }
+    .hud-row:hover { background: rgba(255,255,255,0.1); }
+    .hud-dot { width: calc(7px * var(--s)); height: calc(7px * var(--s)); border-radius: 50%; flex: none; background: #8E8E93; }
+    .hud-dot.yellow { background: #FFB800; box-shadow: 0 0 calc(4px * var(--s)) rgba(255,184,0,0.6); animation: hud-breathe 1.2s ease-in-out infinite; }
+    .hud-dot.red { background: #FF3B30; box-shadow: 0 0 calc(4px * var(--s)) rgba(255,59,48,0.7); animation: hud-blink 0.55s ease-in-out infinite; }
+    .hud-dot.green { background: #34C759; box-shadow: 0 0 calc(4px * var(--s)) rgba(52,199,89,0.6); }
+    .hud-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(2px * var(--s)); }
+    .hud-title { display: flex; align-items: center; gap: calc(4px * var(--s)); font-size: calc(11px * var(--s)); font-weight: 500; line-height: 1.2; color: rgba(255,255,255,0.92); }
+    .hud-row:hover .hud-title { color: #fff; }
+    .hud-title span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hud-src { width: calc(8px * var(--s)); height: calc(8px * var(--s)); fill: rgba(255,255,255,0.4); flex: none; }
+    .hud-meta { display: flex; gap: calc(6px * var(--s)); font-size: calc(9px * var(--s)); line-height: 1.2; }
+    .hud-status { font-weight: 600; }
+    .hud-sub { color: rgba(255,255,255,0.4); }
+    .hud-arrow { margin-left: auto; width: calc(9px * var(--s)); height: calc(9px * var(--s)); fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; transition: stroke 0.15s; }
+    .hud-row:hover .hud-arrow { stroke: rgba(255,255,255,0.5); }
+    /* 页脚：额度周期 + 铃铛（字号 8/9pt） */
+    .hud-foot { display: flex; align-items: center; margin-top: calc(6px * var(--s)); }
+    .hud-usage { display: flex; align-items: center; gap: calc(6px * var(--s)); height: calc(21px * var(--s)); padding: 0 calc(6px * var(--s)); border: 0; border-radius: calc(5px * var(--s)); background: transparent; font: inherit; cursor: pointer; transition: background 0.12s; }
+    .hud-usage:hover { background: rgba(255,255,255,0.1); }
+    .hud-seg { display: flex; padding: 1px; border-radius: calc(4.5px * var(--s)); background: rgba(255,255,255,0.1); }
+    .hud-seg i { width: calc(13px * var(--s)); height: calc(11px * var(--s)); line-height: calc(11px * var(--s)); text-align: center; border-radius: calc(3.5px * var(--s)); font-style: normal; font-size: calc(8px * var(--s)); font-weight: 600; color: rgba(255,255,255,0.45); }
+    .hud-seg i.on { color: #fff; background: rgba(0,212,170,0.85); }
+    .hud-usage-text { font-size: calc(8px * var(--s)); font-weight: 500; color: rgba(0,212,170,0.85); transition: color 0.12s; }
+    .hud-usage:hover .hud-usage-text { color: #00d4aa; }
+    .hud-bell { margin-left: auto; display: flex; align-items: center; gap: calc(3px * var(--s)); padding: calc(2px * var(--s)) calc(4px * var(--s)); border-radius: calc(5px * var(--s)); font-size: calc(9px * var(--s)); font-weight: 600; color: rgba(255,255,255,0.55); cursor: pointer; transition: background 0.12s, color 0.12s; }
+    .hud-bell:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); }
+    .hud-bell svg { width: calc(9px * var(--s)); height: calc(9px * var(--s)); fill: currentColor; flex: none; }
+    .desktop-hint { margin: 20px auto 0; text-align: center; font-size: 13px; color: var(--text-dim); }
+    @media (max-width: 760px) {
+      .mac-desktop { --s: 0.9; }
+      .mb-side { gap: 12px; }
+      .mb-extra { display: none; }
+      .hud-row:nth-child(4) { display: none; }
+      .hud-zone { height: calc(179px * var(--s) + 44px); }
+      .hud[data-state="expanded"] { height: calc(179px * var(--s)); }
+    }
+    @media (max-width: 480px) {
+      .mac-desktop { --s: 0.82; }
+      .mb-app, .mb-extra, .mb-ico-extra { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hud, .hud-body, .hud-dot, .hud-light { transition: none !important; animation: none !important; }
+    }
     .features { padding: 80px 0; }
     .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
     .feature-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 36px 28px; transition: all 0.3s cubic-bezier(0.22,1,0.36,1); position: relative; overflow: hidden; }
@@ -267,11 +338,75 @@
 </section>
 <section class="mockup-section reveal">
   <div class="container">
-    <div class="mockup-wrapper">
-      <div class="mockup-titlebar"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
-      <div class="mockup-body">
-        <img class="mockup-shot" src="./assets/hud-real.png" alt="Comate HUD 真实运行截图：刘海区展开的任务面板，含状态灯、最近任务列表与耗时" />
+    <div class="mac-desktop" id="mac-desktop">
+      <div class="mac-menubar" aria-hidden="true">
+        <div class="mb-side">
+          <svg class="mb-apple" viewBox="0 0 24 24"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></svg>
+          <span class="mb-app">访达</span>
+          <span class="mb-extra">文件</span><span class="mb-extra">编辑</span><span class="mb-extra">显示</span><span class="mb-extra">前往</span><span class="mb-extra">窗口</span><span class="mb-extra">帮助</span>
+        </div>
+        <div class="mb-side">
+          <svg class="mb-ico" viewBox="0 0 24 24"><path d="M2.5 8.6a14 14 0 0 1 19 0"/><path d="M6 12.2a9 9 0 0 1 12 0"/><path d="M9.4 15.8a4 4 0 0 1 5.2 0"/><circle cx="12" cy="19" r="1.1" fill="#fff" stroke="none"/></svg>
+          <svg class="mb-ico" viewBox="0 0 24 24"><rect x="2" y="8" width="17" height="8" rx="2.2"/><path d="M21 11v2"/><rect x="4" y="10" width="11" height="4" rx="1" fill="#fff" stroke="none"/></svg>
+          <svg class="mb-ico mb-ico-extra" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.2"/><path d="M15.6 15.6L20 20"/></svg>
+          <svg class="mb-ico mb-ico-extra" viewBox="0 0 24 24"><path d="M4 8.5h16M4 15.5h16"/><circle cx="9.2" cy="8.5" r="2.3" fill="#fff" stroke="none"/><circle cx="14.8" cy="15.5" r="2.3" fill="#fff" stroke="none"/></svg>
+          <span class="mb-clock">9月24日 周三 10:24</span>
+        </div>
       </div>
+
+      <div class="hud-zone" id="hud-zone">
+        <div class="hud" id="hud" data-state="collapsed" data-light="yellow">
+          <div class="hud-notch">
+            <span class="hud-badge"><img class="hud-logo" src="./assets/comate-logo.svg" alt="Comate" /><i class="hud-light"></i></span>
+            <button class="hud-plus" type="button" tabindex="-1" aria-label="新建任务"><svg viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></svg></button>
+          </div>
+          <div class="hud-body">
+            <div class="hud-rows">
+              <div class="hud-row" data-demo-row>
+                <i class="hud-dot yellow"></i>
+                <div class="hud-main">
+                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h4.2c.4 0 .78.16 1.06.44l1.34 1.26c.28.28.66.44 1.06.44h7.34A1.5 1.5 0 0 1 21 7.64V18.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span>官网 v1.4 改版文案校对</span></div>
+                  <div class="hud-meta"><span class="hud-status" style="color:#FFB800">工作中</span><span class="hud-sub">30天 280.6 点</span><span class="hud-sub hud-meta-time">15 秒前</span></div>
+                </div>
+                <svg class="hud-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5"/></svg>
+              </div>
+              <div class="hud-row">
+                <i class="hud-dot green"></i>
+                <div class="hud-main">
+                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h4.2c.4 0 .78.16 1.06.44l1.34 1.26c.28.28.66.44 1.06.44h7.34A1.5 1.5 0 0 1 21 7.64V18.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span>Comate 任务进度组件</span></div>
+                  <div class="hud-meta"><span class="hud-status" style="color:#34C759">已完成</span><span class="hud-sub">30天 2.46 万 点</span><span class="hud-sub">4 分钟前</span></div>
+                </div>
+                <svg class="hud-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5"/></svg>
+              </div>
+              <div class="hud-row">
+                <i class="hud-dot"></i>
+                <div class="hud-main">
+                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h4.2c.4 0 .78.16 1.06.44l1.34 1.26c.28.28.66.44 1.06.44h7.34A1.5 1.5 0 0 1 21 7.64V18.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span>整理本周工作周报</span></div>
+                  <div class="hud-meta"><span class="hud-status" style="color:#8E8E93">空闲</span><span class="hud-sub">30天 34.3 点</span><span class="hud-sub">22 小时前</span></div>
+                </div>
+                <svg class="hud-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5"/></svg>
+              </div>
+              <div class="hud-row">
+                <i class="hud-dot"></i>
+                <div class="hud-main">
+                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h4.2c.4 0 .78.16 1.06.44l1.34 1.26c.28.28.66.44 1.06.44h7.34A1.5 1.5 0 0 1 21 7.64V18.5A1.5 1.5 0 0 1 19.5 20h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span>生成 v1.4.0 发布说明</span></div>
+                  <div class="hud-meta"><span class="hud-status" style="color:#8E8E93">空闲</span><span class="hud-sub">—</span><span class="hud-sub">1 天前</span></div>
+                </div>
+                <svg class="hud-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5"/></svg>
+              </div>
+            </div>
+            <div class="hud-foot">
+              <button class="hud-usage" type="button" aria-label="切换额度统计周期">
+                <span class="hud-seg"><i class="on">日</i><i>月</i></span>
+                <span class="hud-usage-text">额度已用 97%</span>
+              </button>
+              <span class="hud-bell"><svg viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-5v-5a7 7 0 1 0-14 0v5l-2 2v1h18v-1z"/></svg><b>24</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="desktop-hint">把鼠标移到刘海上，面板会像真机一样展开</p>
     </div>
   </div>
 </section>
@@ -469,6 +604,77 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
   localStorage.setItem('comate-hud-pv', pv);
   var el = document.getElementById('pv-display');
   if(el) el.textContent = '🔥 已有 ' + pv + ' 人体验';
+})();
+
+// HUD 面板演示：循环播放一次任务生命周期（工作中 → 等待确认 → 已完成 → 收起）
+(function(){
+  var desktop = document.getElementById('mac-desktop');
+  var zone = document.getElementById('hud-zone');
+  var hud = document.getElementById('hud');
+  if(!desktop || !zone || !hud) return;
+
+  var LIGHT = {gray:'#8E8E93', yellow:'#FFB800', red:'#FF3B30', green:'#34C759'};
+  var row = hud.querySelector('[data-demo-row]');
+  var dot = row.querySelector('.hud-dot');
+  var status = row.querySelector('.hud-status');
+  var time = row.querySelector('.hud-meta-time');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var timers = [], hovered = false, onScreen = false;
+
+  function clearTimers(){ for(var i = 0; i < timers.length; i++) clearTimeout(timers[i]); timers = []; }
+  function at(ms, fn){ timers.push(setTimeout(fn, ms)); }
+  function light(c){ hud.setAttribute('data-light', c); }
+  function state(s){ hud.setAttribute('data-state', s); }
+  function paint(c, label, t){
+    dot.className = 'hud-dot ' + c;
+    status.textContent = label;
+    status.style.color = LIGHT[c];
+    time.textContent = t;
+  }
+
+  function run(){
+    clearTimers();
+    state('collapsed'); light('yellow'); paint('yellow', '工作中', '15 秒前');
+    at(700,  function(){ state('expanded'); });
+    at(3400, function(){ light('red');   paint('red',   '等待确认', '1 分钟前'); });
+    at(5800, function(){ light('green'); paint('green', '已完成',   '刚刚'); });
+    at(7800, function(){ state('collapsed'); });
+    at(8300, function(){ light('gray'); });
+    at(10000, run);
+  }
+
+  // 只在面板进入视口时播放，离开视口就停，不空转
+  new IntersectionObserver(function(entries){
+    onScreen = entries[0].isIntersecting;
+    if(reduce) return;
+    if(onScreen && !hovered) run();
+    else if(!onScreen) clearTimers();
+  }, {threshold: 0.25}).observe(desktop);
+
+  // hover 热区：鼠标进来就暂停循环并展开，离开后重新开始循环
+  zone.addEventListener('mouseenter', function(){
+    if(reduce) return;
+    hovered = true; clearTimers(); state('expanded');
+  });
+  zone.addEventListener('mouseleave', function(){
+    if(reduce) return;
+    hovered = false;
+    if(onScreen) run();
+  });
+
+  // 日/月周期切换（真机上点这里是切周期）
+  var usage = hud.querySelector('.hud-usage');
+  var segs = usage.querySelectorAll('.hud-seg i');
+  var usageText = hud.querySelector('.hud-usage-text');
+  usage.addEventListener('click', function(){
+    var toDay = !segs[0].classList.contains('on');
+    segs[0].classList.toggle('on', toDay);
+    segs[1].classList.toggle('on', !toDay);
+    usageText.textContent = toDay ? '额度已用 97%' : '额度已用 78%';
+  });
+
+  // 无动效偏好：直接展示展开态，不播循环
+  if(reduce){ state('expanded'); light('yellow'); }
 })();
 
 </script>
