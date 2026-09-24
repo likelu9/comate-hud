@@ -1287,8 +1287,8 @@ function initStatsShare() {
     copyText(text + ' ' + url).then(function (ok) {
       btn.classList.toggle('is-copied', ok);
       if (label) label.textContent = ok ? '已复制，去发给同事' : '复制失败，手动复制下方链接';
-      // 复制失败时把链接摆出来，让用户能手选
-      if (urlEl) { urlEl.textContent = url; urlEl.removeAttribute('hidden'); }
+      // 只在复制失败时把链接摆出来，让用户能手选
+      if (urlEl) { urlEl.textContent = url; if (!ok) urlEl.removeAttribute('hidden'); }
       reset();
     });
   }
