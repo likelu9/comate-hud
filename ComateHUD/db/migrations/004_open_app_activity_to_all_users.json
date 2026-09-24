@@ -1,0 +1,50 @@
+{
+  "version": "004_open_app_activity_to_all_users",
+  "description": "把 app_activity 的默认角色从 member 改为 user：任意已登录 WPS 用户（不限项目成员）都能上报活跃。create/read/update 放行，delete 保持禁止。read 一并放开是因为官网统计区块已对访客公开，非成员同样要能读到聚合数据；同时给 user 角色加字段级权限，只暴露聚合所需字段，藏掉 user_name / device_id（owner 走 member 角色，不受影响，仍看全量）。",
+  "operations": [
+    {
+      "type": "role_config",
+      "action": "define_table_roles",
+      "table": "app_activity",
+      "data": {
+        "default_role": "user",
+        "roles": {
+          "user": {
+            "permissions": [
+              { "action": "create", "effect": "allow" },
+              { "action": "read", "effect": "allow" },
+              { "action": "update", "effect": "allow" }
+            ]
+          },
+          "member": {
+            "permissions": [
+              { "action": "create", "effect": "allow" },
+              { "action": "read", "effect": "allow" },
+              { "action": "update", "effect": "allow" },
+              { "action": "delete", "effect": "deny" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "auth",
+      "action": "set_field_permission",
+      "table": "app_activity",
+      "data": {
+        "role": "user",
+        "table": "app_activity",
+        "fields": [
+          "uid",
+          "version",
+          "active_day",
+          "first_active_at",
+          "launch_count",
+          "hover_count",
+          "click_count",
+          "os_version"
+        ]
+      }
+    }
+  ]
+}
