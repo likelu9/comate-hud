@@ -26,7 +26,12 @@ enum FloatingMetrics {
     /// 以下内边距 / 间距与刘海模式保持一致
     static let panelHPadding: CGFloat = 12
     static let panelTopPadding: CGFloat = 8
-    static let panelBottomPadding: CGFloat = 6
+    /// 面板底部留白：页脚下方必须留出比拖拽手柄命中区更高的空白（12 > handleHitHeight）
+    static let panelBottomPadding: CGFloat = 12
+    /// 拖拽手柄的命中区高度：只取面板最底部一条，避开页脚按钮
+    static let handleHitHeight: CGFloat = 10
+    /// 无任务时列表占位文案的高度
+    static let emptyPlaceholderHeight: CGFloat = 24
     static let listSpacing: CGFloat = 3
     static let blockSpacing: CGFloat = 6
     /// 标题行高度（悬浮模式特有：标题 + 新建任务按钮）
@@ -602,6 +607,33 @@ struct FloatingPanelContent: View {
         .animation(.easeInOut(duration: 0.2), value: interaction.isExpanded)
     }
 
+    /// 列表区：有记录时是可滚动列表，无记录时是占位文案
+    private var listSection: some View {
+        Group {
+            if store.recentTasks.isEmpty {
+                Text("暂无任务")
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.4))
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    HUDTaskRows(store: store, spacing: FloatingMetrics.listSpacing)
+                        .background(
+                            GeometryReader { g in
+                                Color.clear
+                                    .onAppear { updateRowsHeight(g.size.height) }
+                                    .onChange(of: g.size.height) { h in updateRowsHeight(h) }
+                            }
+                        )
+                }
+            }
+        }
+    }
+
+    /// 列表区高度：无记录时没有行可测，给占位文案一个固定高度
+    private var listSectionHeight: CGFloat {
+        store.recentTasks.isEmpty ? FloatingMetrics.emptyPlaceholderHeight : listViewportHeight
+    }
+
     private var panel: some View {
         VStack(alignment: .leading, spacing: FloatingMetrics.blockSpacing) {
             // 标题行：标题 + 新建任务
@@ -614,28 +646,17 @@ struct FloatingPanelContent: View {
             }
             .frame(height: FloatingMetrics.headerHeight)
 
-            if store.recentTasks.isEmpty {
-                Text("暂无任务")
-                    .font(.system(size: 11, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.4))
-                Spacer(minLength: 0)
-            } else {
-                ScrollView(.vertical, showsIndicators: false) {
-                    HUDTaskRows(store: store, spacing: FloatingMetrics.listSpacing)
-                        .background(
-                            GeometryReader { g in
-                                Color.clear
-                                    .onAppear { updateRowsHeight(g.size.height) }
-                                    .onChange(of: g.size.height) { h in updateRowsHeight(h) }
-                            }
-                        )
-                }
-                .frame(height: listViewportHeight)
-            }
-
-            // 页脚吸底：面板被拖高时，额度/消息行贴在面板底部
-            Spacer(minLength: 0)
-
+            listSection
+                // 列表高度固定：超出时由 ScrollView 滚动，不撑高面板
+                .frame(height: listSectionHeight, alignment: .topLeading)
+        }
+        .padding(.horizontal, FloatingMetrics.panelHPadding)
+        .padding(.top, FloatingMetrics.panelTopPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        // 页脚绝对吸底（与刘海模式同一套做法）：位置只由面板高度决定，
+        // 与列表实际高度无关。用 Spacer 顶到尾部时，列表被裁短会把页脚
+        // 挤出面板下沿，页脚热区再被底部拖拽手柄压掉大半。
+        .overlay(alignment: .bottom) {
             HUDUsageFooter(store: store, onSettings: { interaction.onShowMenu?() })
                 .background(
                     GeometryReader { g in
@@ -644,11 +665,9 @@ struct FloatingPanelContent: View {
                             .onChange(of: g.size.height) { h in updateFooterHeight(h) }
                     }
                 )
+                .padding(.horizontal, FloatingMetrics.panelHPadding)
+                .padding(.bottom, FloatingMetrics.panelBottomPadding)
         }
-        .padding(.horizontal, FloatingMetrics.panelHPadding)
-        .padding(.top, FloatingMetrics.panelTopPadding)
-        .padding(.bottom, FloatingMetrics.panelBottomPadding)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: FloatingMetrics.corner)
                 .fill(Color(red: 0.06, green: 0.06, blue: 0.07))
@@ -663,13 +682,16 @@ struct FloatingPanelContent: View {
     /// 底部拖拽手柄：向下拖变高（顶部锚定不动），与刘海模式交互一致
     private var resizeHandle: some View {
         ZStack {
-            Color.clear.contentShape(Rectangle())
+            // 命中区只取面板最底部一条：满高命中会盖住页脚按钮
+            Color.clear
+                .frame(height: FloatingMetrics.handleHitHeight)
+                .contentShape(Rectangle())
             Capsule()
                 .fill(Color.white.opacity(resizeHovered || isResizing ? 0.5 : 0.22))
                 .frame(width: 44, height: 3)
                 .padding(.bottom, 2)
         }
-        .frame(height: FloatingMetrics.handleHeight)
+        .frame(height: FloatingMetrics.handleHeight, alignment: .bottom)
         .onHover { h in
             guard h != resizeHovered else { return }
             resizeHovered = h

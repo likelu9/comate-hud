@@ -266,9 +266,18 @@ struct NotchRootView: View {
     @State private var dragBaseHeight: CGFloat = 0
 
     // 布局常量：必须与 expandedContent 的 padding / spacing 保持一致
+    private let horizontalPadding: CGFloat = 12
     private let listSpacing: CGFloat = 3
     private let blockSpacing: CGFloat = 6
-    private let bottomPadding: CGFloat = 6
+    /// 面板底部留白：页脚下方必须留出比拖拽手柄命中区更高的空白，
+    /// 否则手柄会盖住页脚按钮的命中区（12 > resizeHitHeight）
+    private let bottomPadding: CGFloat = 12
+    /// 拖拽手柄的可视条高度（含条下方留白）
+    private let resizeHandleHeight: CGFloat = 14
+    /// 拖拽手柄的命中区高度：只取面板最底部这一条，避开页脚
+    private let resizeHitHeight: CGFloat = 10
+    /// 无任务时列表占位文案的高度
+    private let emptyPlaceholderHeight: CGFloat = 24
     private var topInset: CGFloat { notchHeight / 2 + 24 }
 
     /// 当前实际展示的记录条数
@@ -372,13 +381,16 @@ struct NotchRootView: View {
             .overlay(alignment: .bottom) {
                 if expanded {
                     ZStack {
-                        Color.clear.contentShape(Rectangle())
+                        // 命中区只取面板最底部一条：满高命中会盖住页脚按钮
+                        Color.clear
+                            .frame(height: resizeHitHeight)
+                            .contentShape(Rectangle())
                         Capsule()
                             .fill(Color.white.opacity(resizeHovered || isResizing ? 0.5 : 0.22))
                             .frame(width: 44, height: 4)
                             .padding(.bottom, 4)
                     }
-                    .frame(height: 14)
+                    .frame(height: resizeHandleHeight, alignment: .bottom)
                     .onHover { h in
                         guard h != resizeHovered else { return }
                         resizeHovered = h
@@ -451,14 +463,52 @@ struct NotchRootView: View {
 
     // MARK: - 展开内容（始终在视图树中，通过 opacity 显隐）
     private var expandedContent: some View {
-        VStack(alignment: .leading, spacing: blockSpacing) {
+        listSection
+            // 列表高度固定：超出时由 ScrollView 滚动，不撑高面板
+            .frame(height: listSectionHeight, alignment: .topLeading)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.top, topInset)
+            // 高度固定为当前面板高度
+            .frame(width: expandedWidth, height: targetExpandedHeight, alignment: .topLeading)
+            // 页脚绝对吸底：位置只由面板高度决定，与列表实际高度无关。
+            // 之前用 Spacer(minLength: 0) 顶到尾部，但 VStack 的 spacing 会围绕
+            // Spacer 各插一条间距，导致列表被裁短时内容比面板高 6pt，
+            // 页脚被挤到面板下沿外（底部留白失效），热区又被拖拽手柄压掉大半。
+            .overlay(alignment: .bottom) {
+                HUDUsageFooter(store: store, onSettings: { onShowMenu?() })
+                    // 实测页脚高度（用于反推内容高度）
+                    .background(
+                        GeometryReader { g in
+                            Color.clear
+                                .onAppear { NSLog("[DBGLAYOUT] footer=%@ target=%.1f footerH=%.1f listH=%.1f rowsH=%.1f bottomPad=%.1f", NSStringFromRect(g.frame(in: .global)), targetExpandedHeight, footerHeight, listViewportHeight, rowsHeight, bottomPadding) }
+                                .onChange(of: g.frame(in: .global)) { r in
+                                    NSLog("[DBGLAYOUT] footer=%@ target=%.1f footerH=%.1f listH=%.1f rowsH=%.1f bottomPad=%.1f", NSStringFromRect(r), targetExpandedHeight, footerHeight, listViewportHeight, rowsHeight, bottomPadding)
+                                }
+                                .preference(key: FooterHeightKey.self, value: g.size.height)
+                        }
+                    )
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, bottomPadding)
+            }
+            .onPreferenceChange(RowsHeightKey.self) { h in
+                guard h > 0, abs(h - rowsHeight) > 0.5 else { return }
+                rowsHeight = h
+                measuredRowCount = displayedRowCount
+            }
+            .onPreferenceChange(FooterHeightKey.self) { h in
+                guard h > 0, abs(h - footerHeight) > 0.5 else { return }
+                footerHeight = h
+            }
+    }
 
+    /// 列表区：有记录时是可滚动列表，无记录时是占位文案
+    private var listSection: some View {
+        Group {
             if store.recentTasks.isEmpty {
                 Text("暂无任务")
                     .font(.system(size: 11, design: .rounded))
                     .foregroundStyle(.white.opacity(0.4))
             } else {
-                // 面板高度可小于内容高度（最小 = 1 条高度），超出时列表可滚动
                 ScrollView(.vertical, showsIndicators: false) {
                     HUDTaskRows(store: store, spacing: listSpacing)
                     // 实测行 VStack 自然高度（与面板高度无关）
@@ -468,40 +518,13 @@ struct NotchRootView: View {
                         }
                     )
                 }
-                .frame(height: listViewportHeight)
             }
+        }
+    }
 
-            // 页脚吸底：面板被拖高时，额度/消息行贴在面板底部，
-            // 而不是跟着列表最后一条记录往下跑
-            Spacer(minLength: 0)
-
-            HUDUsageFooter(store: store, onSettings: { onShowMenu?() })
-                // 实测页脚高度（用于反推内容高度）
-            .background(
-                GeometryReader { g in
-                    Color.clear
-                        .onAppear { NSLog("[DBGLAYOUT] footer=%@ target=%.1f footerH=%.1f listH=%.1f rowsH=%.1f", NSStringFromRect(g.frame(in: .global)), targetExpandedHeight, footerHeight, listViewportHeight, rowsHeight) }
-                        .onChange(of: g.frame(in: .global)) { r in
-                            NSLog("[DBGLAYOUT] footer=%@ target=%.1f footerH=%.1f listH=%.1f rowsH=%.1f", NSStringFromRect(r), targetExpandedHeight, footerHeight, listViewportHeight, rowsHeight)
-                        }
-                        .preference(key: FooterHeightKey.self, value: g.size.height)
-                }
-            )
-        }
-        .padding(.horizontal, 12)
-        .padding(.top, topInset)
-        .padding(.bottom, bottomPadding)
-        // 高度固定为当前面板高度：列表超出时由 ScrollView 滚动，不撑高面板
-        .frame(width: expandedWidth, height: targetExpandedHeight, alignment: .topLeading)
-        .onPreferenceChange(RowsHeightKey.self) { h in
-            guard h > 0, abs(h - rowsHeight) > 0.5 else { return }
-            rowsHeight = h
-            measuredRowCount = displayedRowCount
-        }
-        .onPreferenceChange(FooterHeightKey.self) { h in
-            guard h > 0, abs(h - footerHeight) > 0.5 else { return }
-            footerHeight = h
-        }
+    /// 列表区高度：无记录时没有行可测，给占位文案一个固定高度
+    private var listSectionHeight: CGFloat {
+        store.recentTasks.isEmpty ? emptyPlaceholderHeight : listViewportHeight
     }
 }
 // MARK: - ComateTaskRow
