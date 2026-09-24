@@ -35,6 +35,10 @@ def ok(msg):
     print("  ✓ " + msg)
 
 
+def note(msg):
+    print("  · " + msg)
+
+
 # 1. Info.plist ↔ versions.json
 with open(os.path.join(notch, "Info.plist"), "rb") as f:
     plist = plistlib.load(f)
@@ -80,12 +84,17 @@ if not missing and not extra:
     ok("SOURCES 完整：%d 个源文件全部登记" % len(actual))
 
 # 4. 官网声明的下载包存在
+#    例外：正在构建的版本（versions[0] == Info.plist 版本）的 DMG 由本次构建产出，
+#    而本脚本在 build.sh 开头就跑（DMG 还没生成），此时只提示不报错。
+#    其余情况（版本号已错开、DMG 却不在）说明官网会挂上不存在的下载链接，必须报错。
 dmg = first.get("download", "")
 if dmg:
     candidates = [os.path.join(hud, dmg), os.path.join(notch, "dist", dmg)]
     found = [p for p in candidates if os.path.exists(p)]
     if found:
         ok("官网下载包存在：%s" % os.path.relpath(found[0], root))
+    elif first.get("version") == app_ver:
+        note("官网下载包 %s 待本次构建产出（版本与 Info.plist 一致）" % dmg)
     else:
         errors.append("versions.json 声明的 %s 在 ComateHUD/ 与 ComateNotch/dist/ 都找不到" % dmg)
 

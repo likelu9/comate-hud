@@ -1,6 +1,33 @@
 {
-  "latest": "1.4.1",
+  "latest": "1.4.2",
   "versions": [
+    {
+      "version": "1.4.2",
+      "build": 10,
+      "date": "2026-09-25",
+      "platform": "macOS",
+      "size": "1.6 MB",
+      "download": "ComateHUD-1.4.2.dmg",
+      "minOS": "12.0",
+      "changelog": [
+        {
+          "type": "new",
+          "text": "检测到新版本时，设置按钮亮红点，菜单里可一键跳转下载页"
+        },
+        {
+          "type": "new",
+          "text": "支持开机自启动：菜单里可开关，首次启动默认开启"
+        },
+        {
+          "type": "opt",
+          "text": "更新检测改走 releases.atom，共享出口 IP 被限流时也能查到新版本"
+        },
+        {
+          "type": "fix",
+          "text": "重复启动应用不再叠加第二个悬浮窗，改为把已有面板重新置前"
+        }
+      ]
+    },
     {
       "version": "1.4.1",
       "build": 9,

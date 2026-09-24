@@ -1,6 +1,6 @@
 # ComateNotch 待优化清单
 
-**版本**: v1.4.1 (build 9)  
+**版本**: v1.4.2 (build 10)  
 **日期**: 2026-09-25  
 
 ---
@@ -34,6 +34,11 @@
 - 单实例保护：同 bundle id 已在运行则请它把面板重新置前，新实例直接退出，避免两份 HUD 叠加与双份活跃上报（`Sources/AppDelegate.swift`）
 - 技术债：任务模型拆到 `TaskModel.swift`，面板布局公式拆到 `NotchLayout.swift`，新增 `test.sh`（47 项断言）
 - 文档防漂移：新增 `scripts/check-docs.sh` 并在 `build.sh` 里强制校验（版本号同源 / SOURCES 完整 / 官网不硬编码）
+
+### Phase6 - 1.4.2 发布
+- 更新源改用 `releases.atom`：REST 未鉴权限额按 IP 计（60/时），共享出口 IP 实测已 403
+- `scripts/check-docs.sh` 的 DMG 校验加时序例外：正在构建的版本其 DMG 由本次构建产出，不报错
+- 发布 1.4.2：Info.plist / TODO.md / versions.json 三处版本号同步
 
 ---
 
