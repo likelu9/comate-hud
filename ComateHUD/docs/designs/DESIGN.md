@@ -1,7 +1,7 @@
 ---
 version: "1.5"
 style: "minimal-dark-macos"
-target: "ComateHUD/index.html：① #appstats 区块（插在 #versions 与 #wishwall 之间）；② hero 内下载区 #download 重构（公共信息行 / MAC·WIN·GitHub 三按钮 / 按钮外体积元信息行 / macOS 安装说明 hover 气泡）；③ 全站文案精简（13 → 12 区块：删除 #how「使用流程」，其去重后并入 #features；#compat 表格降级为一行标签带）+ 全站排版节奏重排（区块 padding / 网格 gap / 卡片内边距 / 正文行高字号）；④ 1.5 区块重排与信息精简（见 §10）：hero 版本记录改锚点行 #release-line、「技术栈」→「如何实现」并补三方应用背景、#compat 并入 #tech 且删除该区块与导航项、#versions 移到 #wishwall 正上方（导航同步）、更新日志条目收起态行高压缩 + 日期加重、versions.json 文案精简（41 → 30 条）"
+target: "ComateHUD/index.html：① #appstats 区块（插在 #versions 与 #wishwall 之间）；② hero 内下载区 #download 重构（公共信息行 / MAC·WIN·GitHub 三按钮 / 按钮外体积元信息行 / macOS 安装说明 hover 气泡）；③ 全站文案精简（13 → 12 区块：删除 #how「使用流程」，其去重后并入 #features；#compat 表格降级为一行标签带）+ 全站排版节奏重排（区块 padding / 网格 gap / 卡片内边距 / 正文行高字号）；④ 1.5 区块重排与信息精简（见 §10）；⑤ 应用统计改版（见 §10.7）：与「能力提供」换位、文案口语化、新增人数句与一键分享：hero 版本记录改锚点行 #release-line、「技术栈」→「如何实现」并补三方应用背景、#compat 并入 #tech 且删除该区块与导航项、#versions 移到 #wishwall 正上方（导航同步）、更新日志条目收起态行高压缩 + 日期加重、versions.json 文案精简（41 → 30 条）"
 palette:
   primary: "#00d4aa"      # var(--accent)
   background: "#0a0a0f"   # var(--bg)
@@ -23,6 +23,8 @@ sections:
     title: "全站文案精简清单 + 排版节奏规范（12 区块 · 删除 #how · #compat 降级为标签带）"
   - id: "revision-1.5"
     title: "1.5 修订：区块重排与信息精简（锚点行版本记录 · 如何实现 · #compat 并入 #tech · #versions 移到 #wishwall 前）"
+  - id: "appstats-share"
+    title: "应用统计改版：与能力提供换位 · 文案口语化 · 人数句 · 一键分享（§10.7）"
 references:
   - "references/stats-mockup.svg"
   - "references/download-section.svg"
@@ -99,7 +101,7 @@ release_contract:
 
 ## 5. Acceptance Contract
 
-- [ ] 区块位于 `#versions` 与 `#wishwall` 之间；导航入口位于「更新日志」之后、`#download` 之前
+- [ ] 区块位于 `#powered` 与 `#versions` 之间（1.5 修订与「能力提供」换位）；导航入口位于「能力提供」之后、`更新日志` 之前
 - [ ] 区块与导航入口在 HTML 里不带 `hidden`（默认可见）
 - [ ] 访客（非 owner）：可见 KPI / 趋势 / 版本分布，`#appstats-today-block` 不可见
 - [ ] 未登录访客：区块保留标题与一行登录提示，内容位全部收起（不残留骨架）
@@ -1272,3 +1274,76 @@ footer p { font-size: 14px; color: var(--text-dim); line-height: 1.8; }
 - `#release-line` 初始带 `hidden`（与 `#dl-size` 同一约定，数据到达前不出现 `v—` 占位符），`fetch` 成功分支写入 `#rl-ver` / `#rl-date` 后 `rl.hidden = false`；`catch` 分支不做处理（保持隐藏，hero 的 MAC 按钮已退化为「前往更新日志」）。
 - 版本条目 summary 结构改为 `vi-ver` + `vi-meta(vi-date + vi-count)`，箭头由 `.vi-meta::after` 承担；`typeLabels` / `typeColors` 与 `#version-list` 渲染逻辑不变。
 - `versions[0]` 仍默认 `open`（首条展开，其余收起）。
+
+### 10.7 应用统计改版：换位 · 口语化 · 一键分享
+
+#### 10.7.1 区块换位（与「能力提供」互换）
+
+| 项 | 改前 | 改后 |
+| --- | --- | --- |
+| DOM 顺序 | features → lights → tech → **appstats → powered** → versions → wishwall | features → lights → tech → **powered → appstats** → versions → wishwall |
+| 导航顺序 | … 如何实现 · **应用统计 · 能力提供** · 更新日志 … | … 如何实现 · **能力提供 · 应用统计** · 更新日志 … |
+
+`#appstats` 仍是 `.appstats-section`（padding `96px 0 112px`），前面由 `#tech` 换成 `#powered`（`112px 0`），间距无需调整。`#appstats` 与 `#nav-appstats` 的 `hidden` 解隐逻辑（`loadActivity()` 里 `removeAttribute`）与顺序无关，未改动。
+
+#### 10.7.2 文案口语化
+
+| 位置 | 原文 | 现文案 |
+| --- | --- | --- |
+| h2 | `谁在用 Comate HUD` | `看灯的人，不止你一个` |
+| 副标题 | `安装设备每天上报一次活跃，按用户去重统计。`（静态） | 删除，改为动态人数句 `#appstats-people`（见 10.7.3） |
+| 趋势块标题 | `近 30 日活跃趋势` | `最近 30 天，每天有多少人来亮灯` |
+| 版本分布块标题 | `版本分布` | `大家都在用哪一版` |
+| KPI note | `… · 按用户去重` / `滚动 7 天` / `滚动 30 天` / `有记录以来` | `… · 按人头算` / `最近一周 · 按人头算` / `最近一个月 · 按人头算` / `从发布到现在` |
+| 版本分布空态 | `近 30 日还没有活跃数据` | `最近 30 天还没有人来亮灯` |
+| 明细空态 | `今天还没有设备上报` | `今天还没有人来亮灯` |
+| 明细块标题 | `今日活跃明细` | 不变（owner 专用调试视图，保持功能性） |
+
+KPI 的 4 个 label（`今日活跃` / `近 7 日活跃` / `近 30 日活跃` / `累计活跃`）保持功能性不改，避免数字含义被口语化模糊。
+
+#### 10.7.3 人数句 `#appstats-people`
+
+静态占位（`hidden`，避免数据到达前闪现），`renderStatsPeople(rows)` 填内容：
+
+- `累计活跃 > 0`：`已经有 <b>N</b> 位 Mac 用户把它钉在了刘海区——现在，你也是其中之一。`
+- `累计活跃 = 0`：`统计刚上线，你很可能就是第一批——来当第 1 位。`
+- 请求失败（`statsError`）：不填、保持 `hidden`，由 `#appstats-hint` 说明原因
+
+`statsLoading()` 里先清空并 `hidden`，避免重试时残留旧数字。数字用 `createElement` + `textContent` 构造（不拼 HTML）。
+
+```css
+.appstats-people { max-width: 560px; margin: 16px auto 0; font-size: 15px; line-height: 1.7; color: var(--text-secondary); }
+.appstats-people[hidden] { display: none; }
+.appstats-people b { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; vertical-align: -1px; margin: 0 3px; }
+```
+
+#### 10.7.4 一键分享 `.appstats-share`
+
+位置：版本分布块之后、`#appstats-today-block` 之前。**刻意不用 `.appstats-block` 类**——`statsShowBlocks()` 会按该类批量 `hidden`，而分享在统计拉不到时依然应该可用。
+
+文案：标题 `好东西，别自己藏着` / 正文 `你隔壁工位那位，大概率也在用 Comate。把链接丢给他，让他也少开几次主窗口。` / 按钮 `一键分享`。
+
+**能力自适应**（无外部依赖、无 SDK）：
+
+| 环境 | 按钮文案 | 点击行为 |
+| --- | --- | --- |
+| `typeof navigator.share === 'function'` | `一键分享` | `navigator.share({title, text, url})` 调系统分享面板 |
+| 无 Web Share | `复制链接分享` | 复制「文案 + 官网链接」到剪贴板 |
+
+- `share()` reject 时：`AbortError` / `NotAllowedError`（用户取消、无用户手势）→ 静默；其余错误 → 退回复制。
+- 复制路径：优先 `navigator.clipboard.writeText`（需安全上下文），回退临时 `<textarea>` + `document.execCommand('copy')`。
+- 反馈：按钮文案变 `已复制，去发给同事`（失败则 `复制失败，手动复制下方链接`）并加 `.is-copied`（透明底 + accent 描边），同时把链接以 `#appstats-share-url` 摆出来供手选；2.8s 后复原。
+- 分享 URL = `location.href` 去掉 `#hash` 与 `?query`。
+
+```css
+.appstats-share { margin-top: 56px; text-align: center; }
+.appstats-share-title { font-size: 19px; font-weight: 700; }
+.appstats-share-text { max-width: 460px; margin: 10px auto 0; font-size: 14px; line-height: 1.75; color: var(--text-secondary); }
+.appstats-share-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; padding: 12px 24px; font-family: inherit; font-size: 14px; font-weight: 600; color: #06140f; background: var(--accent); border: 1px solid var(--accent); border-radius: 999px; cursor: pointer; transition: transform 0.15s, box-shadow 0.2s, background 0.2s, color 0.2s; }
+.appstats-share-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
+.appstats-share-btn svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.appstats-share-btn.is-copied { color: var(--accent); background: transparent; box-shadow: none; }
+.appstats-share-url { margin-top: 14px; font-size: 12px; color: var(--text-dim); word-break: break-all; }
+.appstats-share-url[hidden] { display: none; }
+```
+移动端（`@media (max-width:768px)`）：`.appstats-share { margin-top: 40px; }`。
