@@ -354,6 +354,10 @@
     .appstats-hint { margin-top: 24px; font-size: 13px; color: var(--text-dim); text-align: center; }
     .appstats-hint button { margin-left: 10px; padding: 6px 14px; font-size: 13px; color: var(--text); background: transparent; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; cursor: pointer; }
     .appstats-hint button:hover { border-color: var(--accent); color: var(--accent); }
+    /* 应用统计 · 人数句（数据到达后由 JS 填入，拿不到就整句不出现） */
+    .appstats-people { max-width: 560px; margin: 16px auto 0; font-size: 15px; line-height: 1.7; color: var(--text-secondary); }
+    .appstats-people[hidden] { display: none; }
+    .appstats-people b { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; vertical-align: -1px; margin: 0 3px; }
     .stats-scroll { overflow-x: auto; }
     .stats-table { margin-top: 0; }
     .stats-table th, .stats-table td { white-space: nowrap; }
@@ -422,7 +426,7 @@
   <div class="container">
     <a href="#" class="brand"><img src="icon.png" alt="Comate HUD" /><strong>Comate HUD</strong></a>
     <div class="nav-links">
-      <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">如何实现</a><a href="#appstats" id="nav-appstats">应用统计</a><a href="#powered">能力提供</a><a href="#versions">更新日志</a><a href="#wishwall">许愿反馈</a>
+      <a href="#features">核心功能</a><a href="#lights">状态含义</a><a href="#tech">如何实现</a><a href="#powered">能力提供</a><a href="#appstats" id="nav-appstats">应用统计</a><a href="#versions">更新日志</a><a href="#wishwall">许愿反馈</a>
       <a href="#download" class="btn-sm">下载</a>
       <span id="pv-display" style="font-size:12px;color:var(--text-dim);margin-left:8px;white-space:nowrap;font-variant-numeric:tabular-nums;">-</span>
     </div>
@@ -645,25 +649,6 @@
     </div>
   </div>
 </section>
-<section class="appstats-section" id="appstats">
-  <div class="container">
-    <div class="reveal" style="text-align:center;"><div class="section-label">应用统计</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">谁在用 Comate HUD</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">安装设备每天上报一次活跃，按用户去重统计。</p></div>
-    <div class="appstats-kpi reveal" id="appstats-kpi"></div>
-    <div class="appstats-block reveal">
-      <div class="appstats-block-title">近 30 日活跃趋势</div>
-      <div class="appstats-chart" id="appstats-chart"></div>
-    </div>
-    <div class="appstats-block reveal">
-      <div class="appstats-block-title">版本分布</div>
-      <div class="appstats-versions" id="appstats-versions"></div>
-    </div>
-    <div class="appstats-block reveal" id="appstats-today-block" hidden>
-      <div class="appstats-block-title">今日活跃明细</div>
-      <div class="stats-scroll" id="appstats-today"></div>
-    </div>
-    <div class="appstats-hint" id="appstats-hint"></div>
-  </div>
-</section>
 <section class="powered-section" id="powered">
   <div class="container">
     <div class="reveal"><div class="section-label">能力提供</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">有想法，就够了</h2><p style="color:var(--text-secondary);max-width:560px;margin:16px auto 0;font-size:15px;">不用会写代码——你负责想，Comate 负责做。从一个念头，到上线。</p></div>
@@ -679,6 +664,25 @@
       <p>Comate HUD 基于 <a href="https://comate.wps.cn" target="_blank" rel="noopener">WPS Comate</a> 的应用开发能力构建。借助其开放的本地数据库读取、Deeplink 调起、OAuth 认证等接口，实现了与 Comate 桌面客户端的深度集成——读取任务状态、打开会话窗口、获取未读消息、查询用量额度。</p>
       <p style="margin-top:12px;font-size:13px;color:var(--text-dim);">Comate HUD 是独立的 macOS 原生应用，非 WPS 官方产品，由社区开发者基于 Comate 开放能力构建。</p>
     </div>
+  </div>
+</section>
+<section class="appstats-section" id="appstats">
+  <div class="container">
+    <div class="reveal" style="text-align:center;"><div class="section-label">应用统计</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">看灯的人，不止你一个</h2><p class="appstats-people" id="appstats-people" hidden></p></div>
+    <div class="appstats-kpi reveal" id="appstats-kpi"></div>
+    <div class="appstats-block reveal">
+      <div class="appstats-block-title">最近 30 天，每天有多少人来亮灯</div>
+      <div class="appstats-chart" id="appstats-chart"></div>
+    </div>
+    <div class="appstats-block reveal">
+      <div class="appstats-block-title">大家都在用哪一版</div>
+      <div class="appstats-versions" id="appstats-versions"></div>
+    </div>
+    <div class="appstats-block reveal" id="appstats-today-block" hidden>
+      <div class="appstats-block-title">今日活跃明细</div>
+      <div class="stats-scroll" id="appstats-today"></div>
+    </div>
+    <div class="appstats-hint" id="appstats-hint"></div>
   </div>
 </section>
 <section class="version-section" id="versions">
@@ -1202,10 +1206,10 @@ function renderStatsKpi(rows) {
   if (!host) return;
   var today = dayKey(0), d7 = dayKey(-6), d30 = dayKey(-29);
   var cards = [
-    { label: '今日活跃', value: uniqUsers(rows.filter(function (r) { return r.active_day === today; })), note: dayLabel(today) + ' · 按用户去重', today: true },
-    { label: '近 7 日活跃', value: uniqUsers(rows.filter(function (r) { return r.active_day >= d7; })), note: '滚动 7 天' },
-    { label: '近 30 日活跃', value: uniqUsers(rows.filter(function (r) { return r.active_day >= d30; })), note: '滚动 30 天' },
-    { label: '累计活跃', value: uniqUsers(rows), note: '有记录以来' }
+    { label: '今日活跃', value: uniqUsers(rows.filter(function (r) { return r.active_day === today; })), note: dayLabel(today) + ' · 按人头算', today: true },
+    { label: '近 7 日活跃', value: uniqUsers(rows.filter(function (r) { return r.active_day >= d7; })), note: '最近一周 · 按人头算' },
+    { label: '近 30 日活跃', value: uniqUsers(rows.filter(function (r) { return r.active_day >= d30; })), note: '最近一个月 · 按人头算' },
+    { label: '累计活跃', value: uniqUsers(rows), note: '从发布到现在' }
   ];
   host.innerHTML = cards.map(function (c) {
     return '<div class="appstats-card' + (c.today ? ' is-today' : '') + '">' +
@@ -1213,6 +1217,24 @@ function renderStatsKpi(rows) {
       '<div class="k-value">' + c.value + '</div>' +
       '<div class="k-note">' + escHtml(c.note) + '</div></div>';
   }).join('');
+}
+
+// 人数句：已安装的人越多，越值得被分享出去
+function renderStatsPeople(rows) {
+  var host = actEl('appstats-people');
+  if (!host) return;
+  var n = uniqUsers(rows);
+  host.innerHTML = '';
+  if (!n) {
+    host.appendChild(document.createTextNode('统计刚上线，你很可能就是第一批——来当第 1 位。'));
+  } else {
+    host.appendChild(document.createTextNode('已经有 '));
+    var b = document.createElement('b');
+    b.textContent = String(n);
+    host.appendChild(b);
+    host.appendChild(document.createTextNode(' 位 Mac 用户把它钉在了刘海区——现在，你也是其中之一。'));
+  }
+  host.removeAttribute('hidden');
 }
 
 function renderStatsVersions(rows) {
@@ -1224,7 +1246,7 @@ function renderStatsVersions(rows) {
   });
   var list = Object.keys(byVer).map(function (v) { return { v: v, n: Object.keys(byVer[v]).length }; });
   list.sort(function (a, b) { return b.n - a.n || a.v.localeCompare(b.v); });
-  if (!list.length) { host.innerHTML = '<div class="appstats-empty">近 30 日还没有活跃数据</div>'; return; }
+  if (!list.length) { host.innerHTML = '<div class="appstats-empty">最近 30 天还没有人来亮灯</div>'; return; }
   var total = list.reduce(function (s, x) { return s + x.n; }, 0) || 1;
   var top = list.slice(0, 6);
   if (list.length > 6) top.push({ v: '其他', n: list.slice(6).reduce(function (s, x) { return s + x.n; }, 0) });
@@ -1242,7 +1264,7 @@ function renderStatsToday(rows) {
   var today = dayKey(0);
   var list = rows.filter(function (r) { return r.active_day === today; });
   list.sort(function (a, b) { return String(b.first_active_at || '').localeCompare(String(a.first_active_at || '')); });
-  if (!list.length) { host.innerHTML = '<div class="appstats-empty">今天还没有设备上报</div>'; return; }
+  if (!list.length) { host.innerHTML = '<div class="appstats-empty">今天还没有人来亮灯</div>'; return; }
   var head = '<tr><th>用户</th><th>版本</th><th>首次活跃</th><th class="num">启动</th><th class="num">悬停</th><th class="num">点击</th><th class="col-opt">设备</th><th class="col-opt">系统</th></tr>';
   var body = list.map(function (r) {
     var name = r.user_name ? String(r.user_name) : String(r.uid).slice(0, 8);
@@ -1276,6 +1298,7 @@ function statsLoading(owner) {
     return '<div class="appstats-card is-skeleton"><div class="sk-line sk-w1"></div><div class="sk-line sk-w2"></div><div class="sk-line sk-w3"></div></div>';
   }).join('');
   renderStatsTrend([]);
+  var p = actEl('appstats-people'); if (p) { p.innerHTML = ''; p.setAttribute('hidden', ''); }
   var v = actEl('appstats-versions'); if (v) v.innerHTML = '';
   if (owner) { var t = actEl('appstats-today'); if (t) t.innerHTML = '<div class="appstats-empty">加载中…</div>'; }
   var h = actEl('appstats-hint'); if (h) h.textContent = '';
@@ -1320,6 +1343,7 @@ async function loadActivity() {
   if (res.error) { statsError(); return; }
   var rows = actRows(res.data && res.data.rows);
   renderStatsKpi(rows);
+  renderStatsPeople(rows);
   renderStatsTrend(rows);
   renderStatsVersions(rows);
   if (owner) renderStatsToday(rows);
