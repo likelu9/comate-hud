@@ -312,6 +312,12 @@
       "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
       "createdAt": 1790261766136,
       "file": "handoff-1790261766133.handoff.json"
+    },
+    {
+      "handoffId": "handoff-1790277371049",
+      "sessionId": "3d2eaaf8-86c7-4c29-879f-ac1531332b32",
+      "createdAt": 1790277371051,
+      "file": "handoff-1790277371049.handoff.json"
     }
   ]
 }
