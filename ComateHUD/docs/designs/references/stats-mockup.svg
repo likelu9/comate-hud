@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1248" viewBox="0 0 1080 1248" role="img" aria-label="Comate HUD 应用统计区块设计示意图">
+<title>Comate HUD 应用统计区块设计示意图</title>
+<rect width="1080" height="1248" fill="#0a0a0f"/>
+<text x="24" y="0" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="1" font-weight="400" fill="#f5f5f7" text-anchor="start" opacity="1"></text>
+<text x="540.0" y="64" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="13" font-weight="600" fill="#00d4aa" text-anchor="middle" opacity="1" letter-spacing="1.6">应 用 统 计</text>
+<text x="540.0" y="114" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="40" font-weight="700" fill="#f5f5f7" text-anchor="middle" opacity="1" letter-spacing="-1.2">谁在用，用得怎么样</text>
+<text x="540.0" y="148" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="400" fill="#8e8e93" text-anchor="middle" opacity="1">仅应用 owner 可见 · 每用户每天上报一次，按 uid 去重 · 更新于 10:24</text>
+<rect x="24.0" y="196" width="246.0" height="104" rx="20" fill="#111118" stroke="#ffffff0f" stroke-width="1"/>
+<text x="44.0" y="226" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11" font-weight="600" fill="#55555d" text-anchor="start" opacity="1" letter-spacing="1.2">今日活跃</text>
+<text x="44.0" y="266" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="32" font-weight="800" fill="#00d4aa" text-anchor="start" opacity="1">6</text>
+<text x="44.0" y="286" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#55555d" text-anchor="start" opacity="1">较昨日 +1</text>
+<rect x="44.0" y="297" width="206.0" height="2" rx="1" fill="#00d4aa" opacity="0.5"/>
+<rect x="286.0" y="196" width="246.0" height="104" rx="20" fill="#111118" stroke="#ffffff0f" stroke-width="1"/>
+<text x="306.0" y="226" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11" font-weight="600" fill="#55555d" text-anchor="start" opacity="1" letter-spacing="1.2">近 7 日活跃</text>
+<text x="306.0" y="266" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="32" font-weight="800" fill="#f5f5f7" text-anchor="start" opacity="1">38</text>
+<text x="306.0" y="286" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#55555d" text-anchor="start" opacity="1">日均 5.4</text>
+<rect x="548.0" y="196" width="246.0" height="104" rx="20" fill="#111118" stroke="#ffffff0f" stroke-width="1"/>
+<text x="568.0" y="226" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11" font-weight="600" fill="#55555d" text-anchor="start" opacity="1" letter-spacing="1.2">近 30 日活跃</text>
+<text x="568.0" y="266" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="32" font-weight="800" fill="#f5f5f7" text-anchor="start" opacity="1">152</text>
+<text x="568.0" y="286" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#55555d" text-anchor="start" opacity="1">日均 5.1</text>
+<rect x="810.0" y="196" width="246.0" height="104" rx="20" fill="#111118" stroke="#ffffff0f" stroke-width="1"/>
+<text x="830.0" y="226" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11" font-weight="600" fill="#55555d" text-anchor="start" opacity="1" letter-spacing="1.2">累计活跃用户</text>
+<text x="830.0" y="266" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="32" font-weight="800" fill="#f5f5f7" text-anchor="start" opacity="1">23</text>
+<text x="830.0" y="286" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#55555d" text-anchor="start" opacity="1">自 2025-01-01</text>
+<rect x="24" y="324" width="1032" height="272" rx="20" fill="#111118" stroke="#ffffff0f" stroke-width="1"/>
+<text x="52" y="358" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="700" fill="#f5f5f7" text-anchor="start" opacity="1">近 30 日活跃趋势</text>
+<text x="52" y="378" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">按 uid 去重 · 单位：人</text>
+<rect x="924" y="355" width="8" height="8" rx="2" fill="#ffffff14"/>
+<text x="936" y="364" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11" font-weight="400" fill="#55555d" text-anchor="end" opacity="1">无数据</text>
+<rect x="988" y="355" width="8" height="8" rx="2" fill="#00d4aa"/>
+<text x="1000" y="364" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11" font-weight="400" fill="#55555d" text-anchor="end" opacity="1">有活跃</text>
+<line x1="52" y1="542" x2="1028" y2="542" stroke="#ffffff0f" stroke-width="1"/>
+<rect x="52.00" y="500.00" width="30.60" height="42.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="84.60" y="472.00" width="30.60" height="70.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="117.20" y="486.00" width="30.60" height="56.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="149.80" y="458.00" width="30.60" height="84.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="182.40" y="444.00" width="30.60" height="98.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="215.00" y="472.00" width="30.60" height="70.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="247.60" y="538" width="30.60" height="4" rx="2" fill="#ffffff14"/>
+<rect x="280.20" y="486.00" width="30.60" height="56.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="312.80" y="458.00" width="30.60" height="84.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="345.40" y="430.00" width="30.60" height="112.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="378.00" y="444.00" width="30.60" height="98.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="410.60" y="458.00" width="30.60" height="84.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="443.20" y="472.00" width="30.60" height="70.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="475.80" y="486.00" width="30.60" height="56.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="508.40" y="538" width="30.60" height="4" rx="2" fill="#ffffff14"/>
+<rect x="541.00" y="500.00" width="30.60" height="42.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="573.60" y="472.00" width="30.60" height="70.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="606.20" y="444.00" width="30.60" height="98.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="638.80" y="416.00" width="30.60" height="126.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="671.40" y="430.00" width="30.60" height="112.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="704.00" y="458.00" width="30.60" height="84.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="736.60" y="472.00" width="30.60" height="70.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="769.20" y="444.00" width="30.60" height="98.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="801.80" y="458.00" width="30.60" height="84.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="834.40" y="430.00" width="30.60" height="112.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="867.00" y="402.00" width="30.60" height="140.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="899.60" y="416.00" width="30.60" height="126.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="932.20" y="444.00" width="30.60" height="98.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="964.80" y="430.00" width="30.60" height="112.00" rx="3" fill="#00d4aa" opacity="0.85"/>
+<rect x="997.40" y="458.00" width="30.60" height="84.00" rx="3" fill="#00d4aa" opacity="1"/>
+<rect x="899.60" y="416.00" width="30.60" height="126.00" rx="3" fill="#00d4aa"/>
+<g><rect x="862.90" y="386.00" width="104" height="22" rx="6" fill="#1c1c24" stroke="#ffffff1a"/><text x="914.90" y="402.00" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="11" fill="#f5f5f7" text-anchor="middle">9/19 · 9 人</text></g>
+<rect x="997.40" y="428.00" width="46.00" height="22" rx="6" fill="#1c1c24" stroke="#00d4aa" opacity="0.9"/>
+<text x="1012.70" y="444.00" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="11" fill="#00d4aa" text-anchor="middle">今天 6</text>
+<text x="52" y="580" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11" font-weight="400" fill="#55555d" text-anchor="start" opacity="1">8/26</text>
+<text x="540.0" y="580" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11" font-weight="400" fill="#55555d" text-anchor="middle" opacity="1">9/9</text>
+<text x="1028" y="580" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="11" font-weight="400" fill="#55555d" text-anchor="end" opacity="1">9/24</text>
+<rect x="24" y="620" width="1032" height="214" rx="20" fill="#111118" stroke="#ffffff0f" stroke-width="1"/>
+<text x="52" y="654" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="700" fill="#f5f5f7" text-anchor="start" opacity="1">版本分布</text>
+<text x="52" y="674" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">近 30 日活跃用户 · 按 uid 去重</text>
+<text x="52" y="709" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#f5f5f7" text-anchor="start" opacity="1">v1.3.0</text>
+<rect x="168" y="702" width="736" height="8" rx="4" fill="#ffffff0f"/>
+<rect x="168" y="702" width="353.28" height="8" rx="4" fill="#00d4aa" opacity="0.9"/>
+<text x="964" y="709" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="13" font-weight="600" fill="#f5f5f7" text-anchor="end" opacity="1">48%</text>
+<text x="1028" y="709" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#55555d" text-anchor="end" opacity="1">11 人</text>
+<text x="52" y="743" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#f5f5f7" text-anchor="start" opacity="1">v1.2.0</text>
+<rect x="168" y="736" width="736" height="8" rx="4" fill="#ffffff0f"/>
+<rect x="168" y="736" width="191.36" height="8" rx="4" fill="#00d4aa" opacity="0.62"/>
+<text x="964" y="743" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="13" font-weight="600" fill="#f5f5f7" text-anchor="end" opacity="1">26%</text>
+<text x="1028" y="743" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#55555d" text-anchor="end" opacity="1">6 人</text>
+<text x="52" y="777" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#f5f5f7" text-anchor="start" opacity="1">v1.4.0-beta</text>
+<rect x="168" y="770" width="736" height="8" rx="4" fill="#ffffff0f"/>
+<rect x="168" y="770" width="125.12" height="8" rx="4" fill="#00d4aa" opacity="0.62"/>
+<text x="964" y="777" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="13" font-weight="600" fill="#f5f5f7" text-anchor="end" opacity="1">17%</text>
+<text x="1028" y="777" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#55555d" text-anchor="end" opacity="1">4 人</text>
+<text x="52" y="811" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#f5f5f7" text-anchor="start" opacity="1">未知</text>
+<rect x="168" y="804" width="736" height="8" rx="4" fill="#ffffff0f"/>
+<rect x="168" y="804" width="66.24" height="8" rx="4" fill="#00d4aa" opacity="0.62"/>
+<text x="964" y="811" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="13" font-weight="600" fill="#f5f5f7" text-anchor="end" opacity="1">9%</text>
+<text x="1028" y="811" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#55555d" text-anchor="end" opacity="1">2 人</text>
+<rect x="24" y="858" width="1032" height="286" rx="20" fill="#111118" stroke="#ffffff0f" stroke-width="1"/>
+<text x="52" y="892" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="15" font-weight="700" fill="#f5f5f7" text-anchor="start" opacity="1">今日活跃明细</text>
+<text x="52" y="912" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">2025-09-24 · 6 条记录</text>
+<rect x="25" y="930" width="1030" height="40" fill="#ffffff08"/>
+<text x="52" y="955" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="600" fill="#55555d" text-anchor="start" opacity="1" letter-spacing="0.8">用户</text>
+<text x="212" y="955" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="600" fill="#55555d" text-anchor="start" opacity="1" letter-spacing="0.8">版本</text>
+<text x="344" y="955" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="600" fill="#55555d" text-anchor="start" opacity="1" letter-spacing="0.8">首次活跃</text>
+<text x="584" y="955" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="600" fill="#55555d" text-anchor="end" opacity="1" letter-spacing="0.8">启动</text>
+<text x="724" y="955" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="600" fill="#55555d" text-anchor="end" opacity="1" letter-spacing="0.8">HOVER</text>
+<text x="1027" y="955" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="600" fill="#55555d" text-anchor="end" opacity="1" letter-spacing="0.8">点击</text>
+<line x1="25" y1="970" x2="1055" y2="970" stroke="#ffffff0a"/>
+<text x="52" y="996" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="600" fill="#f5f5f7" text-anchor="start" opacity="1">李柯陆</text>
+<text x="212" y="996" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">v1.3.0</text>
+<text x="344" y="996" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">09:12:04</text>
+<text x="584" y="996" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">12</text>
+<text x="724" y="996" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">38</text>
+<text x="1027" y="996" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">7</text>
+<line x1="25" y1="998" x2="1055" y2="998" stroke="#ffffff0a"/>
+<text x="52" y="1024" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="600" fill="#f5f5f7" text-anchor="start" opacity="1">王小明</text>
+<text x="212" y="1024" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">v1.3.0</text>
+<text x="344" y="1024" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">09:48:31</text>
+<text x="584" y="1024" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">6</text>
+<text x="724" y="1024" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">19</text>
+<text x="1027" y="1024" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">3</text>
+<line x1="25" y1="1026" x2="1055" y2="1026" stroke="#ffffff0a"/>
+<text x="52" y="1052" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="600" fill="#f5f5f7" text-anchor="start" opacity="1">陈佳</text>
+<text x="212" y="1052" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">v1.2.0</text>
+<text x="344" y="1052" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">10:03:57</text>
+<text x="584" y="1052" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">4</text>
+<text x="724" y="1052" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">11</text>
+<text x="1027" y="1052" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">2</text>
+<line x1="25" y1="1054" x2="1055" y2="1054" stroke="#ffffff0a"/>
+<text x="52" y="1080" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="600" fill="#f5f5f7" text-anchor="start" opacity="1">刘一诺</text>
+<text x="212" y="1080" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">v1.4.0-beta</text>
+<text x="344" y="1080" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">10:21:16</text>
+<text x="584" y="1080" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">3</text>
+<text x="724" y="1080" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">8</text>
+<text x="1027" y="1080" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">1</text>
+<line x1="25" y1="1082" x2="1055" y2="1082" stroke="#ffffff0a"/>
+<text x="52" y="1108" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="600" fill="#f5f5f7" text-anchor="start" opacity="1">赵敏</text>
+<text x="212" y="1108" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">v1.3.0</text>
+<text x="344" y="1108" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">11:05:42</text>
+<text x="584" y="1108" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">5</text>
+<text x="724" y="1108" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">14</text>
+<text x="1027" y="1108" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">4</text>
+<line x1="25" y1="1110" x2="1055" y2="1110" stroke="#ffffff0a"/>
+<text x="52" y="1136" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="600" fill="#f5f5f7" text-anchor="start" opacity="1">周宇</text>
+<text x="212" y="1136" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="13" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">v1.2.0</text>
+<text x="344" y="1136" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="start" opacity="1">13:40:08</text>
+<text x="584" y="1136" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">2</text>
+<text x="724" y="1136" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">6</text>
+<text x="1027" y="1136" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="14" font-weight="400" fill="#8e8e93" text-anchor="end" opacity="1">0</text>
+<text x="24" y="1178" font-family="-apple-system, BlinkMacSystemFont, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, sans-serif" font-size="12" font-weight="400" fill="#55555d" text-anchor="start" opacity="1">状态覆盖：未登录 / 非 owner → 整块 hidden（含导航入口）｜加载中 → 骨架条｜加载失败 → 错误条 + 重试｜无数据 → 各子块空态文案</text>
+<rect x="24" y="1194" width="1032" height="1" fill="#ffffff0f"/>
+<text x="24" y="1222" font-family="&quot;SF Mono&quot;, Menlo, monospace" font-size="11" fill="#55555d">owner uid = window.__APP_STUDIO_WM__.uid → 命中 OWNER_UIDS 才渲染</text>
+</svg>
