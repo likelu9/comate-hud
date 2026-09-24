@@ -237,7 +237,6 @@
     .arch-detail li:last-child { margin-bottom: 0; }
     /* 兼容性：并入「如何实现」区块，作为其规格脚注 */
     .compat-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 14px; margin-top: 48px; }
-    .compat-strip .cs-label { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-right: 8px; }
     .compat-tag { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; font-size: 13px; line-height: 1.2; color: var(--text-secondary); background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
     .compat-tag svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
     .compat-tag svg.solid { fill: currentColor; stroke: none; }
@@ -397,7 +396,6 @@
       .arch-detail { margin-top: 32px; padding: 28px 22px; font-size: 13px; line-height: 1.9; }
       .arch-detail li { margin-bottom: 10px; }
       .compat-strip { margin-top: 32px; gap: 10px 12px; }
-      .compat-strip .cs-label { flex: 1 1 100%; text-align: center; margin: 0 0 2px; }
       .compat-tag { padding: 8px 14px; font-size: 12px; }
       .version-list { margin-top: 44px; }
       .version-item { padding: 17px 20px; margin-bottom: 12px; }
@@ -640,7 +638,6 @@
     </div>
 
     <div class="compat-strip reveal">
-      <span class="cs-label">兼容性</span>
       <span class="compat-tag">
         <svg class="solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></svg>
         macOS 12.0+
