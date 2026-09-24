@@ -77,10 +77,10 @@
       "planId": "hud-activity-stats",
       "suffix": "hud-activity-stats",
       "title": "Comate HUD 活跃统计（客户端每日上报 + 官网 owner 面板）",
-      "status": "active",
+      "status": "completed",
       "createdAt": 1790242057541,
-      "updatedAt": 1790245968342,
-      "completedAt": null
+      "updatedAt": 1790246002757,
+      "completedAt": 1790246002757
     }
   ]
 }
