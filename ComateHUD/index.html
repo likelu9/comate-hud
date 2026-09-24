@@ -60,9 +60,9 @@
     .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid rgba(255,255,255,0.1); }
     .btn-secondary:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
     .btn-download svg { width: 20px; height: 20px; }
-    .btn-coming { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.16); color: var(--text-secondary); box-shadow: none; cursor: not-allowed; }
-    .btn-coming svg { opacity: 0.5; }
-    .btn-coming-tag { margin-left: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); color: var(--text-dim); }
+    /* Win 版不可用态：与 Mac 版同一套实心按钮（同填充形式/圆角/字号/无边框），仅整体降对比度 */
+    .btn-coming { background: rgba(0,212,170,0.12); color: rgba(0,212,170,0.6); box-shadow: none; cursor: not-allowed; }
+    .btn-coming svg { opacity: 0.6; }
     .hero-tags { margin-top: 12px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
     .hero-tags span { font-size: 12px; color: var(--text-dim); }
     .release-toggle summary { font-size: 13px; color: var(--text-secondary); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; justify-content: center; }
@@ -80,7 +80,10 @@
     .dl-head .dl-date { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
     .dl-head .dl-date::before { content: '·'; margin-right: 8px; color: var(--text-dim); }
     .dl-head .dl-ver[hidden], .dl-head .dl-date[hidden] { display: none; }
-    .dl-actions { position: relative; }
+    .dl-actions { position: relative; margin-bottom: 10px; }
+    /* Win 版「敬请期待」放按钮下方：绝对定位，不影响按钮行几何（Mac/Win 保持同一基线） */
+    .dl-win-wrap { position: relative; display: inline-flex; }
+    .dl-win-note { position: absolute; top: calc(100% + 6px); left: 0; right: 0; text-align: center; font-size: 12px; line-height: 1.2; color: var(--text-dim); white-space: nowrap; }
     .dl-actions .btn-download { white-space: nowrap; }
     .dl-actions .btn-download svg { flex: none; }
     .dl-tags { margin-top: 16px; gap: 16px; }
@@ -378,6 +381,9 @@
       .dl-head .dl-app { font-size: 15px; }
       .dl-actions { gap: 10px; }
       .dl-actions .btn-download { padding: 13px 22px; font-size: 15px; }
+      /* 移动端按钮折行后：说明改为按钮下方常规流，避免与下一个按钮重叠 */
+      .dl-win-wrap { flex-direction: column; align-items: center; }
+      .dl-win-note { position: static; margin-top: 6px; }
       .dl-tags { gap: 10px 14px; }
       .dl-help-trigger { width: auto; height: 44px; padding: 0 14px; }
       .dl-help-label { display: inline; }
