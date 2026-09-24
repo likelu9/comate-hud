@@ -1,6 +1,6 @@
 {
   "version": "004_open_app_activity_to_all_users",
-  "description": "把 app_activity 的默认角色从 member 改为 user：任意已登录 WPS 用户（不限项目成员）都能上报活跃。create/read/update 放行，delete 保持禁止。read 一并放开是因为官网统计区块已对访客公开，非成员同样要能读到聚合数据；同时给 user 角色加字段级权限，只暴露聚合所需字段，藏掉 user_name / device_id（owner 走 member 角色，不受影响，仍看全量）。",
+  "description": "把 app_activity 的默认角色从 member 改为 user：任意已登录 WPS 用户（不限项目成员）都能上报活跃。create/read/update 放行，delete 保持禁止。read 一并放开是因为官网统计区块已对访客公开，非成员同样要能读到聚合数据；同时给 user 角色加字段级权限（visible_fields 白名单），只暴露聚合所需字段，藏掉 user_name / device_id（owner 走 member 角色，不受影响，仍看全量）。注意 fields 必须是逗号分隔字符串，传数组会被静默存成 [\"\"]（等于藏掉全部字段）。",
   "operations": [
     {
       "type": "role_config",
@@ -34,16 +34,7 @@
       "data": {
         "role": "user",
         "table": "app_activity",
-        "fields": [
-          "uid",
-          "version",
-          "active_day",
-          "first_active_at",
-          "launch_count",
-          "hover_count",
-          "click_count",
-          "os_version"
-        ]
+        "fields": "uid,version,active_day,first_active_at,launch_count,hover_count,click_count,os_version"
       }
     }
   ]

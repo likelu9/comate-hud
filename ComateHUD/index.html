@@ -1111,7 +1111,11 @@ loadDownloadCount();
 // 聚合指标（KPI / 趋势 / 版本分布）对访客公开；今日明细含用户名与设备标识，仅 owner 可见。
 const ACT_TABLE = 'app_activity';
 // 建表种子行与早期契约测试行，不参与统计
+// 种子/测试行的排除口径：device_id 黑名单（owner 可见）+ version 哨兵。
+// 非成员读不到 device_id（FLS 只放行聚合字段），所以必须有一条不依赖 device_id 的判据，
+// 否则种子行会混进对访客公开的版本分布。客户端只会报真实版本（读不到时回退 'unknown'），不会产生 0.0.0。
 const ACT_IGNORE_DEVICES = ['seed-row', 'curl-contract-test'];
+const ACT_IGNORE_VERSION = '0.0.0';
 
 function actEl(id) { return document.getElementById(id); }
 
@@ -1130,7 +1134,9 @@ function escHtml(s) {
 
 function actRows(raw) {
   return (raw || []).filter(function (r) {
-    return r && r.uid && ACT_IGNORE_DEVICES.indexOf(String(r.device_id || '')) < 0;
+    if (!r || !r.uid) return false;
+    if (String(r.version || '') === ACT_IGNORE_VERSION) return false;
+    return ACT_IGNORE_DEVICES.indexOf(String(r.device_id || '')) < 0;
   });
 }
 function uniqUsers(rows) {

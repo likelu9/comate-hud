@@ -1,0 +1,15 @@
+{
+  "version": "005_detach_owner_from_user_role",
+  "description": "004 定义 default_role=user 时，平台会把 user 角色 materialize 到已有用户身上，owner 因此同时持有 member + user。平台的字段级权限是「受限优先」：只要命中任一角色的 visible_fields，字段就被藏。结果 owner 的 user_name / device_id 也被藏掉，违反「owner 看全量」。本 migration 把 owner 从 user 角色摘出，恢复其 member 角色的全字段可见性。注意：以后再对 app_activity 调 define_table_roles 会重新 materialize，需要重跑本步骤。",
+  "operations": [
+    {
+      "type": "auth",
+      "action": "remove_role",
+      "table": "app_activity",
+      "data": {
+        "user": "1388246874",
+        "role": "user"
+      }
+    }
+  ]
+}

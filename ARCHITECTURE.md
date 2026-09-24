@@ -34,7 +34,7 @@ ComateNotch/
 - `index.html` — 单文件站点（内联 CSS/JS），无框架、无构建、无 CDN
 - `vendor/appbase.js` — App Studio BaaS SDK（`createClient({ projectId })`）
 - `versions.json` — 版本清单唯一来源，驱动下载按钮、更新日志与版本卡片
-- `db/migrations/NNN_*.json` — 表结构：001 许愿 / 002 下载计数 / 003 活跃统计
+- `db/migrations/NNN_*.json` — 表结构：001 许愿 / 002 下载计数 / 003 活跃统计 / 004 活跃表对全体登录用户开放（含 `user` 角色字段白名单）/ 005 把 owner 从 `user` 角色摘出
 - `docs/designs/` — DESIGN.md 与参考图
 
 ### 数据流
@@ -44,4 +44,6 @@ ComateNotch/
 
 ## 权限与隔离
 - 官网 BaaS 属项目 `3171466180955374`；workspace 根项目是 `3599569812562023`，两者不可混用
-- `app_activity` 权限：create / read / update allow，delete deny（含 owner，刻意为之）
+- `app_activity`：`default_role: user`（任意已登录 WPS 用户，不限项目成员），`member` = 项目成员。两个角色都 create / read / update allow，delete 一律 deny（含 owner，刻意为之）
+- `user` 角色带字段白名单（`visible_fields`）：只放行聚合所需字段，藏 `user_name` / `device_id`。`member` 无 FLS，owner 看全量
+- ⚠️ 平台的 FLS 是「受限优先」：owner 只要还持有 `user` 角色就会被一起限掉，所以 005 必须把 owner 从 `user` 摘出（`remove_role`）

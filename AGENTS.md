@@ -27,6 +27,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) · 官网视觉 See [ComateHUD/docs/desig
 - 官网不用 CDN/外链资源；建表写在 `ComateHUD/db/migrations/NNN_*.json`
 - BaaS 请求必须带 `X-Project-Id: 3171466180955374`（官网项目 ≠ 根项目 `3599569812562023`）
 - BaaS 表**全表要求登录**（无 Cookie 一律 `401 未登录或登录已过期`）：客户端上报依赖 keychain 的 `wps_sid`，读不到就没有任何上报通道，只能跳过
+- 建表时的 access-pattern 默认 `default_role: member` = 只有**项目成员**能读写；要让任意登录用户能读写，用 `define_table_roles` 把 `default_role` 改成 `user`（`access` 字段只在建表时生效）
+- 只读核对权限用 RBAC 查询接口（`POST /api/manage/v1/db/auth`）：`get_table_access` / `get_user_roles` / `check`。注意 `check` 不模拟 `default_role`，对无显式角色的 uid 恒返回 false，不能用来验证非成员；`get_user_roles` 有滞后（会返回上一次变更前的状态）
+- `set_field_permission` 的 `fields` 必须是**逗号分隔字符串**；传数组会被静默存成 `[""]`，等于把该角色所有字段都藏掉
+- `define_table_roles` 会把 `default_role` materialize 到**已有用户**身上（owner 也会被挂上），而平台的 FLS 是「受限优先」→ 改完必须 `remove_role` 把 owner 从 `user` 摘掉，否则 owner 的 `user_name` / `device_id` 也被藏（见 migration 005）
 - 活跃上报取不到用户身份时退化为**设备维度 uid**（`anon-<设备指纹前 20 位>`，昵称留空），不再整条跳过；401/403 退避 6 小时再试
 - 官网「应用统计」：KPI / 趋势 / 版本分布对访客公开，**今日明细（含用户名 + 设备标识）仅 owner**；owner 判定优先认 `window.__APP_STUDIO_WM__.uid`，`localStorage` 名字白名单只是本地开发回退
 - keychain 读取要 fork `security`，只能在后台队列调用
