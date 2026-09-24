@@ -49,6 +49,26 @@ else
 fi
 echo ""
 
+# --- Step 2.5: 计算 DMG 实际体积（官网体积的唯一真值来源）---
+echo "==> Step 2.5: 计算安装包体积"
+SIZE_STR="-"
+if [[ -f "$DMG_DST" ]]; then
+  DMG_BYTES=$(stat -f%z "$DMG_DST" 2>/dev/null || stat -c%s "$DMG_DST" 2>/dev/null || echo 0)
+  if [[ "$DMG_BYTES" =~ ^[0-9]+$ && "$DMG_BYTES" -gt 0 ]]; then
+    SIZE_STR=$(awk -v b="$DMG_BYTES" 'BEGIN{
+      if (b >= 1048576)   printf "%.1f MB", b/1048576;
+      else if (b >= 1024) printf "%.0f KB", b/1024;
+      else                printf "%d B", b;
+    }')
+    echo "✅ 安装包体积: $SIZE_STR ($DMG_BYTES bytes) -> versions.json"
+  else
+    echo "⚠ 无法读取 DMG 字节数，size 保持 '-'（官网将隐藏体积行，不写假数据）"
+  fi
+else
+  echo "⚠ 未找到 DMG，size 保持 '-'（官网将隐藏体积行，不写假数据）"
+fi
+echo ""
+
 # --- Step 3: 更新 versions.json ---
 echo "==> Step 3: 更新版本清单"
 cd "$HUD_DIR"
@@ -58,29 +78,32 @@ node -e "
 const fs = require('fs');
 const data = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
 
-// 检查版本是否已存在
-if (data.versions.some(v => v.version === '${VERSION}')) {
-  console.log('⚠ 版本 ${VERSION} 已存在于 versions.json，跳过添加');
-  process.exit(0);
+// 版本已存在时：只回填 size（幂等重跑，不新增条目）
+const idx = data.versions.findIndex(v => v.version === '${VERSION}');
+if (idx >= 0) {
+  data.versions[idx].size = '${SIZE_STR}';
+  console.log('✅ 已回填 v${VERSION} size -> ${SIZE_STR}（未新增条目）');
+} else {
+  // 新增新版本到最前面（size 取 Step 2.5 实测值，不再写死 '-'）
+  data.versions.unshift({
+    version: '${VERSION}',
+    build: ${BUILD_NUM},
+    date: new Date().toISOString().split('T')[0],
+    platform: 'macOS',
+    size: '${SIZE_STR}',
+    download: 'ComateHUD-${VERSION}.dmg',
+    minOS: '12.0',
+    changelog: [
+      { type: 'new', text: '待填写更新内容' }
+    ]
+  });
+  console.log('✅ versions.json 已更新: 新增 v${VERSION}（size ${SIZE_STR}）');
 }
 
-// 添加新版本到最前面
-data.versions.unshift({
-  version: '${VERSION}',
-  build: ${BUILD_NUM},
-  date: new Date().toISOString().split('T')[0],
-  download: 'ComateHUD-${VERSION}.dmg',
-  size: '-',
-  minOS: '12.0',
-  changelog: [
-    { type: 'new', text: '待填写更新内容' }
-  ]
-});
-
-data.latest = '${VERSION}';
+// latest 始终取列表首项，避免重跑旧版本时把 latest 回退
+data.latest = data.versions[0].version;
 
 fs.writeFileSync('versions.json', JSON.stringify(data, null, 2) + '\n');
-console.log('✅ versions.json 已更新: latest -> v${VERSION}');
 console.log('⚠ 请编辑 versions.json 填写本次更新的具体 changelog');
 "
 echo ""

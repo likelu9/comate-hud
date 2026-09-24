@@ -94,8 +94,8 @@
     .dl-help-trigger:hover, .dl-help.is-open .dl-help-trigger { background: rgba(0,212,170,0.08); border-color: rgba(0,212,170,0.35); color: var(--accent); }
     .dl-help-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .dl-help-label { display: none; }
-    .dl-help-pop { position: absolute; top: calc(100% + 14px); left: 50%; transform: translate(-50%, -6px); width: min(440px, calc(100vw - 48px)); padding: 18px 20px 20px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 18px 48px rgba(0,0,0,0.6); text-align: left; font-size: 13px; line-height: 1.75; color: var(--text-secondary); opacity: 0; visibility: hidden; pointer-events: none; z-index: 40; user-select: text; -webkit-user-select: text; transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.22,1,0.36,1), visibility 0s linear 0.18s; }
-    .dl-help-pop::before { content: ''; position: absolute; top: -5px; left: 50%; margin-left: -5px; width: 10px; height: 10px; background: var(--bg-card); border-left: 1px solid rgba(255,255,255,0.1); border-top: 1px solid rgba(255,255,255,0.1); transform: rotate(45deg); }
+    .dl-help-pop { position: absolute; bottom: calc(100% + 14px); left: 50%; transform: translate(-50%, 6px); width: min(440px, calc(100vw - 48px)); max-height: calc(100vh - 40px); overflow-y: auto; padding: 18px 20px 20px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 18px 48px rgba(0,0,0,0.6); text-align: left; font-size: 13px; line-height: 1.75; color: var(--text-secondary); opacity: 0; visibility: hidden; pointer-events: none; z-index: 40; user-select: text; -webkit-user-select: text; transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.22,1,0.36,1), visibility 0s linear 0.18s; }
+    .dl-help-pop::before { content: ''; position: absolute; bottom: -5px; left: 50%; margin-left: -5px; width: 10px; height: 10px; background: var(--bg-card); border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); transform: rotate(45deg); }
     .dl-help:hover .dl-help-pop,
     .dl-help:focus-within .dl-help-pop,
     .dl-help.is-open .dl-help-pop { opacity: 1; visibility: visible; pointer-events: auto; transform: translate(-50%, 0); transition-delay: 0s; }
@@ -382,7 +382,7 @@
       .dl-help-trigger { width: auto; height: 44px; padding: 0 14px; }
       .dl-help-label { display: inline; }
       .dl-help { display: contents; }
-      .dl-help-pop { position: static; order: 9; flex: 1 1 100%; width: 100%; max-width: none; margin-top: 2px; transform: none; opacity: 1; visibility: visible; pointer-events: auto; display: none; }
+      .dl-help-pop { position: static; order: 9; flex: 1 1 100%; width: 100%; max-width: none; max-height: none; overflow-y: visible; margin-top: 2px; transform: none; opacity: 1; visibility: visible; pointer-events: auto; display: none; }
       .dl-help-pop::before { display: none; }
       .dl-help:focus-within .dl-help-pop { display: none; }
       .dl-help.is-open .dl-help-pop { display: block; }
@@ -415,7 +415,7 @@
     <div class="dl-block" id="download">
       <div class="dl-head">
         <span class="dl-app">Comate HUD</span>
-        <span class="dl-ver" id="dl-version" hidden>v1.0.0</span>
+        <span class="dl-ver" id="dl-version" hidden></span>
         <span class="dl-date" id="dl-date" hidden></span>
       </div>
       <div class="hero-actions dl-actions">
@@ -450,7 +450,7 @@
       <div class="hero-tags dl-tags">
         <span class="dl-tag" id="dl-size" hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5l9 4.5 9-4.5M12 12v9"/></svg>
-          <span id="dl-size-text">1.8 MB</span> DMG
+          <span id="dl-size-text"></span> DMG
         </span>
         <span class="dl-tag">
           <svg class="solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.18-.87 1.03-1.9 1.63-2.86 1.55-.13-.98.35-2.06 1.16-3.02.83-.99 2.1-1.65 2.95-1.71zM19.7 17.1c-.5 1.15-.74 1.66-1.38 2.67-.9 1.42-2.16 3.19-3.72 3.2-1.39.01-1.75-.9-3.64-.89-1.89.01-2.29.91-3.68.9-1.56-.01-2.75-1.61-3.64-3.02-2.5-3.94-2.76-8.56-1.22-11.02 1.1-1.75 2.83-2.78 4.46-2.78 1.66 0 2.7.91 4.07.91 1.33 0 2.14-.91 4.06-.91 1.45 0 2.99.79 4.08 2.16-3.59 1.97-3 7.09.61 8.78z"/></svg>
@@ -521,7 +521,7 @@
               <div class="hud-row">
                 <i class="hud-dot"></i>
                 <div class="hud-main">
-                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M2.5 8V17.8A2.2 2.2 0 0 0 4.7 20H19.3A2.2 2.2 0 0 0 21.5 17.8V9.6A2.2 2.2 0 0 0 19.3 7.4H12.4C11.8 7.4 11.2 7.2 10.8 6.8L9.6 5.6C9.2 5.2 8.6 5 8 5H4.7A2.2 2.2 0 0 0 2.5 7.2Z"/></svg><span>生成 v1.4.0 发布说明</span></div>
+                  <div class="hud-title"><svg class="hud-src" viewBox="0 0 24 24"><path d="M2.5 8V17.8A2.2 2.2 0 0 0 4.7 20H19.3A2.2 2.2 0 0 0 21.5 17.8V9.6A2.2 2.2 0 0 0 19.3 7.4H12.4C11.8 7.4 11.2 7.2 10.8 6.8L9.6 5.6C9.2 5.2 8.6 5 8 5H4.7A2.2 2.2 0 0 0 2.5 7.2Z"/></svg><span>生成发布说明</span></div>
                   <div class="hud-meta"><span class="hud-status" style="color:#8E8E93">空闲</span><span class="hud-sub">—</span><span class="hud-sub">1 天前</span></div>
                 </div>
                 <svg class="hud-arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8.5 7H17v8.5"/></svg>
