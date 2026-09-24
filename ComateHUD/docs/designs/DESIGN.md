@@ -1342,8 +1342,43 @@ KPI 的 4 个 label（`今日活跃` / `近 7 日活跃` / `近 30 日活跃` / 
 .appstats-share-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; padding: 12px 24px; font-family: inherit; font-size: 14px; font-weight: 600; color: #06140f; background: var(--accent); border: 1px solid var(--accent); border-radius: 999px; cursor: pointer; transition: transform 0.15s, box-shadow 0.2s, background 0.2s, color 0.2s; }
 .appstats-share-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
 .appstats-share-btn svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.appstats-share-btn.is-copied { color: var(--accent); background: transparent; box-shadow: none; }
 .appstats-share-url { margin-top: 14px; font-size: 12px; color: var(--text-dim); word-break: break-all; }
 .appstats-share-url[hidden] { display: none; }
 ```
 移动端（`@media (max-width:768px)`）：`.appstats-share { margin-top: 40px; }`。
+
+> 1.5.1 起：`.is-copied` 已删除——复制反馈改由页面级轻提示（`.toast`）承担，见 §11。
+
+---
+
+## 11. 1.5.1 修订：分享改「复制 + 轻提示」· 下载区 GitHub 备注
+
+### 11.1 一键分享：只复制，不调系统面板
+
+旧实现按能力分流（`navigator.share` 可用则唤起系统分享面板，否则复制）。1.5.1 起**统一为复制**：
+
+- 点击即把「口语描述 + 官网地址」写入剪贴板，不再调用 `navigator.share`（去掉 `canShare` 分支与 `AbortError` 兜底）。
+- 按钮文案**静态**为「一键分享」，不再随能力变化，也不再在点击后改写文案。
+- 剪贴板内容：`给你安利个好东西——Comate HUD，把 WPS Comate 的任务状态钉在 macOS 刘海区，不用打开主窗口。 <官网地址>`（描述与地址之间一个空格）。
+- 官网地址 = `location.href` 去掉 `#hash` 与 `?query`，**只出现一次**（旧实现会重复一次）。
+- 复制失败时（非安全上下文 / 剪贴板被拒）才把 `.appstats-share-url` 露出来供手选。
+
+### 11.2 页面级轻提示 `.toast`
+
+```css
+.toast { position: fixed; left: 50%; bottom: 34px; z-index: 90; max-width: calc(100vw - 40px); padding: 12px 20px; font-size: 14px; font-weight: 500; color: var(--text); background: var(--bg-card); border: 1px solid rgba(0,212,170,0.35); border-radius: 999px; box-shadow: 0 14px 36px rgba(0,0,0,0.55); opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-50%, 14px); transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22,1,0.36,1), visibility 0s linear 0.22s; }
+.toast.is-on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition-delay: 0s; }
+```
+
+- 单例元素 `#toast`，放在 `</footer>` 之后、首个 `<script>` 之前；`role="status"` + `aria-live="polite"`，屏幕阅读器可播报。
+- `showToast(msg)`：写文案 → 加 `.is-on` → 2600ms 后移除；**重复调用先 `clearTimeout` 再重排**，连点不会叠加或提前消失。
+- 文案：成功 `已复制，粘贴给同事就能分享`；失败 `复制失败，手动复制下方链接`。
+- `pointer-events: none`，不拦截点击；`max-width: calc(100vw - 40px)` 保证 390px 下不溢出。
+- 已知取舍：`bottom: 34px` 的常规定位会短暂压住视口底部内容——若此刻刚点的分享按钮正好贴近视口底边，会与之重叠约 1 秒，随后自动淡出。
+
+### 11.3 下载区 GitHub 备注
+
+- 第三列（GitHub）按钮下新增 `<span class="dl-gh-note">开源免费</span>`，与 Mac 列「安装说明」、Win 列「敬请期待」构成同一行三列备注。
+- 三列备注与各自按钮**水平居中误差 0px**、均在按钮下方 10px、统一 12px `var(--text-dim)`。
+- 「开源免费」的准确性已核实：`github.com/likelu9/comate-hud` 匿名可访问（HTTP 200），确为公开仓库。
+- 注：仓库当前**没有 LICENSE 文件**；若要严格主张「开源」，建议补一个 OSI 许可（如 MIT）。

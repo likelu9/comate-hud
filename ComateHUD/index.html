@@ -82,6 +82,10 @@
     /* 每个下载按钮与其下方文案组成一列，文案与按钮左右居中对齐 */
     .dl-cell { display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .dl-win-note { font-size: 12px; line-height: 1.2; color: var(--text-dim); white-space: nowrap; }
+    .dl-gh-note { font-size: 12px; line-height: 1.2; color: var(--text-dim); text-align: center; }
+    /* 轻提示（分享复制反馈） */
+    .toast { position: fixed; left: 50%; bottom: 34px; z-index: 90; max-width: calc(100vw - 40px); padding: 12px 20px; font-size: 14px; font-weight: 500; color: var(--text); background: var(--bg-card); border: 1px solid rgba(0,212,170,0.35); border-radius: 999px; box-shadow: 0 14px 36px rgba(0,0,0,0.55); opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-50%, 14px); transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22,1,0.36,1), visibility 0s linear 0.22s; }
+    .toast.is-on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition-delay: 0s; }
     .dl-actions .btn-download { white-space: nowrap; }
     .dl-actions .btn-download svg { flex: none; }
     .dl-tags { margin-top: 16px; gap: 16px; }
@@ -365,7 +369,6 @@
     .appstats-share-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; padding: 12px 24px; font-family: inherit; font-size: 14px; font-weight: 600; color: #06140f; background: var(--accent); border: 1px solid var(--accent); border-radius: 999px; cursor: pointer; transition: transform 0.15s, box-shadow 0.2s, background 0.2s, color 0.2s; }
     .appstats-share-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
     .appstats-share-btn svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-    .appstats-share-btn.is-copied { color: var(--accent); background: transparent; box-shadow: none; }
     .appstats-share-url { margin-top: 14px; font-size: 12px; color: var(--text-dim); word-break: break-all; }
     .appstats-share-url[hidden] { display: none; }
     .stats-scroll { overflow-x: auto; }
@@ -488,6 +491,7 @@
                     <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
                     <span>GitHub</span>
                   </a>
+          <span class="dl-gh-note">开源免费</span>
         </div>
       </div>
       <div class="hero-tags dl-tags">
@@ -736,6 +740,7 @@
     <p style="margin-top:12px;"><a href="#download">下载</a> · <a href="#wishwall">许愿反馈</a> · <a href="https://github.com/likelu9/comate-hud" target="_blank" rel="noopener">GitHub</a></p>
   </div>
 </footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 window.addEventListener('load',function(){setTimeout(function(){document.getElementById('boot-cover').classList.add('hide')},800)});
 (function(){var o=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting)x.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});document.querySelectorAll('.reveal').forEach(function(el){o.observe(el)})})();
@@ -1260,49 +1265,29 @@ function copyText(t) {
   }
 }
 
-// 一键分享：能调系统分享面板就调，调不了就复制链接
+// 轻提示：贴在页面底部，告知复制结果
+var toastTimer = null;
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('is-on');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { el.classList.remove('is-on'); }, 2600);
+}
+
+// 一键分享：把「口语描述 + 官网地址」丢进剪贴板，再用轻提示告诉用户可以发出去了
 function initStatsShare() {
   var btn = actEl('appstats-share-btn');
   if (!btn) return;
-  var label = actEl('appstats-share-btn-text');
   var urlEl = actEl('appstats-share-url');
-  var canShare = typeof navigator.share === 'function';
-  var timer = null;
-  if (label) label.textContent = canShare ? '一键分享' : '复制链接分享';
-
-  function pageUrl() { return location.href.split('#')[0].split('?')[0]; }
-
-  function reset() {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(function () {
-      if (label) label.textContent = canShare ? '一键分享' : '复制链接分享';
-      btn.classList.remove('is-copied');
-      if (urlEl) urlEl.setAttribute('hidden', '');
-    }, 2800);
-  }
-
-  function doCopy() {
-    var url = pageUrl();
-    var text = 'Comate HUD：把 WPS Comate 的任务状态钉在 macOS 刘海区，不用打开主窗口。';
-    copyText(text + ' ' + url).then(function (ok) {
-      btn.classList.toggle('is-copied', ok);
-      if (label) label.textContent = ok ? '已复制，去发给同事' : '复制失败，手动复制下方链接';
+  btn.addEventListener('click', function () {
+    var url = location.href.split('#')[0].split('?')[0];
+    var text = '给你安利个好东西——Comate HUD，把 WPS Comate 的任务状态钉在 macOS 刘海区，不用打开主窗口。 ' + url;
+    copyText(text).then(function (ok) {
       // 只在复制失败时把链接摆出来，让用户能手选
       if (urlEl) { urlEl.textContent = url; if (!ok) urlEl.removeAttribute('hidden'); }
-      reset();
-    });
-  }
-
-  btn.addEventListener('click', function () {
-    if (!canShare) { doCopy(); return; }
-    navigator.share({
-      title: 'Comate HUD',
-      text: 'Comate HUD：把 WPS Comate 的任务状态钉在 macOS 刘海区，不用打开主窗口。',
-      url: pageUrl()
-    }).catch(function (err) {
-      // 用户主动取消不算失败，不打扰；其余情况退回复制
-      if (err && (err.name === 'AbortError' || err.name === 'NotAllowedError')) return;
-      doCopy();
+      showToast(ok ? '已复制，粘贴给同事就能分享' : '复制失败，手动复制下方链接');
     });
   });
 }
