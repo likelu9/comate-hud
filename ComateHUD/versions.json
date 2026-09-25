@@ -1,6 +1,21 @@
 {
-  "latest": "1.4.2",
+  "latest": "1.4.3",
   "versions": [
+    {
+      "version": "1.4.3",
+      "build": 11,
+      "date": "2026-09-25",
+      "platform": "macOS",
+      "size": "1.9 MB",
+      "download": "ComateHUD-1.4.3.dmg",
+      "minOS": "12.0",
+      "changelog": [
+        {
+          "type": "opt",
+          "text": "更新红点改为「点一次即已读」：菜单项也亮红点，点过后同一版本不再提示，出现更新版本时自动恢复"
+        }
+      ]
+    },
     {
       "version": "1.4.2",
       "build": 10,
