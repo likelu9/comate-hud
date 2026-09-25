@@ -189,7 +189,7 @@ struct HUDUsageFooter: View {
                     .overlay(alignment: .topTrailing) {
                         if store.showsUpdateDot {
                             Circle()
-                                .fill(Color(hex: "#FF4D4F"))
+                                .fill(UpdateDot.color)
                                 .frame(width: 5, height: 5)
                                 .overlay(Circle().stroke(Color.black.opacity(0.4), lineWidth: 0.5))
                                 .offset(x: 3, y: -3)
@@ -236,6 +236,14 @@ struct HUDUsageFooter: View {
 }
 
 // MARK: - 关于弹窗内容
+
+/// 更新红点配色（#FF4D4F）。设置齿轮走 SwiftUI、菜单项勾选列走 AppKit，
+/// 两处共用同一色值 —— 分开写迟早改一处漏一处，而 5px 的红点色差肉眼几乎发现不了
+private enum UpdateDot {
+    static let hex = "#FF4D4F"
+    static let color = Color(hex: hex)
+    static let nsColor = NSColor(color)
+}
 
 /// 「关于」弹窗的设计常量
 private enum AboutDesign {
@@ -580,14 +588,14 @@ final class HUDContextMenu: NSObject {
         return menu
     }
 
-    /// 菜单项里的红点（#FF4D4F，与设置按钮红点同色）。
+    /// 菜单项里的红点（与设置按钮同色，见 UpdateDot）。
     /// 用 drawingHandler 而不是 lockFocus：前者按屏幕缩放绘制，Retina 下边缘不糊
     private static let updateDotImage: NSImage = {
         let side: CGFloat = 14
         let dot: CGFloat = 7
         return NSImage(size: NSSize(width: side, height: side), flipped: false) { _ in
             let rect = NSRect(x: (side - dot) / 2, y: (side - dot) / 2, width: dot, height: dot)
-            NSColor(srgbRed: 1, green: 77.0 / 255, blue: 79.0 / 255, alpha: 1).setFill()
+            UpdateDot.nsColor.setFill()
             NSBezierPath(ovalIn: rect).fill()
             return true
         }

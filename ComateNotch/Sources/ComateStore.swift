@@ -14,7 +14,8 @@ final class ComateStore: ObservableObject {
     @Published private(set) var isOpeningMessageCenter: Bool = false
     /// 检测到的新版本号（nil = 无更新或尚未检测成功）。驱动设置按钮红点与菜单文案
     @Published private(set) var availableUpdate: String?
-    /// 本次会话是否已完成过一次更新检查：菜单据此区分「检查更新」与「已是最新版本」
+    /// 本次会话是否成功查到过 feed：菜单据此区分「检查更新」与「已是最新版本」。
+    /// 只在解析出 release 时置位 —— 失败（断网 / 限流）不置位，否则会把失败谎报成「已是最新版本」
     @Published private(set) var updateChecked: Bool = false
     /// 新版本发布页（GitHub Release，公开可访问）；没有时菜单退回官网
     private(set) var availableUpdateURL: URL?
@@ -410,9 +411,10 @@ final class ComateStore: ObservableObject {
         UserDefaults.standard.set(now, forKey: ComateStore.lastUpdateCheckKey)
         UpdateChecker.shared.fetchLatest { [weak self] release in
             guard let self = self else { return }
+            // 拿不到 feed 就什么都不改：菜单保持「检查更新」，下次可再查
+            guard let release else { return }
             self.updateChecked = true
-            guard let release,
-                  HUDVersion.isNewer(release.version, than: UpdateChecker.localVersion) else { return }
+            guard HUDVersion.isNewer(release.version, than: UpdateChecker.localVersion) else { return }
             self.availableUpdate = release.version
             self.availableUpdateURL = release.url
         }
