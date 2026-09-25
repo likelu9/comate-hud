@@ -29,7 +29,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) · 官网视觉 See [ComateHUD/docs/desig
 
 ## Conventions
 - 客户端新增 Swift 文件必须加进 `ComateNotch/build.sh` 的 `SOURCES` 数组，否则不会被编译（`scripts/check-docs.sh` 会拦截漏登记）
-- 根 `comate.json`：`meta.projectId` = 官网项目 `3171466180955374`、`zip` = `./ComateHUD`，目的是让 Comate 右上角「发布」按钮直接更新官网正式站。平台是否认这个 projectId 待实测：不认则只会部署到根项目（无副作用），详见本文件末的验证路径
+- 根 `comate.json`：`zip` = `./ComateHUD`（平台要求 frontend 目录含 `index.html`）；`meta.projectId` **保持工作区项目 `3599569812562023`** —— 曾试过指向官网项目，平台确实接受了，但有副作用，见本文件末的实测结论
 - 版本号只改 `ComateNotch/Info.plist`（`CFBundleShortVersionString` / `CFBundleVersion`）；改完必须同步 `ComateNotch/TODO.md` 顶部版本声明与 `ComateHUD/versions.json` 的 `latest` / `versions[0]`，否则 `build.sh` 会在开头校验失败
 - **每次发版都必须升版本号，但可以选择升哪一段**（两条轨道，收尾时主动问用户并给建议，不自行决定）：
   - 升**营销版本**（`1.4.2` → `1.4.3`）：用户可感知的新功能 / 行为变更 → **会触发更新检查**（菜单项与设置齿轮亮红点）
@@ -61,12 +61,14 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) · 官网视觉 See [ComateHUD/docs/desig
 - 不要在官网写死 DMG 体积/版本号（一律由 `versions.json` 驱动）
 - 不要放宽 `003_create_app_activity.json` 的 `delete: deny`（owner 也删不掉，刻意为之）
 
-## 待验证：右上角「发布」按钮 → 官网正式站
-根 `comate.json` 已把 `meta.projectId` 指向官网项目、`zip` 指向 `./ComateHUD`，目的是让 Comate 右上角「发布」按钮直接更新官网正式站（顺带就能用应用开发能力看该项目的运营数据与数据库）。**平台是否认这个 projectId 尚未实测**，验证方法：
+## 实测结论：右上角「发布」按钮 → 官网正式站（2026-09-25）
+把根 `comate.json` 的 `meta.projectId` 指向官网项目 `3171466180955374` 后实测：**平台认这个 projectId**——点发布确实落到官网项目（`code versions --project-id 3171466180955374` 出现新版本 `1.0.0`，`commit_id` = 当时的提交 `8281d10`；线上页面内容完好，99919 字符）。
 
-1. 发布前记基线：`code status --project-id <pid>` 两个项目各跑一次（2026-09-25 基线：官网 `3171466180955374` = 20 个版本 / `active`；根项目 `3599569812562023` = 20 个版本 / `deploy_status: null`）
-2. 点右上角「发布」：会先跑 `command.build`（客户端构建，约 1 分钟，属预期），再 zip `./ComateHUD`、上传部署
-3. 再查两个项目的 `versions_count` / `deploy_status`：
-   - **官网项目 +1** → 平台认 `projectId`，按钮即官网发布入口（预期效果达成）
-   - **根项目 `deploy_status` 变 active** → 平台用工作区项目覆盖了 `projectId`，此路不通：改走「按钮只当同一份页面的第二部署」或「官网整体迁到根项目」
-4. 打开对应 URL 看页面底部版本记录行是否为 `v1.4.3 · build 12`（`check-site.js` 守的就是这行），并滚到「应用统计」区：出现 KPI 数字说明它读到了官网项目的数据
+但有三个问题，故**已回滚** `projectId` 到工作区项目 `3599569812562023`：
+1. **官网项目被改名**：`Comate HUD 应用官网` → `Comate任务进度小组件`（工作区项目名），需用 `code update` 改回
+2. **版本号按工作区计数器记**：官网项目里凭空多了一条 `1.0.0`（比 `1.4.23` 小），与 `release.sh` 的站内版本号体系打架
+3. **达不到「在 Comate 仪表盘看官网数据」的目的**：仪表盘绑定的是**工作区项目** `3599569812562023`（该项目 `code versions` 为 `total: 0`、`deploy_status: null`），而页面第 896 行写死 `PROJECT_ID = '3171466180955374'`，数据都在官网项目 → 工作区仪表盘永远看不到
+
+要真正实现「一个入口既发布又能看数据」，只能把官网整体迁进工作区项目：改 `PROJECT_ID` + 在工作区项目重建 7 个迁移（含角色 / FLS 那堆坑）+ 迁移历史数据。
+
+只读查运营数据不需要仪表盘：`code stats --project-id 3171466180955374`（2026-09-25 实测 `total_pv=255 / total_uv=21`）。
