@@ -73,6 +73,7 @@
     .release-line[hidden] { display: none; }
     .release-line:hover { color: var(--text-secondary); }
     .release-line .rl-ver { font-size: 14px; font-weight: 700; color: var(--text); }
+    .release-line .rl-build { font-weight: 600; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
     .release-line .rl-sep { color: rgba(255,255,255,0.22); }
     .release-line .rl-date { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
     .release-line .rl-more { display: inline-flex; align-items: center; gap: 3px; margin-left: 2px; }
@@ -509,6 +510,8 @@
       <a class="release-line" id="release-line" href="#versions" hidden>
         <span class="rl-label">最新版本</span>
         <span class="rl-ver" id="rl-ver"></span>
+        <span class="rl-sep" id="rl-sep-build" hidden>·</span>
+        <span class="rl-build" id="rl-build" hidden></span>
         <span class="rl-sep">·</span>
         <span class="rl-date" id="rl-date"></span>
         <span class="rl-more">查看更新日志<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
@@ -752,11 +755,16 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
     var dlText = document.getElementById('dl-text');
     var dlSize = document.getElementById('dl-size');
     var dlSizeText = document.getElementById('dl-size-text');
-    // 下载区下方的版本记录：版本号与更新日期同行，点击锚点跳到更新日志
+    // 下载区下方的版本记录：版本号 + build + 更新日期同行，点击锚点跳到更新日志
     var rl = document.getElementById('release-line');
     if(rl){
       var rlVer = document.getElementById('rl-ver'), rlDate = document.getElementById('rl-date');
+      var rlBuild = document.getElementById('rl-build'), rlSepBuild = document.getElementById('rl-sep-build');
       if(rlVer) rlVer.textContent = 'v' + v.version;
+      // build 号：官网在售的是哪个构建要能一眼确认（DMG 文件名刻意不带 build，跨 build 保持链接稳定）
+      var hasBuild = v.build != null && String(v.build).trim() !== '';
+      if(rlBuild){ rlBuild.textContent = hasBuild ? 'build ' + v.build : ''; rlBuild.hidden = !hasBuild; }
+      if(rlSepBuild) rlSepBuild.hidden = !hasBuild;
       if(rlDate) rlDate.textContent = v.date || '';
       rl.hidden = false;
     }
