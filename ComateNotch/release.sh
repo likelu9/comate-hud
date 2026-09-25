@@ -131,6 +131,18 @@ console.log('⚠ 请编辑 versions.json 填写本次更新的具体 changelog')
 "
 echo ""
 
+# --- Step 3.5: 官网渲染自检（发布前必过）---
+# versions.json 刚被 Step 3 改过，官网靠它渲染；这里用真实脚本跑一遍，拦住
+# 「数据改完官网渲染不出来」（例如新条目漏填 changelog）这类要等下次发官网才暴露的问题。
+echo "==> Step 3.5: 官网渲染自检"
+if ! node "$HUD_DIR/scripts/check-site.js"; then
+  echo ""
+  echo "❌ 官网渲染自检未通过 —— 已中止发布。"
+  echo "   versions.json 刚被 Step 3 改过，官网此刻渲染不出来；先修 index.html / versions.json 再重跑。"
+  exit 1
+fi
+echo ""
+
 # --- Step 4: 部署到 Comate ---
 echo "==> Step 4: 部署前端页面"
 bash /Users/likelu/.wpscomate/agent/skills/official/comate-cli/scripts/comate.sh code publish \

@@ -9,7 +9,7 @@
 - 构建客户端: `cd ComateNotch && ./build.sh` → `build/ComateHUD.app` + `dist/ComateHUD-<ver>.dmg`（构建开头会跑 `scripts/check-docs.sh`）
 - 纯逻辑测试: `cd ComateNotch && ./test.sh`（编译 Sources（除 UI 入口）+ `Tests/main.swift` 跑断言，不启动 UI、不写用户目录、不发网络请求）
 - 文档 / 版本校验: `bash ComateNotch/scripts/check-docs.sh`（版本号同源 / TODO.md 声明 / SOURCES 完整 / DMG 存在）
-- 发版: `cd ComateNotch && ./release.sh <version> <build>`（构建 + 复制 DMG + **实测 DMG 体积写入 versions.json** + 部署官网）
+- 发版: `cd ComateNotch && ./release.sh <version> <build>`（构建 + 复制 DMG + **实测 DMG 体积写入 versions.json** + **官网渲染自检** + 部署官网）
   - 体积唯一来源 = release.sh Step 2.5 的 `stat` 实测值（≥1MiB 显示 `X.Y MB`）；重跑同一版本号只回填 size，不新增条目
 - 官网本地预览: `cd ComateHUD && python3 -m http.server 8766`
 - 官网渲染自检: `node ComateHUD/scripts/check-site.js`（把 index.html 里**真实的**版本渲染脚本放到 DOM 桩上跑，断言渲染值与 `versions.json` 一致）
@@ -20,7 +20,7 @@
 - `cd ComateNotch && ./test.sh` 必须 exit 0（纯逻辑断言全绿）
 - `bash ComateNotch/scripts/check-docs.sh` 必须 exit 0（build.sh 已内置，单独改文档后可单跑）
 - 改官网后本地起 http.server 打开，控制台无 JS 报错（BaaS 接口本地 **401** 属预期：全表要求登录）
-- `node ComateHUD/scripts/check-site.js` 必须 exit 0（**发布官网前必跑**：脚本引用的 id 都存在 / 渲染值与 `versions.json` 一致 / 缺字段时不回落硬编码）
+- `node ComateHUD/scripts/check-site.js` 必须 exit 0（release.sh Step 3.5 已内置，单独改官网后可单跑：脚本引用的 id 都存在 / 渲染值与 `versions.json` 一致 / 缺字段时不回落硬编码）
 - 改上报/统计链路时，用 `defaults read com.wpscomate.hud | grep activity` 检查日桶与 pending
 - 改动过的文件都要重读确认
 
