@@ -3,7 +3,7 @@
 #
 # 四项检查全部可机器判定、无主观判断，因此零误报：
 #   1. Info.plist（版本号唯一真源）与官网 versions.json 对外声明一致
-#   2. ComateNotch/TODO.md 顶部声明的版本号与 Info.plist 一致
+#   2. ComateNotch/TODO.md 顶部声明的版本号 / build 号与 Info.plist 一致
 #   3. Sources/*.swift 全部登记进 build.sh 的 SOURCES（漏登记 = 文件不参与编译）
 #   4. versions.json 声明的 DMG 确实存在
 #
@@ -61,13 +61,15 @@ else:
 # 2. TODO.md 顶部版本声明
 with open(os.path.join(notch, "TODO.md"), encoding="utf-8") as f:
     todo = f.read()
-m = re.search(r"\*\*版本\*\*:\s*v?([0-9][0-9.]*)", todo)
+m = re.search(r"\*\*版本\*\*:\s*v?([0-9][0-9.]*)(?:\s*\(build\s*([0-9]+)\))?", todo)
 if not m:
-    errors.append("TODO.md 顶部缺少「**版本**: vX.Y.Z」声明")
+    errors.append("TODO.md 顶部缺少「**版本**: vX.Y.Z (build N)」声明")
 elif m.group(1).rstrip(".") != app_ver:
     errors.append("TODO.md 声明版本 %s 与 Info.plist %s 不一致" % (m.group(1), app_ver))
+elif m.group(2) and int(m.group(2)) != app_build:
+    errors.append("TODO.md 声明的 build %s 与 Info.plist build %s 不一致" % (m.group(2), app_build))
 else:
-    ok("TODO.md 版本声明 == %s" % app_ver)
+    ok("TODO.md 版本声明 == %s (build %s)" % (app_ver, app_build))
 
 # 3. build.sh SOURCES 完整性
 with open(os.path.join(notch, "build.sh"), encoding="utf-8") as f:

@@ -28,11 +28,15 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) · 官网视觉 See [ComateHUD/docs/desig
 ## Conventions
 - 客户端新增 Swift 文件必须加进 `ComateNotch/build.sh` 的 `SOURCES` 数组，否则不会被编译（`scripts/check-docs.sh` 会拦截漏登记）
 - 版本号只改 `ComateNotch/Info.plist`（`CFBundleShortVersionString` / `CFBundleVersion`）；改完必须同步 `ComateNotch/TODO.md` 顶部版本声明与 `ComateHUD/versions.json` 的 `latest` / `versions[0]`，否则 `build.sh` 会在开头校验失败
-- **改动收尾必须跟用户确认版本号**：每次改动完成、发版之前，都要主动问一次「这次是否升版本号」，并按改动量给出建议等级 ——
-  - `patch`（1.4.2 → 1.4.3）：纯修 bug、文案、局部逻辑微调，用户感知不到新能力
-  - `minor`（1.4.2 → 1.5.0）：用户可感知的新功能或行为变更（新增入口、改变已有交互）
-  - `major`（2.0.0）：不兼容变更（配置格式、上报协议、数据结构）
-  - 不要自行升版本，也不要默认不升；用户未确认就保持原版本，并在收尾时明说「本次未升版本，线上仍是 X.Y.Z，该改动要等下次发版才送达用户」
+- **每次发版都必须升版本号，但可以选择升哪一段**（两条轨道，收尾时主动问用户并给建议，不自行决定）：
+  - 升**营销版本**（`1.4.2` → `1.4.3`）：用户可感知的新功能 / 行为变更 → **会触发更新检查**（菜单项与设置齿轮亮红点）
+  - 只升 **build 号**（`1.4.2 (10)` → `1.4.2 (11)`）：**静默发版**，产物换新但对外版本号不变 → **不触发更新检查、不亮红点**；适合纯修 bug / 文案 / 内部逻辑微调，用户下次主动开菜单才会发现变化
+  - `2.0.0`：不兼容变更（配置格式、上报协议、数据结构）
+  - 用户未确认就保持原版本，并在收尾时明说「本次未升版本，线上仍是 X.Y.Z，该改动要等下次发版才送达用户」
+- **静默发版（只升 build）的硬约束**：
+  - **GitHub Release 的 tag 必须复用同一个营销版本号**（如 `v1.4.2-11`），**绝不能**写成更高的营销版本 —— 客户端只比营销版本（`HUDVersion.segments` 遇第一个非数字/点即截断，`v1.4.2-11` → `[1,4,2]`），写成 `v1.4.3` 会让全体用户亮红点、却下载到仍是 1.4.2 的包，红点永远消不掉
+  - `versions.json` 里同版本号那条要**原地更新**（`release.sh` 自动回填 build / date / download，changelog 需人工追加本次内容），不新增条目，否则官网会出现两行同名版本；DMG 沿用 `ComateHUD-<营销版本>.dmg`，会覆盖上一个 build 的包、下载链接保持稳定
+  - build 号三处同步（Info.plist / TODO.md 顶部声明 / versions.json 首项），`check-docs.sh` 会拦截不一致
 - 新增可脱离界面验证的逻辑（判定规则、公式、解析）时，同步在 `ComateNotch/Tests/main.swift` 补断言，别只靠肉眼验证
 - 官网不用 CDN/外链资源；建表写在 `ComateHUD/db/migrations/NNN_*.json`
 - BaaS 请求必须带 `X-Project-Id: 3171466180955374`（官网项目 ≠ 根项目 `3599569812562023`）

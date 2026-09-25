@@ -13,6 +13,11 @@
 # 版本号有两个独立空间，别混用：
 #   <version>       客户端版本（Info.plist / DMG 名 / versions.json），跟 App 一起发
 #   [site_version]  官网站内版本（平台递增计数器，取 code status 的 latest_version +1），省略时用 <version>
+#
+# 两条发版轨道（详见 AGENTS.md）：
+#   升营销版本（1.4.2 -> 1.4.3）     客户端会亮红点提示更新
+#   只升 build 号（1.4.2 10 -> 11）  静默发版，不触发更新检查；GitHub tag 请用 v1.4.2-11，
+#                                   千万不要写成更高的营销版本号（会误触发全体红点）
 # ============================================================
 set -euo pipefail
 
@@ -84,11 +89,23 @@ node -e "
 const fs = require('fs');
 const data = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
 
-// 版本已存在时：只回填 size（幂等重跑，不新增条目）
+// 版本已存在时：原地更新（幂等重跑不新增条目）。
+// 只升 build 号 = 静默发版：build 必须一起回填，否则 check-docs 会因
+// Info.plist build 与 versions.json build 不一致而拦下 build.sh。
 const idx = data.versions.findIndex(v => v.version === '${VERSION}');
 if (idx >= 0) {
-  data.versions[idx].size = '${SIZE_STR}';
-  console.log('✅ 已回填 v${VERSION} size -> ${SIZE_STR}（未新增条目）');
+  const entry = data.versions[idx];
+  const prevBuild = typeof entry.build === 'number' ? entry.build : 0;
+  entry.size = '${SIZE_STR}';
+  entry.download = 'ComateHUD-${VERSION}.dmg';
+  if (${BUILD_NUM} > prevBuild) {
+    entry.build = ${BUILD_NUM};
+    entry.date = new Date().toISOString().split('T')[0];
+    console.log('✅ 静默发版：v${VERSION} build ' + prevBuild + ' -> ${BUILD_NUM}（营销版本不变 → 不触发更新检查红点）');
+    console.log('⚠ 记得往 v${VERSION} 那条的 changelog 追加本次改动，官网才看得到');
+  } else {
+    console.log('✅ 已回填 v${VERSION} size -> ${SIZE_STR}（build ${BUILD_NUM}，未新增条目）');
+  }
 } else {
   // 新增新版本到最前面（size 取 Step 2.5 实测值，不再写死 '-'）
   data.versions.unshift({
@@ -133,4 +150,5 @@ echo ""
 echo "后续操作:"
 echo "  1. 编辑 ComateHUD/versions.json 填写 changelog"
 echo "  2. 重新运行: bash $0 ${VERSION} ${BUILD_NUM} ${SITE_VERSION}"
+echo "  3. GitHub Release tag 用 v${VERSION}（静默发版用 v${VERSION}-${BUILD_NUM}）——不要写成更高的营销版本号，否则会误触发全体红点"
 echo "============================================"

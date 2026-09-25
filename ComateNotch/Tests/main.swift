@@ -45,6 +45,9 @@ check(HUDVersion.isNewer("1.4.1", than: "1.4"), "1.4.1 > 1.4")
 check(!HUDVersion.isNewer("v1.4.1-beta.1", than: "1.4.1"), "同号预发布不算更新")
 check(HUDVersion.isNewer("2.0.0", than: "1.99.99"), "主版本优先于次版本")
 check(!HUDVersion.isNewer("", than: "1.0"), "空版本号不误判为更新")
+check(!HUDVersion.isNewer("v1.4.2-11", than: "1.4.2"), "静默发版 tag（同营销版本 + build 后缀）不算更新 → 不亮红点")
+check(HUDVersion.isNewer("v1.4.2-11", than: "1.4.1"), "静默发版对更早版本的用户仍然提示更新")
+check(HUDVersion.isNewer("v1.4.3", than: "1.4.2"), "升营销版本则提示更新")
 
 // MARK: - releases.atom 解析
 
@@ -187,6 +190,8 @@ check(!UpdateChecker.shouldShowDot(available: "1.4.2", acknowledged: nil, local:
       "与本地同版本 → 不亮")
 check(!UpdateChecker.shouldShowDot(available: "v1.4.2", acknowledged: "1.4.2", local: localVersion),
       "带 v 前缀与已读版本视为同一版本")
+check(!UpdateChecker.shouldShowDot(available: "v1.4.2-11", acknowledged: nil, local: "1.4.2"),
+      "静默发版（只升 build）对同营销版本用户不亮红点")
 
 // MARK: - 汇总
 
