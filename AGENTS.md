@@ -34,7 +34,8 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) · 官网视觉 See [ComateHUD/docs/desig
   - `2.0.0`：不兼容变更（配置格式、上报协议、数据结构）
   - 用户未确认就保持原版本，并在收尾时明说「本次未升版本，线上仍是 X.Y.Z，该改动要等下次发版才送达用户」
 - **静默发版（只升 build）的硬约束**：
-  - **GitHub Release 的 tag 必须复用同一个营销版本号**（如 `v1.4.2-11`），**绝不能**写成更高的营销版本 —— 客户端只比营销版本（`HUDVersion.segments` 遇第一个非数字/点即截断，`v1.4.2-11` → `[1,4,2]`），写成 `v1.4.3` 会让全体用户亮红点、却下载到仍是 1.4.2 的包，红点永远消不掉
+  - **首选原地替换**：该营销版本若已有 GitHub Release，直接 `gh release upload <tag> <dmg> --clobber` 换掉产物 —— tag 不变、不新增 Release、不触发红点，也避免同一营销版本出现两个 Release
+  - 确需新建 tag 时：**必须复用同一个营销版本号**（如 `v1.4.2-11`），**绝不能**写成更高的营销版本 —— 客户端只比营销版本（`HUDVersion.segments` 遇第一个非数字/点即截断，`v1.4.2-11` → `[1,4,2]`），写成 `v1.4.3` 会让全体用户亮红点、却下载到仍是 1.4.2 的包，红点永远消不掉
   - `versions.json` 里同版本号那条要**原地更新**（`release.sh` 自动回填 build / date / download，changelog 需人工追加本次内容），不新增条目，否则官网会出现两行同名版本；DMG 沿用 `ComateHUD-<营销版本>.dmg`，会覆盖上一个 build 的包、下载链接保持稳定
   - build 号三处同步（Info.plist / TODO.md 顶部声明 / versions.json 首项），`check-docs.sh` 会拦截不一致
 - 新增可脱离界面验证的逻辑（判定规则、公式、解析）时，同步在 `ComateNotch/Tests/main.swift` 补断言，别只靠肉眼验证
