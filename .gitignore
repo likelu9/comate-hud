@@ -6,6 +6,8 @@ Thumbs.db
 ComateNotch/build/
 ComateNotch/dist/
 ComateHUD/ComateHUD-*.dmg
+# 平台封面截图：每次发布重截都会换一份，不入库（发布时由 comate.sh code thumbnail 单独上传）
+ComateHUD/thumbnail_*.png
 ComateHUD/.publish/
 dist/
 build/
