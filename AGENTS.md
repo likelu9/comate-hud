@@ -29,6 +29,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) · 官网视觉 See [ComateHUD/docs/desig
 
 ## Conventions
 - 客户端新增 Swift 文件必须加进 `ComateNotch/build.sh` 的 `SOURCES` 数组，否则不会被编译（`scripts/check-docs.sh` 会拦截漏登记）
+- 根 `comate.json`：`meta.projectId` = 官网项目 `3171466180955374`、`zip` = `./ComateHUD`，目的是让 Comate 右上角「发布」按钮直接更新官网正式站。平台是否认这个 projectId 待实测：不认则只会部署到根项目（无副作用），详见本文件末的验证路径
 - 版本号只改 `ComateNotch/Info.plist`（`CFBundleShortVersionString` / `CFBundleVersion`）；改完必须同步 `ComateNotch/TODO.md` 顶部版本声明与 `ComateHUD/versions.json` 的 `latest` / `versions[0]`，否则 `build.sh` 会在开头校验失败
 - **每次发版都必须升版本号，但可以选择升哪一段**（两条轨道，收尾时主动问用户并给建议，不自行决定）：
   - 升**营销版本**（`1.4.2` → `1.4.3`）：用户可感知的新功能 / 行为变更 → **会触发更新检查**（菜单项与设置齿轮亮红点）
@@ -59,3 +60,13 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) · 官网视觉 See [ComateHUD/docs/desig
 - 不要把 `.publish/` 或任何 `.zip` 写进 `comate.json` 的 zip 源目录
 - 不要在官网写死 DMG 体积/版本号（一律由 `versions.json` 驱动）
 - 不要放宽 `003_create_app_activity.json` 的 `delete: deny`（owner 也删不掉，刻意为之）
+
+## 待验证：右上角「发布」按钮 → 官网正式站
+根 `comate.json` 已把 `meta.projectId` 指向官网项目、`zip` 指向 `./ComateHUD`，目的是让 Comate 右上角「发布」按钮直接更新官网正式站（顺带就能用应用开发能力看该项目的运营数据与数据库）。**平台是否认这个 projectId 尚未实测**，验证方法：
+
+1. 发布前记基线：`code status --project-id <pid>` 两个项目各跑一次（2026-09-25 基线：官网 `3171466180955374` = 20 个版本 / `active`；根项目 `3599569812562023` = 20 个版本 / `deploy_status: null`）
+2. 点右上角「发布」：会先跑 `command.build`（客户端构建，约 1 分钟，属预期），再 zip `./ComateHUD`、上传部署
+3. 再查两个项目的 `versions_count` / `deploy_status`：
+   - **官网项目 +1** → 平台认 `projectId`，按钮即官网发布入口（预期效果达成）
+   - **根项目 `deploy_status` 变 active** → 平台用工作区项目覆盖了 `projectId`，此路不通：改走「按钮只当同一份页面的第二部署」或「官网整体迁到根项目」
+4. 打开对应 URL 看页面底部版本记录行是否为 `v1.4.3 · build 12`（`check-site.js` 守的就是这行），并滚到「应用统计」区：出现 KPI 数字说明它读到了官网项目的数据
