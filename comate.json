@@ -1,13 +1,14 @@
 {
   "version": "1",
   "meta": {
-    "projectId": "3599569812562023"
+    "projectId": "3599569812562023",
+    "framework": "html"
   },
   "command": {
     "install": "",
     "dev": "cd ComateNotch && ./build.sh && open build/ComateHUD.app",
     "build": "cd ComateNotch && ./build.sh",
-    "zip": "$system-zip frontend:./ComateNotch"
+    "zip": "$system-zip frontend:./ComateHUD"
   },
   "enableCloud": true
 }
