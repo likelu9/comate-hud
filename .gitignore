@@ -50,3 +50,7 @@ __pycache__/
 .inspect/
 .cloudsync_meta.json
 .cloudsync_zip_meta.json
+
+# ── 内部工程笔记（仅本地，不进公开仓库）──
+/AGENTS.md
+/ARCHITECTURE.md

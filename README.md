@@ -6,6 +6,8 @@ macOS AI 任务状态灯 — 为 [WPS Comate](https://comate.wps.cn) 而生。
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+![Comate HUD 界面](assets/screenshot.jpg)
+
 ## 功能
 
 - 🟢 **实时状态灯** — 三色状态灯常驻刘海区（绿=空闲 / 黄=工作中 / 等待确认）
@@ -16,9 +18,24 @@ macOS AI 任务状态灯 — 为 [WPS Comate](https://comate.wps.cn) 而生。
 
 ## 安装
 
-1. 从 [Releases](../../releases) 下载最新 DMG
-2. 将 `ComateHUD.app` 拖入「应用程序」文件夹
-3. 首次启动请允许辅助功能权限
+1. 从 [Releases](../../releases/latest) 下载最新 DMG（也可以打开[产品介绍页](https://comate.wpsgo.com/s/HyDSehobOTHX/)，页面上同样能下载 —— 该页为 WPS 内网可见）
+2. 打开 DMG，把 `ComateHUD.app` 拖进「应用程序」文件夹
+3. 首次启动需放行一次，见下
+
+### 首次打开被 macOS 拦截怎么办
+
+本应用未使用 Apple 付费开发者证书签名，双击后 macOS 会拦截首次启动（提示「未打开“ComateHUD”」，Apple 无法验证其安全性）。任选一种方式放行：
+
+- **方式一（图形界面）**：打开「系统设置」→「隐私与安全性」，下滑到「安全性」区域，点「已阻止“ComateHUD”以保护 Mac」旁的**仍要打开**，在二次弹窗「打开“ComateHUD”？」中再点**仍要打开**，输入系统密码。
+- **方式二（终端）**：
+
+  ```bash
+  xattr -dr com.apple.quarantine /Applications/ComateHUD.app
+  ```
+
+  然后双击启动。
+
+放行后按提示允许**辅助功能**权限（用于窗口定位与读取刘海区域）。DMG 内附同一份 `安装说明.txt`。
 
 ## 构建
 
@@ -33,8 +50,9 @@ cd ComateNotch
 ## 一键发布
 
 ```bash
-./release.sh <version> <build_num>
-# 示例: ./release.sh 1.3.0 4
+cd ComateNotch
+./release.sh <version> <build>
+# 示例: ./release.sh 1.4.4 13
 ```
 
 自动完成：构建 DMG → 更新版本清单 → 部署产品介绍页
@@ -78,6 +96,19 @@ ComateNotch/            # macOS 原生应用
 - macOS 12.0 (Monterey) 或更高版本
 - Apple Silicon (M1/M2/M3/M4) & Intel x86_64
 - 需安装 WPS Comate 桌面版
+
+## 隐私
+
+应用**不上传**你的任务内容、对话记录、文件路径或额度数据 —— 这些全部在本地读取与展示。唯一上报的是**匿名活跃统计**，用于了解有多少人在用、都在什么版本上：
+
+| 字段 | 说明 |
+| --- | --- |
+| `uid` / `user_name` | 能读到 WPS 登录身份时为 WPS 账号 id 与昵称；读不到时退化为 `anon-<设备标识前 20 位>`（昵称留空） |
+| `device_id` | 本机随机生成的标识，用于区分设备（不含硬件序列号） |
+| `version` / `os_version` | 应用版本号与系统版本 |
+| `active_day` / `launch_count` / `hover_count` / `click_count` | 当日日期与启动 / 悬停 / 点击次数 |
+
+数据仅用于产品运营统计，不用于其他用途，也不对第三方共享。当前版本没有提供关闭开关；如果你不希望上报，欢迎提 issue。
 
 ## License
 
