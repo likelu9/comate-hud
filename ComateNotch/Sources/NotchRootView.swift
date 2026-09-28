@@ -465,7 +465,8 @@ struct NotchRootView: View {
             // Spacer 各插一条间距，导致列表被裁短时内容比面板高 6pt，
             // 页脚被挤到面板下沿外（底部留白失效），热区又被拖拽手柄压掉大半。
             .overlay(alignment: .bottom) {
-                HUDUsageFooter(store: store, onSettings: { onShowMenu?() })
+                HUDUsageFooter(store: store, onSettings: { onShowMenu?() },
+                                onLogin: { LoginWindowController.shared.present(refreshing: store) })
                     // 实测页脚高度（用于反推内容高度）
                     .background(
                         GeometryReader { g in

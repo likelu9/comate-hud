@@ -167,16 +167,16 @@ final class ComateStore: ObservableObject {
 
     // MARK: - 模型用量
 
-    /// 用量取数状态，决定左下角是显示数字还是「用量 —」
+    /// 用量取数状态，决定左下角是显示数字还是登录引导
     enum UsageState: Equatable {
         /// 还没取过（启动瞬间）
         case idle
         case ok
-        /// keychain 里没有 wps_sid：没装或没登录 Comate 桌面端
+        /// 没有凭据：没登录过 WPS 账号，或刚退出登录
         case noCredential
         /// 有凭据但取数失败（网络异常 / 接口改版）
         case failed
-        /// 凭据被服务端拒（sid 过期）：已自动重读 keychain 重试，等 Comate 刷新登录态
+        /// 凭据被服务端拒（登录已失效）：已自动重读 cookie 重试，等用户重新登录
         case authExpired
     }
 
@@ -225,8 +225,8 @@ final class ComateStore: ObservableObject {
             Self.retryDelay(failures: usageFailures, authFailed: authFailed))
     }
 
-    /// 凭据失效后的重试间隔：成因在外部（等 Comate 刷新登录态并重写 keychain），
-    /// 不等指数退避，固定 30 秒去重读；一旦 keychain 换了新 sid 就立即恢复
+    /// 凭据失效后的重试间隔：成因可能在外部（用户会去重新登录），
+    /// 不等指数退避，固定 30 秒去重读；一旦 cookie 里换了新 sid 就立即恢复
     static let authRetryInterval: TimeInterval = 30
 
     /// 重试延迟：凭据失效固定短间隔，其它失败走指数退避
@@ -235,42 +235,21 @@ final class ComateStore: ObservableObject {
         return min(60.0 * pow(2, Double(max(failures, 1) - 1)), 300)
     }
 
-    /// 凭据失效后是否值得重试：只有 keychain 里已经换成另一个 sid 才有意义。
-    /// 拿到的还是同一个（Comate 尚未刷新）就不白打一次接口。
+    /// 凭据失效后是否值得重试：只有 cookie 里已经换成另一个 sid 才有意义。
+    /// 拿到的还是同一个（用户尚未重新登录）就不白打一次接口。
     static func shouldRetryAfterAuthFailure(previous: String?, fresh: String?) -> Bool {
         guard let fresh = fresh, !fresh.isEmpty else { return false }
         return fresh != previous
     }
 
-    /// 用量接口的凭据：桌面客户端登录时写进 keychain 的 wps_sid
-    /// （svce=wps365 / acct=credential_wps_sid，不带账号后缀，多账号登录会覆盖成当前账号）。
-    /// 与浏览器登录状态无关；与未读消息、云端任务列表两个接口复用同一凭据。
+    /// 用量 / 未读 / 云端任务 / 活跃上报共用的凭据，来源于 AuthSession
+    /// —— HUD 自己用 WKWebView 登录一次得到的会话，存在自己的 cookie store 里。
     ///
-    /// 读取要 fork `/usr/bin/security`，在别人机器上首次还会弹钥匙串授权框，
-    /// 所以：① 一律在后台队列调用（主线程调用会把面板卡死）；
-    /// ② 成功后缓存，避免 30 秒内重复 fork 三次；③ 被服务端拒（401）时清缓存重读。
-    private let sidLock = NSLock()
-    private var cachedSid: String?
-
-    /// 取 sid（默认读缓存）。线程安全，可在任意队列调用。
-    /// forceRefresh 用于凭据失效后的重读。
-    /// 读失败不写缓存：用户这次点了「拒绝」，下次仍会重试，而不是一直拿 nil。
+    /// 一律在后台队列调用：AuthSession 读 cookie store 会等 WebKit 的 XPC，主线程调用会卡住面板。
+    /// 缓存与失效重读都交给 AuthSession —— 凭据只保留一处真值来源，不再复制副本。
     @discardableResult
     private func wpsSid(forceRefresh: Bool = false) -> String? {
-        // 整段加锁（包括 fork 期间）：用量、未读数、云端任务三个调用点会在启动瞬间并发进来，
-        // 不串行就会同时 fork 三个 security——别人机器上首次就是三个钥匙串授权框一起弹。
-        // 加锁只阻塞后台队列，主线程不走这里。
-        sidLock.lock()
-        defer { sidLock.unlock() }
-        if !forceRefresh, let cached = cachedSid { return cached }
-        let fresh = Self.readWpsSidFromKeychain()
-        // 只在真的读了 keychain 时打日志（命中缓存不打），便于排查 fork 频率
-        NSLog("[ComateHUD] 读取 keychain 凭据: %@", fresh == nil ? "无" : "成功")
-        if let fresh = fresh, Self.isValidSid(fresh) {
-            cachedSid = fresh
-            return fresh
-        }
-        return nil
+        AuthSession.shared.currentSid(forceRefresh: forceRefresh)
     }
 
     /// 左下角限额显示周期：默认日限额，点击切换月限额，选择持久化
@@ -291,8 +270,8 @@ final class ComateStore: ObservableObject {
     }
 
     /// 页脚点击切换：在日/月之间来回切
-    /// 活跃上报用的凭据。复用 wpsSid 的 keychain 缓存与串行锁，避免上报路径再 fork 一次 security。
-    /// 必须在后台队列调用（读 keychain 会 fork security，首次可能弹授权框）。
+    /// 活跃上报用的凭据。与用量/未读共用 AuthSession 的缓存，不会重复读 cookie store。
+    /// 必须在后台队列调用（读 cookie store 要等 WebKit 的 XPC）。
     func sidForActivityReport() -> String? {
         wpsSid()
     }
@@ -300,6 +279,14 @@ final class ComateStore: ObservableObject {
     func toggleUsagePeriod() {
         ActivityReporter.shared.record(.click)
         setUsagePeriod(usagePeriod == .daily ? .monthly : .daily)
+    }
+
+    /// 未登录 / 登录失效时是否把额度位换成登录引导
+    var needsLogin: Bool { usageState == .noCredential || usageState == .authExpired }
+
+    /// 额度位上的登录引导文案
+    var loginPromptLabel: String {
+        usageState == .authExpired ? "登录已失效，重新登录" : "未登录，点此登录"
     }
 
     /// 页脚额度文案：只展示当前高亮周期那一个（日/月由左侧胶囊指示，文案不再重复周期名）。
@@ -314,9 +301,9 @@ final class ComateStore: ObservableObject {
     var usageLimitDetail: String {
         switch usageState {
         case .noCredential:
-            return "未登录 Comate 桌面端，读不到用量"
+            return "未登录 WPS 账号，读不到用量与未读消息\n点击此处登录"
         case .authExpired:
-            return "登录态已过期（sid 失效），已自动重读凭据；Comate 刷新登录态后会自动恢复"
+            return "登录已失效，用量与未读消息已停更\n点击此处重新登录，通常无需再扫码"
         case .failed:
             return "用量获取失败，稍后自动重试"
         case .idle:
@@ -365,7 +352,21 @@ final class ComateStore: ObservableObject {
     }
 
     func start() {
-        // 每日活跃上报：注入凭据来源（复用 keychain 缓存），记一次启动，并补报上次没发出去的桶
+        // 凭据唯一来源：HUD 自己用 WKWebView 登录得到的会话。先挂状态回调再启动，避免漏掉首次判定
+        AuthSession.shared.onStateChange = { [weak self] state in
+            guard let self = self else { return }
+            switch state {
+            case .noCredential:
+                self.usageState = .noCredential
+                // 退出登录 / 从未登录：不该再显示上一个人的未读与云任务
+                self.clearCloudState()
+            case .expired:      self.usageState = .authExpired
+            // .ok 不在这里改用量状态：能不能取到数由 refreshUsage 判定，两个来源写同一个字段会互相覆盖
+            case .ok, .unknown: break
+            }
+        }
+        AuthSession.shared.start()
+        // 每日活跃上报：注入凭据来源（复用 AuthSession 的缓存），记一次启动，并补报上次没发出去的桶
         ActivityReporter.shared.credentialProvider = { [weak self] in self?.sidForActivityReport() }
         ActivityReporter.shared.record(.launch)
         ActivityReporter.shared.flush()
@@ -397,6 +398,26 @@ final class ComateStore: ObservableObject {
         timer?.invalidate(); timer = nil
         cloudTimer?.invalidate(); cloudTimer = nil
         usageTimer?.invalidate(); usageTimer = nil
+    }
+
+    /// 退出登录后清掉云端数据：未读数、云任务、用量。
+    /// 不动本地任务 —— 那是本机 Comate 的会话记录，跟登录态没关系。
+    private func clearCloudState() {
+        cloudUnreadCount = 0
+        cloudTasks = []
+        usageLimits = nil
+        credits30d = [:]
+        mergeRecentTasks(local: recentTasks.filter { !$0.isCloud }, cloud: [])
+    }
+
+    /// 登录成功后的收尾：立刻补齐云端数据，并把登录期间攒下的活跃桶补报出去。
+    /// 由登录窗口的成功回调触发（见 AppDelegate）。
+    func refreshAfterLogin() {
+        NSLog("[ComateHUD] 登录成功，恢复云端数据")
+        refreshCloudUnread()
+        refreshCloudTasks()
+        refreshUsage(trigger: .launch)
+        ActivityReporter.shared.flush()
     }
 
     /// 检查更新。默认受 6 小时节流（force = 用户在菜单里手动点，立即查）。
@@ -521,47 +542,6 @@ final class ComateStore: ObservableObject {
                 sqlite3_finalize(aStmt)
             }
         return result
-    }
-
-    /// 从 macOS Keychain 读取 Comate 的 wps_sid（阻塞调用，必须在后台队列执行）
-    /// Comate (Tauri 应用) 通过 KSO Account SDK 将 sid 存入 Keychain
-    /// service=wps365, account=credential_wps_sid
-    /// 值格式为 "go-keyring-base64:<base64>"，解码后得到真实 sid
-    private static func readWpsSidFromKeychain() -> String? {
-        // security find-generic-password -a "credential_wps_sid" -w
-        let task = Process()
-        task.launchPath = "/usr/bin/security"
-        task.arguments = ["find-generic-password", "-a", "credential_wps_sid", "-w"]
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        // stderr 不能并入 stdout：否则 security 的警告文本会被当成 sid 发给接口
-        task.standardError = FileHandle.nullDevice
-        do {
-            try task.run()
-            task.waitUntilExit()
-            guard task.terminationStatus == 0 else { return nil }
-            let raw = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: raw, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            // 格式: go-keyring-base64:<base64>
-            if output.hasPrefix("go-keyring-base64:") {
-                let b64 = String(output.dropFirst("go-keyring-base64:".count))
-                if let data = Data(base64Encoded: b64) {
-                    return String(data: data, encoding: .utf8)
-                }
-            }
-            return output.isEmpty ? nil : output
-        } catch {
-            return nil
-        }
-    }
-
-    /// sid 合法性校验：只允许 cookie 值里安全的字符。sid 会拼进 Cookie 请求头，
-    /// 含换行/控制字符时可能被注入额外 HTTP 头（来源是自家 keychain，风险低但校验便宜）。
-    static func isValidSid(_ sid: String) -> Bool {
-        guard !sid.isEmpty, sid.count <= 512 else { return false }
-        return sid.allSatisfy { c in
-            (c.isLetter && c.isASCII) || (c.isNumber && c.isASCII) || "-_".contains(c)
-        }
     }
 
     /// 读会话日志（增量）。文件不存在或没有事件时返回 nil，调用方据此退回数据库判据。
@@ -737,7 +717,7 @@ final class ComateStore: ObservableObject {
 
     /// 失败后改用一次性定时器，按退避时间重试。
     /// 收起态常规节拍是 10 分钟，而凭据失效的恢复窗口只有 30 秒——
-    /// 等常规节拍的话，Comate 刷新完 keychain 也要十分钟才接回来。
+    /// 等常规节拍的话，用户重新登录后也要十分钟才接回来。
     private func scheduleUsageRetry() {
         usageTimer?.invalidate()
         usageRetryScheduled = true
@@ -771,9 +751,8 @@ final class ComateStore: ObservableObject {
 
     /// 拉取模型用量：限额每个节拍都拉；近 30 天智点明细按 backfillInterval 节流
     /// （实测 462 条 / 5 个请求 / 0.7s）。
-    /// 凭据失效（sid 过期）时重读 keychain 再试一次：Comate 刷新登录态会重写 keychain，
-    /// 重读即可拿到新 sid（token_cookie 里只有 access_token，无 refresh_token，无法自行续期）。
-    /// 失败不抛错：状态置 failed/authExpired 并退避，面板显示「用量 —」，其余功能不受影响。
+    /// 凭据失效时重读 cookie store 再试一次：用户重新登录后 cookie 里就是新 sid，重读即可接上。
+    /// 失败不抛错：状态置 failed/authExpired 并退避，面板显示登录引导，其余功能不受影响。
     private func refreshUsage(trigger: UsageTrigger) {
         let now = Date()
         guard Self.shouldFetch(lastFetch: lastUsageFetch, now: now) else { return }
@@ -782,8 +761,7 @@ final class ComateStore: ObservableObject {
         let backfill = Self.shouldBackfill(trigger, lastBackfill: lastUsageBackfill, now: now)
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self = self else { return }
-            // 读 keychain 会 fork security（别人机器首次还弹授权框），必须在后台队列做，
-            // 否则面板会在弹框期间卡住。
+            // AuthSession 读 cookie store 要等 WebKit 的 XPC，必须在后台队列做，否则会卡住面板。
             guard let credential = self.wpsSid() else {
                 DispatchQueue.main.async { self.usageState = .noCredential }
                 return
@@ -792,9 +770,9 @@ final class ComateStore: ObservableObject {
             var sid = credential
             var limits = UsageAPI.fetchLimits(sid: sid)
 
-            // 凭据失效：清缓存重读 keychain，只有换到了新 sid 才值得重试
+            // 凭据失效：清缓存重读 cookie store，只有换到了新 sid 才值得重试
             if case .authFailed = limits {
-                NSLog("[ComateHUD] 凭据失效(trigger=%@)，重读 keychain", "\(trigger)")
+                NSLog("[ComateHUD] 凭据失效(trigger=%@)，重读 cookie store", "\(trigger)")
                 let fresh = self.wpsSid(forceRefresh: true)
                 if Self.shouldRetryAfterAuthFailure(previous: sid, fresh: fresh), let fresh = fresh {
                     sid = fresh
@@ -820,14 +798,18 @@ final class ComateStore: ObservableObject {
                 // 明细失败不清空旧值：宁可显示上一次的结果，也不要凭空变空
                 if case .ok = limits {
                     self.usageState = .ok
+                    AuthSession.shared.markOK()
                     self.noteUsageSuccess()
                     if self.usageRetryScheduled { self.scheduleUsageTimer() }
                 } else if credits != nil {
                     self.usageState = .ok
+                    AuthSession.shared.markOK()
                     self.noteUsageSuccess()
                     if self.usageRetryScheduled { self.scheduleUsageTimer() }
                 } else if case .authFailed = limits {
                     self.usageState = .authExpired
+                    // 让 AuthSession 同步进入失效态：菜单红点与面板提示都靠它
+                    AuthSession.shared.markExpired()
                     self.noteUsageFailure(authFailed: true)
                     self.scheduleUsageRetry()
                 } else {

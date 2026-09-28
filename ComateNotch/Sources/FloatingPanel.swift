@@ -141,7 +141,12 @@ final class FloatingContentView: NSView {
                 self?.panel?.store.openComateApp()
                 NSApp.activate(ignoringOtherApps: true)
             },
-            onShowAbout: { AboutHUDWindow.show() })
+            onShowAbout: { AboutHUDWindow.show() },
+            onLogin: { [weak self] in
+                guard let store = self?.panel?.store else { return }
+                LoginWindowController.shared.present(refreshing: store)
+            },
+            onSignOut: { AuthSession.shared.signOut() })
         cachedMenuBuilder = builder
         return builder
     }
@@ -657,7 +662,8 @@ struct FloatingPanelContent: View {
         // 与列表实际高度无关。用 Spacer 顶到尾部时，列表被裁短会把页脚
         // 挤出面板下沿，页脚热区再被底部拖拽手柄压掉大半。
         .overlay(alignment: .bottom) {
-            HUDUsageFooter(store: store, onSettings: { interaction.onShowMenu?() })
+            HUDUsageFooter(store: store, onSettings: { interaction.onShowMenu?() },
+                            onLogin: { LoginWindowController.shared.present(refreshing: store) })
                 .background(
                     GeometryReader { g in
                         Color.clear

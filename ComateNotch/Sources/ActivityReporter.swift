@@ -7,7 +7,9 @@ import Foundation
 /// - 另外埋点：面板 hover 展开次数、面板内点击次数 —— 只在本机累计，随日报集中上报，不实时打接口
 ///
 /// 上报策略：
-/// - 跨天后的第一个节拍上报「昨天」的桶；应用退出时兜底上报「今天」的桶（正常情况一天 1 次请求）
+/// - 跨天后的第一个节拍上报「昨天」的桶；应用退出时兜底上报「今天」的桶
+/// - 日内每 2 小时补报一次当天桶（只有真有变更时才发）——只有启动/跨天/退出三个时点时，
+///   崩溃或强杀会丢掉当天已累计的点击与 hover
 /// - 桶持久化在 UserDefaults，每次计数变更即落盘 —— 进程被杀/断电也不丢，下次启动补报
 /// - 服务端按 uid + active_day 预查：没有就插入，已有则按「当天累计值」覆盖更新。
 ///   发的是累计总量而不是增量，所以重试、重复上报、多设备各报一次都不会把数字越加越大。
@@ -15,7 +17,8 @@ import Foundation
 /// 身份：
 /// - BaaS 全表要求登录（实测无 Cookie 直接 401），所以读不到 wps_sid 就没有上报通道，只能跳过
 /// - 有凭据但 BaaS auth 取不到用户时，退化为设备维度 uid（anon-xxx），不编造昵称
-/// - 401/403 视为「凭据无权限」，退避一段时间再试，避免每 5 分钟撞一次
+/// - 401/403 视为「凭据失效」，按阶梯退避（30 秒 → 1 分钟 → 5 分钟 → 15 分钟 → 1 小时封顶）；
+///   用户重新登录成功会立刻 flush 一次，不用等退避走完
 final class ActivityReporter {
     static let shared = ActivityReporter()
 
@@ -51,7 +54,7 @@ final class ActivityReporter {
         var dirty: Bool            // 有未上报的变更
     }
 
-    /// 凭据提供者：由 ComateStore 注入（复用它的 keychain 缓存与串行锁，避免重复 fork security）
+    /// 凭据提供者：由 ComateStore 注入（复用 AuthSession 的缓存，避免重复读 cookie store）
     var credentialProvider: (() -> String?)?
 
     private let lock = NSLock()
@@ -61,14 +64,21 @@ final class ActivityReporter {
     private var flushing = false
     /// 鉴权失败后的静默期截止时刻（只存内存：重启后允许再试一次）
     private var authFailedUntil = Date.distantPast
+    /// 连续鉴权失败次数，决定退避阶梯位置（上报成功后清零）
+    private var authFailureStreak = 0
+    /// 上次上报成功的时刻（持久化：重启后不会把 2 小时窗口重新算起）
+    private var lastSuccessAt = Date.distantPast
 
     private static let bucketKey = "notch.activity.bucket"
     private static let pendingKey = "notch.activity.pending"
     private static let deviceIdKey = "notch.activity.deviceId"
+    private static let lastSuccessKey = "notch.activity.lastSuccessAt"
     /// 失败后的重试间隔：一天只有一两次请求，失败就尽快补，不必等下一个节拍
     private static let retryInterval: TimeInterval = 300
-    /// 鉴权失败（401/403）后的静默期：重试同一个凭据不会变好，等 Comate 刷新登录态或换账号
-    private static let authBackoff: TimeInterval = 6 * 3600
+    /// 鉴权失败（401/403）后的退避阶梯：重试同一把凭据不会变好，所以逐次拉长
+    private static let authBackoffSteps: [TimeInterval] = [30, 60, 300, 900, 3600]
+    /// 日内补报间隔：只发「当天桶有变更」的
+    private static let intradayInterval: TimeInterval = 2 * 3600
     /// 单次上报超时
     private static let requestTimeout: TimeInterval = 15
 
@@ -116,10 +126,13 @@ final class ActivityReporter {
         let retryDue = Date().timeIntervalSince(lastAttempt) >= Self.retryInterval
         let busy = flushing
         let authBlocked = Date() < authFailedUntil
+        // 日内补报：当天桶有变更、且距上次成功超过 intradayInterval
+        let intradayDue = (bucket?.dirty == true)
+            && Date().timeIntervalSince(lastSuccessAt) >= Self.intradayInterval
         lock.unlock()
         guard !busy else { return }
         guard !authBlocked else { return }
-        guard rolled || hasPending else { return }
+        guard rolled || hasPending || intradayDue else { return }
         guard retryDue else { return }
         flush()
     }
@@ -150,7 +163,7 @@ final class ActivityReporter {
             defer { self.lock.lock(); self.flushing = false; self.lock.unlock() }
             guard let sid = self.credentialProvider?() else {
                 // BaaS 全表要求登录（实测无 Cookie 直接 401），没有凭据就没有任何上报通道
-                NSLog("[ComateHUD] 活跃上报跳过：无凭据（未登录 Comate 桌面端）")
+                NSLog("[ComateHUD] 活跃上报跳过：无凭据（未登录 WPS 账号）")
                 return
             }
             let deviceId = Self.deviceId()
@@ -208,18 +221,34 @@ final class ActivityReporter {
             b.dirty = false
             bucket = b
         }
+        let now = Date()
+        lastSuccessAt = now
+        authFailureStreak = 0
         let snapshot = (bucket: bucket, pending: pending)
         lock.unlock()
         persist(snapshot.bucket, snapshot.pending)
+        UserDefaults.standard.set(now, forKey: Self.lastSuccessKey)
         NSLog("[ComateHUD] 活跃上报成功: %@", day)
     }
 
-    /// 鉴权失败：静默一段时间再试，避免每 5 分钟撞一次 401
+    /// 鉴权失败：按阶梯退避（30 秒 → 1 分钟 → 5 分钟 → 15 分钟 → 1 小时封顶）。
+    /// 不再像以前那样一律静默 6 小时 —— 静默期内用户看不到任何反馈，而失败本身是可见化要处理的事。
+    /// 用户在面板上重新登录成功后，登录回调会立刻 flush 一次，不用等退避走完。
     private func markAuthFailed() {
         lock.lock()
-        authFailedUntil = Date().addingTimeInterval(Self.authBackoff)
+        authFailureStreak += 1
+        let step = Self.authBackoffDelay(streak: authFailureStreak)
+        authFailedUntil = Date().addingTimeInterval(step)
+        let streak = authFailureStreak
         lock.unlock()
-        NSLog("[ComateHUD] 活跃上报被拒（凭据无权限或已过期），静默 %d 小时后重试", Int(Self.authBackoff / 3600))
+        NSLog("[ComateHUD] 活跃上报被拒（凭据失效），%d 秒后重试（第 %d 次）", Int(step), streak)
+    }
+
+    /// 鉴权失败的退避阶梯取值：第 n 次失败取第 n 档，超出后停在最后一档。
+    /// 抽成静态纯函数是为了能脱离界面断言（见 Tests/main.swift）。
+    static func authBackoffDelay(streak: Int) -> TimeInterval {
+        guard streak >= 1 else { return authBackoffSteps[0] }
+        return authBackoffSteps[min(streak - 1, authBackoffSteps.count - 1)]
     }
 
     // MARK: - 网络
@@ -331,6 +360,7 @@ final class ActivityReporter {
         if let data = d.data(forKey: Self.pendingKey) {
             pending = (try? JSONDecoder().decode([Bucket].self, from: data)) ?? []
         }
+        lastSuccessAt = d.object(forKey: Self.lastSuccessKey) as? Date ?? .distantPast
     }
 
     // MARK: - 工具

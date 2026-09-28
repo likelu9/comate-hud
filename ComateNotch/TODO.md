@@ -1,7 +1,7 @@
 # ComateNotch 待优化清单
 
-**版本**: v1.4.3 (build 12)  
-**日期**: 2026-09-25  
+**版本**: v1.4.4 (build 13)  
+**日期**: 2026-09-28  
 
 ---
 
@@ -40,6 +40,16 @@
 - `scripts/check-docs.sh` 的 DMG 校验加时序例外：正在构建的版本其 DMG 由本次构建产出，不报错
 - 发布 1.4.2：Info.plist / TODO.md / versions.json 三处版本号同步
 
+### Phase7 - 1.4.4 凭据自持与登录可见化
+- **凭据来源整体切换**：不再读 Comate 桌面端写在 Keychain 的 `wps_sid`（要 fork `security`、别人机器首次弹授权框、坏了没人知道），改为 HUD 自己用内嵌 WKWebView 登录一次，`wps_sid` 存在自己的 cookie store 里（`Sources/AuthSession.swift`）
+  - 实测：cookie store 必须有活着的 WKWebView 实例才读得到（无实例时 `getAllCookies` 恒返回空）；常驻一个离屏实例 +21MB，不拉子进程；cookie 按 bundle id 隔离，读不到 Safari / WPS Office / Comate 桌面端
+  - 登录成功的判据 = 真的打通 o.wpsgo.com（身份）与 comate.wps.cn（额度）两条链路，而不是「cookie 里出现了 wps_sid」——避免假成功
+- **登录窗口**（`Sources/LoginWindow.swift`）：独立 NSWindow + 复用常驻 WKWebView；打开时先查自有凭据，能复用就直接恢复、不弹窗（观感是「点一下就恢复」）
+- **首次启动引导**：未登录时自动弹一次登录窗口（用户关掉后不再自动弹），老用户升级后正好收到一次引导
+- **失败可见化**：面板额度位在未登录 / 失效时换成可点的登录引导（原来只有一个「—」）；右键菜单账号组置顶并在失效时亮红点；可退出登录
+- **上报策略**：401/403 的固定静默 6 小时改为阶梯退避（30 秒 → 1 分钟 → 5 分钟 → 15 分钟 → 1 小时封顶）；新增日内每 2 小时补报当天桶
+- `test.sh` 断言 47 → 80 项（新增 sid 合法性、失效重试判定、退避阶梯）
+
 ---
 
 ## 待优化 📋
@@ -73,7 +83,7 @@
 
 - `ComateStore.swift` 957 行：任务模型（`TaskLight` / `RedKind` / `ComateTask`）已拆到 `TaskModel.swift`。再拆「模型用量」「云端任务」两段需要把一批 `private` 状态放宽为 internal —— Swift 扩展不能新增存储属性，状态只能留在原文件，收益与风险需要单独评估
 - `NotchRootView.swift` 624 行：布局公式与常量已拆到 `NotchLayout.swift`；`ComateLogo` / `ComateOfficialPath1,2` / `StatusLight` / `NotchShape` / `ComateTaskRow` / `ComatePlusButton` 等独立视图仍混在同一文件，可再拆
-- `test.sh` 已覆盖版本比较 / 布局公式 / 状态灯判定（47 项断言）；仍缺 UI 层与数据读取层（SQLite 查询、会话日志解析）的自动化覆盖
+- `test.sh` 已覆盖版本比较 / 布局公式 / 状态灯判定 / 凭据校验 / 上报退避阶梯（80 项断言）；仍缺 UI 层与数据读取层（SQLite 查询、会话日志解析）的自动化覆盖
 
 ---
 

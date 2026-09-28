@@ -21,12 +21,14 @@ rm -rf "$BUILD"
 mkdir -p "$BUILD/arm64" "$BUILD/x86_64"
 
 SDK_PATH=$(xcrun --show-sdk-path)
-COMMON_FLAGS=(-O -sdk "$SDK_PATH" -framework AppKit -framework SwiftUI -framework Combine -framework CoreFoundation)
+COMMON_FLAGS=(-O -sdk "$SDK_PATH" -framework AppKit -framework SwiftUI -framework Combine -framework CoreFoundation -framework WebKit)
 
 SOURCES=(
     "$SRC/ComateHUDApp.swift"
     "$SRC/AppDelegate.swift"
     "$SRC/ComateStore.swift"
+    "$SRC/AuthSession.swift"
+    "$SRC/LoginWindow.swift"
     "$SRC/TaskModel.swift"
     "$SRC/UsageAPI.swift"
     "$SRC/SessionJournal.swift"
@@ -114,14 +116,17 @@ Comate HUD —— 安装说明
       xattr -dr com.apple.quarantine /Applications/ComateHUD.app
       然后双击启动
 
-【首次启动会弹权限提示】
-  · 读取 Comate 用量数据需要访问钥匙串，请选「始终允许」；
-    若选「拒绝」，额度区会显示「—」，任务列表不受影响。
+【首次启动会引导登录】
+  · 首次启动会弹出登录窗口，用 WPS 账号登录一次即可 ——
+    未读消息、云端任务与额度用量需要登录后才能读取（任务状态灯始终可用）。
+  · 凭证只保存在本机 HUD 自己的数据里（HUD 不读取你的文档内容）；
+    登录失效时面板会提示，点一下即可重新登录，通常无需再扫码。
 
 【使用】
   · 刘海 HUD 模式：常驻屏幕顶部刘海区，鼠标移上去展开任务面板
   · 任意悬浮模式：圆形悬浮球可拖到桌面任意位置，移上去展开面板
-  · 右键菜单：切换显示模式 / 显示主窗口 / 最近记录条数 / 关于 / 退出
+  · 右键菜单：WPS 账号（登录 / 退出登录）/ 切换显示模式 / 显示主窗口 / 最近记录条数 /
+    检查更新 / 关于 / 退出
 
 【系统要求】
 macOS 12.0 或更高版本，支持 Apple 芯片与 Intel 芯片。

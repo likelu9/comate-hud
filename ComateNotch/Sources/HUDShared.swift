@@ -109,39 +109,23 @@ struct HUDUsageFooter: View {
     /// 设置按钮动作。必填而非可选：设置是功能而不是装饰，
     /// 两种显示模式都必须提供，避免再出现「某个模式没有设置按钮」
     let onSettings: () -> Void
+    /// 登录 / 重新登录。未登录与登录失效时，额度位会变成指向它的按钮
+    let onLogin: () -> Void
 
     @State private var usageToggleHovered = false
+    @State private var loginHovered = false
     @State private var bellHovered = false
     @State private var settingsHovered = false
     @State private var bellRotate = false
 
     var body: some View {
         HStack(spacing: 6) {
-            // 周期切换：胶囊 + 文案一起点，热区仅覆盖内容本身（不占满整行）
-            Button(action: { store.toggleUsagePeriod() }) {
-                HStack(spacing: 6) {
-                    usagePeriodIndicator
-                    Text("额度已用 \(store.activeUsageLabel)")
-                        .font(.system(size: 8, weight: .medium, design: .rounded))
-                        // 与周期色块同色（品牌绿），hover 时提亮到全不透明
-                        .foregroundStyle(Color(hex: "#00D4AA")
-                            .opacity(usageToggleHovered ? 1.0 : 0.85))
-                }
-                .padding(.horizontal, 6)
-                .frame(height: FooterHit.height)
-                .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
-                .background(
-                    RoundedRectangle(cornerRadius: FooterHit.corner)
-                        .fill(Color.white.opacity(usageToggleHovered ? 0.1 : 0))
-                )
+            // 未登录 / 登录失效时把额度位换成可点的登录引导，其余情况仍是日 / 月额度切换
+            if store.needsLogin {
+                loginPrompt
+            } else {
+                usageToggle
             }
-            .buttonStyle(.plain)
-            .onHover { h in
-                usageToggleHovered = h
-                if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-            }
-            .animation(.easeInOut(duration: 0.12), value: usageToggleHovered)
-            .help(store.usageLimitDetail)
 
             Spacer(minLength: 0)
 
@@ -212,6 +196,63 @@ struct HUDUsageFooter: View {
                   ? "设置（检测到新版 \(store.availableUpdate ?? "")）"
                   : "设置（等同右键菜单）")
         }
+    }
+
+    /// 额度周期切换：胶囊 + 文案一起点，热区仅覆盖内容本身（不占满整行）
+    private var usageToggle: some View {
+        Button(action: { store.toggleUsagePeriod() }) {
+            HStack(spacing: 6) {
+                usagePeriodIndicator
+                Text("额度已用 \(store.activeUsageLabel)")
+                    .font(.system(size: 8, weight: .medium, design: .rounded))
+                    // 与周期色块同色（品牌绿），hover 时提亮到全不透明
+                    .foregroundStyle(Color(hex: "#00D4AA")
+                        .opacity(usageToggleHovered ? 1.0 : 0.85))
+            }
+            .padding(.horizontal, 6)
+            .frame(height: FooterHit.height)
+            .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
+            .background(
+                RoundedRectangle(cornerRadius: FooterHit.corner)
+                    .fill(Color.white.opacity(usageToggleHovered ? 0.1 : 0))
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { h in
+            usageToggleHovered = h
+            if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+        .animation(.easeInOut(duration: 0.12), value: usageToggleHovered)
+        .help(store.usageLimitDetail)
+    }
+
+    /// 未登录 / 登录失效的登录引导。
+    /// 原来这里只有一个「—」，用户看不出来「得先去登录」——失效提示必须比状态数字显眼。
+    private var loginPrompt: some View {
+        let tint = Color(hex: store.usageState == .authExpired ? TaskLight.red.color : TaskLight.yellow.color)
+        return Button(action: onLogin) {
+            HStack(spacing: 5) {
+                Image(systemName: "person.crop.circle.badge.exclamationmark")
+                    .font(.system(size: 9))
+                Text(store.loginPromptLabel)
+                    .font(.system(size: 8.5, weight: .semibold, design: .rounded))
+            }
+            .foregroundStyle(tint)
+            .padding(.horizontal, 6)
+            .frame(height: FooterHit.height)
+            .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
+            .background(
+                RoundedRectangle(cornerRadius: FooterHit.corner)
+                    .fill(tint.opacity(loginHovered ? 0.24 : 0.14))
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { h in
+            loginHovered = h
+            if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+        .animation(.easeInOut(duration: 0.12), value: loginHovered)
+        .help(store.usageLimitDetail)
     }
 
     /// 额度周期指示：双段胶囊（日 | 月），高亮当前周期。纯视觉，点击由外层按钮接管
@@ -496,20 +537,31 @@ final class HUDContextMenu: NSObject {
     private let onSwitchMode: (ComateStore.DisplayMode) -> Void
     private let onShowMainWindow: () -> Void
     private let onShowAbout: () -> Void
+    private let onLogin: () -> Void
+    private let onSignOut: () -> Void
 
     init(store: ComateStore,
          onSwitchMode: @escaping (ComateStore.DisplayMode) -> Void,
          onShowMainWindow: @escaping () -> Void,
-         onShowAbout: @escaping () -> Void) {
+         onShowAbout: @escaping () -> Void,
+         onLogin: @escaping () -> Void,
+         onSignOut: @escaping () -> Void) {
         self.store = store
         self.onSwitchMode = onSwitchMode
         self.onShowMainWindow = onShowMainWindow
         self.onShowAbout = onShowAbout
+        self.onLogin = onLogin
+        self.onSignOut = onSignOut
     }
 
     /// 每次弹出都重新构建：勾选态、「恢复默认高度」的显隐取决于当前 store 状态
     func build() -> NSMenu {
         let menu = NSMenu()
+
+        // 账号：这是登录失效时用户唯一能自救的地方，所以需要动作时直接置顶并带红点；
+        // 已登录时收进子菜单，不占两行
+        addAccountItems(to: menu)
+        menu.addItem(.separator())
 
         let modeItem = NSMenuItem(title: "显示模式", action: nil, keyEquivalent: "")
         let modeMenu = NSMenu()
@@ -601,6 +653,38 @@ final class HUDContextMenu: NSObject {
         }
     }()
 
+    /// 账号组：需要动作时（未登录 / 已失效）直接置顶，失效时带红点
+    private func addAccountItems(to menu: NSMenu) {
+        switch AuthSession.shared.state {
+        case .noCredential:
+            menu.addItem(actionItem("登录 WPS 账号…", #selector(menuLogin)))
+        case .expired:
+            let item = actionItem("登录已失效，重新登录", #selector(menuLogin))
+            item.onStateImage = Self.updateDotImage
+            item.state = .on
+            menu.addItem(item)
+        case .ok:
+            let account = NSMenuItem(title: "WPS 账号", action: nil, keyEquivalent: "")
+            let submenu = NSMenu()
+            let status = NSMenuItem(title: "已登录", action: nil, keyEquivalent: "")
+            status.isEnabled = false
+            submenu.addItem(status)
+            submenu.addItem(actionItem("退出登录", #selector(menuSignOut)))
+            account.submenu = submenu
+            menu.addItem(account)
+        case .unknown:
+            let item = NSMenuItem(title: "正在检查登录状态…", action: nil, keyEquivalent: "")
+            item.isEnabled = false
+            menu.addItem(item)
+        }
+    }
+
+    private func actionItem(_ title: String, _ selector: Selector) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: selector, keyEquivalent: "")
+        item.target = self
+        return item
+    }
+
     @objc private func menuSwitchMode(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String,
               let mode = ComateStore.DisplayMode(rawValue: raw) else { return }
@@ -640,6 +724,10 @@ final class HUDContextMenu: NSObject {
     }
 
     @objc private func menuAbout() { onShowAbout() }
+
+    @objc private func menuLogin() { onLogin() }
+
+    @objc private func menuSignOut() { onSignOut() }
 
     @objc private func menuQuit() {
         store.stop()

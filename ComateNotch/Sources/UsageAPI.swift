@@ -4,12 +4,12 @@ import Foundation
 ///
 /// 这两个接口没有公开文档，所以所有失败路径都收敛成 Outcome，由调用方降级成占位符——
 /// 面板其余功能不受影响，也不会因为接口改版而崩。
-/// 凭据是桌面客户端写在 keychain 里的 wps_sid，与浏览器登录状态无关。
+/// 凭据是 AuthSession 提供的 wps_sid（HUD 自己登录得到的会话）。
 enum UsageAPI {
 
     /// 单次请求结果。把「凭据失效」从其它失败里分出来：
-    /// 凭据失效是外部状态（Comate 刷新登录态后会重写 keychain），
-    /// 值得立刻重读 keychain 再试一次；其它失败走退避重试。
+    /// 凭据失效可能是会话被服务端作废（用户改了密码 / 在别处退出登录），
+    /// 值得立刻重读 cookie store 再试一次；其它失败走退避重试。
     enum Outcome<T> {
         case ok(T)
         case authFailed
@@ -199,7 +199,7 @@ enum UsageAPI {
     // MARK: - 内部
 
     /// 同步 GET（调用方保证在后台队列）。
-    /// 区分「凭据失效」与「其它失败」，前者由调用方重读 keychain 重试。
+    /// 区分「凭据失效」与「其它失败」，前者由调用方重读 cookie store 重试。
     private static func get(_ path: String, query: [URLQueryItem], sid: String) -> Outcome<[String: Any]> {
         guard var components = URLComponents(string: host + path) else { return .failed }
         if !query.isEmpty { components.queryItems = query }

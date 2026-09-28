@@ -25,7 +25,7 @@ done < <(ls "$SRC"/*.swift)
 
 echo "==> 编译测试（源文件 $(( ${#SOURCES[@]} + 1 )) 个）"
 swiftc -sdk "$SDK_PATH" -target arm64-apple-macos12.0 \
-    -framework AppKit -framework SwiftUI -framework Combine -framework CoreFoundation \
+    -framework AppKit -framework SwiftUI -framework Combine -framework CoreFoundation -framework WebKit \
     "${SOURCES[@]}" "$ROOT/Tests/main.swift" -o "$OUT/logic-tests"
 
 echo "==> 运行断言"

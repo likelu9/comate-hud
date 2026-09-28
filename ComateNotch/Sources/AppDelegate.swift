@@ -64,7 +64,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.store.openComateApp()
                 NSApp.activate(ignoringOtherApps: true)
             },
-            onShowAbout: { AboutHUDWindow.show() })
+            onShowAbout: { AboutHUDWindow.show() },
+            onLogin: { [weak self] in self?.presentLogin() },
+            onSignOut: { AuthSession.shared.signOut() })
 
         let view = NotchRootView(
             store: store,
@@ -105,6 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         container.addSubview(hosting)
         panel.contentView = container
         store.start()
+        offerLoginOnFirstLaunch()
         // 首次启动默认开启开机自启（仅一次，之后完全由菜单里的开关控制）
         LaunchAtLogin.applyDefaultOnFirstLaunch()
         // 应用上次保存的显示模式（否则启动后总是显示刘海面板）
@@ -144,6 +147,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             panel?.orderOut(nil)
             backdropPanel?.orderOut(nil)
             floatingPanel?.orderFrontRegardless()
+        }
+    }
+
+    /// 打开登录窗口。成功后立刻补齐云端数据：未读、云任务、额度，并补报攒下的活跃桶。
+    private func presentLogin() {
+        LoginWindowController.shared.present(refreshing: store)
+    }
+
+    /// 首次启动引导登录一次。
+    /// 用「本版本新增的标记」判定，所以老用户升级到这一版后会正好收到一次引导 ——
+    /// 他们的凭据来源变了，必须重新登录一次。用户关掉后不再自动弹，之后靠面板提示与菜单项自救。
+    private func offerLoginOnFirstLaunch() {
+        let key = "notch.didOfferLogin"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        // 等面板先出现：启动瞬间弹窗既突兀，也会和首帧渲染抢主线程
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self = self else { return }
+            // 已经有可用凭据就不打扰
+            guard AuthSession.shared.state != .ok else { return }
+            self.presentLogin()
         }
     }
 

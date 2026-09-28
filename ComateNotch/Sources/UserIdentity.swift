@@ -2,7 +2,7 @@ import Foundation
 
 /// Comate 用户身份（用户名 + uid）
 ///
-/// 来源：官网 BaaS 的 auth 接口（与 ComateHUD/index.html 同一个项目），用 keychain 里的 wps_sid 鉴权：
+/// 来源：官网 BaaS 的 auth 接口（与 ComateHUD/index.html 同一个项目），用 AuthSession 提供的 wps_sid 鉴权：
 ///   POST {base}/api/manage/v1/db/auth   {"action":"get_user"}
 ///   → {"code":0,"data":{"user_id":"1388246874","nickname":"李柯陆",...}}
 ///
@@ -37,9 +37,10 @@ final class UserIdentity {
     private var cachedSid: String?
 
     /// 取身份（阻塞，必须在后台队列调用）。sid 变化会重新取（换账号场景）。
-    func current(sid: String) -> Identity? {
+    /// forceRefresh 用于登录后校验：要一次真实请求，不能被上一次的同 sid 缓存糊弄过去。
+    func current(sid: String, forceRefresh: Bool = false) -> Identity? {
         lock.lock()
-        if let c = cached, cachedSid == sid { lock.unlock(); return c }
+        if !forceRefresh, let c = cached, cachedSid == sid { lock.unlock(); return c }
         lock.unlock()
         guard let identity = fetch(sid: sid) else { return nil }
         lock.lock()

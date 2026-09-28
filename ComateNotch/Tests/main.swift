@@ -193,6 +193,32 @@ check(!UpdateChecker.shouldShowDot(available: "v1.4.2", acknowledged: "1.4.2", l
 check(!UpdateChecker.shouldShowDot(available: "v1.4.2-11", acknowledged: nil, local: "1.4.2"),
       "静默发版（只升 build）对同营销版本用户不亮红点")
 
+// MARK: - 凭据校验与失效重试
+
+section("AuthSession 的 sid 合法性校验")
+check(AuthSession.isValidSid("V02Sabcdefghijklmnopqrstuvwxyz0123456789-_"), "正常 sid 通过")
+check(!AuthSession.isValidSid(""), "空值不通过")
+check(!AuthSession.isValidSid(String(repeating: "a", count: 513)), "超长不通过")
+check(!AuthSession.isValidSid("abc def"), "含空格不通过")
+check(!AuthSession.isValidSid("abc\r\nX-Evil: 1"), "含换行不通过（防请求头注入）")
+check(!AuthSession.isValidSid("abc;def"), "含分号不通过")
+
+section("凭据失效后是否值得重试")
+check(!ComateStore.shouldRetryAfterAuthFailure(previous: "a", fresh: "a"), "还是同一把凭据 → 不重试")
+check(!ComateStore.shouldRetryAfterAuthFailure(previous: "a", fresh: nil), "取不到凭据 → 不重试")
+check(ComateStore.shouldRetryAfterAuthFailure(previous: "a", fresh: "b"), "换成新凭据 → 重试")
+
+// MARK: - 上报退避阶梯
+
+section("活跃上报的鉴权失败退避阶梯")
+eq(ActivityReporter.authBackoffDelay(streak: 0), 30, "异常入参也取第一档")
+eq(ActivityReporter.authBackoffDelay(streak: 1), 30, "第 1 次失败 30 秒后重试")
+eq(ActivityReporter.authBackoffDelay(streak: 2), 60, "第 2 次 1 分钟")
+eq(ActivityReporter.authBackoffDelay(streak: 3), 300, "第 3 次 5 分钟")
+eq(ActivityReporter.authBackoffDelay(streak: 4), 900, "第 4 次 15 分钟")
+eq(ActivityReporter.authBackoffDelay(streak: 5), 3600, "第 5 次 1 小时")
+eq(ActivityReporter.authBackoffDelay(streak: 99), 3600, "继续失败停在 1 小时封顶")
+
 // MARK: - 汇总
 
 print("\n———————————————")
