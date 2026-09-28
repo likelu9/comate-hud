@@ -242,6 +242,16 @@ final class ComateStore: ObservableObject {
         return fresh != previous
     }
 
+    /// 取凭据失败后的短重试间隔：成因是冷启动时 cookie store 还没就绪，
+    /// 不是真的没登录，所以不按真失败的指数退避走
+    static let credentialReadRetryInterval: TimeInterval = 5
+
+    /// 取凭据失败时，能不能据此判定「未登录」。
+    /// 只有 AuthSession 亲口判无凭据才算数 —— 单次读取失败不代表没登录。
+    static func shouldConcludeNoCredential(authState: AuthSession.State) -> Bool {
+        authState == .noCredential
+    }
+
     /// 用量 / 未读 / 云端任务 / 活跃上报共用的凭据，来源于 AuthSession
     /// —— HUD 自己用 WKWebView 登录一次得到的会话，存在自己的 cookie store 里。
     ///
@@ -361,8 +371,16 @@ final class ComateStore: ObservableObject {
                 // 退出登录 / 从未登录：不该再显示上一个人的未读与云任务
                 self.clearCloudState()
             case .expired:      self.usageState = .authExpired
-            // .ok 不在这里改用量状态：能不能取到数由 refreshUsage 判定，两个来源写同一个字段会互相覆盖
-            case .ok, .unknown: break
+            // .ok 不直接写用量状态：能不能取到数由 refreshUsage 判定，两个来源写同一个字段会互相覆盖。
+            // 但登录态从「无凭据」翻成「有凭据」时得把用量拉起来，否则面板会一直停在更早那次的
+            // noCredential 上，菜单却显示已登录（冷启动首读失败就是这个形态）。
+            case .ok:
+                if self.usageState == .noCredential || self.usageState == .authExpired {
+                    self.lastUsageFetch = .distantPast
+                    self.usageRetryAfter = .distantPast
+                    self.refreshUsage(trigger: .launch)
+                }
+            case .unknown: break
             }
         }
         AuthSession.shared.start()
@@ -718,17 +736,25 @@ final class ComateStore: ObservableObject {
     /// 失败后改用一次性定时器，按退避时间重试。
     /// 收起态常规节拍是 10 分钟，而凭据失效的恢复窗口只有 30 秒——
     /// 等常规节拍的话，用户重新登录后也要十分钟才接回来。
+    /// 延迟完全由 usageRetryAfter 决定（调用方必须设）：真失败的退避本就不低于频次上限，
+    /// 而凭据瞬时读失败这种要抢在几秒内重试。
     private func scheduleUsageRetry() {
         usageTimer?.invalidate()
         usageRetryScheduled = true
-        // +0.5s 容差：定时器可能比退避时刻早一丁点触发，被两个门（退避 + 频次上限）卡掉
-        let delay = max(usageRetryAfter.timeIntervalSinceNow, Self.minFetchInterval) + 0.5
+        // +0.5s 容差：定时器可能比退避时刻早一丁点触发，被退避门卡掉
+        let delay = Self.usageRetryDelay(retryAfter: usageRetryAfter, now: Date())
         usageTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
             guard let self = self else { return }
             self.usageRetryScheduled = false
             self.refreshUsage(trigger: .timer)
             self.scheduleUsageTimer()
         }
+    }
+
+    /// 重试延迟：完全由退避时刻决定，不再夹到频次上限——
+    /// 真失败的退避（60s 起）本就不低于上限，而凭据瞬时读失败要抢在几秒内重试。
+    static func usageRetryDelay(retryAfter: Date, now: Date) -> TimeInterval {
+        max(retryAfter.timeIntervalSince(now), 0) + 0.5
     }
 
     enum UsageTrigger { case launch, expand, timer }
@@ -763,7 +789,18 @@ final class ComateStore: ObservableObject {
             guard let self = self else { return }
             // AuthSession 读 cookie store 要等 WebKit 的 XPC，必须在后台队列做，否则会卡住面板。
             guard let credential = self.wpsSid() else {
-                DispatchQueue.main.async { self.usageState = .noCredential }
+                DispatchQueue.main.async {
+                    guard Self.shouldConcludeNoCredential(authState: AuthSession.shared.state) else {
+                        // 登录态还没判、或已经判为有凭据：这只是冷启动首读空手而归。
+                        // 按未登录处理会让面板提示登录、菜单却显示已登录，故按瞬时失败重试。
+                        NSLog("[ComateHUD] 取凭据失败但登录态未判无凭据，按瞬时失败重试")
+                        self.lastUsageFetch = .distantPast
+                        self.usageRetryAfter = Date().addingTimeInterval(Self.credentialReadRetryInterval)
+                        self.scheduleUsageRetry()
+                        return
+                    }
+                    self.usageState = .noCredential
+                }
                 return
             }
             NSLog("[ComateHUD] 拉取用量: trigger=%@, backfill=%@", "\(trigger)", backfill ? "true" : "false")

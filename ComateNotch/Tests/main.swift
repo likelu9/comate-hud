@@ -219,6 +219,42 @@ eq(ActivityReporter.authBackoffDelay(streak: 4), 900, "第 4 次 15 分钟")
 eq(ActivityReporter.authBackoffDelay(streak: 5), 3600, "第 5 次 1 小时")
 eq(ActivityReporter.authBackoffDelay(streak: 99), 3600, "继续失败停在 1 小时封顶")
 
+// MARK: - 登录态与用量状态的收敛
+
+section("取凭据失败不轻易判未登录")
+check(ComateStore.shouldConcludeNoCredential(authState: .noCredential),
+      "AuthSession 判无凭据 → 可以判未登录")
+check(!ComateStore.shouldConcludeNoCredential(authState: .unknown),
+      "登录态尚未判定 → 不判未登录（面板不能抢在判定前下结论）")
+check(!ComateStore.shouldConcludeNoCredential(authState: .ok),
+      "已判有凭据 → 不判未登录（冷启动首读可能空手而归）")
+check(!ComateStore.shouldConcludeNoCredential(authState: .expired),
+      "凭据失效 → 是重新登录提示，不是未登录")
+
+section("首次凭据判定的重试节奏")
+check(!AuthSession.initialReadRetryDelays.isEmpty,
+      "冷启动首读失败要重试，不能直接判未登录")
+check(AuthSession.initialReadRetryDelays == AuthSession.initialReadRetryDelays.sorted(),
+      "重试间隔递增")
+check(AuthSession.initialReadRetryDelays.reduce(0, +) <= 3.0,
+      "总重试时长 ≤3s（不拖慢启动引导与面板首屏）")
+check(ComateStore.credentialReadRetryInterval < ComateStore.retryDelay(failures: 1, authFailed: false),
+      "瞬时读失败不像真失败那样退避 60 秒")
+check(ComateStore.usageRetryDelay(retryAfter: Date().addingTimeInterval(5), now: Date()) < 6,
+      "重试延迟由退避时刻决定，不被频次上限夹到 30 秒")
+check(ComateStore.usageRetryDelay(retryAfter: .distantPast, now: Date()) == 0.5,
+      "退避时刻已过则只留半秒容差")
+
+section("启动探测不覆盖真实请求的结论")
+check(AuthSession.probeCanApply(currentState: .unknown),
+      "还没结论 → 探测可以填")
+check(!AuthSession.probeCanApply(currentState: .ok),
+      "真实请求已判有凭据 → 探测不能把它改成无凭据")
+check(!AuthSession.probeCanApply(currentState: .expired),
+      "真实请求已判失效 → 探测不能把它改回有凭据")
+check(!AuthSession.probeCanApply(currentState: .noCredential),
+      "已有无凭据结论 → 不重复下发状态变化")
+
 // MARK: - 汇总
 
 print("\n———————————————")
