@@ -586,7 +586,7 @@ final class HUDContextMenu: NSObject {
         // 刘海落在哪块屏：只对刘海模式有意义，且单屏时没有可选项
         addScreenItems(to: menu)
 
-        let mainItem = NSMenuItem(title: "显示主窗口", action: #selector(menuShowMain), keyEquivalent: "")
+        let mainItem = NSMenuItem(title: "打开 WPS Comate", action: #selector(menuShowMain), keyEquivalent: "")
         mainItem.target = self
         menu.addItem(mainItem)
         menu.addItem(.separator())
