@@ -32,24 +32,76 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.switchDisplayMode(self.store.displayMode)
         }
 
-        let panel = NotchPanel()
+        let panel = NotchPanel(screen: targetNotchScreen())
         self.panel = panel
 
-        // 监听外接显示器热插拔：屏幕数量/排列变化时重新定位
+        // 监听外接显示器热插拔：屏幕数量/排列变化时重新解析目标屏并重定位。
+        // 与用户手动换屏走同一条路径 —— 以前只挪窗口 frame，notch 几何会停在旧屏上
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil, queue: .main) { [weak self] _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self?.panel?.repositionToMainScreen()
+                self?.retargetNotchPanel()
                 self?.floatingPanel?.repositionToMainScreen()
             }
         }
 
         // 静态托底窗口：固定收起态尺寸，置于主面板下层，不参与动效
-        let backdrop = NotchBackdropPanel(collapsedFrame: panel.collapsedFrame())
-        self.backdropPanel = backdrop
-        backdrop.orderFrontRegardless()
+        rebuildNotchBackdrop(collapsedFrame: panel.collapsedFrame(), visible: true)
 
+        panel.contentView = makeNotchChrome(for: panel,
+                                            initialExpanded: CommandLine.arguments.contains("--expanded"))
+        store.start()
+        offerLoginOnFirstLaunch()
+        // 首次启动默认开启开机自启（仅一次，之后完全由菜单里的开关控制）
+        LaunchAtLogin.applyDefaultOnFirstLaunch()
+        // 应用上次保存的显示模式（否则启动后总是显示刘海面板）
+        switchDisplayMode(store.displayMode)
+    }
+
+    // MARK: - 刘海面板几何
+
+    /// 当前该贴哪块屏：用户选择的那块（拔了就临时回退主屏，选择本身保留）
+    private func targetNotchScreen() -> NSScreen? {
+        let options = NotchPanel.screenOptions()
+        guard let hit = NotchScreenTarget.resolve(saved: store.notchScreenID, options: options),
+              let screen = NSScreen.screens.first(where: { $0.cmDisplayID == hit.id }) else {
+            return NSScreen.main ?? NSScreen.screens.first
+        }
+        return screen
+    }
+
+    /// 用户从菜单指定刘海屏幕（nil = 跟随主屏）：存偏好后立即换屏
+    private func selectNotchScreen(_ id: UInt32?) {
+        guard store.notchScreenID != id else { return }
+        store.notchScreenID = id
+        retargetNotchPanel()
+    }
+
+    /// 换屏（用户选择 / 显示器热插拔）：重算几何并重建烘死几何的那层视图。
+    /// wingWidth / notchHeight / expandedWidth 都是构造期传入 NotchRootView 的，
+    /// 只挪窗口 frame 会得到宽度与黑罩高度都对不上的面板
+    private func retargetNotchPanel() {
+        guard let panel = panel else { return }
+        guard panel.retarget(to: targetNotchScreen()) else { return }
+        // 换屏后鼠标已不在面板上，继续展开会变成一块卡在新屏上的面板
+        store.setPanelExpanded(false)
+        panel.contentView = makeNotchChrome(for: panel, initialExpanded: false)
+        rebuildNotchBackdrop(collapsedFrame: panel.collapsedFrame(),
+                             visible: store.displayMode == .notchHUD)
+    }
+
+    /// 静态托底窗口：跟随面板几何重建（换屏后宽度可能不同，不能只挪窗口）
+    private func rebuildNotchBackdrop(collapsedFrame: NSRect, visible: Bool) {
+        let old = backdropPanel
+        let backdrop = NotchBackdropPanel(collapsedFrame: collapsedFrame)
+        backdropPanel = backdrop
+        if visible { backdrop.orderFrontRegardless() }
+        old?.orderOut(nil)
+    }
+
+    /// 刘海面板的内容层：菜单宿主 + SwiftUI 内容。启动与换屏共用，两处构造参数不会漂移
+    private func makeNotchChrome(for panel: NotchPanel, initialExpanded: Bool) -> HUDMenuHostView {
         let geo = panel.notch
         // 菜单宿主：右键与设置按钮共用同一份菜单（HUDContextMenu），两种显示模式只换窗口
         let container = HUDMenuHostView(frame: NSRect(x: 0, y: 0,
@@ -66,11 +118,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             onShowAbout: { AboutHUDWindow.show() },
             onLogin: { [weak self] in self?.presentLogin() },
-            onSignOut: { AuthSession.shared.signOut() })
+            onSignOut: { AuthSession.shared.signOut() },
+            screenOptions: { NotchPanel.screenOptions() },
+            onSelectScreen: { [weak self] id in self?.selectNotchScreen(id) })
 
         let view = NotchRootView(
             store: store,
-            initialExpanded: CommandLine.arguments.contains("--expanded"),
+            initialExpanded: initialExpanded,
             onExpandChange: { [weak panel, weak store] isExpanded, height in
                 store?.setPanelExpanded(isExpanded)
                 if isExpanded { panel?.animateToExpanded(height: height) }
@@ -105,13 +159,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // minYMargin 弹性 = 顶部边距固定 → 视图始终吸在窗口顶部
         hosting.autoresizingMask = [NSView.AutoresizingMask.minYMargin]
         container.addSubview(hosting)
-        panel.contentView = container
-        store.start()
-        offerLoginOnFirstLaunch()
-        // 首次启动默认开启开机自启（仅一次，之后完全由菜单里的开关控制）
-        LaunchAtLogin.applyDefaultOnFirstLaunch()
-        // 应用上次保存的显示模式（否则启动后总是显示刘海面板）
-        switchDisplayMode(store.displayMode)
+        return container
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -142,6 +190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                        expandedWidth: panel?.expandedWidth ?? 280) { [weak self] m in
                     self?.switchDisplayMode(m)
                 }
+                fp.onSelectScreen = { [weak self] id in self?.selectNotchScreen(id) }
                 floatingPanel = fp
             }
             panel?.orderOut(nil)

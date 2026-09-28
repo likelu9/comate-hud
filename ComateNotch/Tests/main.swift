@@ -273,6 +273,35 @@ check(UsageAPI.parseAccount(["data": ["nickname": "", "company_name": ""]]) == n
       "两样都没有 → 视为取不到，菜单回退「已登录」")
 check(UsageAPI.parseAccount([:]) == nil, "空响应不报错")
 
+section("刘海目标屏幕：生效屏解析")
+let builtin = NotchScreenTarget.Option(id: 1, name: "内置显示器", isMain: true)
+let dellA = NotchScreenTarget.Option(id: 2, name: "DELL U2720Q", isMain: false)
+let dellB = NotchScreenTarget.Option(id: 3, name: "DELL U2720Q", isMain: false)
+check(NotchScreenTarget.resolve(saved: nil, options: [builtin, dellA])?.id == 1,
+      "没选过 → 跟随主屏（默认行为与改动前一致）")
+check(NotchScreenTarget.resolve(saved: 2, options: [builtin, dellA])?.id == 2,
+      "选过 → 停在选中的那块")
+check(NotchScreenTarget.resolve(saved: 9, options: [builtin, dellA])?.id == 1,
+      "选中的屏被拔掉 → 临时回退主屏")
+check(NotchScreenTarget.resolve(saved: 2, options: [dellA, dellB])?.id == 2,
+      "没有主屏标记时，选中的屏仍然优先")
+check(NotchScreenTarget.resolve(saved: nil, options: [dellA, dellB])?.id == 2,
+      "没有主屏标记 → 退回第一块，不返回 nil")
+check(NotchScreenTarget.resolve(saved: 9, options: []) == nil,
+      "一块屏都没有 → nil，由调用方兜底")
+
+section("刘海目标屏幕：菜单可见性与命名")
+check(!NotchScreenTarget.shouldShowMenu(screenCount: 1), "单屏不出现子菜单")
+check(NotchScreenTarget.shouldShowMenu(screenCount: 2), "多屏才出现")
+check(NotchScreenTarget.baseName("Built-in Retina Display", isBuiltin: true) == "内置显示器",
+      "内建屏用统一名，不暴露系统语言下的型号名")
+check(NotchScreenTarget.baseName("DELL U2720Q", isBuiltin: false) == "DELL U2720Q",
+      "外接屏沿用型号名")
+check(NotchScreenTarget.baseName("", isBuiltin: false) == "显示器", "名字为空也不出现空行")
+check(NotchScreenTarget.dedupe("DELL U2720Q", index: 0) == "DELL U2720Q", "首个不补序号")
+check(NotchScreenTarget.dedupe("DELL U2720Q", index: 1) == "DELL U2720Q（2）",
+      "第二块同型号补序号，菜单里能区分")
+
 // MARK: - 汇总
 
 print("\n———————————————")

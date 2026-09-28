@@ -146,7 +146,9 @@ final class FloatingContentView: NSView {
                 guard let store = self?.panel?.store else { return }
                 LoginWindowController.shared.present(refreshing: store)
             },
-            onSignOut: { AuthSession.shared.signOut() })
+            onSignOut: { AuthSession.shared.signOut() },
+            screenOptions: { NotchPanel.screenOptions() },
+            onSelectScreen: { [weak self] id in self?.panel?.onSelectScreen?(id) })
         cachedMenuBuilder = builder
         return builder
     }
@@ -215,6 +217,9 @@ final class FloatingPanel: NSPanel {
     let store: ComateStore
     /// 切换显示模式（由 AppDelegate 注入）
     var onSwitchMode: ((ComateStore.DisplayMode) -> Void)?
+    /// 菜单里指定刘海屏幕（由 AppDelegate 注入）：换屏逻辑归它管，
+    /// 悬浮模式切回刘海模式时用同一个入口，否则菜单里的选项会点不动
+    var onSelectScreen: ((UInt32?) -> Void)?
     /// 展开态宽度：与刘海模式保持一致
     let expandedWidth: CGFloat
 

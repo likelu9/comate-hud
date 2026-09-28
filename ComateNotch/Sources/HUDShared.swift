@@ -539,19 +539,27 @@ final class HUDContextMenu: NSObject {
     private let onShowAbout: () -> Void
     private let onLogin: () -> Void
     private let onSignOut: () -> Void
+    /// 可选的刘海屏幕（每次构建菜单时现取，屏幕热插拔后菜单自然是最新的）
+    private let screenOptions: () -> [NotchScreenTarget.Option]
+    /// 指定刘海屏幕（nil = 跟随主屏）
+    private let onSelectScreen: (UInt32?) -> Void
 
     init(store: ComateStore,
          onSwitchMode: @escaping (ComateStore.DisplayMode) -> Void,
          onShowMainWindow: @escaping () -> Void,
          onShowAbout: @escaping () -> Void,
          onLogin: @escaping () -> Void,
-         onSignOut: @escaping () -> Void) {
+         onSignOut: @escaping () -> Void,
+         screenOptions: @escaping () -> [NotchScreenTarget.Option],
+         onSelectScreen: @escaping (UInt32?) -> Void) {
         self.store = store
         self.onSwitchMode = onSwitchMode
         self.onShowMainWindow = onShowMainWindow
         self.onShowAbout = onShowAbout
         self.onLogin = onLogin
         self.onSignOut = onSignOut
+        self.screenOptions = screenOptions
+        self.onSelectScreen = onSelectScreen
     }
 
     /// 每次弹出都重新构建：勾选态、「恢复默认高度」的显隐取决于当前 store 状态
@@ -574,6 +582,9 @@ final class HUDContextMenu: NSObject {
         }
         modeItem.submenu = modeMenu
         menu.addItem(modeItem)
+
+        // 刘海落在哪块屏：只对刘海模式有意义，且单屏时没有可选项
+        addScreenItems(to: menu)
 
         let mainItem = NSMenuItem(title: "显示主窗口", action: #selector(menuShowMain), keyEquivalent: "")
         mainItem.target = self
@@ -684,6 +695,32 @@ final class HUDContextMenu: NSObject {
         }
     }
 
+    /// 「刘海所在屏幕」子菜单。勾选态标的是**用户的选择**而不是「当前生效」（选中的屏被拔掉时
+    /// 会临时用主屏，顶上那一行说明去向）—— 两者混用会让菜单看不出自己到底选了什么
+    private func addScreenItems(to menu: NSMenu) {
+        guard store.displayMode == .notchHUD else { return }
+        let options = screenOptions()
+        guard NotchScreenTarget.shouldShowMenu(screenCount: options.count) else { return }
+        let saved = store.notchScreenID
+
+        let item = NSMenuItem(title: "刘海所在屏幕", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        if let saved = saved, !options.contains(where: { $0.id == saved }) {
+            submenu.addItem(infoItem("已选屏幕未连接，当前用主屏幕"))
+        }
+        let follow = actionItem("跟随主屏幕", #selector(menuSelectScreen(_:)))
+        if saved == nil { follow.state = .on }
+        submenu.addItem(follow)
+        for option in options {
+            let row = actionItem(option.name, #selector(menuSelectScreen(_:)))
+            row.representedObject = NSNumber(value: option.id)
+            if saved == option.id { row.state = .on }
+            submenu.addItem(row)
+        }
+        item.submenu = submenu
+        menu.addItem(item)
+    }
+
     private func actionItem(_ title: String, _ selector: Selector) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: selector, keyEquivalent: "")
         item.target = self
@@ -701,6 +738,10 @@ final class HUDContextMenu: NSObject {
         guard let raw = sender.representedObject as? String,
               let mode = ComateStore.DisplayMode(rawValue: raw) else { return }
         onSwitchMode(mode)
+    }
+
+    @objc private func menuSelectScreen(_ sender: NSMenuItem) {
+        onSelectScreen((sender.representedObject as? NSNumber)?.uint32Value)
     }
 
     @objc private func menuShowMain() { onShowMainWindow() }

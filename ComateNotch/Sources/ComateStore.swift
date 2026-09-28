@@ -131,6 +131,29 @@ final class ComateStore: ObservableObject {
     @Published var floatingPositionX: CGFloat = UserDefaults.standard.object(forKey: ComateStore.floatingPosXKey) as? CGFloat ?? 0.7
     @Published var floatingPositionY: CGFloat = UserDefaults.standard.object(forKey: ComateStore.floatingPosYKey) as? CGFloat ?? 0.5
 
+    // MARK: - 刘海所在屏幕
+
+    /// 用户指定的刘海屏幕（CGDirectDisplayID）；nil = 跟随主屏（默认）。
+    /// 变更即写盘，重启后保持
+    @Published var notchScreenID: UInt32? = ComateStore.loadNotchScreenID() {
+        didSet {
+            guard oldValue != notchScreenID else { return }
+            if let id = notchScreenID {
+                UserDefaults.standard.set(Int(id), forKey: ComateStore.notchScreenKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: ComateStore.notchScreenKey)
+            }
+        }
+    }
+
+    private static let notchScreenKey = "notch.screenDisplayID"
+
+    private static func loadNotchScreenID() -> UInt32? {
+        guard UserDefaults.standard.object(forKey: notchScreenKey) != nil else { return nil }
+        let v = UserDefaults.standard.integer(forKey: notchScreenKey)
+        return v > 0 ? UInt32(v) : nil
+    }
+
     func saveFloatingPosition(x: CGFloat, y: CGFloat) {
         floatingPositionX = x
         floatingPositionY = y

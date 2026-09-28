@@ -6,7 +6,7 @@ import SwiftUI
 /// 支持外接显示器热插拔：屏幕变化时自动重新定位到主屏幕。
 final class NotchPanel: NSPanel {
 
-    struct NotchGeometry {
+    struct NotchGeometry: Equatable {
         let centerX: CGFloat
         let notchLeft: CGFloat
         let notchRight: CGFloat
@@ -49,7 +49,21 @@ final class NotchPanel: NSPanel {
                              screenTopY: screen.frame.maxY)
     }
 
-    let notch: NotchGeometry
+    private(set) var notch: NotchGeometry
+    /// 当前所有屏幕，供菜单选择用（顺序与 NSScreen.screens 一致；重名补序号）
+    static func screenOptions() -> [NotchScreenTarget.Option] {
+        let mainID = NSScreen.main?.cmDisplayID
+        var seen: [String: Int] = [:]
+        return NSScreen.screens.compactMap { screen in
+            guard let id = screen.cmDisplayID else { return nil }
+            let base = NotchScreenTarget.baseName(screen.localizedName, isBuiltin: screen.cmIsBuiltin)
+            let index = seen[base, default: 0]
+            seen[base] = index + 1
+            return NotchScreenTarget.Option(id: id,
+                                            name: NotchScreenTarget.dedupe(base, index: index),
+                                            isMain: id == mainID)
+        }
+    }
     /// 收起态左右翼宽度：刘海两侧可显示区域的宽度
     /// HUD 总宽 = 刘海宽 + 左翼 + 右翼，中间段被刘海硬件遮挡，纯黑融合
     let wingWidth: CGFloat = 36  // 收窄到 36
@@ -65,13 +79,16 @@ final class NotchPanel: NSPanel {
     /// 为拖拽放大留足余量。展开态高度由内容自然高度决定（条数变化跟随），
     /// 但 hostingView 尺寸必须恒定，否则又会重新布局导致顶部跳动；窗口只负责裁剪可见区域。
     let hostingHeight: CGFloat = 720
-    private let anchorTopY: CGFloat
+    private var anchorTopY: CGFloat
 
-    init() {
-        // NSScreen.main 可能为 nil（无外接显示器 / 切用户），notchGeometry 内部兜底
-        let screen = NSScreen.main ?? NSScreen.screens.first
-        self.notch = NotchPanel.notchGeometry(for: screen)
-        self.anchorTopY = notch.screenTopY - notch.notchHeight
+    /// 入参为本次要贴的屏幕（由调用方按用户选择解析好后传入）；
+    /// 不传则退回主屏 —— 与改动前行为一致，单屏用户无感知。
+    /// notchGeometry 内部还会兜一层：NSScreen.main 可能为 nil（无外接显示器 / 切用户）
+    init(screen: NSScreen? = nil) {
+        let target = screen ?? NSScreen.main ?? NSScreen.screens.first
+        let geo = NotchPanel.notchGeometry(for: target)
+        self.notch = geo
+        self.anchorTopY = geo.screenTopY - geo.notchHeight
 
         // super.init 之前不能用 self 的计算属性，直接用已初始化的存储属性计算
         // 窗口初始为收起态尺寸（宽度全程不变，见 hudWidth）
@@ -126,30 +143,21 @@ final class NotchPanel: NSPanel {
         setFrame(expandedFrame(height: maxHeight), display: true)
     }
 
-    /// 外接显示器热插拔：屏幕数量/排列变化时重新定位到主屏幕
-    func repositionToMainScreen() {
-        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
-            NSLog("[NotchPanel] reposition: 无可用屏幕")
-            return
-        }
-        let newNotch = NotchPanel.notchGeometry(for: screen)
-        // 如果主屏幕没变（frame 完全一致），跳过无意义的重定位
-        if newNotch.centerX == notch.centerX && newNotch.screenTopY == notch.screenTopY {
-            NSLog("[NotchPanel] reposition: 主屏幕未变化，跳过")
-            return
-        }
-        NSLog("[NotchPanel] reposition: 屏幕变化，从 (%.0f,%.0f) 移动到 (%.0f,%.0f)",
-              notch.centerX, notch.screenTopY, newNotch.centerX, newNotch.screenTopY)
-        // 由于 NotchGeometry 是 let 不可变，需要重建面板
-        // 简单方案：直接移动窗口 frame 到新屏幕的对应位置
-        let newX = newNotch.centerX - collapsedWidth / 2
-        let newY = newNotch.screenTopY - notch.notchHeight
-        let target = NSRect(x: newX, y: newY, width: collapsedWidth, height: notch.notchHeight)
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.35
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            self.animator().setFrame(target, display: true)
-        }
+    /// 换屏：重算几何并同步窗口位置。返回几何是否真的变了 ——
+    /// 调用方据此决定是否重建视图层（wingWidth / notchHeight / expandedWidth 是构造期烘死的）。
+    /// 不带动画：跨屏滑过去既慢又会经过中间那块屏
+    @discardableResult
+    func retarget(to screen: NSScreen?) -> Bool {
+        let new = NotchPanel.notchGeometry(for: screen)
+        guard new != notch else { return false }
+        NSLog("[NotchPanel] 换屏: (%.0f,%.0f)h%.0f → (%.0f,%.0f)h%.0f",
+              notch.centerX, notch.screenTopY, notch.notchHeight,
+              new.centerX, new.screenTopY, new.notchHeight)
+        notch = new
+        anchorTopY = new.screenTopY - new.notchHeight
+        // 换屏必须瞬时完成：旧几何的展开态在新屏上毫无意义
+        setFrame(collapsedFrame(), display: true)
+        return true
     }
 
     func animateToCollapsed() {
@@ -212,4 +220,51 @@ final class NotchBackdropPanel: NSPanel {
 
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
+}
+
+// MARK: - 目标屏幕选择
+
+/// 刘海 HUD 落在哪块屏幕。默认跟随主屏（存储为 nil）；用户指定过就用指定那块，
+/// 被拔掉时**临时**回退主屏 —— 不覆盖用户选择，显示器插回来即恢复。
+///
+/// 全部为纯逻辑：屏幕在测试进程里造不出来，判定规则必须能脱离 NSScreen 断言。
+enum NotchScreenTarget {
+    struct Option: Equatable {
+        /// CGDirectDisplayID
+        let id: UInt32
+        let name: String
+        let isMain: Bool
+    }
+
+    /// 子菜单是否出现：只有多屏时才有可选项，单屏多一行纯噪音
+    static func shouldShowMenu(screenCount: Int) -> Bool { screenCount > 1 }
+
+    /// 生效屏幕：用户选中的那块仍在 → 它；否则主屏 → 否则第一块。没有屏幕时返回 nil
+    static func resolve(saved: UInt32?, options: [Option]) -> Option? {
+        if let saved = saved, let hit = options.first(where: { $0.id == saved }) { return hit }
+        return options.first(where: { $0.isMain }) ?? options.first
+    }
+
+    /// 展示名基线：内建屏统一叫「内置显示器」（型号名对用户没有信息量）
+    static func baseName(_ raw: String, isBuiltin: Bool) -> String {
+        if isBuiltin { return "内置显示器" }
+        return raw.isEmpty ? "显示器" : raw
+    }
+
+    /// 重名补序号：两块同型号外接屏在菜单里必须能区分
+    static func dedupe(_ base: String, index: Int) -> String {
+        index > 0 ? "\(base)（\(index + 1)）" : base
+    }
+}
+
+extension NSScreen {
+    /// CGDirectDisplayID：跨启动稳定，可用来记住用户选的屏幕
+    var cmDisplayID: UInt32? {
+        (deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
+    }
+
+    var cmIsBuiltin: Bool {
+        guard let id = cmDisplayID else { return false }
+        return CGDisplayIsBuiltin(id) != 0
+    }
 }
