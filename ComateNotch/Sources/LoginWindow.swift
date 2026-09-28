@@ -17,7 +17,11 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
 
     private static let loginURL = URL(string: "https://comate.wps.cn/web/")!
     private static let windowWidth: CGFloat = 460
-    private static let windowHeight: CGFloat = 620
+    /// comate.wps.cn/web 的登录页在视口高 <600pt 时自身布局会塌（绿色主登录按钮被压成一条），
+    /// 实测阈值 600pt。窗口正文顶部说明区占 78pt，故按 WebView ≈740pt 定窗口高度。
+    private static let windowHeight: CGFloat = 820
+    /// 允许缩小，但下限保证 WebView ≥620pt，不越过登录页的 600pt 塌陷线
+    private static let windowMinHeight: CGFloat = 700
     /// 校验失败后的重试次数：登录页回跳需要时间，sid 可能先到、权限后到
     private static let maxAttempts = 3
 
@@ -82,11 +86,12 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
 
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0,
                                                   width: Self.windowWidth, height: Self.windowHeight),
-                              styleMask: [.titled, .closable],
+                              styleMask: [.titled, .closable, .resizable],
                               backing: .buffered, defer: false)
         window.title = "登录 WPS 账号"
         window.isReleasedWhenClosed = false
         window.delegate = self
+        window.contentMinSize = NSSize(width: Self.windowWidth, height: Self.windowMinHeight)
         window.center()
 
         let tip = Self.makeLabel(
