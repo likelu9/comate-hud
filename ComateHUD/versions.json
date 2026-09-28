@@ -1,6 +1,21 @@
 {
-  "latest": "1.4.4",
+  "latest": "1.4.5",
   "versions": [
+    {
+      "version": "1.4.5",
+      "build": 14,
+      "date": "2026-09-28",
+      "platform": "macOS",
+      "size": "2.0 MB",
+      "download": "ComateHUD-1.4.5.dmg",
+      "minOS": "12.0",
+      "changelog": [
+        {
+          "type": "fix",
+          "text": "修复每次升级后登录必弹「ComateHUD 想要使用你储存在钥匙串中的…」授权框、且点「始终允许」也记不住的问题：现在 HUD 会在启动时按当前构建自动校验该钥匙串条目，版本变化时自动重置，升级后无需任何操作也不会再弹"
+        }
+      ]
+    },
     {
       "version": "1.4.4",
       "build": 13,
