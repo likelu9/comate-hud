@@ -92,13 +92,18 @@ final class AuthSession {
         return fresh
     }
 
+    /// 从一组 cookie 里取 HUD 用的那把 sid。登录页（内存态 store）与自有 store 共用这一处判定。
+    static func sid(in cookies: [HTTPCookie]) -> String? {
+        cookies.first { $0.name == sidCookieName && !$0.value.isEmpty }?.value
+    }
+
     /// 同步读 cookie store。不判有效性，只负责取出来。
     private func readSidFromCookieStore() -> String? {
         let store = ensureWebView().configuration.websiteDataStore.httpCookieStore
         var found: String?
         let semaphore = DispatchSemaphore(value: 0)
         store.getAllCookies { cookies in
-            found = cookies.first { $0.name == Self.sidCookieName && !$0.value.isEmpty }?.value
+            found = Self.sid(in: cookies)
             semaphore.signal()
         }
         if semaphore.wait(timeout: .now() + Self.readTimeout) == .timedOut {
@@ -119,8 +124,36 @@ final class AuthSession {
 
     // MARK: - 常驻 webview
 
-    /// 全 App 唯一的那份 WKWebView。登录窗口直接复用它（见 LoginWindow），避免两份实例两份内存。
-    var cookieWebView: WKWebView { ensureWebView() }
+    /// 把外部 cookie store（登录窗的内存态 store）里的 cookie 镜像进自有凭据 store。
+    /// 登录页跑在非持久 store 上（避免 WebKit 去读钥匙串的 WebCrypto 主密钥），
+    /// 不镜像就落不进凭据源。
+    ///
+    /// 写入后**读回确认**再回调：`setCookie` 是异步的，不确认就可能「以为镜像好了、
+    /// 其实还没落地」，重启后免登录会莫名其妙失效。回调参数 = 是否全部落地。
+    func absorbCookies(from store: WKHTTPCookieStore, completion: @escaping (Bool) -> Void) {
+        store.getAllCookies { [weak self] cookies in
+            guard let self = self else { return }
+            let target = self.ensureWebView().configuration.websiteDataStore.httpCookieStore
+            let group = DispatchGroup()
+            for cookie in cookies {
+                group.enter()
+                target.setCookie(cookie) { group.leave() }
+            }
+            group.notify(queue: .main) {
+                target.getAllCookies { persisted in
+                    let key: (HTTPCookie) -> String = { "\($0.name)@\($0.domain)\($0.path)" }
+                    let have = Set(persisted.map(key))
+                    let missing = cookies.filter { !have.contains(key($0)) }
+                    if !missing.isEmpty {
+                        NSLog("[ComateHUD] cookie 镜像未落地 %d 项（含 sid：%@）",
+                              missing.count,
+                              missing.contains { $0.name == Self.sidCookieName } ? "是" : "否")
+                    }
+                    completion(missing.isEmpty)
+                }
+            }
+        }
+    }
 
     private func ensureWebView() -> WKWebView {
         webViewLock.lock()

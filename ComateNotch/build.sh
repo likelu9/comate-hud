@@ -69,8 +69,27 @@ else
     cp "$BUILD/arm64/ComateHUD" "$APP/Contents/MacOS/ComateHUD"
 fi
 
-echo "==> ad-hoc 签名"
-codesign --force --sign - "$APP" 2>/dev/null || echo "⚠ 签名跳过"
+# 签名：优先用稳定的本地签名身份。
+# 背景：ad-hoc 签名的指定要求是 `cdhash H"..."`，每次重建都会变；
+# 而 WebKit 的 WebCrypto 主密钥存在钥匙串里、ACL 记录的是创建者身份 ——
+# 身份一变，读旧条目就要授权，用户每次升级/重建都会看到「ComateHUD 想要使用
+# 你储存在钥匙串中的…」弹窗（且 ad-hoc 下「始终允许」记不住）。
+# 用自签名证书后指定要求是 `identifier "com.wpscomate.hud" and certificate root = H"…"`，
+# 跨构建恒定，授权能真正沿用。证书由 scripts/make-signing-identity.sh 一次性生成。
+SIGN_ID="Comate HUD Local Signing"
+KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
+if security find-certificate -c "$SIGN_ID" "$KEYCHAIN" >/dev/null 2>&1; then
+    echo "==> 稳定身份签名（$SIGN_ID）"
+    if codesign --force --deep --keychain "$KEYCHAIN" -s "$SIGN_ID" "$APP" 2>/dev/null; then
+        echo "    指定要求: $(codesign -d -r- "$APP" 2>/dev/null | tail -1)"
+    else
+        echo "    ⚠ 稳定身份签名失败，回退 ad-hoc（身份将随构建变化）"
+        codesign --force --sign - "$APP" 2>/dev/null || echo "⚠ 签名跳过"
+    fi
+else
+    echo "==> ad-hoc 签名（未找到稳定身份，见 AGENTS.md「签名身份」）"
+    codesign --force --sign - "$APP" 2>/dev/null || echo "⚠ 签名跳过"
+fi
 
 # 验证
 echo "==> 验证"
