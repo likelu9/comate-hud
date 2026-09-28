@@ -52,7 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.contentView = makeNotchChrome(for: panel,
                                             initialExpanded: CommandLine.arguments.contains("--expanded"))
         store.start()
-        offerLoginOnFirstLaunch()
+        offerLoginOnLaunch()
         // 首次启动默认开启开机自启（仅一次，之后完全由菜单里的开关控制）
         LaunchAtLogin.applyDefaultOnFirstLaunch()
         // 应用上次保存的显示模式（否则启动后总是显示刘海面板）
@@ -204,17 +204,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         LoginWindowController.shared.present(refreshing: store)
     }
 
-    /// 首次启动引导登录一次。
-    /// 用「本版本新增的标记」判定，所以老用户升级到这一版后会正好收到一次引导 ——
-    /// 他们的凭据来源变了，必须重新登录一次。用户关掉后不再自动弹，之后靠面板提示与菜单项自救。
-    private func offerLoginOnFirstLaunch() {
-        let key = "notch.didOfferLogin"
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
-        UserDefaults.standard.set(true, forKey: key)
+    /// 每次启动引导登录一次。
+    /// 凭据只在内存里（不落盘、不碰钥匙串），启动时必然未登录 —— 不引导用户就只会看到一个未登录面板，
+    /// 「本版本已引导过」这类标记已无意义。用户关掉后不再自动弹，之后靠面板提示与菜单项自救。
+    private func offerLoginOnLaunch() {
         // 等面板先出现：启动瞬间弹窗既突兀，也会和首帧渲染抢主线程
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             guard let self = self else { return }
-            // 已经有可用凭据就不打扰
+            // 本次运行内已登录（刚登过）就不打扰
             guard AuthSession.shared.state != .ok else { return }
             self.presentLogin()
         }

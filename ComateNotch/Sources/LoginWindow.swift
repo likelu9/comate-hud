@@ -1,7 +1,7 @@
 import AppKit
 import WebKit
 
-/// 登录窗口：由 HUD 自己完成一次 WPS 官方登录，把 wps_sid 落到自己的 cookie store 里。
+/// 登录窗口：由 HUD 自己完成一次 WPS 官方登录，把 wps_sid 记进内存（不落盘、不碰钥匙串）。
 ///
 /// 两个设计取舍：
 /// - **独立 NSWindow，不用 SwiftUI sheet**：HUD 的面板是非激活 borderless NSPanel，其中弹不出 sheet
@@ -9,7 +9,7 @@ import WebKit
 /// - **登录页跑在非持久（内存）store 上**：WebKit 只在持久 store 里才需要读钥匙串中的
 ///   `WebCrypto Master Key`；非持久 store 用内存里的主密钥。登录过程里反复弹的
 ///   「ComateHUD 想要使用你储存在钥匙串中的…」就是持久 store 触发的，换内存 store 后
-///   登录链路不再碰钥匙串。代价是 cookie 要先镜像进自有凭据 store（见 absorbCookies）。
+///   登录链路不再碰钥匙串。代价：凭据只记内存（App 退出即失效），不落盘不镜像。
 ///
 /// 登录成功的判据是「真的打通了 HUD 依赖的两条链路」，而不是「cookie 里出现了 wps_sid」——
 /// 后者会出现「看着登录成功、凭据其实不可用」的假成功。
@@ -180,11 +180,9 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
         scheduleVerify(store: cookieStore)
     }
 
-    /// 校验流水线：从**登录页那口 store** 取 sid → 探测两条链路 → 成功则先把 cookie 镜像进
-    /// 自有凭据 store（重启后免登录靠它）再收尾。
+    /// 校验流水线：从**登录页那口 store** 取 sid → 探测两条链路 → 成功则把 sid 记进内存并收尾。
     ///
-    /// 为什么读登录页那口 store 而不是自有 store：登录页跑在内存态 store 上，sid 只落在
-    /// 这口 store 里；镜像落地是异步的，拿镜像后的值校验会误判「登录失败」（窗口不关、面板显示未登录）。
+    /// 凭据出生地就是登录页那口 store，所以校验直接读它；自有凭据 store 已不存在（凭据不持久化）。
     private func scheduleVerify(store loginStore: WKHTTPCookieStore) {
         guard !finished else { return }
         if verifying { pendingStore = loginStore; return }
@@ -196,14 +194,10 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
                 let ok = sid.map { Self.probe(sid: $0) } ?? false
                 DispatchQueue.main.async {
                     self.verifying = false
-                    if ok, sid != nil {
-                        // 先确保凭据真的进了自有 store，再宣布成功（否则重启后免登录会“莫名失效”）
-                        AuthSession.shared.absorbCookies(from: loginStore) { allPersisted in
-                            if !allPersisted {
-                                NSLog("[ComateHUD] 登录凭据镜像未完全落地，重启后可能需重新登录")
-                            }
-                            self.finishSuccess()
-                        }
+                    if ok, let sid = sid {
+                        // 凭据只记内存：不落 cookie store、不镜像、不碰钥匙串
+                        AuthSession.shared.adopt(sid: sid)
+                        self.finishSuccess()
                     } else if sid == nil {
                         // 还没登录：不算失败，等页面下一次写 cookie 再试
                         self.attempt = 0
@@ -251,15 +245,9 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
     // MARK: - 收尾
 
     func windowWillClose(_ notification: Notification) {
-        // 用户可能在登录成功后才手动关窗（比如弹窗没自动关）：关窗前兜底镜像一次，
-        // 否则这口内存 store 随实例释放，辛苦登的凭据就丢了。
-        if let store = webView?.configuration.websiteDataStore.httpCookieStore {
-            AuthSession.shared.absorbCookies(from: store) { [weak self] _ in
-                self?.releaseWebView()
-            }
-        } else {
-            releaseWebView()
-        }
+        // 关窗 = 放弃这次登录（凭据只在内存，没成功就不会被记下）；
+        // 登录成功能自动关窗，不需要用户手动关。
+        releaseWebView()
         window = nil
         onSuccess = nil
         verifying = false
@@ -267,8 +255,8 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
         pendingStore = nil
     }
 
-    /// 关窗后卸掉登录页：登录页跑在内存态 store 上、实例不再复用，
-    /// 置空即一并释放内存 store 与页面（凭据已镜像进自有 store，读 cookie 走常驻 webview）。
+    /// 关窗后卸掉登录页：实例不再复用，置空即一并释放内存 store 与页面
+    /// （凭据已记进内存，不再需要这口 store）。
     private func releaseWebView() {
         guard let webView = webView else { return }
         webView.configuration.websiteDataStore.httpCookieStore.remove(self)

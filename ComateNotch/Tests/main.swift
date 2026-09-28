@@ -231,13 +231,14 @@ check(!ComateStore.shouldConcludeNoCredential(authState: .ok),
 check(!ComateStore.shouldConcludeNoCredential(authState: .expired),
       "凭据失效 → 是重新登录提示，不是未登录")
 
-section("首次凭据判定的重试节奏")
-check(!AuthSession.initialReadRetryDelays.isEmpty,
-      "冷启动首读失败要重试，不能直接判未登录")
-check(AuthSession.initialReadRetryDelays == AuthSession.initialReadRetryDelays.sorted(),
-      "重试间隔递增")
-check(AuthSession.initialReadRetryDelays.reduce(0, +) <= 3.0,
-      "总重试时长 ≤3s（不拖慢启动引导与面板首屏）")
+section("凭据只存内存：从 cookie 里挑出 wps_sid")
+let makeCookie: (String, String) -> HTTPCookie? = { name, value in
+    HTTPCookie(properties: [.name: name, .value: value, .domain: "comate.wps.cn", .path: "/"])
+}
+check(AuthSession.sid(in: []) == nil, "没有 cookie → 无凭据")
+check(AuthSession.sid(in: [makeCookie("other", "x")!]) == nil, "只有别的 cookie → 无凭据")
+check(AuthSession.sid(in: [makeCookie("wps_sid", "V02Sabc")!]) == "V02Sabc", "取到 wps_sid")
+check(AuthSession.sid(in: [makeCookie("wps_sid", "")!]) == nil, "空值的 wps_sid 不算凭据")
 check(ComateStore.credentialReadRetryInterval < ComateStore.retryDelay(failures: 1, authFailed: false),
       "瞬时读失败不像真失败那样退避 60 秒")
 check(ComateStore.usageRetryDelay(retryAfter: Date().addingTimeInterval(5), now: Date()) < 6,

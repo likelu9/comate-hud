@@ -1,20 +1,15 @@
 import Foundation
-import WebKit
 
-/// Comate HUD 的凭据唯一来源：本 App 内嵌 WKWebView 的 cookie store。
+/// Comate HUD 的凭据唯一来源：**只存在内存里**的那把 wps_sid。
 ///
-/// 为什么不再读 Comate 写在 Keychain 里的 wps_sid：那是**别的 App 的凭据副本** ——
-/// 读它要 fork `/usr/bin/security`（别人机器上首次会弹钥匙串授权框，被拒就等于凭空没有凭据），
-/// 而 WPS 何时轮换、是否回写都不由我们掌控，凭据坏了也没人知道。
-/// 现在改成 HUD 自己用 WKWebView 走一次官方登录：凭据存在自己的 cookie store 里，
-/// 自己读取、自己检测失效、自己引导重登 —— 全链路可自愈。
+/// 两条不回退的硬约束：
+/// - **不读 Keychain**：曾经 fork `/usr/bin/security` 去读 Comate 写的凭据副本，首次会弹钥匙串授权框
+/// - **不写 Keychain**：任何 WebKit **持久** store 都会让 WebKit 去读钥匙串里的 WebCrypto 主密钥，
+///   登录过程中会反复看到「ComateHUD 想要使用你储存在钥匙串中的…」。所以登录页跑在
+///   内存态 store（内存主密钥），登录拿到的 sid 也只记在内存，不落 cookie store、不镜像、不持久化
 ///
-/// 实测约束（决定了这个类的形状）：
-/// - **必须存在一个 WKWebView 实例才读得到 cookie**：没有实例时 `getAllCookies` 恒返回空集
-/// - cookie 按 bundle id 隔离，读不到 Safari / WPS Office / Comate 桌面端的登录态
-/// - 常驻一个「未加载任何页面」的实例：主进程 +21MB，不额外拉起辅助进程；
-///   反复创建/销毁会让 WebKit 反复起停辅助进程，故常驻一个，登录窗口复用它，全 App 只有一份
-/// - `getAllCookies` 是异步 API，这里用信号量同步等待：会等 XPC，**必须在后台队列调用**
+/// 代价与口径：App 退出（或用户退出登录）后凭据即失效，下次启动一律按未登录处理，
+/// 由 AppDelegate / 面板 / 菜单引导用户重新登录。
 final class AuthSession {
     static let shared = AuthSession()
 
@@ -32,151 +27,62 @@ final class AuthSession {
     private(set) var state: State = .unknown
 
     private static let sidCookieName = "wps_sid"
-    /// 读 cookie 的超时：正常在毫秒级返回，超时说明 WebKit 辅助进程异常
-    private static let readTimeout: TimeInterval = 6
-
-    /// 首次判定的重试节奏。冷启动时 WebKit 的 cookie store 可能尚未就绪，
-    /// 第一次 getAllCookies 会空手而归（与紧接着的第二次读取结果不一致）。
-    /// 直接判「无凭据」会让面板提示未登录、菜单却显示已登录，所以重试几次再下结论。
-    static let initialReadRetryDelays: [TimeInterval] = [0.3, 0.7, 1.5]
 
     private let lock = NSLock()
-    private let webViewLock = NSLock()
-    private var cachedSid: String?
-    private var webView: WKWebView?
+    /// 本次运行期间拿到的 sid。**只存内存**：App 退出即失效，下次启动按未登录处理。
+    private var sessionSid: String?
     private var didStart = false
 
     private init() {}
 
     // MARK: - 启动
 
-    /// 启动时调用一次（主线程）：备好常驻 webview，并异步做首次凭据判定。
+    /// 启动时调用一次（主线程）。凭据只在内存里，冷启动必然为空 →
+    /// 直接判未登录，由 AppDelegate / 面板 / 菜单引导用户重新登录。
     func start() {
         guard !didStart else { return }
         didStart = true
-        _ = ensureWebView()
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            guard let self = self else { return }
-            // 这里只能判定「有没有凭据」；「凭据还管不管用」交给第一次真实请求（401/403 会翻成 .expired）
-            // 且只能用低权威的 setStateIfUnknown：探测慢的时候，真实请求可能已经先给出结论了
-            if self.currentSid() != nil {
-                self.setStateIfUnknown(.ok)
-                return
-            }
-            NSLog("[ComateHUD] 首次读凭据未命中，按冷启动时序重试")
-            for delay in Self.initialReadRetryDelays {
-                Thread.sleep(forTimeInterval: delay)
-                if self.currentSid(forceRefresh: true) != nil {
-                    NSLog("[ComateHUD] 重试后拿到凭据，判定为已登录")
-                    self.setStateIfUnknown(.ok)
-                    return
-                }
-            }
-            NSLog("[ComateHUD] 重试后仍无凭据，判定为未登录")
-            self.setStateIfUnknown(.noCredential)
-        }
+        NSLog("[ComateHUD] 凭据不持久化，启动按未登录处理")
+        setStateIfUnknown(.noCredential)
     }
 
     // MARK: - 凭据读取
 
-    /// 取 sid（默认读内存缓存）。线程安全，**必须在后台队列调用**。
+    /// 取 sid。凭据只在内存里，这里不涉及任何 IO，线程安全。
     ///
-    /// `forceRefresh` 用于凭据被服务端拒后的重读：重读拿到的值与旧值相同，
-    /// 就说明这把凭据换不掉，调用方据此判定「重试没有意义」。
+    /// `forceRefresh` 保留：调用方用它表达「服务端刚拒过这把凭据」。内存凭据没有
+    /// 「重读换一把」的可能，重读拿到的就是同一把 —— 调用方据此判定重试没有意义。
     func currentSid(forceRefresh: Bool = false) -> String? {
         lock.lock()
         defer { lock.unlock() }
-        if !forceRefresh, let cached = cachedSid { return cached }
-        guard let fresh = readSidFromCookieStore(), Self.isValidSid(fresh) else { return nil }
-        cachedSid = fresh
-        return fresh
+        return sessionSid
     }
 
-    /// 从一组 cookie 里取 HUD 用的那把 sid。登录页（内存态 store）与自有 store 共用这一处判定。
+    /// 登录成功后由 LoginWindow 写入内存凭据。只接受合法 sid，非法值忽略。
+    func adopt(sid: String) {
+        guard Self.isValidSid(sid) else {
+            NSLog("[ComateHUD] 登录返回的 sid 非法，忽略")
+            return
+        }
+        lock.lock()
+        sessionSid = sid
+        lock.unlock()
+        NSLog("[ComateHUD] 已记录本次运行的登录凭据（仅内存）")
+        setState(.ok)
+    }
+
+    /// 从一组 cookie 里取 HUD 用的那把 sid。登录页与自己那口 store 共用这一处判定。
     static func sid(in cookies: [HTTPCookie]) -> String? {
         cookies.first { $0.name == sidCookieName && !$0.value.isEmpty }?.value
     }
 
-    /// 同步读 cookie store。不判有效性，只负责取出来。
-    private func readSidFromCookieStore() -> String? {
-        let store = ensureWebView().configuration.websiteDataStore.httpCookieStore
-        var found: String?
-        let semaphore = DispatchSemaphore(value: 0)
-        store.getAllCookies { cookies in
-            found = Self.sid(in: cookies)
-            semaphore.signal()
-        }
-        if semaphore.wait(timeout: .now() + Self.readTimeout) == .timedOut {
-            NSLog("[ComateHUD] 读取 cookie store 超时，按无凭据处理")
-            return nil
-        }
-        return found
-    }
-
     /// cookie 值会拼进 `Cookie` 请求头，含换行/控制字符时可能注入额外 HTTP 头。
-    /// 来源是自家 cookie store，风险低，但校验很便宜。
+    /// 来源是自家登录页，风险低，但校验很便宜。
     static func isValidSid(_ sid: String) -> Bool {
         guard !sid.isEmpty, sid.count <= 512 else { return false }
         return sid.allSatisfy { c in
             (c.isLetter && c.isASCII) || (c.isNumber && c.isASCII) || "-_".contains(c)
         }
-    }
-
-    // MARK: - 常驻 webview
-
-    /// 把外部 cookie store（登录窗的内存态 store）里的 cookie 镜像进自有凭据 store。
-    /// 登录页跑在非持久 store 上（避免 WebKit 去读钥匙串的 WebCrypto 主密钥），
-    /// 不镜像就落不进凭据源。
-    ///
-    /// 写入后**读回确认**再回调：`setCookie` 是异步的，不确认就可能「以为镜像好了、
-    /// 其实还没落地」，重启后免登录会莫名其妙失效。回调参数 = 是否全部落地。
-    func absorbCookies(from store: WKHTTPCookieStore, completion: @escaping (Bool) -> Void) {
-        store.getAllCookies { [weak self] cookies in
-            guard let self = self else { return }
-            let target = self.ensureWebView().configuration.websiteDataStore.httpCookieStore
-            let group = DispatchGroup()
-            for cookie in cookies {
-                group.enter()
-                target.setCookie(cookie) { group.leave() }
-            }
-            group.notify(queue: .main) {
-                target.getAllCookies { persisted in
-                    let key: (HTTPCookie) -> String = { "\($0.name)@\($0.domain)\($0.path)" }
-                    let have = Set(persisted.map(key))
-                    let missing = cookies.filter { !have.contains(key($0)) }
-                    if !missing.isEmpty {
-                        NSLog("[ComateHUD] cookie 镜像未落地 %d 项（含 sid：%@）",
-                              missing.count,
-                              missing.contains { $0.name == Self.sidCookieName } ? "是" : "否")
-                    }
-                    completion(missing.isEmpty)
-                }
-            }
-        }
-    }
-
-    private func ensureWebView() -> WKWebView {
-        webViewLock.lock()
-        if let existing = webView {
-            webViewLock.unlock()
-            return existing
-        }
-        webViewLock.unlock()
-
-        // 建 WKWebView 必须在主线程
-        var made: WKWebView?
-        let make = {
-            let config = WKWebViewConfiguration()
-            config.websiteDataStore = .default()
-            made = WKWebView(frame: .zero, configuration: config)
-        }
-        if Thread.isMainThread { make() } else { DispatchQueue.main.sync(execute: make) }
-
-        webViewLock.lock()
-        if webView == nil { webView = made }
-        let result = webView!
-        webViewLock.unlock()
-        return result
     }
 
     // MARK: - 状态迁移
@@ -186,29 +92,20 @@ final class AuthSession {
         setState(.ok)
     }
 
-    /// 服务端拒绝（401/403）：清缓存，让下一次读取重新去 cookie store 取。
-    /// 不清空 cookie 本身 —— 凭据可能只是服务端瞬时拒绝，或者用户马上要重登。
+    /// 服务端拒绝（401/403）：标记为过期，保留内存里的 sid ——
+    /// 可能只是服务端瞬时拒绝；真要重登时 LoginWindow 会覆盖它。
     func markExpired() {
-        lock.lock()
-        cachedSid = nil
-        lock.unlock()
         setState(.expired)
     }
 
-    /// 退出登录：清掉自家 cookie store 里的 cookie，回到未登录态。
-    /// 用 removeData 而不是逐个 delete：HUD 的 store 只为 WPS 登录而存在，整片清掉更彻底。
+    /// 退出登录：丢掉内存凭据，回到未登录态。
     func signOut(completion: (() -> Void)? = nil) {
-        let store = ensureWebView().configuration.websiteDataStore
-        store.removeData(ofTypes: [WKWebsiteDataTypeCookies], modifiedSince: .distantPast) {
-            DispatchQueue.main.async {
-                self.lock.lock()
-                self.cachedSid = nil
-                self.lock.unlock()
-                self.setState(.noCredential)
-                NSLog("[ComateHUD] 已退出登录，清空本地登录凭据")
-                completion?()
-            }
-        }
+        lock.lock()
+        sessionSid = nil
+        lock.unlock()
+        setState(.noCredential)
+        NSLog("[ComateHUD] 已退出登录，内存凭据已丢弃")
+        DispatchQueue.main.async { completion?() }
     }
 
     private func setState(_ new: State) {
