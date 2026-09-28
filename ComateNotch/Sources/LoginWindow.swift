@@ -48,7 +48,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
 
     // MARK: - 对外入口
 
-    /// 打开登录流程。先看自家 cookie store 里有没有现成可用的凭据：有就直接探测，
+    /// 打开登录流程。先看内存里有没有本次运行已登录的凭据（present 前刚登过就不重复弹窗）：有就直探测，
     /// 通了立刻回调、不弹窗（用户观感是「点一下就恢复」）；没有或不通才真的开窗。
     func present(onSuccess: @escaping () -> Void) {
         if let window = window {
@@ -220,7 +220,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
     // MARK: - 校验
 
     /// cookie store 变化很频繁（页面会不断写各种域的 cookie），只在「还没完成」时试一次，
-    /// 真正的去重靠 verifying / finished 两个标志。
+    /// 真正的去重靠 verifying / finished 两个标志。（主路径其实是 2 秒轮询，这里是快路径。）
     func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
         guard !finished else { return }
         scheduleVerify(store: cookieStore)
@@ -283,7 +283,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
         stopPolling()
         AuthSession.shared.markOK()
         setStatus("登录成功，正在恢复数据…", color: .systemGreen)
-        NSLog("[ComateHUD] WPS 登录成功，凭据已写入 HUD 自有 cookie store")
+        NSLog("[ComateHUD] WPS 登录成功，凭据已记入内存（不落盘）")
         let callback = onSuccess
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { [weak self] in
             self?.close()

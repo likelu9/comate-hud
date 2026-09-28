@@ -268,7 +268,7 @@ final class ComateStore: ObservableObject {
         return fresh != previous
     }
 
-    /// 取凭据失败后的短重试间隔：成因是冷启动时 cookie store 还没就绪，
+    /// 取凭据失败后的短重试间隔：成因是冷启动时登录态还没落定（首读可能空手而归），
     /// 不是真的没登录，所以不按真失败的指数退避走
     static let credentialReadRetryInterval: TimeInterval = 5
 
@@ -279,9 +279,9 @@ final class ComateStore: ObservableObject {
     }
 
     /// 用量 / 未读 / 云端任务 / 活跃上报共用的凭据，来源于 AuthSession
-    /// —— HUD 自己用 WKWebView 登录一次得到的会话，存在自己的 cookie store 里。
+    /// —— HUD 自己用 WKWebView 登录一次得到的会话，只记在内存（不落盘、进程退出即失效）。
     ///
-    /// 一律在后台队列调用：AuthSession 读 cookie store 会等 WebKit 的 XPC，主线程调用会卡住面板。
+    /// 纯内存读，无 IO、无锁等待；调用方仍习惯在后台队列用，无害。
     /// 缓存与失效重读都交给 AuthSession —— 凭据只保留一处真值来源，不再复制副本。
     @discardableResult
     private func wpsSid(forceRefresh: Bool = false) -> String? {
@@ -306,8 +306,7 @@ final class ComateStore: ObservableObject {
     }
 
     /// 页脚点击切换：在日/月之间来回切
-    /// 活跃上报用的凭据。与用量/未读共用 AuthSession 的缓存，不会重复读 cookie store。
-    /// 必须在后台队列调用（读 cookie store 要等 WebKit 的 XPC）。
+    /// 活跃上报用的凭据。与用量/未读共用 AuthSession 的内存凭据。
     func sidForActivityReport() -> String? {
         wpsSid()
     }
@@ -820,7 +819,7 @@ final class ComateStore: ObservableObject {
 
     /// 拉取模型用量：限额每个节拍都拉；近 30 天智点明细按 backfillInterval 节流
     /// （实测 462 条 / 5 个请求 / 0.7s）。
-    /// 凭据失效时重读 cookie store 再试一次：用户重新登录后 cookie 里就是新 sid，重读即可接上。
+    /// 凭据失效时重新取一次再试：用户重新登录后 AuthSession 里就是新 sid，重取即可接上。
     /// 失败不抛错：状态置 failed/authExpired 并退避，面板显示登录引导，其余功能不受影响。
     private func refreshUsage(trigger: UsageTrigger) {
         let now = Date()
@@ -830,7 +829,7 @@ final class ComateStore: ObservableObject {
         let backfill = Self.shouldBackfill(trigger, lastBackfill: lastUsageBackfill, now: now)
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self = self else { return }
-            // AuthSession 读 cookie store 要等 WebKit 的 XPC，必须在后台队列做，否则会卡住面板。
+            // 取内存凭据；登录态未定时不急着判「未登录」（详见下面 shouldConcludeNoCredential）
             guard let credential = self.wpsSid() else {
                 DispatchQueue.main.async {
                     guard Self.shouldConcludeNoCredential(authState: AuthSession.shared.state) else {
