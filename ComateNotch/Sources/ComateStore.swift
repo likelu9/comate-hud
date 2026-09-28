@@ -185,6 +185,9 @@ final class ComateStore: ObservableObject {
     /// 日/月限额（左下角展示）
     @Published var usageLimits: UsageAPI.Limits?
 
+    /// 当前登录账号（昵称 + 归属企业），设置菜单的账号组展示用。只在主线程读写
+    private(set) var account: UsageAPI.Account?
+
     /// 近 30 天各会话智点累计（session_id → 点数）。只在主线程读写
     private var credits30d: [String: Double] = [:]
 
@@ -425,6 +428,7 @@ final class ComateStore: ObservableObject {
         cloudTasks = []
         usageLimits = nil
         credits30d = [:]
+        account = nil
         mergeRecentTasks(local: recentTasks.filter { !$0.isCloud }, cloud: [])
     }
 
@@ -435,7 +439,23 @@ final class ComateStore: ObservableObject {
         refreshCloudUnread()
         refreshCloudTasks()
         refreshUsage(trigger: .launch)
+        refreshAccount(force: true)
         ActivityReporter.shared.flush()
+    }
+
+    /// 取当前账号信息（昵称 + 归属企业）供菜单展示。
+    /// 账号信息不随会话变化，所以取到一次就不再重复请求；重新登录时 force 刷新（换了账号）。
+    /// 失败静默：菜单退回「已登录」，不影响其它功能。
+    func refreshAccount(force: Bool = false) {
+        if !force, account != nil { return }
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self, let sid = self.wpsSid(),
+                  case .ok(let value) = UsageAPI.fetchAccount(sid: sid) else { return }
+            DispatchQueue.main.async {
+                self.account = value
+                NSLog("[ComateHUD] 账号信息已更新")
+            }
+        }
     }
 
     /// 检查更新。默认受 6 小时节流（force = 用户在菜单里手动点，立即查）。
@@ -837,6 +857,7 @@ final class ComateStore: ObservableObject {
                     self.usageState = .ok
                     AuthSession.shared.markOK()
                     self.noteUsageSuccess()
+                    self.refreshAccount()
                     if self.usageRetryScheduled { self.scheduleUsageTimer() }
                 } else if credits != nil {
                     self.usageState = .ok

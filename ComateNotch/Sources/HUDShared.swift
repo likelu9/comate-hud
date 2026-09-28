@@ -666,9 +666,14 @@ final class HUDContextMenu: NSObject {
         case .ok:
             let account = NSMenuItem(title: "WPS 账号", action: nil, keyEquivalent: "")
             let submenu = NSMenu()
-            let status = NSMenuItem(title: "已登录", action: nil, keyEquivalent: "")
-            status.isEnabled = false
-            submenu.addItem(status)
+            // 登录后要能一眼看出是哪个账号、属于哪个企业：账号信息还没取到时退回「已登录」
+            if let info = store.account {
+                if !info.nickname.isEmpty { submenu.addItem(infoItem("账号 \(info.nickname)")) }
+                if !info.companyName.isEmpty { submenu.addItem(infoItem("企业 \(info.companyName)")) }
+            } else {
+                submenu.addItem(infoItem("已登录"))
+            }
+            submenu.addItem(.separator())
             submenu.addItem(actionItem("退出登录", #selector(menuSignOut)))
             account.submenu = submenu
             menu.addItem(account)
@@ -682,6 +687,13 @@ final class HUDContextMenu: NSObject {
     private func actionItem(_ title: String, _ selector: Selector) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: selector, keyEquivalent: "")
         item.target = self
+        return item
+    }
+
+    /// 纯展示行（不可点，不响应键盘）
+    private func infoItem(_ title: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
         return item
     }
 

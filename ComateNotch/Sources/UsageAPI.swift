@@ -51,6 +51,13 @@ enum UsageAPI {
         let tokens: Int
     }
 
+    /// 当前登录账号信息（菜单里展示「账号 / 企业」用）
+    struct Account {
+        let nickname: String
+        /// 归属企业名。接口可能不给或为空，空串表示这一项没有
+        let companyName: String
+    }
+
     private static let host = "https://comate.wps.cn"
     /// 与现有「未读消息 / 云端任务」接口保持一致
     private static let referer = "https://comate.wps.cn/web/"
@@ -130,6 +137,27 @@ enum UsageAPI {
         }
         guard daily != nil || monthly != nil else { return .failed }
         return .ok(Limits(daily: daily, monthly: monthly))
+    }
+
+    /// 当前登录账号（昵称 + 归属企业），供菜单展示。
+    static func fetchAccount(sid: String) -> Outcome<Account> {
+        let json: [String: Any]
+        switch get("/api/coserve/v1/users/current", query: [], sid: sid) {
+        case .ok(let body): json = body
+        case .authFailed: return .authFailed
+        case .failed: return .failed
+        }
+        guard let account = parseAccount(json) else { return .failed }
+        return .ok(account)
+    }
+
+    /// 解析当前账号：昵称与企业名各自可能缺失，两样都没有才算失败。
+    static func parseAccount(_ json: [String: Any]) -> Account? {
+        let data = json["data"] as? [String: Any] ?? [:]
+        let nickname = (data["nickname"] as? String) ?? ""
+        let company = (data["company_name"] as? String) ?? ""
+        if nickname.isEmpty && company.isEmpty { return nil }
+        return Account(nickname: nickname, companyName: company)
     }
 
     /// 区间内的消耗明细，自动翻页。

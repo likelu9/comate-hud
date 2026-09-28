@@ -255,6 +255,24 @@ check(!AuthSession.probeCanApply(currentState: .expired),
 check(!AuthSession.probeCanApply(currentState: .noCredential),
       "已有无凭据结论 → 不重复下发状态变化")
 
+section("账号信息解析（菜单展示用）")
+if let full = UsageAPI.parseAccount(["code": 0, "data": [
+    "nickname": "李柯陆", "company_name": "金山办公软件有限公司", "user_id": 1388246874,
+]]) {
+    check(full.nickname == "李柯陆", "取到账号名")
+    check(full.companyName == "金山办公软件有限公司", "取到企业名")
+} else {
+    check(false, "完整响应应能解析出账号")
+}
+if let onlyName = UsageAPI.parseAccount(["data": ["nickname": "李柯陆"]]) {
+    check(onlyName.companyName.isEmpty, "接口没给企业名时留空，不编造")
+} else {
+    check(false, "只有账号名也应算解析成功")
+}
+check(UsageAPI.parseAccount(["data": ["nickname": "", "company_name": ""]]) == nil,
+      "两样都没有 → 视为取不到，菜单回退「已登录」")
+check(UsageAPI.parseAccount([:]) == nil, "空响应不报错")
+
 // MARK: - 汇总
 
 print("\n———————————————")
