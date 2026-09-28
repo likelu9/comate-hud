@@ -38,6 +38,19 @@ final class AuthSession {
     private var sessionSid: String?
     private var didStart = false
 
+    /// 带凭据的 API 请求统一走这个 session。
+    ///
+    /// 为什么不用 `URLSession.shared`：它的磁盘缓存（`~/Library/Caches/<bundleid>/Cache.db*`）
+    /// 会把请求头一并写盘，而我们的请求头里带着 `Cookie: wps_sid=…` —— 实测能在 `Cache.db-wal` 里
+    /// 搜到 67 次带值的 `wps_sid=`。`.ephemeral` 的缓存只在内存，且不落 HTTP cookie jar，
+    /// 「凭据不落盘」这条约束就靠它守住。
+    static let apiSession = URLSession(configuration: {
+        let config = URLSessionConfiguration.ephemeral
+        // 不做条件请求，避免任何「事后回磁盘读缓存」的可能
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return config
+    }())
+
     private init() {}
 
     // MARK: - 启动

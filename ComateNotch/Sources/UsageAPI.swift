@@ -241,7 +241,7 @@ enum UsageAPI {
 
         let semaphore = DispatchSemaphore(value: 0)
         var outcome: Outcome<[String: Any]> = .failed
-        URLSession.shared.dataTask(with: request) { data, response, _ in
+        AuthSession.apiSession.dataTask(with: request) { data, response, _ in
             defer { semaphore.signal() }
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             guard let data = data,

@@ -62,7 +62,7 @@ final class UserIdentity {
 
         var result: Identity?
         let sem = DispatchSemaphore(value: 0)
-        URLSession.shared.dataTask(with: req) { data, _, _ in
+        AuthSession.apiSession.dataTask(with: req) { data, _, _ in
             defer { sem.signal() }
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

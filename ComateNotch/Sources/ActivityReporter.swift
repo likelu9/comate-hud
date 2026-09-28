@@ -327,7 +327,7 @@ final class ActivityReporter {
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
             req.httpBody = try? JSONSerialization.data(withJSONObject: body)
         }
-        URLSession.shared.dataTask(with: req) { data, response, error in
+        AuthSession.apiSession.dataTask(with: req) { data, response, error in
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             if let error = error {
                 NSLog("[ComateHUD] 活跃上报请求失败: %@", error.localizedDescription)

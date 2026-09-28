@@ -680,7 +680,7 @@ final class ComateStore: ObservableObject {
             req.setValue("https://comate.wps.cn/web/cloud/", forHTTPHeaderField: "Referer")
             req.setValue("application/json", forHTTPHeaderField: "Accept")
             req.timeoutInterval = 8
-            let task = URLSession.shared.dataTask(with: req) { data, _, _ in
+            let task = AuthSession.apiSession.dataTask(with: req) { data, _, _ in
                 guard let data = data,
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       json["code"] as? Int == 0 else { return }
@@ -714,7 +714,7 @@ final class ComateStore: ObservableObject {
             req.setValue("https://comate.wps.cn/web/cloud/", forHTTPHeaderField: "Referer")
             req.setValue("application/json", forHTTPHeaderField: "Accept")
             req.timeoutInterval = 8
-            let task = URLSession.shared.dataTask(with: req) { data, _, _ in
+            let task = AuthSession.apiSession.dataTask(with: req) { data, _, _ in
                 guard let data = data,
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       json["code"] as? Int == 0,
