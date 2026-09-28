@@ -28,6 +28,7 @@ SOURCES=(
     "$SRC/AppDelegate.swift"
     "$SRC/ComateStore.swift"
     "$SRC/AuthSession.swift"
+    "$SRC/WebCryptoKeyReset.swift"
     "$SRC/LoginWindow.swift"
     "$SRC/TaskModel.swift"
     "$SRC/UsageAPI.swift"

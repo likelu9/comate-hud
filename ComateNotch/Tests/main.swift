@@ -256,6 +256,22 @@ check(!AuthSession.probeCanApply(currentState: .expired),
 check(!AuthSession.probeCanApply(currentState: .noCredential),
       "已有无凭据结论 → 不重复下发状态变化")
 
+section("WebCrypto 主密钥条目重置（消登录弹框）")
+check(WebCryptoKeyReset.shouldReset(recorded: nil, current: "abc"),
+      "首次运行（没有记录）→ 清理一次")
+check(WebCryptoKeyReset.shouldReset(recorded: "abc", current: "def"),
+      "重建/发版后 cdhash 变了 → 必须清理（否则 partition 不匹配会弹框）")
+check(!WebCryptoKeyReset.shouldReset(recorded: "abc", current: "abc"),
+      "身份没变 → 不动钥匙串，不无谓轮换主密钥")
+check(!WebCryptoKeyReset.shouldReset(recorded: "abc", current: nil),
+      "身份取不到 → 宁可不清理，也不瞎删条目")
+check(!WebCryptoKeyReset.shouldReset(recorded: nil, current: nil),
+      "两边都空 → 不清理")
+check(!WebCryptoKeyReset.shouldReset(recorded: "abc", current: ""),
+      "空身份不算身份变化")
+eq(WebCryptoKeyReset.accountPrefix, "com.apple.WebKit.WebCrypto.master+",
+   "account 前缀与 WebKit 的命名约定一致（写错就等于没清）")
+
 section("账号信息解析（菜单展示用）")
 if let full = UsageAPI.parseAccount(["code": 0, "data": [
     "nickname": "李柯陆", "company_name": "金山办公软件有限公司", "user_id": 1388246874,

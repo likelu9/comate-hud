@@ -24,6 +24,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         didBecomePrimary = true
 
+        // 代码身份一变就重置 WebKit 的 WebCrypto 主密钥钥匙串条目。
+        // 必须在任何 WKWebView 被创建之前：条目 partition 记的是创建它的那次构建的 cdhash，
+        // 不重置就会在每次重建/发版后被 securityd 判 `ACL partition mismatch` 并弹授权框（见 WebCryptoKeyReset）
+        WebCryptoKeyReset.resetIfIdentityChanged()
+
         // 用户重复双击 App 时，由新实例发来置前请求；按当前模式重新置前面板即可
         // （switchDisplayMode 幂等，不会重建窗口）。观察者随进程存活，不需要移除
         _ = DistributedNotificationCenter.default().addObserver(
