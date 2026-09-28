@@ -2,11 +2,16 @@ import Foundation
 
 /// Comate HUD 的凭据唯一来源：**只存在内存里**的那把 wps_sid。
 ///
-/// 两条不回退的硬约束：
+/// 两条不回退的约束：
 /// - **不读 Keychain**：曾经 fork `/usr/bin/security` 去读 Comate 写的凭据副本，首次会弹钥匙串授权框
-/// - **不写 Keychain**：任何 WebKit **持久** store 都会让 WebKit 去读钥匙串里的 WebCrypto 主密钥，
-///   登录过程中会反复看到「ComateHUD 想要使用你储存在钥匙串中的…」。所以登录页跑在
-///   内存态 store（内存主密钥），登录拿到的 sid 也只记在内存，不落 cookie store、不镜像、不持久化
+/// - **凭据不落盘**：登录页面跑在内存态 store（`WKWebsiteDataStore.nonPersistent()`），
+///   拿到的 sid 只记在内存，不落 cookie store、不镜像、不持久化；App 退出即失效
+///
+/// ⚠️ 一个容易被误判的事实（实测）：登录页真正使用 WebCrypto 时（提交凭据那一步），
+/// WebKit 会自己创建一条钥匙串条目 `com.apple.WebKit.WebCrypto.master+com.wpscomate.hud`，
+/// **内存态 store 也一样建**。用户看到的「反复弹授权框」不是它的存在，而是它的 ACL 与当前
+/// 签名身份不匹配 —— 所以真正要保住的是 `build.sh` 的稳定签名身份（见 AGENTS.md），
+/// 而不是换 store。条目由我们自己创建时是静默的，不会弹框。
 ///
 /// 代价与口径：App 退出（或用户退出登录）后凭据即失效，下次启动一律按未登录处理，
 /// 由 AppDelegate / 面板 / 菜单引导用户重新登录。

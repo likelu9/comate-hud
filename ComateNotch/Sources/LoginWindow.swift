@@ -6,10 +6,11 @@ import WebKit
 /// 两个设计取舍：
 /// - **独立 NSWindow，不用 SwiftUI sheet**：HUD 的面板是非激活 borderless NSPanel，其中弹不出 sheet
 ///   （「关于」窗口也是因此走独立窗口）。
-/// - **登录页跑在非持久（内存）store 上**：WebKit 只在持久 store 里才需要读钥匙串中的
-///   `WebCrypto Master Key`；非持久 store 用内存里的主密钥。登录过程里反复弹的
-///   「ComateHUD 想要使用你储存在钥匙串中的…」就是持久 store 触发的，换内存 store 后
-///   登录链路不再碰钥匙串。代价：凭据只记内存（App 退出即失效），不落盘不镜像。
+/// - **登录页跑在非持久（内存）store 上**：登录产生的 cookie 不落盘（不需要免登录）。
+///   注意：换 store **不能**避免登录时 WebKit 自己创建 `WebCrypto.master` 钥匙串条目
+///   （实测内存态 store 一样建，见 `AuthSession` 顶部注释），该条目与授权弹框的关系见 AGENTS.md。
+/// - **轮询兜底**：内存态 store 上的 `cookiesDidChange` 通知不能作为唯一触发源，
+///   所以窗口活着时每 2 秒自己查一次登录页那口 store（否则会出现「页面已登录、HUD 永远不知道」）。
 ///
 /// 登录成功的判据是「真的打通了 HUD 依赖的两条链路」，而不是「cookie 里出现了 wps_sid」——
 /// 后者会出现「看着登录成功、凭据其实不可用」的假成功。
@@ -37,6 +38,11 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
     /// 校验在飞时又来了新的 cookie（页面连续写）→ 记下来，本轮跑完立刻再跑一次，
     /// 否则「最后一次写 cookie = sid 落地」那一次可能被丢弃。
     private var pendingStore: WKHTTPCookieStore?
+    /// 轮询兜底：内存态 store 上的 cookiesDidChange 通知实测不可靠（登录完成后一次都没触发），
+    /// 只靠它会出现「页面已登录、HUD 却永远不知道」。
+    private var pollTimer: Timer?
+    private var lastStallLogAt: Date?
+    private var didLogSid = false
 
     private override init() { super.init() }
 
@@ -53,6 +59,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
         self.onSuccess = onSuccess
         self.finished = false
         self.attempt = 0
+        self.didLogSid = false
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self = self else { return }
             if let sid = AuthSession.shared.currentSid(forceRefresh: true), Self.probe(sid: sid) {
@@ -86,8 +93,8 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
     private func openWindow() {
         guard window == nil else { return }
 
-        // 登录页专用 webview：非持久 store（内存态），不与自有凭据 store 共用；
-        // 登录产生的 cookie 由 cookiesDidChange 镜像进自有 store。
+        // 登录页专用 webview：非持久 store（内存态）—— WebKit 用内存主密钥，登录链路不碰钥匙串。
+        // 凭据拿到后只记内存（AuthSession.adopt），不落盘、不镜像。
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
         let webView = WKWebView(frame: .zero, configuration: config)
@@ -147,13 +154,52 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
         ])
 
         self.window = window
-        // cookie 一变就试着校验：登录走完回跳时 wps_sid 会落进来
+        // 快路径：cookie 一变就试着校验（登录走完回跳时 wps_sid 会落进来）
         webView.configuration.websiteDataStore.httpCookieStore.add(self)
+        // 兜底：内存态 store 的变化通知不可靠（实测一次都没触发），没它就会出现
+        // 「页面已经进了 Comate，HUD 却永远停在未登录」。轮询是「登录成功→自动关窗」的保障。
+        startPolling(store: webView.configuration.websiteDataStore.httpCookieStore)
         webView.load(URLRequest(url: Self.loginURL))
 
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         NSLog("[ComateHUD] 已打开 WPS 登录窗口")
+    }
+
+    // MARK: - 轮询兜底
+
+    /// 每 2 秒自己查一次登录页那口 store：拿到 wps_sid 就去校验，没有就打一次诊断日志。
+    private func startPolling(store: WKHTTPCookieStore) {
+        pollTimer?.invalidate()
+        let timer = Timer(timeInterval: 2.0, repeats: true) { [weak self] _ in
+            guard let self = self, !self.finished else { return }
+            store.getAllCookies { [weak self] cookies in
+                guard let self = self, !self.finished else { return }
+                if AuthSession.sid(in: cookies) != nil {
+                    self.scheduleVerify(store: store)
+                } else {
+                    self.logCookiesIfStalled(cookies)
+                }
+            }
+        }
+        // .common：菜单/面板处于事件跟踪时也继续跑，否则轮询会停掉
+        RunLoop.main.add(timer, forMode: .common)
+        pollTimer = timer
+    }
+
+    private func stopPolling() {
+        pollTimer?.invalidate()
+        pollTimer = nil
+    }
+
+    /// 长时间没等到 wps_sid 时把当前 cookie 名字打出来（只打名字不打印值），
+    /// 用来区分「页面还没写」和「写的名字不是 wps_sid」。
+    private func logCookiesIfStalled(_ cookies: [HTTPCookie]) {
+        let now = Date()
+        if let last = lastStallLogAt, now.timeIntervalSince(last) < 15 { return }
+        lastStallLogAt = now
+        let names = cookies.map { "\($0.name)@\($0.domain)" }.sorted().joined(separator: ", ")
+        NSLog("[ComateHUD] 登录页暂未发现 wps_sid，当前 cookie：%@", names.isEmpty ? "(空)" : names)
     }
 
     private static func makeLabel(_ text: String, size: CGFloat, color: NSColor) -> NSTextField {
@@ -190,6 +236,10 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
         loginStore.getAllCookies { [weak self] cookies in
             guard let self = self else { return }
             let sid = AuthSession.sid(in: cookies)
+            if let sid = sid, !self.didLogSid {
+                self.didLogSid = true
+                NSLog("[ComateHUD] 已发现 wps_sid（长度 %d），开始双接口探测", sid.count)
+            }
             DispatchQueue.global(qos: .utility).async {
                 let ok = sid.map { Self.probe(sid: $0) } ?? false
                 DispatchQueue.main.async {
@@ -210,6 +260,8 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
                                 self?.scheduleVerify(store: loginStore)
                             }
                         } else {
+                            NSLog("[ComateHUD] 双接口探测未通过（第 %d 次），凭据被服务端拒绝或权限尚未就绪",
+                                  self.attempt)
                             self.setStatus("已取得登录凭证但服务端仍拒绝，请关闭窗口后重试",
                                            color: .systemOrange)
                             self.drainPending()
@@ -228,6 +280,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
 
     private func finishSuccess() {
         finished = true
+        stopPolling()
         AuthSession.shared.markOK()
         setStatus("登录成功，正在恢复数据…", color: .systemGreen)
         NSLog("[ComateHUD] WPS 登录成功，凭据已写入 HUD 自有 cookie store")
@@ -247,6 +300,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
     func windowWillClose(_ notification: Notification) {
         // 关窗 = 放弃这次登录（凭据只在内存，没成功就不会被记下）；
         // 登录成功能自动关窗，不需要用户手动关。
+        stopPolling()
         releaseWebView()
         window = nil
         onSuccess = nil
