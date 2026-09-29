@@ -9,13 +9,13 @@
 /* text */
 --hud-text-primary:rgba(245,245,245,1);--hud-text-secondary:rgba(245,245,245,.72);--hud-text-tertiary:rgba(245,245,245,.55);
 --hud-text-quaternary:rgba(245,245,245,.46);--hud-text-disabled:rgba(245,245,245,.30);--hud-text-strong:rgba(245,245,245,.92);
---hud-text-on-accent:rgba(255,255,255,1);
+--hud-text-on-accent:#0F0F11;--hud-text-on-danger:rgba(255,255,255,1);
 /* line */
 --hud-line-panel:rgba(255,255,255,.12);--hud-line-card:rgba(255,255,255,.07);--hud-line-divider:rgba(255,255,255,.08);
---hud-line-divider-strong:rgba(255,255,255,.14);--hud-line-focus:rgba(59,137,255,1);
+--hud-line-divider-strong:rgba(255,255,255,.14);--hud-line-focus:rgba(0,212,170,1);
 /* accent */
---hud-accent:rgba(10,108,255,1);--hud-accent-hover:rgba(59,137,255,1);--hud-accent-pressed:rgba(5,87,214,1);
---hud-accent-soft:rgba(10,108,255,.16);--hud-accent-track:rgba(10,108,255,.22);--hud-accent-on:rgba(255,255,255,1);
+--hud-accent:rgba(0,212,170,1);--hud-accent-hover:rgba(34,224,187,1);--hud-accent-pressed:rgba(0,169,138,1);
+--hud-accent-soft:rgba(0,212,170,.16);--hud-accent-track:rgba(0,212,170,.22);--hud-accent-on:#0F0F11;
 /* status */
 --hud-status-idle:rgba(156,160,170,1);--hud-status-working:rgba(255,201,40,1);--hud-status-waiting:rgba(255,98,89,1);--hud-status-done:rgba(49,209,88,1);
 --hud-status-idle-soft:rgba(156,160,170,.14);--hud-status-working-soft:rgba(255,201,40,.14);--hud-status-waiting-soft:rgba(255,98,89,.14);--hud-status-done-soft:rgba(49,209,88,.14);
@@ -24,18 +24,18 @@
 --hud-handle-idle:rgba(255,255,255,.22);--hud-handle-active:rgba(255,255,255,.50);
 /* radius / space */
 --hud-radius-3:3px;--hud-radius-4:4px;--hud-radius-6:6px;--hud-radius-8:8px;--hud-radius-panel:16px;--hud-radius-full:999px;
---hud-space-2:2px;--hud-space-3:3px;--hud-space-6:6px;--hud-space-8:8px;--hud-space-10:10px;--hud-space-12:12px;--hud-space-20:20px;
+--hud-space-2:2px;--hud-space-3:3px;--hud-space-4:4px;--hud-space-6:6px;--hud-space-7:7px;--hud-space-8:8px;--hud-space-10:10px;--hud-space-12:12px;--hud-space-14:14px;--hud-space-20:20px;
 /* font */
 --hud-font-family:'SF Pro Rounded',ui-rounded,-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;
 --hud-font-mono:ui-monospace,SFMono-Regular,Menlo,monospace;
---hud-line-label:16px;--hud-line-row2:12px;--hud-line-micro:9px;
+--hud-line-label:18px;--hud-line-row2:14px;--hud-line-micro:12px;
 /* motion */
 --hud-dur-instant:80ms;--hud-dur-fast:120ms;--hud-dur-normal:200ms;--hud-dur-skeleton:1200ms;
 --hud-ease-standard:cubic-bezier(.25,.10,.25,1);--hud-ease-out:cubic-bezier(.16,.84,.44,1);
 /* shadow */
---hud-shadow-tip:0 8px 24px rgba(0,0,0,.48);--hud-shadow-cta:0 5px 9px rgba(10,108,255,.22);
+--hud-shadow-tip:0 8px 24px rgba(0,0,0,.48);--hud-shadow-cta:0 5px 9px rgba(0,212,170,.22);--hud-glow-focus:0 0 4px rgba(0,212,170,1);
 /* 几何常量 */
---hud-row-h:30px;--hud-header-h:18px;--hud-empty-h:24px;--hud-foot-h:20px;--hud-seg-h:13px;--hud-icon-btn:20px;--hud-handle-hit:10px;
+--hud-row-h:34px;--hud-header-h:20px;--hud-empty-h:24px;--hud-foot-h:22px;--hud-seg-h:17px;--hud-icon-btn:20px;--hud-icon-hit-w:32px;--hud-handle-hit:10px;
 }
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0}
@@ -49,7 +49,7 @@ p{margin:0}
 .lead mark{background:var(--hud-accent-soft);color:var(--hud-accent-hover);border-radius:3px;padding:0 4px;font:400 11px/1.5 var(--hud-font-mono)}
 .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .pill{font-size:10.5px;font-weight:500;padding:3px 10px;border-radius:var(--hud-radius-full);background:var(--hud-surface-raised);border:1px solid var(--hud-line-card);color:var(--hud-text-tertiary)}
-.pill.on{color:var(--hud-accent-hover);background:var(--hud-accent-soft);border-color:rgba(59,137,255,.35)}
+.pill.on{color:var(--hud-accent-hover);background:var(--hud-accent-soft);border-color:rgba(0,212,170,.35)}
 .sub{margin:6px 0 16px 12px;font-size:12px;line-height:18px;color:var(--hud-text-tertiary);max-width:920px}
 /* ===== 1. 模拟桌面 + 1:1 面板 ===== */
 .stage{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
@@ -60,50 +60,52 @@ background:radial-gradient(120% 90% at 25% -10%,#181B22 0%,#0B0B0D 55%,#060608 1
 .menubar b{font-size:9px;font-weight:500;color:var(--hud-text-tertiary);letter-spacing:.2px}
 .menubar em{margin-left:auto;font-style:normal;font-size:9px;color:var(--hud-text-quaternary)}
 .frame{position:relative;padding-right:26px}
-.pin{position:absolute;right:-25px;width:15px;height:15px;border-radius:var(--hud-radius-full);border:1px solid rgba(59,137,255,.55);
+.pin{position:absolute;right:-25px;width:15px;height:15px;border-radius:var(--hud-radius-full);border:1px solid rgba(0,212,170,.55);
 background:var(--hud-accent-soft);color:var(--hud-accent-hover);font:600 8px/13px var(--hud-font-mono);text-align:center;z-index:3}
-.pin::before{content:'';position:absolute;right:15px;top:7px;width:10px;border-top:1px dashed rgba(59,137,255,.45)}
+.pin::before{content:'';position:absolute;right:15px;top:7px;width:10px;border-top:1px dashed rgba(0,212,170,.45)}
 /* ===== 2. 产品组件（1:1 对齐实现）===== */
 .panel{width:281px;position:relative;background:var(--hud-surface-panel);border:1px solid var(--hud-line-panel);
-border-radius:var(--hud-radius-panel);padding:var(--hud-space-8) var(--hud-space-12) var(--hud-space-12)}
+border-radius:var(--hud-radius-panel);padding:var(--hud-space-10) var(--hud-space-14) var(--hud-space-14)}
 .h-head{height:var(--hud-header-h);display:flex;align-items:center;justify-content:space-between;gap:var(--hud-space-6)}
-.h-title{font-size:11px;font-weight:600;line-height:var(--hud-line-label);color:var(--hud-text-secondary);letter-spacing:.1px}
+.h-title{font-size:12.5px;font-weight:600;line-height:var(--hud-line-label);color:var(--hud-text-secondary);letter-spacing:.1px}
 .h-add{width:18px;height:18px;flex:none;display:grid;place-items:center;border:0;padding:0;background:none;border-radius:var(--hud-radius-4);
 color:var(--hud-text-tertiary);cursor:pointer;transition:background var(--hud-dur-fast) var(--hud-ease-standard),color var(--hud-dur-fast) var(--hud-ease-standard)}
 .h-add:hover,.h-add.is-hover{background:var(--hud-surface-hit);color:var(--hud-text-primary)}
-.h-rows{display:flex;flex-direction:column;gap:var(--hud-space-3);margin-top:var(--hud-space-6)}
-.h-row{min-height:var(--hud-row-h);display:flex;align-items:center;gap:var(--hud-space-6);padding:0 var(--hud-space-8);
+.h-rows{display:flex;flex-direction:column;gap:var(--hud-space-4);margin-top:var(--hud-space-8)}
+.h-row{min-height:var(--hud-row-h);display:flex;align-items:center;gap:var(--hud-space-7);padding:0 var(--hud-space-8);
 border-radius:var(--hud-radius-8);background:var(--hud-surface-row);cursor:pointer;transition:background var(--hud-dur-fast) var(--hud-ease-standard)}
 .h-row:hover,.h-row.is-hover{background:var(--hud-surface-row-hover)}
 .h-row:active,.h-row.is-press{background:var(--hud-surface-row-pressed)}
-.h-dot{width:7px;height:7px;flex:none;border-radius:var(--hud-radius-full)}
+.h-dot{width:8px;height:8px;flex:none;border-radius:var(--hud-radius-full)}
 .h-dot--idle{background:var(--hud-status-idle);box-shadow:0 0 3px var(--hud-status-idle-soft)}
 .h-dot--working{background:var(--hud-status-working);box-shadow:0 0 3px var(--hud-status-working-soft)}
 .h-dot--waiting{background:var(--hud-status-waiting);box-shadow:0 0 3px var(--hud-status-waiting-soft)}
 .h-dot--done{background:var(--hud-status-done);box-shadow:0 0 3px var(--hud-status-done-soft)}
 .h-src{width:14px;height:14px;flex:none;display:grid;place-items:center;color:var(--hud-text-tertiary)}
 .h-stack{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--hud-space-2)}
-.h-name{font-size:11px;font-weight:500;line-height:var(--hud-line-label);color:var(--hud-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.h-note{font-size:9px;line-height:var(--hud-line-row2);color:var(--hud-text-quaternary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.h-time{flex:none;font-size:9px;line-height:var(--hud-line-row2);color:var(--hud-text-quaternary)}
-.h-empty{flex:1;display:flex;align-items:center;justify-content:center;height:var(--hud-empty-h);font-size:9px;color:var(--hud-text-quaternary)}
-.h-foot{height:var(--hud-foot-h);margin-top:var(--hud-space-6);display:flex;align-items:center;gap:var(--hud-space-6)}
+.h-name{font-size:12.5px;font-weight:500;line-height:var(--hud-line-label);color:var(--hud-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h-note{font-size:10px;line-height:var(--hud-line-row2);color:var(--hud-text-quaternary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h-time{flex:none;font-size:10px;line-height:var(--hud-line-row2);color:var(--hud-text-quaternary)}
+.h-empty{flex:1;display:flex;align-items:center;justify-content:center;height:var(--hud-empty-h);font-size:11px;line-height:16px;color:var(--hud-text-quaternary)}
+.h-foot{height:var(--hud-foot-h);margin-top:var(--hud-space-8);display:flex;align-items:center;gap:var(--hud-space-7)}
 .h-quota{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--hud-space-2)}
-.h-qtext{font-size:8px;font-weight:500;line-height:var(--hud-line-micro);color:var(--hud-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h-qtext{font-size:10px;font-weight:500;line-height:var(--hud-line-micro);color:var(--hud-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .h-qtext b{font-weight:600;color:var(--hud-text-strong)}
 .h-qtext.is-warn{color:var(--hud-status-waiting)}
 .h-bar{height:3px;border-radius:var(--hud-radius-full);background:var(--hud-surface-track);overflow:hidden}
 .h-bar i{display:block;height:100%;border-radius:var(--hud-radius-full);background:var(--hud-accent)}
-.h-seg{height:var(--hud-seg-h);flex:none;display:flex;align-items:center;padding:1px;border-radius:var(--hud-radius-3);background:var(--hud-surface-track)}
-.h-seg span{height:11px;display:flex;align-items:center;padding:0 5px;border-radius:2px;font-size:8px;font-weight:500;color:var(--hud-text-tertiary)}
+.h-seg{height:var(--hud-seg-h);flex:none;position:relative;display:flex;align-items:center;padding:1px;border-radius:var(--hud-radius-3);background:var(--hud-surface-track)}
+.h-seg::before{content:'';position:absolute;left:0;right:0;top:-2.5px;bottom:-2.5px}
+.h-seg span{width:17px;height:14px;display:flex;align-items:center;justify-content:center;border-radius:2px;font-size:9.5px;font-weight:600;color:var(--hud-text-tertiary)}
 .h-seg .on{background:var(--hud-accent);color:var(--hud-accent-on)}
-.h-ib{width:var(--hud-icon-btn);height:var(--hud-icon-btn);flex:none;display:grid;place-items:center;position:relative;border:0;padding:0;
+.h-ib{width:var(--hud-icon-hit-w);height:var(--hud-foot-h);flex:none;display:grid;place-items:center;position:relative;border:0;padding:0;
 background:none;border-radius:var(--hud-radius-4);color:var(--hud-text-tertiary);cursor:pointer;transition:background var(--hud-dur-fast) var(--hud-ease-standard)}
+.h-ib svg{width:10.5px;height:10.5px}
 .h-ib:hover{background:var(--hud-surface-hit);color:var(--hud-text-primary)}
-.h-badge{position:absolute;top:-2px;right:-3px;min-width:13px;height:9px;padding:0 3px;border-radius:var(--hud-radius-full);
-background:var(--hud-dot-update);box-shadow:0 0 0 1px var(--hud-dot-update-ring);color:var(--hud-text-on-accent);
-font:600 7px/9px var(--hud-font-family);text-align:center}
-.h-handle{height:var(--hud-handle-hit);margin-top:var(--hud-space-6);display:grid;place-items:center;cursor:row-resize}
+.h-badge{position:absolute;top:-2px;right:1px;min-width:15px;height:13px;padding:0 3px;border-radius:var(--hud-radius-full);
+background:var(--hud-dot-update);box-shadow:0 0 0 1px var(--hud-dot-update-ring);color:var(--hud-text-on-danger);
+font:600 10px/13px var(--hud-font-family);text-align:center}
+.h-handle{height:var(--hud-handle-hit);margin-top:var(--hud-space-8);display:grid;place-items:center;cursor:row-resize}
 .h-handle i{display:block;width:44px;height:3px;border-radius:var(--hud-radius-full);background:var(--hud-handle-idle);transition:background var(--hud-dur-fast) var(--hud-ease-standard)}
 .h-handle:hover i,.h-handle.is-hover i,.h-handle.is-drag i{background:var(--hud-handle-active)}
 .h-handle.is-drag{cursor:grabbing}
@@ -112,20 +114,23 @@ font:600 7px/9px var(--hud-font-family);text-align:center}
 background:var(--hud-accent);color:var(--hud-accent-on);font:600 10.5px/1 var(--hud-font-family);box-shadow:var(--hud-shadow-cta);cursor:pointer}
 .h-btn:hover{background:var(--hud-accent-hover)}
 .h-btn--plain{background:var(--hud-accent-soft);color:var(--hud-accent-hover);box-shadow:none}
+.h-btn--foot{flex:1;min-width:0;height:var(--hud-foot-h)}
+.h-udot{position:absolute;top:4px;right:6px;width:5px;height:5px;border-radius:var(--hud-radius-full);background:var(--hud-dot-update);box-shadow:0 0 0 .5px var(--hud-dot-update-ring)}
 .h-state{padding:var(--hud-space-12) 0;display:flex;flex-direction:column;align-items:center;gap:var(--hud-space-6);text-align:center}
 .h-state .ic{color:var(--hud-text-tertiary)}
 .h-state .ic--warn{color:var(--hud-status-waiting)}
 .h-state .tx{font-size:9px;line-height:var(--hud-line-row2);color:var(--hud-text-quaternary)}
 .h-tip{position:relative;max-width:231px;padding:4px 8px;border-radius:var(--hud-radius-6);background:var(--hud-surface-raised);
-border:1px solid var(--hud-line-divider);box-shadow:var(--hud-shadow-tip);font-size:9px;line-height:15px;color:var(--hud-text-secondary)}
+border:1px solid var(--hud-line-divider);box-shadow:var(--hud-shadow-tip);font-size:10px;line-height:13px;color:var(--hud-text-secondary)}
 .h-tip::after{content:'';position:absolute;left:14px;bottom:-4px;width:6px;height:6px;transform:rotate(45deg);
 background:var(--hud-surface-raised);border-right:1px solid var(--hud-line-divider);border-bottom:1px solid var(--hud-line-divider)}
 .h-free{position:absolute;left:14px;top:39px;right:14px;z-index:2}
 .h-count{position:absolute;top:5px;right:14px;z-index:3;padding:1px 6px;border-radius:var(--hud-radius-full);background:var(--hud-surface-raised);
 border:1px solid var(--hud-line-divider);font-size:8px;font-weight:500;line-height:12px;color:var(--hud-text-secondary)}
 .sk{height:7px;border-radius:var(--hud-radius-full);background:var(--hud-surface-skeleton);animation:sk-pulse var(--hud-dur-skeleton) ease-in-out infinite}
-.sk--dot{width:7px;height:7px;flex:none}
+.sk--dot{width:8px;height:8px;flex:none}
 .sk--src{width:14px;height:14px;flex:none;border-radius:var(--hud-radius-full)}
+.sk--ib{width:var(--hud-icon-hit-w);height:var(--hud-foot-h);flex:none;border-radius:var(--hud-radius-4)}
 @keyframes sk-pulse{0%,100%{opacity:.55}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* ===== 3. 标注层（非产品样式）===== */
@@ -134,7 +139,7 @@ border:1px solid var(--hud-line-divider);font-size:8px;font-weight:500;line-heig
 .lg li{display:flex;gap:10px;padding:7px 10px;border-radius:var(--hud-radius-6);background:var(--hud-surface-row);margin-bottom:3px;
 font-size:11px;line-height:17px}
 .lg li::before{counter-increment:lg;content:counter(lg);flex:none;width:15px;height:15px;margin-top:1px;border-radius:var(--hud-radius-full);
-border:1px solid rgba(59,137,255,.55);background:var(--hud-accent-soft);color:var(--hud-accent-hover);font:600 8px/13px var(--hud-font-mono);text-align:center}
+border:1px solid rgba(0,212,170,.55);background:var(--hud-accent-soft);color:var(--hud-accent-hover);font:600 8px/13px var(--hud-font-mono);text-align:center}
 .lg b{font-weight:600;color:var(--hud-text-primary);flex:none}
 .lg span{color:var(--hud-text-tertiary)}
 code{font:400 9px/1.5 var(--hud-font-mono);color:var(--hud-accent-hover)}
@@ -156,12 +161,12 @@ code i{font-style:normal;color:var(--hud-text-quaternary)}
 .w280 .h-tip{max-width:none;box-shadow:none}
 footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divider);font-size:10.5px;line-height:18px;color:var(--hud-text-quaternary)}
 </style></head><body><svg width=0 height=0 style="position:absolute" aria-hidden=true><symbol id="ic-plus" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M6 2.2v7.6M2.2 6h7.6"/></symbol><symbol id="ic-cloud" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.2 12.5h6.1a2.7 2.7 0 0 0 .3-5.4 3.6 3.6 0 0 0-6.9-.6A2.7 2.7 0 0 0 5.2 12.5Z"/></symbol><symbol id="ic-folder" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M2.2 12.4V3.9c0-.5.4-.9.9-.9h2.6l1.3 1.6h5.9c.5 0 .9.4.9.9v6.9c0 .5-.4.9-.9.9H3.1a.9.9 0 0 1-.9-.9Z"/></symbol><symbol id="ic-bell" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 6.8a3.8 3.8 0 0 1 7.6 0v2.4l1 1.5H3.2l1-1.5V6.8Z"/><path d="M6.4 10.7a1.6 1.6 0 0 0 3.2 0"/></symbol><symbol id="ic-gear" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="8" r="2.1"/><path d="M8 1.9v1.6M8 12.5v1.6M2.9 4.9l1.4.8M11.7 10.3l1.4.8M2.9 11.1l1.4-.8M11.7 5.7l1.4-.8"/></symbol><symbol id="ic-user" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="5.6" r="2.6"/><path d="M3.2 13.4c.6-2.3 2.5-3.6 4.8-3.6s4.2 1.3 4.8 3.6"/></symbol><symbol id="ic-warn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M8 2.6 14 13H2L8 2.6Z"/><path d="M8 6.6v3.1M8 11.4h.01"/></symbol></svg><div class="wr">
-<header><h1><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="3.5" width="18" height="13" rx="4" fill="none" stroke="#0A6CFF" stroke-width="1.5"/><path d="M1 7h18" stroke="#0A6CFF" stroke-width="1.5"/><circle cx="10" cy="12.5" r="2.5" fill="#0A6CFF"/></svg>悬浮窗展开内容 · panel-main</h1>
-<p class=lead>Comate HUD 主面板 <strong>1:1 像素稿</strong>（pt = px，缩放 100%）。下方为面板在模拟桌面左上处的真实落位，右侧为逐块标注。页脚额度已按 <mark>T1 方案 A</mark> 落地：品牌绿退出售，进度走 <code>accent.normal</code> + 中性文案。状态变体见第二、三节。</p>
-<div class=meta><span class="pill on">第二阶段 · surfaces-wip</span><span class=pill>面板 281 × 250 pt（含 1pt 描边）</span><span class=pill>圆角 16 · 描边白 12% 1pt</span><span class=pill>内边距 12 / 8 / 12 · 区块 6 · 行距 3</span><span class=pill>字体 rounded</span><span class=pill>零外链 · 图标内联 SVG</span></div></header>
+<header><h1><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="3.5" width="18" height="13" rx="4" fill="none" stroke="#00D4AA" stroke-width="1.5"/><path d="M1 7h18" stroke="#00D4AA" stroke-width="1.5"/><circle cx="10" cy="12.5" r="2.5" fill="#00D4AA"/></svg>悬浮窗展开内容 · panel-main</h1>
+<p class=lead>Comate HUD 主面板 <strong>1:1 像素稿</strong>（pt = px，缩放 100%）。下方为面板在模拟桌面左上处的真实落位，右侧为逐块标注。主色由 KD 蓝改为<strong>品牌绿</strong> <code>accent.normal #00D4AA</code>：<strong>品牌绿只用于交互与额度</strong>（按钮 / 进度 / 选中 / 焦点），<strong>实底上的文字 / 图标一律深墨 <code>#0F0F11</code></strong>（品牌绿为亮色，白字仅 ≈1.9:1 不可读，深墨 ≈9.8:1），<strong>状态绿 <code>#31D158</code> 只用于状态</strong>（状态灯 / 状态文案），<strong>两者不得同屏紧邻</strong>。页脚额度区改为固定顺序 <mark>周期（日｜月）→ 已用 / 总量 + 进度条 → 铃铛 + 未读数 → 齿轮</mark>，数据源 <code>UsageAPI.Limit</code>（<code>used / total / remain / percent</code>）。字号与间距按新刻度上调（标题 12.5 · 行高 34 · 页脚 22），KD 紧凑刻度例外见 <code>T4</code>。状态变体见第二、三节。</p>
+<div class=meta><span class="pill on">第二阶段 · surfaces-wip</span><span class=pill>面板 281 × ≈288 pt（含 1pt 描边）</span><span class=pill>圆角 16 · 描边白 12% 1pt</span><span class=pill>内边距 14 / 10 / 14 · 区块 8 · 行距 4</span><span class=pill>主色 accent.normal #00D4AA（品牌绿）</span><span class=pill>字号 / 间距上调 · KD 例外见 T4</span><span class=pill>字体 rounded</span><span class=pill>零外链 · 图标内联 SVG</span></div></header>
 
 <h2>一 · 主面板（默认态）</h2>
-<p class=sub>宽取 <code>metrics.bar-w 281pt</code>（与刘海条同宽，保证收起/展开不跳宽）；高度按内容 250pt，夹取区间 120–420pt（兜底 300）。区块竖向顺序：标题行 → 任务列表 → 页脚额度区 → 拖拽手柄。</p>
+<p class=sub>宽取 <code>metrics.bar-w 281pt</code>（与刘海条同宽，保证收起/展开不跳宽）；高度按内容 ≈288pt，夹取区间 <b>132–460pt</b>（兜底 <b>340</b>）。区块竖向顺序：标题行 → 任务列表 → 页脚额度区 → 拖拽手柄。<b>页脚内部从左到右固定顺序</b>：① 周期胶囊「日｜月」（选中段 <code>accent.normal</code> 实底）→ ② 额度「已用 / 总量」+ 细进度条（<code>accent.normal</code> 填充、<code>accent.track</code> 作底）→ ③ 铃铛 + 未读数 → ④ 齿轮（含 5pt 更新红点）。</p>
 <div class=stage>
 
 <section class=desk>
@@ -173,8 +178,8 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <span class=h-title>Comate HUD</span>
 <button class=h-add type=button aria-label="新建任务"><svg width=11 height=11 aria-hidden=true><use href=#ic-plus /></svg></button>
 </div>
-<span class=pin style="top:20px">2</span>
-<span class=pin style="top:40px">3</span>
+<span class=pin style="top:12px">2</span>
+<span class=pin style="top:46px">3</span>
 <div class=h-rows>
 <div class=h-row>
 <span class="h-dot h-dot--idle"></span>
@@ -182,7 +187,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <span class=h-stack><span class=h-name>整理 window 布局常量</span><span class=h-note>—</span></span>
 <span class=h-time>3天前</span>
 </div>
-<span class=pin style="top:76px">4</span>
+<span class=pin style="top:84px">4</span>
 <div class=h-row>
 <span class="h-dot h-dot--working"></span>
 <span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span>
@@ -201,7 +206,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <span class=h-stack><span class=h-name>收敛四态色板到 Logo</span><span class=h-note>—</span></span>
 <span class=h-time>2小时前</span>
 </div>
-<span class=pin style="top:112px">5</span>
+<span class=pin style="top:122px">5</span>
 <div class=h-row>
 <span class="h-dot h-dot--idle"></span>
 <span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span>
@@ -209,18 +214,18 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <span class=h-time>1天前</span>
 </div>
 </div>
-<span class=pin style="top:200px">6</span>
+<span class=pin style="top:236px">6</span>
 <div class=h-foot>
+<span class=h-seg><span>日</span><span class=on>月</span></span>
 <span class=h-quota>
-<span class=h-qtext>额度 <b>1,240</b> / 2,000 点</span>
+<span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span>
 <span class=h-bar><i style="width:62%"></i></span>
 </span>
-<span class=h-seg><span>7天</span><span class=on>30天</span></span>
-<button class=h-ib type=button aria-label="消息，3 条未读"><svg width=12 height=12 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button>
-<button class=h-ib type=button aria-label="设置"><svg width=12 height=12 aria-hidden=true><use href=#ic-gear /></svg></button>
+<button class=h-ib type=button aria-label="消息，3 条未读"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
 </div>
 <div class=h-handle><i></i></div>
-<span class=pin style="top:224px">7</span>
+<span class=pin style="top:266px">7</span>
 </div>
 </div>
 </section>
@@ -228,20 +233,20 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <section class=legend>
 <h3>逐块标注 · 块名 / 关键 token 与数值 / 尺寸</h3>
 <ol class=lg style="margin-top:8px">
-<li><b>面板容器</b><span><code>surface.panel <i>#0F0F11</i></code> · 描边 <code>line.panel <i>1pt 白12%</i></code> · <code>radius.panel <i>16pt</i></code> · 宽 <b>281 × 250 pt</b>（含描边；= <code>metrics.bar-w</code>，高夹取 120–420）· 内边距 <b>12 / 8 / 12</b> · 无投影（P1 / 验收 3）</span></li>
-<li><b>标题行 · Comate HUD +「+」新建任务</b><span>行高 <code>metrics.header-h <i>18pt</i></code> · 标题 <code>font.label <i>11pt / 600</i></code> + <code>text.secondary <i>白70%</i></code>（行高 16 = <code>line.label</code>）· 按钮视觉 <b>18×18</b>、<code>radius.4</code>、图标 <b>11pt</b> · 常态 <code>text.tertiary</code> / hover <code>surface.hit + text.primary</code> · <code>dur.fast 120ms</code></span></li>
-<li><b>任务行 + 四态状态灯</b><span>行底 <code>surface.row <i>白4%</i></code> · <code>radius.8</code> · 行高 <b>30pt</b>（= <code>line.label 16 + space.2 2 + 12</code>）· 行内 padding <b>0 8</b> · 行间距 <code>metrics.row-gap <i>3pt</i></code> · 无描边（P2）；灯 <code>metrics.dot <i>7pt</i></code>，空闲 <code>status.idle #9CA0AA</code> / 工作中 <code>#FFC928</code> / 等待确认 <code>#FF6259</code> / 已完成 <code>#31D158</code>，微发光 <code>glow.status 0 0 3px {status.*-soft}</code>；左侧交互区 <code>metrics.hit-left <i>44pt</i></code></span></li>
-<li><b>来源图标 + 任务标题</b><span>云端 <b>icloud</b> / 本机 <b>folder</b>，<b>14×14</b>、<code>text.tertiary</code>；标题 <code>font.label <i>11pt / 500</i></code> + <code>text.primary</code>，单行末尾省略，与图标间距 <code>space.6 6pt</code></span></li>
-<li><b>副信息 + 相对时间</b><span>均 <code>font.meta <i>9pt</i></code> + <code>text.quaternary</code>（行高 12）；副信息在标题下方 <code>space.2 2pt</code>，有额度写 <b>「30天 N 点」</b>、无则 <b>「—」</b>；时间右对齐，档位 <b>N秒前 / N分钟前 / N小时前 / N天前</b></span></li>
-<li><b>页脚额度区（额度 + 周期 + 铃铛 + 设置）</b><span>行高 <code>space.20 <i>20pt</i></code>；额度文案 <code>font.micro <i>8pt / 500</i></code> + <code>text.secondary</code>，关键值 <code>text.strong</code>；进度轨 <b>3pt</b> <code>surface.track + radius.full</code>，已填充 <code>accent.normal</code>（T1 方案 A；≤20% 时文案转 <code>status.waiting</code>）；分段控件高 <b>13pt</b> <code>radius.3</code>，选中 <code>accent.normal + accent.on</code>；图标按钮视觉 <b>20×20</b> <code>radius.4</code>，未读角标 <b>13×9</b> <code>dot.update + 1pt dot.update-ring</code>，与状态灯不相邻（T6）</span></li>
+<li><b>面板容器</b><span><code>surface.panel <i>#0F0F11</i></code> · 描边 <code>line.panel <i>1pt 白12%</i></code> · <code>radius.panel <i>16pt</i></code> · 宽 <b>281 × ≈288 pt</b>（含描边；= <code>metrics.bar-w</code>，高夹取 <b>132–460</b> / 兜底 340）· 内边距 <b>14 / 10 / 14</b> · 无投影（P1 / 验收 3）</span></li>
+<li><b>标题行 · Comate HUD +「+」新建任务</b><span>行高 <code>metrics.header-h <i>20pt</i></code> · 标题 <code>font.label <i>12.5pt / 600</i></code> + <code>text.secondary <i>白70%</i></code>（行高 18 = <code>line.label</code>）· 按钮视觉 <b>18×18</b>、<code>radius.4</code>、图标 <b>11pt</b> · 常态 <code>text.tertiary</code> / hover <code>surface.hit + text.primary</code> · <code>dur.fast 120ms</code></span></li>
+<li><b>任务行 + 四态状态灯</b><span>行底 <code>surface.row <i>白4%</i></code> · <code>radius.8</code> · 行高 <b>34pt</b>（= <code>line.label 18 + space.2 2 + line.row2 14</code>）· 行内 padding <b>0 8</b> · 行内元素间距 <code>space.7 <i>7pt</i></code> · 行间距 <code>metrics.row-gap <i>4pt</i></code>（行内边距 <b>3 / 6 → 4 / 7</b>）· 行高 <b>34pt 高于 KD 刻度 32</b>，<b>例外汇总见 T4</b> · 无描边（P2）；灯 <code>metrics.dot <i>8pt</i></code>，空闲 <code>status.idle #9CA0AA</code> / 工作中 <code>#FFC928</code> / 等待确认 <code>#FF6259</code> / 已完成 <code>status.done #31D158</code>，微发光 <code>glow.status 0 0 3px {status.*-soft}</code>；左侧交互区 <code>metrics.hit-left <i>44pt</i></code> · <b>语义分工（硬规则）</b>：<code>status.done #31D158</code> 只用于状态（状态灯 / 状态文案），<b>不得与品牌绿 <code>accent.normal #00D4AA</code> 同屏紧邻</b>；任务行内不出现任何品牌绿</span></li>
+<li><b>来源图标 + 任务标题</b><span>云端 <b>icloud</b> / 本机 <b>folder</b>，<b>14×14</b>、<code>text.tertiary</code>；标题 <code>font.label <i>12.5pt / 500</i></code> + <code>text.primary</code>（行高 18 = <code>line.label</code>），单行末尾省略，与图标间距 <code>space.7 <i>7pt</i></code></span></li>
+<li><b>副信息 + 相对时间</b><span>均 <code>font.meta <i>10pt</i></code> + <code>text.quaternary</code>（行高 14 = <code>line.row2</code>）；副信息在标题下方 <code>space.2 2pt</code>，有额度写 <b>「30天 N 点」</b>、无则 <b>「—」</b>；时间右对齐，档位 <b>N秒前 / N分钟前 / N小时前 / N天前</b></span></li>
+<li><b>页脚额度区（周期 → 额度 → 铃铛 → 齿轮，从左到右顺序固定）</b><span>行高 <code>metrics.foot-h <i>22pt</i></code>（= 侧热区高）· 区块上距 <code>space.8 <i>8pt</i></code> · 内部间距 <code>space.7 <i>7pt</i></code>；<b>① 周期胶囊「日｜月」</b>（<b>标签只允许「日 / 月」</b>，不得写成「7天 / 30天」）：每段 <b>17 × 14</b>、段内字号 <b>9.5pt / 600</b>、整体 <b>36 × 17</b>、<code>radius.3</code>、底 <code>surface.track</code>、<b>选中段 <code>accent.normal</code> 实底 + <code>accent.on #0F0F11</code></b>（品牌绿为亮色，白字仅 ≈1.9:1 不可读；深墨 <code>#0F0F11</code> ≈9.8:1，故一律深墨）、未选中 <code>text.tertiary</code>，热区 <b>36 × 22</b>（<code>::before</code> 撑高，不改变视觉高度）；<b>② 额度「已用 / 总量」</b>：文案 <code>font.meta <i>10pt / 500</i></code> + <code>text.secondary</code>，格式 <b>「已用 1,240 / 2,000 点」</b>、关键值 <code>text.strong</code>（<b>≤20% 时文案转 <code>status.waiting</code></b>）+ 细进度条 <b>3pt</b> <code>radius.full</code>：填充 <code>accent.normal #00D4AA</code>、底 <code>accent.track rgba(0,212,170,.22)</code>，宽度直接取 <code>percent</code>；<b>数据源 <code>UsageAPI.Limit</code></b>：<code>used</code> / <code>total</code> 组成读数、<code>remain</code> 用于耗尽提示、<code>percent</code> 驱动进度条；<b>③ 铃铛</b> + 未读数 <b>10pt / 600</b>（角标 <b>15 × 13</b>、<code>dot.update + 1pt dot.update-ring</code>）；<b>④ 齿轮</b> + <b>5pt</b> 更新红点（<code>dot.update</code>、<code>0 0 0 .5px dot.update-ring</code>）；铃铛 / 齿轮图标 <b>10.5pt</b>、热区 <b>32 × 22</b> <code>radius.4</code>（侧宽 32 / 高 22）· 未登录 / 登录失效时 <b>② 额度位替换为登录引导按钮</b>（见第三节 ③）· 额度只用品牌绿、铃铛角标用 <code>dot.update</code>，与状态灯不相邻（T6）</span></li>
 <li><b>底部拖拽手柄</b><span>胶囊 <b>44 × 3 pt</b>（<code>metrics.handle-w / -h</code>）· <code>radius.full</code> · 常态 <code>--hud-handle-idle <i>白22%</i></code> · hover / 拖拽中 <code>--hud-handle-active <i>白50%</i></code> · 命中区仅最底 <code>space.10 <i>10pt</i></code> · 光标 <code>row-resize</code> / 拖拽 <code>grabbing</code></span></li>
 </ol>
 <h3 style="margin-top:16px">区块顺序与职责</h3>
 <table class=tbl><thead><tr><th>#</th><th>区块</th><th>职责</th><th>高度 / 间距</th></tr></thead><tbody>
-<tr><td>1</td><td><b>标题行</b></td><td>标识产品身份 + 唯一主动作（新建任务）；不承载状态</td><td>18pt · 上距 8pt</td></tr>
-<tr><td>2</td><td><b>任务列表</b></td><td>面板唯一信息主体；每行一眼读完「灯 + 来源 + 标题 + 消耗 + 时间」</td><td>内容高 · 行距 3pt</td></tr>
+<tr><td>1</td><td><b>标题行</b></td><td>标识产品身份 + 唯一主动作（新建任务）；不承载状态</td><td>20pt · 上距 8pt</td></tr>
+<tr><td>2</td><td><b>任务列表</b></td><td>面板唯一信息主体；每行一眼读完「灯 + 来源 + 标题 + 消耗 + 时间」</td><td>行高 34pt · 行距 4pt</td></tr>
 <tr><td>2a</td><td><em>空态占位</em></td><td>无任务时顶替列表，不额外加卡片或插图</td><td>24pt</td></tr>
-<tr><td>3</td><td><b>页脚额度区</b></td><td>额度读数 + 周期切换 + 消息入口 + 设置入口；只读靠左、操作靠右</td><td>20pt · 上距 6pt</td></tr>
+<tr><td>3</td><td><b>页脚额度区</b></td><td><b>固定顺序</b>：① 周期切换「日｜月」→ ② 额度读数（已用 / 总量 + 进度条）→ ③ 消息入口（铃铛 + 未读数）→ ④ 设置入口（齿轮）</td><td>22pt · 上距 8pt</td></tr>
 <tr><td>4</td><td><b>拖拽手柄</b></td><td>调节面板可见条数（1–10）；命中区独占最底 10pt</td><td>3pt 胶囊 / 10pt 命中</td></tr>
 </tbody></table>
 </section>
@@ -251,7 +256,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 /* 变体区辅助样式（仅标注/示意用，非产品 token） */
 .rel{position:relative;padding-top:34px}
 .tip-above{position:absolute;left:14px;top:4px}
-.panel--120{height:120px;display:flex;flex-direction:column}
+.panel--132{height:132px;display:flex;flex-direction:column}
 .h-rows--empty{flex:1;justify-content:center}
 .sk{display:block}
 .tline{display:flex;flex-direction:column;gap:4px}
@@ -274,11 +279,11 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <div class="h-row is-hover"><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
 <div class=h-row><span class="h-dot h-dot--waiting"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>确认删除旧状态灯映射</span><span class=h-note>30天 860 点</span></span><span class=h-time>5分钟前</span></div>
 </div>
-<div class=h-foot><span class=h-quota><span class=h-qtext>额度 <b>1,240</b> / 2,000 点</span><span class=h-bar><i style="width:62%"></i></span></span><span class=h-seg><span>7天</span><span class=on>30天</span></span><button class=h-ib type=button><svg width=12 height=12 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button><button class=h-ib type=button aria-label="设置"><svg width=12 height=12 aria-hidden=true><use href=#ic-gear /></svg></button></div>
+<div class=h-foot><span class=h-seg><span>日</span><span class=on>月</span></span><span class=h-quota><span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span><span class=h-bar><i style="width:62%"></i></span></span><button class=h-ib type=button><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button><button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button></div>
 <div class=h-handle><i></i></div>
 </div>
 </div>
-<p class=cap><b>行 hover（第 2 行）</b>行底 <code>surface.row-hover <i>白10%</i></code> · 其余几何不变（高 30pt / <code>radius.8</code> / 灯 7pt）· 过渡 <code>dur.fast 120ms + ease.standard</code> · 行整体不位移、不加描边、不换字色；tooltip 锚定该行上方 4pt（示意图移至面板外以免遮挡行内容）· 光标 <code>pointer</code></p>
+<p class=cap><b>行 hover（第 2 行）</b>行底 <code>surface.row-hover <i>白10%</i></code> · 其余几何不变（高 34pt / <code>radius.8</code> / 灯 8pt）· 过渡 <code>dur.fast 120ms + ease.standard</code> · 行整体不位移、不加描边、不换字色；tooltip 锚定该行上方 4pt（示意图移至面板外以免遮挡行内容）· 光标 <code>pointer</code></p>
 </div>
 
 <div class=card>
@@ -290,7 +295,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <div class="h-row is-press"><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
 <div class=h-row><span class="h-dot h-dot--waiting"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>确认删除旧状态灯映射</span><span class=h-note>30天 860 点</span></span><span class=h-time>5分钟前</span></div>
 </div>
-<div class=h-foot><span class=h-quota><span class=h-qtext>额度 <b>1,240</b> / 2,000 点</span><span class=h-bar><i style="width:62%"></i></span></span><span class=h-seg><span>7天</span><span class=on>30天</span></span><button class=h-ib type=button><svg width=12 height=12 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button><button class=h-ib type=button aria-label="设置"><svg width=12 height=12 aria-hidden=true><use href=#ic-gear /></svg></button></div>
+<div class=h-foot><span class=h-seg><span>日</span><span class=on>月</span></span><span class=h-quota><span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span><span class=h-bar><i style="width:62%"></i></span></span><button class=h-ib type=button><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button><button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button></div>
 <div class=h-handle><i></i></div>
 </div>
 <p class=cap><b>行 pressed（第 2 行）</b>行底 <code>surface.row-pressed <i>白14%</i></code> · 反馈时长 <code>dur.instant 80ms</code> · 按下期间 tooltip 隐藏（避免与按下态叠加，避免遮挡点击目标）· 松手即跳转「在 Comate 中打开该任务」· 禁用/无权限行不进入 pressed，只保留 hover（P4 + 验收 4）</p>
@@ -305,7 +310,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <div class=tline><span class=tlab>有消息行</span><span class=h-tip>3 条消息</span></div>
 <div class=tline><span class=tlab>兜底（无数据）</span><span class=h-tip>在 Comate 中打开该任务</span></div>
 </div>
-<p class=cap><b>tooltip</b>底 <code>surface.raised <i>白6%</i></code> + 描边 <code>line.divider</code> · <code>radius.6</code> · 文案 <code>font.meta 9pt</code> + <code>text.secondary</code>（行高 15）· 内边距 <b>4 / 8</b> · 投影 <code>shadow.tip</code> · 最大宽 <b>231pt</b>，单行省略 · 优先级：等待确认 &gt; 额度 &gt; tokens &gt; 消息数 &gt; 兜底，同时只出一条</p>
+<p class=cap><b>tooltip</b>底 <code>surface.raised <i>白6%</i></code> + 描边 <code>line.divider</code> · <code>radius.6</code> · 文案 <code>font.meta 10pt</code> + <code>text.secondary</code>（行高 13）· 内边距 <b>4 / 8</b> · 投影 <code>shadow.tip</code> · 最大宽 <b>231pt</b>，单行省略 · 优先级：等待确认 &gt; 额度 &gt; tokens &gt; 消息数 &gt; 兜底，同时只出一条</p>
 </div>
 </div>
 
@@ -338,7 +343,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 </div>
 </div>
 </div>
-<p class=cap><b>手柄</b>胶囊 <b>44 × 3 pt</b> + <code>radius.full</code>；常态 <code>--hud-handle-idle 白22%</code>，hover / 拖拽中 <code>--hud-handle-active 白50%</code>（<code>dur.fast 120ms</code>）· 命中区仅最底 <code>space.10 10pt</code>（面板左右 12 / 底 12 不属于手柄）· 光标 <code>row-resize</code> → 拖拽 <code>grabbing</code> · 拖拽中右上角显示行数读数 <b>6 / 10 行</b>（<code>font.micro 8pt</code> + <code>surface.raised</code> + <code>radius.full</code>，面板高度 8pt 内实时重排）· 高度受 1–10 条夹取（兜底 300 / 最小 120 / 最大 420）</p>
+<p class=cap><b>手柄</b>胶囊 <b>44 × 3 pt</b> + <code>radius.full</code>；常态 <code>--hud-handle-idle 白22%</code>，hover / 拖拽中 <code>--hud-handle-active 白50%</code>（<code>dur.fast 120ms</code>）· 命中区仅最底 <code>space.10 10pt</code>（面板左右 12 / 底 12 不属于手柄）· 光标 <code>row-resize</code> → 拖拽 <code>grabbing</code> · 拖拽中右上角显示行数读数 <b>6 / 10 行</b>（<code>font.micro 8pt</code> + <code>surface.raised</code> + <code>radius.full</code>，面板高度 8pt 内实时重排）· 高度受 1–10 条夹取（兜底 340 / 最小 132 / 最大 460）</p>
 </div>
 
 <div class=card>
@@ -351,21 +356,21 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <div class=h-row><span class="sk sk--dot"></span><span class="sk sk--src"></span><span class=h-stack><span class=sk style="width:88px"></span><span class=sk style="width:60px;height:6px"></span></span><span class=sk style="width:34px"></span></div>
 <div class=h-row><span class="sk sk--dot"></span><span class="sk sk--src"></span><span class=h-stack><span class=sk style="width:112px"></span><span class=sk style="width:20px;height:6px"></span></span><span class=sk style="width:28px"></span></div>
 </div>
-<div class=h-foot><span class=h-quota><span class=sk style="width:88px;height:8px"></span><span class="sk" style="width:100%;height:3px"></span></span><span class="sk" style="width:44px;height:13px"></span><span class="sk sk--src"></span><span class="sk sk--src"></span></div>
+<div class=h-foot><span class="sk" style="width:36px;height:17px"></span><span class=h-quota><span class=sk style="width:104px;height:10px"></span><span class="sk" style="width:100%;height:3px"></span></span><span class="sk sk--ib"></span><span class="sk sk--ib"></span></div>
 <div class=h-handle><i></i></div>
 </div>
-<p class=cap><b>加载骨架</b>骨架色 <code>surface.skeleton <i>白6%</i></code>，圆角 <code>radius.full</code>；<b>行位保留</b>（4 行 × 30pt，与真实列表同高，避免加载完成时面板跳动）· 呼吸 <code>--hud-dur-skeleton 1200ms</code> ease-in-out，仅透明度 0.55 ↔ 1（P5 只允许透明度/位移）· <code>prefers-reduced-motion</code> 下停在终态（不闪）</p>
+<p class=cap><b>加载骨架</b>骨架色 <code>surface.skeleton <i>白6%</i></code>，圆角 <code>radius.full</code>；<b>行位保留</b>（4 行 × 34pt，与真实列表同高，避免加载完成时面板跳动）· 呼吸 <code>--hud-dur-skeleton 1200ms</code> ease-in-out，仅透明度 0.55 ↔ 1（P5 只允许透明度/位移）· <code>prefers-reduced-motion</code> 下停在终态（不闪）</p>
 </div>
 
 <div class=card>
 <header><h3>空态 · 暂无任务</h3><span class="tag on">empty</span></header>
-<div class="panel panel--120">
+<div class="panel panel--132">
 <div class=h-head><span class=h-title>Comate HUD</span><button class=h-add type=button><svg width=11 height=11 aria-hidden=true><use href=#ic-plus /></svg></button></div>
 <div class="h-rows h-rows--empty"><div class=h-empty>暂无任务</div></div>
-<div class=h-foot><span class=h-quota><span class=h-qtext>额度 <b>1,240</b> / 2,000 点</span><span class=h-bar><i style="width:62%"></i></span></span><span class=h-seg><span>7天</span><span class=on>30天</span></span><button class=h-ib type=button><svg width=12 height=12 aria-hidden=true><use href=#ic-bell /></svg></button><button class=h-ib type=button aria-label="设置"><svg width=12 height=12 aria-hidden=true><use href=#ic-gear /></svg></button></div>
+<div class=h-foot><span class=h-seg><span>日</span><span class=on>月</span></span><span class=h-quota><span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span><span class=h-bar><i style="width:62%"></i></span></span><button class=h-ib type=button><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg></button><button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg></button></div>
 <div class=h-handle><i></i></div>
 </div>
-<p class=cap><b>空态（面板高 120 = 最小夹取下限）</b>文案「暂无任务」<code>font.meta 9pt</code> + <code>text.quaternary</code>，占位 <code>metrics.empty-h <i>24pt</i></code> 垂直居中 · 内容自然高 110pt &lt; 下限 120pt → 触发最小高夹取，多余 10pt 由空态占位吸收（<b>不加插图、不加卡片、不加引导按钮</b>，唯一下一步是标题行「+」）· 页脚额度区保留（登录态下额度仍有效）· 无未读时铃铛不显示角标</p>
+<p class=cap><b>空态（面板高 132 = 最小夹取下限）</b>文案「暂无任务」<code>font.meta <i>11pt</i></code> + <code>text.quaternary</code>（行高 16），占位 <code>metrics.empty-h <i>24pt</i></code> 由 <code>flex:1</code> 吸满剩余高度（实测撑到 30pt），文案垂直居中 · 面板取最小高夹取下限 <b>132pt</b>（内容不足则补齐，占位吸收全部余量）（<b>不加插图、不加卡片、不加引导按钮</b>，唯一下一步是标题行「+」）· 页脚按新顺序保留（① 周期 → ② 额度 → ③ 铃铛 → ④ 齿轮；登录态下额度仍有效）· 无未读时铃铛不显示角标</p>
 </div>
 
 <div class=card>
@@ -395,12 +400,33 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <div class=h-handle><i></i></div>
 </div>
 </div>
+<div>
+<div class=vlab>③ 登录失效 / 会话过期 · 额度位替换为登录引导</div>
+<div class=panel>
+<div class=h-head><span class=h-title>Comate HUD</span></div>
+<div class=h-rows>
+<div class=h-row>
+<span class="h-dot h-dot--idle"></span>
+<span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span>
+<span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>—</span></span>
+<span class=h-time>12秒前</span>
 </div>
-<p class=cap><b>未登录 / 错误态</b>结构同为「标题行 + 状态块 + 手柄」：状态块内边距 <b>12 / 0</b>、图标 → 文案 → 按钮间距 <code>space.6 6pt</code>；文案 <code>font.meta 9pt</code> + <code>text.quaternary</code>；主按钮 <code>accent.normal</code> + <code>accent.on</code> + <code>radius.6</code>，高 <b>20pt</b>、<code>font.mini 10.5pt / 600</code>、投影 <code>shadow.cta</code>；错误态按钮为软底 <code>accent.soft</code> + <code>accent.hover</code>（次级动作）· 图标 14×14，错误态用 <code>status.waiting</code> 表异常（唯一允许的越线用色）· <b>两种态都隐藏页脚额度区与铃铛/设置</b>（无数据可比，避免误读）· 面板高按内容 ≈ 150pt，未触发夹取</p>
+</div>
+<div class=h-foot>
+<span class=h-seg><span>日</span><span class=on>月</span></span>
+<button class="h-btn h-btn--foot" type=button>登录 Comate</button>
+<button class=h-ib type=button aria-label="消息"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg></button>
+</div>
+<div class=h-handle><i></i></div>
+</div>
+</div>
+</div>
+<p class=cap><b>未登录 / 错误态</b><b>①②</b> 结构同为「标题行 + 状态块 + 手柄」：状态块内边距 <b>12 / 0</b>、图标 → 文案 → 按钮间距 <code>space.6 6pt</code>；文案 <code>font.meta 9pt</code> + <code>text.quaternary</code>；主按钮 <code>accent.normal #00D4AA</code> + <code>accent.on #0F0F11</code> + <code>radius.6</code>，高 <b>20pt</b>、<code>font.mini 10.5pt / 600</code>、投影 <code>shadow.cta</code>；错误态按钮为软底 <code>accent.soft</code> + <code>accent.hover</code>（次级动作）· 图标 14×14，错误态用 <code>status.waiting</code> 表异常（唯一允许的越线用色）· <b>①② 隐藏页脚额度区与铃铛 / 设置</b>（无数据可比，避免误读）· 面板高按内容 ≈ 154pt，未触发夹取。<br><b>③ 登录失效 / 会话过期（有缓存任务）</b>：页脚保留且顺序不变，<b>② 额度位整体替换为登录引导按钮</b>——<code>accent.normal</code> 实底 + <code>accent.on #0F0F11</code>、<code>radius.6</code>、<b>高 22pt</b>（= <code>metrics.foot-h</code>，与页脚热区等高）、<code>font.mini 10.5pt / 600</code>、投影 <code>shadow.cta</code>、<code>flex:1</code> 占满额度位；周期胶囊 / 铃铛 / 齿轮位置不变，行内额度副信息统一显示 <code>—</code>，登录成功后自动回填 <code>UsageAPI.Limit</code>（<code>used / total / remain / percent</code>）· 面板高按内容 ≈ 136pt，未触发夹取</p>
 </div>
 </div>
 
 <h2>四 · 状态规则速查</h2>
-<p class=sub>完整规则见 <code>DESIGN.md</code> §7.3。<b>hover</b>：行白 4%→10%、手柄 22%→50%、图标按钮加 12% 命中底并提亮字色（<code>dur.fast 120ms</code>）· <b>pressed</b>：行 10%→14%、tooltip 隐藏、松手打开任务（<code>dur.instant 80ms</code>）· <b>loading</b>：保留 4 行骨位（同高 30pt）、透明度 0.55↔1 呼吸 1200ms、不显示空态 · <b>empty</b>：24pt 占位、面板夹到最小高 120、页脚保留 · <b>error</b>：<code>status.waiting</code> 图标 + 次级软底按钮，隐藏页脚与铃铛 · <b>drag</b>：手柄 50% + <code>grabbing</code> + 行数读数，高度 1–10 行夹取 · <b>focus</b>：2pt <code>line.focus</code> 环 + 1pt 偏移 · <b>disabled</b>：整控件 <code>opacity .4</code>，不用灰色替代色。</p>
-<footer>纯本地 HTML：零外链（字体/图片/CDN/埋点），图标为内联 SVG sprite。依据 <code>DESIGN.md</code> §2 + §7。1:1 校验：281 宽 · 圆角 16 · 描边 1pt 白12% · 内边距 12/8/12 · 区块 6 · 行距 3 · 标题行 18 · 灯 7 · 手柄 44×3 · 空态 24 · 页脚 20。</footer>
+<p class=sub>完整规则见 <code>DESIGN.md</code> §7.3。<b>hover</b>：行白 4%→10%、手柄 22%→50%、图标按钮加 12% 命中底并提亮字色（<code>dur.fast 120ms</code>）· <b>pressed</b>：行 10%→14%、tooltip 隐藏、松手打开任务（<code>dur.instant 80ms</code>）· <b>loading</b>：保留 4 行骨位（同高 34pt）、透明度 0.55↔1 呼吸 1200ms、不显示空态 · <b>empty</b>：24pt 占位、面板夹到最小高 132、页脚保留 · <b>error</b>：<code>status.waiting</code> 图标 + 次级软底按钮，①② 隐藏页脚与铃铛；<b>登录失效</b>保留页脚、额度位换登录引导按钮 · <b>drag</b>：手柄 50% + <code>grabbing</code> + 行数读数，高度 1–10 行夹取 · <b>focus</b>：2pt <code>line.focus #00D4AA</code> 环 + 1pt 偏移 + <code>glow.focus 0 0 4px #00D4AA</code> · <b>disabled</b>：整控件 <code>opacity .4</code>，不用灰色替代色。<br><b>用色分工（硬规则）</b>：<b>品牌绿 <code>accent.normal #00D4AA</code>（hover <code>#22E0BB</code> / pressed <code>#00A98A</code>）只用于交互与额度</b>——只出现在按钮实底、进度填充、周期选中段、焦点环；<b>状态绿 <code>status.done #31D158</code> 只用于状态</b>——只出现在状态灯与状态文案；<b>两者不得同屏紧邻</b>（同一行 / 同一区块内不同时出现）。</p>
+<footer>纯本地 HTML：零外链（字体/图片/CDN/埋点），图标为内联 SVG sprite。依据 <code>DESIGN.md</code> §2 + §7。1:1 校验：281 宽 · 圆角 16 · 描边 1pt 白12% · 内边距 <b>14/10/14</b> · 区块 <b>8</b> · 行距 <b>4</b> · 行高 <b>34</b> · 标题行 <b>20</b> · 标题 <b>12.5 / 500–600</b> · 副信息 <b>10</b> · 灯 <b>8</b> · 手柄 44×3 · 空态 24 / 文案 <b>11</b> · 页脚 <b>22</b> · 周期段 <b>17×14（段内 9.5）</b> · 额度 <b>10</b> · 未读数 <b>10</b> · tooltip 文案 <b>10 / 13</b> · 图标 <b>10.5</b> · 侧热区 <b>32×22</b> · 面板高 <b>132 / 340 / 460</b> · 主色 <b>accent.normal #00D4AA</b>。字号 <b>10 / 11 / 12.5</b>、间距 <b>4 / 7 / 14</b>、行高 <b>34（高于 KD 刻度 32）</b>、圆角 16 均不在 KD 刻度上，作为 HUD 紧凑刻度的例外登记（旧值 30 / 3 / 6 已被替换） —— <b>例外汇总见 T4</b>。</footer>
 </div></body></html>

@@ -1,10 +1,10 @@
 <!DOCTYPE html><html lang=zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Comate HUD · 刘海形态 · notch</title>
 <style>
 :root{--f:'SF Pro Rounded',ui-rounded,-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;--m:ui-monospace,SFMono-Regular,Menlo,monospace;
---ac:#0A6CFF;--ach:#3B89FF;--acs:rgba(10,108,255,.16);--idle:#9CA0AA;--work:#FFC928;--wait:#FF6259;--done:#31D158;
+--ac:#00D4AA;--ach:#22E0BB;--acp:#00A98A;--acs:rgba(0,212,170,.16);--act:rgba(0,212,170,.22);--acon:#0F0F11;--idle:#9CA0AA;--work:#FFC928;--wait:#FF6259;--done:#31D158;
 --tp:rgba(245,245,245,1);--ts:rgba(245,245,245,.72);--tt:rgba(245,245,245,.55);--tq:rgba(245,245,245,.46);--td:rgba(245,245,245,.4);
 --row:rgba(255,255,255,.04);--hit:rgba(255,255,255,.12);--track:rgba(255,255,255,.1);--lc:rgba(255,255,255,.07);
---gd:rgba(59,137,255,.45);--gds:rgba(59,137,255,.32)}
+--gd:rgba(0,212,170,.45);--gds:rgba(0,212,170,.32)}
 *,*::before,*::after{box-sizing:border-box}html,body{margin:0}
 body{background:#060608;color:var(--tp);font:400 12px/1.55 var(--f);-webkit-font-smoothing:antialiased;padding:28px 24px 64px}
 .wr{max-width:1280px;margin:0 auto}
@@ -14,7 +14,7 @@ h3{margin:0 0 7px;font-size:13px;font-weight:600}p{margin:0}
 .lead{margin-top:8px;max-width:960px;font-size:13px;line-height:20px;color:var(--ts)}
 .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .pill{font-size:10.5px;font-weight:500;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--lc);color:var(--tt)}
-.pill.on{color:var(--ach);background:var(--acs);border-color:rgba(59,137,255,.35)}
+.pill.on{color:var(--ach);background:var(--acs);border-color:rgba(0,212,170,.35)}
 .sub{margin:6px 0 16px 12px;font-size:12px;line-height:18px;color:var(--tt);max-width:960px}
 code{font:400 9px/1.5 var(--m);color:var(--ach)}mark{background:var(--acs);color:var(--ach);border-radius:3px;padding:0 4px;font:400 10px/1.5 var(--m)}
 .dh,.dv{display:flex;gap:6px;font:400 8.5px/1 var(--m);color:var(--ach)}
@@ -33,7 +33,7 @@ code{font:400 9px/1.5 var(--m);color:var(--ach)}mark{background:var(--acs);color
 .bar,.panel{position:relative;background:#000;border-radius:0 0 14px 14px}
 .panel{width:281px}
 .lw{position:absolute;left:4px;width:28px;height:28px}
-.hz{position:absolute;left:36px;display:grid;place-items:center;font:400 8px/1 var(--m);color:rgba(59,137,255,.7);border-left:1px dashed var(--gds);border-right:1px dashed var(--gds);white-space:nowrap}
+.hz{position:absolute;left:36px;display:grid;place-items:center;font:400 8px/1 var(--m);color:rgba(0,212,170,.7);border-left:1px dashed var(--gds);border-right:1px dashed var(--gds);white-space:nowrap}
 .pb{position:absolute;right:16px;width:18px;height:18px;display:grid;place-items:center;padding:0;border:0;border-radius:4px;background:none;color:var(--tt);cursor:pointer}
 .pb:hover,.pb.hv{background:var(--hit);color:var(--tp)}
 .ng{display:block;width:28px;height:28px}
@@ -43,14 +43,36 @@ code{font:400 9px/1.5 var(--m);color:var(--ach)}mark{background:var(--acs);color
 @keyframes ng-ripple{0%{transform:scale(.72);opacity:.34}100%{transform:scale(1.35);opacity:0}}
 @keyframes ng-breath{0%{transform:scale(.78);opacity:.48}100%{transform:scale(1);opacity:1}}
 @keyframes ng-wave{0%{transform:scale(.73);opacity:.38}100%{transform:scale(1.24);opacity:0}}
-@keyframes ng-slow{0%{transform:scale(.73);opacity:.38}100%{transform:scale(1.2);opacity:0}}
+@keyframes ng-slow{0%{transform:scale(.73);opacity:.28}100%{transform:scale(1.2);opacity:0}}
 @keyframes ng-bob{0%{transform:translateY(0);opacity:.72}100%{transform:translateY(-5px);opacity:1}}
-@keyframes ng-draw{0%{stroke-dashoffset:175}50%,100%{stroke-dashoffset:0}}
-@keyframes ng-spark{0%,45%{opacity:0;transform:scale(.2)}70%,100%{opacity:.85;transform:scale(1)}}
+@keyframes ng-draw{0%{stroke-dashoffset:175}36%{stroke-dashoffset:0}100%{stroke-dashoffset:0}}
+@keyframes ng-spark{0%,50%{opacity:0;transform:scale(.2)}100%{opacity:.85;transform:scale(1)}}
+@keyframes ng-ebr{0%,100%{opacity:.6}50%{opacity:1}}
+/* ── Logo 五态：动画图元类。动画写在「可见实例内联的图元」自身，不再挂在 defs 模板上靠 <use> 克隆 ── */
+.sg-arc{fill:none;stroke:currentColor;stroke-width:132;opacity:.55}
+.sg-orb,.sg-rip,.sg-core,.sg-wv,.sg-wvs,.sg-bob{transform-box:view-box;transform-origin:300px 300px}
+.sg-orb{animation:ng-spin 1.15s linear infinite var(--d,0s)}
+.sg-orb circle{fill:none;stroke:currentColor;stroke-linecap:round}
+.sg-o1{stroke-width:38;stroke-dasharray:111.5 1572.5}
+.sg-o2{stroke-width:26;opacity:.7;stroke-dasharray:62.2 1621.8;stroke-dashoffset:-92.2}
+.sg-o3{stroke-width:16;opacity:.34;stroke-dasharray:30 1654;stroke-dashoffset:-165.1}
+.sg-rip{fill:none;stroke:currentColor;stroke-width:8;animation:ng-ripple 5s ease-out infinite var(--d,0s)}
+.sg-core{fill:currentColor;animation:ng-breath 2.5s ease-in-out infinite alternate var(--d,0s)}
+.sg-wv{fill:none;stroke:currentColor;stroke-width:8;animation:ng-wave 1.6s ease-out infinite var(--d,0s)}
+.sg-wv2{animation-delay:calc(var(--d,0s) - .72s)}
+.sg-wvs{fill:none;stroke:currentColor;stroke-width:8;animation:ng-slow 2.4s ease-out infinite var(--d,0s)}
+.sg-bob{fill:currentColor;animation:ng-bob 1.15s ease-in-out infinite alternate var(--d,0s)}
+.sg-still,.sg-dot{fill:currentColor}
+.sg-ebr{animation:ng-ebr 1.6s ease-in-out infinite var(--d,0s)}
+.sg-ck{fill:none;stroke:currentColor;stroke-width:30;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:175;animation:ng-draw 1.7s ease-out infinite var(--d,0s)}
+.sg-spk{fill:currentColor;transform-box:view-box;animation:ng-spark 1.7s ease-out infinite var(--d,0s)}
+.sg-sp1{transform-origin:389px 230px}
+.sg-sp2{transform-origin:218px 256px;animation-delay:calc(var(--d,0s) + .06s)}
+.sg-sp3{transform-origin:370px 374px;animation-delay:calc(var(--d,0s) + .12s)}
 .srows{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .srow{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--row);border:1px solid var(--lc)}
 .sname{flex:none;width:126px;font-size:11px;font-weight:600;line-height:16px}
-.sname i{display:inline-block;width:7px;height:7px;border-radius:999px;background:currentColor;margin-right:5px;vertical-align:1px}
+.sname i{display:inline-block;width:8px;height:8px;border-radius:999px;background:currentColor;margin-right:5px;vertical-align:1px}
 .sname span{display:block;font:400 9px/13px var(--m);color:var(--tq);margin-top:1px}
 .frames{display:flex;gap:10px;flex:none}
 .fr{text-align:center}
@@ -58,20 +80,22 @@ code{font:400 9px/1.5 var(--m);color:var(--ach)}mark{background:var(--acs);color
 .fr span{display:block;margin-top:3px;font:400 8px/1 var(--m);color:var(--tq)}
 .snote{flex:1;min-width:276px;font-size:10.5px;line-height:17px;color:var(--ts)}
 .snote b{color:#fff;font-weight:600}
-.row{position:absolute;left:12px;right:12px;height:30px;display:flex;align-items:center;gap:8px;padding:0 6px;border-radius:8px;background:var(--row)}
-.lt{flex:none;width:7px;height:7px;border-radius:999px;background:currentColor;filter:drop-shadow(0 0 1.5px currentColor)}
+.row{position:absolute;left:14px;right:14px;height:34px;display:flex;align-items:center;gap:8px;padding:0 7px;border-radius:8px;background:var(--row)}
+.lt{flex:none;width:8px;height:8px;border-radius:999px;background:currentColor;filter:drop-shadow(0 0 1.5px currentColor)}
 .st{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.tt{display:flex;align-items:center;gap:4px;font:500 11px/15px var(--f);color:var(--tp);white-space:nowrap;overflow:hidden}
-.mt{display:flex;align-items:center;gap:6px;font:400 9px/11px var(--f);color:var(--td);white-space:nowrap}
+.tt{display:flex;align-items:center;gap:4px;font:500 12.5px/17px var(--f);color:var(--tp);white-space:nowrap;overflow:hidden}
+.mt{display:flex;align-items:center;gap:6px;font:400 10px/13px var(--f);color:var(--td);white-space:nowrap}
 .mt b{font-weight:600}
 .si{flex:none;color:rgba(255,255,255,.5)}.ar{flex:none;color:rgba(255,255,255,.2)}
-.emp{position:absolute;left:12px;right:12px;top:43px;height:24px;display:grid;place-items:center;font:400 11px/1 var(--f);color:rgba(255,255,255,.4)}
-.ft{position:absolute;left:12px;right:12px;bottom:12px;height:20px;display:flex;align-items:center;gap:6px}
-.ftg{display:flex;align-items:center;gap:6px;height:20px;padding:0 6px;border-radius:5px}
+.emp{position:absolute;left:14px;right:14px;top:43px;bottom:34px;display:grid;place-items:center;font:400 11px/1 var(--f);color:rgba(255,255,255,.4)}
+.ft{position:absolute;left:14px;right:14px;bottom:14px;height:20px;display:flex;align-items:center;gap:6px}
+.ftg{display:flex;align-items:center;gap:6px;height:20px;padding:0 7px;border-radius:5px}
+.pg{flex:none;width:30px;height:3px;border-radius:999px;background:var(--act);overflow:hidden}
+.pg i{display:block;height:100%;border-radius:999px;background:var(--ac)}
 .seg{display:flex;padding:1px;border-radius:4px;background:var(--track)}
 .seg span{width:13px;height:11px;display:grid;place-items:center;border-radius:3.5px;font:600 8px/1 var(--f);color:rgba(255,255,255,.45)}
-.seg .on{background:var(--ac);color:#fff}
-.ftx{font:500 8px/9px var(--f);color:var(--ts)}.ftx b{color:rgba(245,245,245,.92)}
+.seg .on{background:var(--ac);color:var(--acon)}
+.ftx{font:500 9px/10px var(--f);color:var(--ts);white-space:nowrap}.ftx b{color:rgba(245,245,245,.92)}
 .ib{position:relative;width:30px;height:20px;display:flex;align-items:center;justify-content:center;gap:2px;color:rgba(255,255,255,.55);font:600 9px/1 var(--f)}
 .ud{position:absolute;right:4px;top:-1px;width:5px;height:5px;border-radius:999px;background:#FF4D4F;box-shadow:0 0 0 .5px rgba(0,0,0,.4)}
 .hnd{position:absolute;left:50%;bottom:4px;margin-left:-22px;width:44px;height:4px;border-radius:999px;background:rgba(255,255,255,.22)}
@@ -80,40 +104,23 @@ code{font:400 9px/1.5 var(--m);color:var(--ach)}mark{background:var(--acs);color
 .lg{counter-reset:lg;margin:10px 0 0;padding:0;list-style:none}
 .lg li{display:flex;gap:9px;padding:7px 10px;border-radius:6px;background:var(--row);margin-bottom:3px;font-size:11px;line-height:17px}
 .lg li::before{counter-increment:lg;content:counter(lg);flex:none;width:15px;height:15px;margin-top:1px;border-radius:999px;
-border:1px solid rgba(59,137,255,.55);background:var(--acs);color:var(--ach);font:600 8px/13px var(--m);text-align:center}
+border:1px solid rgba(0,212,170,.55);background:var(--acs);color:var(--ach);font:600 8px/13px var(--m);text-align:center}
 .lg b{font-weight:600;color:var(--tp);flex:none}.lg span{color:var(--tt)}
 footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:10.5px;line-height:18px;color:var(--tq)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
-<svg width=0 height=0 style="position:absolute"><defs>
-<g id=a><path d="M181 442A185 185 0 1 1 419 442" fill=none stroke=currentColor stroke-width=132 opacity=.55/></g>
-<g id=orb style="animation:ng-spin 1.15s linear infinite var(--d,0s)">
-<circle cx=300 cy=300 r=268 fill=none stroke=currentColor stroke-width=38 stroke-linecap=round stroke-dasharray="111.5 1572.5"/>
-<circle cx=300 cy=300 r=268 fill=none stroke=currentColor stroke-width=26 opacity=.7 stroke-linecap=round stroke-dasharray="62.2 1621.8" stroke-dashoffset="-92.2"/>
-<circle cx=300 cy=300 r=268 fill=none stroke=currentColor stroke-width=16 opacity=.34 stroke-linecap=round stroke-dasharray="30 1654" stroke-dashoffset="-165.1"/></g>
-<circle id=ir cx=300 cy=300 r=42 fill=none stroke=currentColor stroke-width=8 style="animation:ng-ripple 2.5s ease-out infinite var(--d,0s)"/>
-<circle id=id cx=300 cy=300 r=26 fill=currentColor style="animation:ng-breath 2.5s ease-in-out infinite alternate var(--d,0s)"/>
-<circle id=wr cx=300 cy=300 r=82 fill=none stroke=currentColor stroke-width=8 style="animation:ng-wave 1.6s ease-out infinite var(--d,0s)"/>
-<circle id=wrs cx=300 cy=300 r=82 fill=none stroke=currentColor stroke-width=8 style="animation:ng-slow 2.4s ease-out infinite var(--d,0s)"/>
-<rect id=wb x=285 y=248 width=30 height=72 rx=15 fill=currentColor style="animation:ng-bob 1.15s ease-in-out infinite alternate var(--d,0s)"/>
-<rect id=wbs x=285 y=248 width=30 height=72 rx=15 fill=currentColor/>
-<circle id=wd cx=300 cy=362 r=16 fill=currentColor/>
-<path id=ck d="M245 304 284 343 365 255" fill=none stroke=currentColor stroke-width=30 stroke-linecap=round stroke-linejoin=round stroke-dasharray=175 style="animation:ng-draw 1.7s ease-out infinite var(--d,0s)"/>
-<circle id=sp1 cx=300 cy=300 r=8 fill=currentColor style="animation:ng-spark 1.7s ease-out infinite calc(var(--d,0s) + .58s)"/>
-<circle id=sp2 cx=300 cy=300 r=6 fill=currentColor style="animation:ng-spark 1.7s ease-out infinite calc(var(--d,0s) + .68s)"/>
-<circle id=sp3 cx=300 cy=300 r=5 fill=currentColor style="animation:ng-spark 1.7s ease-out infinite calc(var(--d,0s) + .74s)"/>
-</defs>
+<svg width=0 height=0 style="position:absolute">
 <symbol id=ic-plus viewBox="0 0 12 12" fill=none stroke=currentColor stroke-width=1.4 stroke-linecap=round><path d="M6 2.2v7.6M2.2 6h7.6"/></symbol>
 <symbol id=ic-arrow viewBox="0 0 10 10" fill=none stroke=currentColor stroke-width=1.2 stroke-linecap=round stroke-linejoin=round><path d="M2.6 7.4 7.4 2.6M3.4 2.6h4v4"/></symbol>
 <symbol id=ic-cloud viewBox="0 0 16 16" fill=none stroke=currentColor stroke-width=1.2 stroke-linecap=round stroke-linejoin=round><path d="M5.2 12.5h6.1a2.7 2.7 0 0 0 .3-5.4 3.6 3.6 0 0 0-6.9-.6A2.7 2.7 0 0 0 5.2 12.5Z"/></symbol>
 <symbol id=ic-folder viewBox="0 0 16 16" fill=none stroke=currentColor stroke-width=1.2 stroke-linejoin=round><path d="M2.2 12.4V3.9c0-.5.4-.9.9-.9h2.6l1.3 1.6h5.9c.5 0 .9.4.9.9v6.9c0 .5-.4.9-.9.9H3.1a.9.9 0 0 1-.9-.9Z"/></symbol>
 <symbol id=ic-bell viewBox="0 0 16 16" fill=none stroke=currentColor stroke-width=1.2 stroke-linecap=round stroke-linejoin=round><path d="M4.2 6.8a3.8 3.8 0 0 1 7.6 0v2.4l1 1.5H3.2l1-1.5V6.8Z"/><path d="M6.4 10.7a1.6 1.6 0 0 0 3.2 0"/></symbol>
-<symbol id=ic-gear viewBox="0 0 16 16" fill=none stroke=currentColor stroke-width=1.2><circle cx=8 cy=8 r=2.1/><path d="M8 1.9v1.6M8 12.5v1.6M2.9 4.9l1.4.8M11.7 10.3l1.4.8M2.9 11.1l1.4-.8M11.7 5.7l1.4-.8"/></symbol>
+<symbol id=ic-gear viewBox="0 0 16 16" fill=none stroke=currentColor stroke-width=1.2><circle cx=8 cy=8 r="2.1"/><path d="M8 1.9v1.6M8 12.5v1.6M2.9 4.9l1.4.8M11.7 10.3l1.4.8M2.9 11.1l1.4-.8M11.7 5.7l1.4-.8"/></symbol>
 </svg>
 <div class=wr>
-<header><h1><svg width=20 height=20 viewBox="0 0 20 20"><rect x=1 y=3.5 width=18 height=13 rx=4 fill=none stroke=#0A6CFF stroke-width=1.5/><path d="M3.5 3.5v13M16.5 3.5v13" stroke=#0A6CFF stroke-width=1.5/><circle cx=10 cy=10 r=2.5 fill=#0A6CFF/></svg>刘海形态 · notch</h1>
+<header><h1><svg width=20 height=20 viewBox="0 0 20 20"><rect x=1 y=3.5 width=18 height=13 rx=4 fill=none stroke=#00D4AA stroke-width="1.5"/><path d="M3.5 3.5v13M16.5 3.5v13" stroke=#00D4AA stroke-width="1.5"/><circle cx=10 cy=10 r=2.5 fill="#00D4AA"/></svg>刘海形态 · notch</h1>
 <p class=lead>Comate HUD 的<strong>刘海态</strong>一面 <strong>1:1 像素稿</strong>（pt = px，100%）。收起条与展开面板是<mark>同一个黑色形状</mark>（顶部直角贴屏幕顶边、底圆角 14）：展开只改高度与 y，左右边缘全程不动。几何取自 <code>NotchRootView.swift</code>（<code>wingWidth 36</code> / <code>topInset</code> / 高度公式）、<code>NotchLayout.swift</code>，动效取自 <code>LogoMotion.swift</code>。</p>
-<div class=meta><span class="pill on">第二阶段 · surfaces-wip</span><span class=pill>收起条 281 × 38 / 268 × 34</span><span class=pill>底 #000 · 底圆角 14 · 顶部直角</span><span class=pill>左右翼 36 + 36 · 中段 209 硬件开孔</span><span class=pill>Logo 28pt（悬浮 30pt）</span><span class=pill>零外链</span></div></header>
+<div class=meta><span class="pill on">第二阶段 · surfaces-wip</span><span class=pill>收起条 281 × 38 / 268 × 34</span><span class=pill>底 #000 · 底圆角 14 · 顶部直角</span><span class=pill>左右翼 36 + 36 · 中段 209 硬件开孔</span><span class=pill>Logo 28pt（悬浮 30pt）</span><span class=pill>品牌绿 #00D4AA · 交互/额度</span><span class=pill>五态真动画 · 减弱动态效果退化</span><span class=pill>零外链</span></div></header>
 
 <h2>一 · 收起条 · 两种尺寸 1:1</h2>
 <p class=sub>同一组件两种落地：有刘海屏 <b>281×38</b>（中段 209pt 与硬件开孔无缝，<code>281 = 209 + 2×36</code>）、无刘海屏 fallback <b>268×34</b>。底用 <code>surface.bar #000000</code>（不用 <code>surface.panel</code>：近黑底会在纯黑开孔旁露色差）；左右底角 <code>radius.notch 14</code>、顶部直角与屏幕顶边齐平。左翼 logo 中心固定 <code>x=18</code>，右翼「+」新建任务。<b>收起与展开同宽</b>。</p>
@@ -123,7 +130,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 <div class=dh style="width:281px"><i></i>281 pt<i></i></div>
 <div class=hrow>
 <div class=board><div class=bar style="width:281px;height:38px">
-<span class=lw style="top:5px"><svg class="ng c-wk" viewBox="0 0 600 600"><use href="#a"/><use href="#orb"/></svg></span>
+<span class=lw style="top:5px"><svg class="ng c-wk" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></span>
 <div class=hz style="width:209px;top:0;height:38px">硬件刘海 209 × 38</div>
 <button class=pb style="top:10px"><svg width=11 height=11><use href="#ic-plus"/></svg></button>
 </div></div>
@@ -136,7 +143,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 <div class=dh style="width:268px"><i></i>268 pt<i></i></div>
 <div class=hrow>
 <div class=board><div class=bar style="width:268px;height:34px">
-<span class=lw style="top:3px"><svg class="ng c-id" viewBox="0 0 600 600"><use href="#a"/><use href="#ir"/><use href="#id"/></svg></span>
+<span class=lw style="top:3px"><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></span>
 <div class=hz style="width:196px;top:0;height:34px">无开孔 · 中段 196pt</div>
 <button class="pb hv" style="top:8px"><svg width=11 height=11><use href="#ic-plus"/></svg></button>
 </div></div>
@@ -153,114 +160,116 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 </ol>
 
 <h2>二 · 收起条 Logo 五态（小样 · 每态 2–3 帧）</h2>
-<p class=sub>同一 C 形底弧 —— <code>r185</code> / 描边 <code>132</code> / <code>α.55</code> / 起止 130°→410°（280° 长弧，缺口留在正下方），<b>不随状态变</b>，只换色与弧内指示。设计空间 600，按 <code>size/600</code> 落地：收起条内 <b>28pt</b>、悬浮模式 <b>30pt</b>。每态并排 2 帧＝同一动画的<b>错相采样</b>（只差 <code>animation-delay</code> 负值），任一瞬间两帧相位不同，所以「在动」。</p>
+<p class=sub>同一 C 形底弧 —— <code>r185</code> / 描边 <code>132</code> / <code>α.55</code> / 起止 130°→410°（280° 长弧，缺口留在正下方），<b>不随状态变</b>，只换色与弧内指示。设计空间 600，按 <code>size/600</code> 落地：收起条内 <b>28pt</b>、悬浮模式 <b>30pt</b>。每态均为 <b>真动画</b>（CSS 关键帧无限循环，不是静态帧）：并排 2 帧＝同一动画的 <b>错相采样</b>（只差 <code>animation-delay</code> 负值），任一瞬间两帧相位不同，多截几张可见相位差。系统开启「<b>减弱动态效果</b>」时按 <code>prefers-reduced-motion</code> 退化为静态终态。</p>
 <div class=srows>
 <div class=srow>
 <div class=sname><i class=t-id></i>空闲<span>idle · #9CA0AA</span></div>
 <div class=frames>
-<div class=fr><div class=bx><svg class="ng c-id" viewBox="0 0 600 600"><use href="#a"/><use href="#ir"/><use href="#id"/></svg></div><span>相位 0</span></div>
-<div class=fr><div class=bx><svg class="ng c-id" viewBox="0 0 600 600" style="--d:-1.25s"><use href="#a"/><use href="#ir"/><use href="#id"/></svg></div><span>−1.25s</span></div>
+<div class=fr><div class=bx><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div><span>相位 0</span></div>
+<div class=fr><div class=bx><svg class="ng c-id" viewBox="0 0 600 600" style="--d:-1.25s"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div><span>−1.25s</span></div>
 </div>
-<p class=snote><b>灰 #9CA0AA · 呼吸点 + 外扩涟漪（各 2.5s）</b><br>中心柔光点 <code>2.5s ease-in-out alternate</code>：<code>scale .78→1</code>、<code>α .48→1</code>；同色涟漪环 <code>r42 / 描边 8</code> <code>2.5s ease-out</code>：<code>scale .72→1.35</code>、<code>α .34→0</code>。两段同周期同相起跑 → 每次「吸满」伴一次外扩。</p>
+<p class=snote><b>灰 #9CA0AA · 真动画：呼吸 2.5s + 外扩涟漪 5s（每 2 次呼吸外扩一波）</b><br>中心柔光点 <code>ng-breath 2.5s ease-in-out infinite alternate</code>：<code>scale .78→1</code>、<code>α .48→1</code>；同色涟漪环 <code>r42 / 描边 8</code> <code>ng-ripple 5s ease-out infinite</code>：<code>scale .72→1.35</code>、<code>α .34→0</code>。呼吸两次（5s）恰好外扩一波。</p>
 </div>
 <div class=srow>
 <div class=sname><i class=t-wk></i>工作中<span>working · #FFC928</span></div>
 <div class=frames>
-<div class=fr><div class=bx><svg class="ng c-wk" viewBox="0 0 600 600"><use href="#a"/><use href="#orb"/></svg></div><span>t=0</span></div>
-<div class=fr><div class=bx><svg class="ng c-wk" viewBox="0 0 600 600" style="--d:-.38s"><use href="#a"/><use href="#orb"/></svg></div><span>t=0.38s</span></div>
+<div class=fr><div class=bx><svg class="ng c-wk" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div><span>t=0</span></div>
+<div class=fr><div class=bx><svg class="ng c-wk" viewBox="0 0 600 600" style="--d:-.38s"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div><span>t=0.38s</span></div>
 </div>
-<p class=snote><b>黄 #FFC928 · 三段光轨 1.15s 线性循环</b><br>三段弧同绕 <code>r268</code> 圆环（周长 <b>1,683.9</b>）整体 <code>rotate 0→360°</code>：<code>1.15s linear infinite</code>（<b>线性</b>匀速追逐，不去缓入缓出）。三段起始相位 0 / 92.2 / 165.1，弧长 111.5 / 62.2 / 30 —— 头 <b>38 描边 α1</b>、中 <b>26 α.70</b>、尾 <b>16 α.34</b>；头段 <code>shadow r14 α.55</code>（28pt 下亚像素）。光轨外扩到 268 是为脱离底弧 132 描边的带宽，否则同色叠在弧上「看不出在转」。</p>
+<p class=snote><b>黄 #FFC928 · 真动画：三段光轨 1.15s 线性循环（不可逆）</b><br>三段弧同绕 <code>r268</code> 圆环（周长 <b>1,683.9</b>）整体 <code>rotate 0→360°</code>：<code>ng-spin 1.15s linear infinite</code>（<b>线性</b>匀速单向追逐，不用 alternate 往返）。三段起始相位 0 / 92.2 / 165.1，弧长 111.5 / 62.2 / 30 —— 头 <b>38 描边 α1</b>、中 <b>26 α.70</b>、尾 <b>16 α.34</b>；头段 <code>shadow r14 α.55</code>（28pt 下亚像素）。光轨外扩到 268 是为脱离底弧 132 描边的带宽，否则同色叠在弧上「看不出在转」。</p>
 </div>
 <div class=srow>
 <div class=sname><i class=t-wt></i>等待确认<span>waiting · #FF6259</span></div>
 <div class=frames>
-<div class=fr><div class=bx><svg class="ng c-wt" viewBox="0 0 600 600"><use href="#a"/><use href="#wr"/><use href="#wr" style="--d:-.72s"/><use href="#wb"/><use href="#wd"/></svg></div><span>t=0</span></div>
-<div class=fr><div class=bx><svg class="ng c-wt" viewBox="0 0 600 600" style="--d:-.53s"><use href="#a"/><use href="#wr"/><use href="#wr" style="--d:-.72s"/><use href="#wb"/><use href="#wd"/></svg></div><span>t=0.53s</span></div>
+<div class=fr><div class=bx><svg class="ng c-wt" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wv" cx=300 cy=300 r="82"/><circle class="sg-wv sg-wv2" cx=300 cy=300 r="82"/><rect class="sg-bob" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></svg></div><span>t=0</span></div>
+<div class=fr><div class=bx><svg class="ng c-wt" viewBox="0 0 600 600" style="--d:-.53s"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wv" cx=300 cy=300 r="82"/><circle class="sg-wv sg-wv2" cx=300 cy=300 r="82"/><rect class="sg-bob" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></svg></div><span>t=0.53s</span></div>
 </div>
-<p class=snote><b>红 #FF6259 · 双圈错相脉冲 1.6s ease-out + 感叹号浮动 1.15s</b><br>两圈同形脉冲环 <code>r82 / 描边 8</code>：<code>1.6s ease-out infinite</code>、<code>scale .73→1.24</code>、<code>α .38→0</code>，第二圈 <code>delay 0.72s</code>（错开 45% 相位 → 两波连续外扩）。感叹号：竖条 <code>30×72 rx15</code> + 圆点 <code>r16</code>（y 偏移 −16 / +62）；竖条 <code>1.15s ease-in-out alternate</code> 上浮 <b>−5</b>、<code>α .72→1</code>，<b>圆点不浮动</b>；状态灯同步 <code>0.55s</code> 闪（要打断你）。</p>
+<p class=snote><b>红 #FF6259 · 真动画（重点）：双圈错相脉冲 1.6s ease-out + 感叹号浮动 1.15s</b><br>两圈同形脉冲环 <code>r82 / 描边 8</code>：<code>ng-wave 1.6s ease-out infinite</code>、<code>scale .73→1.24</code>、<code>α .38→0</code>，第二圈 <code>delay 0.72s</code>（错开 45% 相位 → 两波连续外扩）。感叹号：竖条 <code>30×72 rx15</code> + 圆点 <code>r16</code>（y 偏移 −16 / +62）；竖条 <code>1.15s ease-in-out alternate</code> 上浮 <b>−5</b>、<code>α .72→1</code>，<b>圆点不浮动</b>；状态灯同步 <code>0.55s</code> 闪（要打断你）。</p>
 </div>
 <div class=srow>
 <div class=sname><i class=t-wt></i>异常 · 新增<span>error · #FF6259 · 不闪</span></div>
 <div class=frames>
-<div class=fr><div class=bx><svg class="ng c-er" viewBox="0 0 600 600"><use href="#a"/><use href="#wrs"/><use href="#wbs"/><use href="#wd"/></svg></div><span>相位 0</span></div>
-<div class=fr><div class=bx><svg class="ng c-er" viewBox="0 0 600 600" style="--d:-1.2s"><use href="#a"/><use href="#wrs"/><use href="#wbs"/><use href="#wd"/></svg></div><span>−1.2s</span></div>
+<div class=fr><div class=bx><svg class="ng c-er" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wvs" cx=300 cy=300 r="82"/><g class="sg-ebr"><rect class="sg-still" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></g></svg></div><span>相位 0</span></div>
+<div class=fr><div class=bx><svg class="ng c-er" viewBox="0 0 600 600" style="--d:-1.2s"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wvs" cx=300 cy=300 r="82"/><g class="sg-ebr"><rect class="sg-still" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></g></svg></div><span>−1.2s</span></div>
 </div>
-<p class=snote><b>红 #FF6259 · 同一图形、单圈 2.4s 慢脉冲、感叹号不浮动</b><br>与「等待确认」<b>共用同一图形与同一个红</b>，只降两处强度：脉冲只剩 <b>1 圈</b>（<code>r82 / 描边 8</code>），时长由 1.6s 放慢到 <code>2.4s ease-out infinite</code>、<code>scale .73→1.20</code>（比等待确认收敛）、<code>α .38→0</code>；竖条与圆点<b>全部静止</b>（无 <code>bob</code>）——等待确认要打断你（双圈 + 浮动），异常只记录状态（慢慢呼吸一次）。</p>
+<p class=snote><b>红 #FF6259 · 真动画：单圈 2.4s 慢脉冲、感叹号不浮动（极慢透明度呼吸 1.6s）</b><br>与「等待确认」<b>共用同一图形与同一个红</b>，只降两处强度：脉冲只剩 <b>1 圈</b>（<code>r82 / 描边 8</code>），时长由 1.6s 放慢到 <code>ng-slow 2.4s ease-out infinite</code>、<code>scale .73→1.20</code>（比等待确认收敛）、透明度峰值降到 <code>α .28</code>；竖条与圆点<b>不浮动</b>（无 <code>bob</code>），只做 <code>ng-ebr 1.6s ease-in-out infinite</code> 极慢透明度呼吸（<code>.6↔1</code>）——等待确认要打断你（双圈 + 浮动），异常只记录状态。</p>
 </div>
 <div class=srow>
 <div class=sname><i class=t-dn></i>已完成<span>done · #31D158</span></div>
 <div class=frames>
-<div class=fr><div class=bx><svg class="ng c-dn" viewBox="0 0 600 600"><use href="#a"/><use href="#ck"/><g transform="translate(89 -70)"><use href="#sp1"/></g><g transform="translate(-82 -44)"><use href="#sp2"/></g><g transform="translate(70 74)"><use href="#sp3"/></g></svg></div><span>t=0</span></div>
-<div class=fr><div class=bx><svg class="ng c-dn" viewBox="0 0 600 600" style="--d:-.85s"><use href="#a"/><use href="#ck"/><g transform="translate(89 -70)"><use href="#sp1"/></g><g transform="translate(-82 -44)"><use href="#sp2"/></g><g transform="translate(70 74)"><use href="#sp3"/></g></svg></div><span>t=0.85s</span></div>
+<div class=fr><div class=bx><svg class="ng c-dn" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><path class="sg-ck" d="M245 304 284 343 365 255"/><circle class="sg-spk sg-sp1" cx=389 cy=230 r="8"/><circle class="sg-spk sg-sp2" cx=218 cy=256 r="6"/><circle class="sg-spk sg-sp3" cx=370 cy=374 r="5"/></svg></div><span>t=0</span></div>
+<div class=fr><div class=bx><svg class="ng c-dn" viewBox="0 0 600 600" style="--d:-.85s"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><path class="sg-ck" d="M245 304 284 343 365 255"/><circle class="sg-spk sg-sp1" cx=389 cy=230 r="8"/><circle class="sg-spk sg-sp2" cx=218 cy=256 r="6"/><circle class="sg-spk sg-sp3" cx=370 cy=374 r="5"/></svg></div><span>t=0.85s</span></div>
 </div>
-<p class=snote><b>绿 #31D158 · 对勾描出 + 3 颗迸发星点（一次性）</b><br>对勾 <code>M245 304 → 284 343 → 365 255</code>（路径长 <b>175</b>）自左向右 <code>trim 0→1</code>：<code>0.62s ease-out</code>、<code>delay 0.15s</code>、描边 <b>30</b> 圆头。星点 <code>r8 / r6 / r5</code> 分置 (389,230) / (218,256) / (370,374)：<code>0.5s ease-out</code>、<code>delay 0.58 / 0.68 / 0.74s</code>、<code>scale .2→1</code>、<code>α 0→.85</code>。到终态就停（本页为看相位回放成 1.7s 循环）。</p>
+<p class=snote><b>绿 #31D158 · 真动画：对勾 0.62s 描出一次 + 3 颗星点 0.86s 依次聚开</b><br>对勾 <code>M245 304 → 284 343 → 365 255</code>（路径长 <b>175</b>）自左向右 <code>trim 0→1</code>：<code>ng-draw 0.62s ease-out</code>（本页 1.7s 循环回放，前 36%＝0.62s 完成描出）、<code>delay 0.15s</code>、描边 <b>30</b> 圆头。星点 <code>r8 / r6 / r5</code> 分置 (389,230) / (218,256) / (370,374)：<code>ng-spark 0.86s ease-out</code>（本页同 1.7s 循环回放）、<code>delay 0 / 0.06 / 0.12s</code> 依次聚开、<code>scale .2→1</code>、<code>α 0→.85</code>。真实实现到终态即停，本页循环回放以便核对。</p>
 </div>
 </div>
-<p class=cap style="max-width:960px;margin-top:10px"><b>五态共性</b> 底弧固定不随状态变；弧内指示 <code>opacity + scale .92</code> 交叉淡入 <code>0.52s ease-out</code>、颜色过渡 <code>0.5s ease-in-out</code>；色板与任务行状态灯<b>共用同一支</b>；<code>prefers-reduced-motion</code> 退化为无动画终态。</p>
+<p class=cap style="max-width:960px;margin-top:10px"><b>五态共性</b> 底弧固定不随状态变；弧内指示 <code>opacity + scale .92</code> 交叉淡入 <code>0.52s ease-out</code>、颜色过渡 <code>0.5s ease-in-out</code>；色板与任务行状态灯<b>共用同一支</b>；五态在页面内均以 <b>真 CSS 关键帧</b>运行（非静态帧），系统「减弱动态效果」时 <code>prefers-reduced-motion: reduce</code> 令 <code>animation:none</code> 退化为静态终态。</p>
 
 <h2>三 · 展开面板 1:1 · 刘海形态</h2>
-<p class=sub>与收起条<b>同宽同形</b>——展开只改高度与 y，左右边缘全程不动。顶部 38pt 仍是<b>刘海条本体（标题行）</b>：左翼 Logo + 右翼「+」保留，中段 209pt 被硬件开孔遮挡（刘海形态没有文字标题，标题区＝刘海条）。其下 <code>topInset = notchHeight/2 + 24 = 43pt</code> 预留空白；再依次是任务列表（行高 30 / 行距 3）→ 区块 6 → 页脚 20 → 底部留白 12（<code>bottomPadding 12 &gt; resizeHitHeight 10</code>，手柄不吃页脚热区）。高度 = <code>78 + 33n</code>：5 条 <b>281 × 243</b>、空态 <b>281 × 111</b>。</p>
+<p class=sub>与收起条<b>同宽同形</b>——展开只改高度与 y，左右边缘全程不动。顶部 38pt 仍是<b>刘海条本体（标题行）</b>：左翼 Logo + 右翼「+」保留，中段 209pt 被硬件开孔遮挡（刘海形态没有文字标题，标题区＝刘海条）。其下 <code>topInset = notchHeight/2 + 24 = 43pt</code> 预留空白；再依次是任务列表（行高 34 / 行距 4）→ 区块 8 → 页脚 20 → 底部留白 14（<code>bottomPadding 14 &gt; resizeHitHeight 10</code>，手柄不吃页脚热区）。高度 = <code>81 + 38n</code>：5 条 <b>281 × 271</b>、空态 <b>281 × 119</b>。</p>
 <div class=tw>
 <div class=barwrap>
-<h3>③ 有任务（5 条 · 四态灯齐）· 281 × 243</h3>
+<h3>③ 有任务（5 条 · 四态灯齐）· 281 × 271</h3>
 <div class=dh style="width:281px"><i></i>281 pt<i></i></div>
 <div class=hrow>
-<div class=board><div class=panel style="height:243px">
-<span class=lw style="top:5px"><svg class="ng c-wk" viewBox="0 0 600 600"><use href="#a"/><use href="#orb"/></svg></span>
+<div class=board><div class=panel style="height:271px">
+<span class=lw style="top:5px"><svg class="ng c-wk" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></span>
 <div class=hz style="width:209px;top:0;height:38px">硬件刘海 209 × 38</div>
 <button class=pb style="top:10px"><svg width=11 height=11><use href="#ic-plus"/></svg></button>
 <div class=gd style="top:43px"><span class=gdl>topInset 43</span></div>
 <div class=row style="top:43px"><i class="lt t-id"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-folder"/></svg>整理 window 布局常量</span><span class=mt><b class=t-id>待办</b>—<span>3天前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
-<div class=row style="top:76px"><i class="lt t-wk"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>补全 infer 接口单测</span><span class=mt><b class=t-wk>进行中</b>30天 1,240 点<span>12秒前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
-<div class=row style="top:109px"><i class="lt t-wt"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>确认删除旧状态灯映射</span><span class=mt><b class=t-wt>等你确认</b>30天 860 点<span>5分钟前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
-<div class=row style="top:142px"><i class="lt t-wt"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>拉取远端分支失败</span><span class=mt><b class=t-wt>异常</b>—<span>1小时前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
-<div class=row style="top:175px"><i class="lt t-dn"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-folder"/></svg>收敛四态色板到 Logo</span><span class=mt><b class=t-dn>已完成</b>—<span>2小时前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
+<div class=row style="top:81px"><i class="lt t-wk"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>补全 infer 接口单测</span><span class=mt><b class=t-wk>进行中</b>30天 1,240 点<span>12秒前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
+<div class=row style="top:119px"><i class="lt t-wt"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>确认删除旧状态灯映射</span><span class=mt><b class=t-wt>等你确认</b>30天 860 点<span>5分钟前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
+<div class=row style="top:157px"><i class="lt t-wt"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>拉取远端分支失败</span><span class=mt><b class=t-wt>异常</b>—<span>1小时前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
+<div class=row style="top:195px"><i class="lt t-dn"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-folder"/></svg>收敛四态色板到 Logo</span><span class=mt><b class=t-dn>已完成</b>—<span>2小时前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
 <div class=ft>
-<span class=ftg><span class=seg><span>日</span><span class=on>月</span></span><span class=ftx>额度已用 <b>62%</b></span></span>
+<span class=ftg style="padding:0"><span class=seg><span class=on>日</span><span>月</span></span></span>
+<span class=ftg><span class=ftx>已用 <b>1,240</b> / 2,000 点</span><span class=pg><i style="width:62%"></i></span></span>
 <span class=ib><svg width=9 height=9><use href="#ic-bell"/></svg>2</span>
 <span class=ib><svg width=9 height=9><use href="#ic-gear"/></svg><i class=ud></i></span>
 </div>
 <i class=hnd></i>
 </div></div>
-<div class=dv style="height:243px"><i></i>243<i></i></div>
+<div class=dv style="height:271px"><i></i>271<i></i></div>
 </div>
-<p class=cap><b>块名</b> 展开面板（刘海态）· 已标 topInset<br>宽 <b>281</b>（与收起条同宽，展开不跳宽）· 高 <b>243</b>（= 78 + 33×5）· 底 <code>surface.bar #000</code> · 底圆角 <b>14</b>（顶部直角）· 内边距左右 <b>12</b> / 底 <b>12</b> · 行距 <b>3</b> / 区块 <b>6</b> · 页脚高 <b>20</b> · 手柄胶囊 <b>44×4</b></p>
+<p class=cap><b>块名</b> 展开面板（刘海态）· 已标 topInset<br>宽 <b>281</b>（与收起条同宽，展开不跳宽）· 高 <b>271</b>（= 81 + 38×5）· 底 <code>surface.bar #000</code> · 底圆角 <b>14</b>（顶部直角）· 行高 <b>34</b> / 行距 <b>4</b> · 内边距左右 <b>14</b> / 底 <b>14</b> · 区块 <b>8</b> · 页脚高 <b>20</b> · 手柄胶囊 <b>44×4</b></p>
 </div>
 <div class=barwrap>
-<h3>④ 空态 · 281 × 111</h3>
+<h3>④ 空态 · 281 × 119</h3>
 <div class=dh style="width:281px"><i></i>281 pt<i></i></div>
 <div class=hrow>
-<div class=board><div class=panel style="height:111px">
-<span class=lw style="top:5px"><svg class="ng c-id" viewBox="0 0 600 600"><use href="#a"/><use href="#ir"/><use href="#id"/></svg></span>
+<div class=board><div class=panel style="height:119px">
+<span class=lw style="top:5px"><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></span>
 <div class=hz style="width:209px;top:0;height:38px">硬件刘海 209 × 38</div>
 <button class=pb style="top:10px"><svg width=11 height=11><use href="#ic-plus"/></svg></button>
 <p class=emp>暂无任务</p>
 <div class=ft>
-<span class=ftg><span class=seg><span class=on>日</span><span>月</span></span><span class=ftx>额度已用 <b>—</b></span></span>
+<span class=ftg style="padding:0"><span class=seg><span class=on>日</span><span>月</span></span></span>
+<span class=ftg><span class=ftx>已用 <b>—</b> / 2,000 点</span><span class=pg><i style="width:0"></i></span></span>
 <span class=ib><svg width=9 height=9><use href="#ic-bell"/></svg></span>
 <span class=ib><svg width=9 height=9><use href="#ic-gear"/></svg></span>
 </div>
 <i class=hnd></i>
 </div></div>
-<div class=dv style="height:111px"><i></i>111<i></i></div>
+<div class=dv style="height:119px"><i></i>119<i></i></div>
 </div>
-<p class=cap><b>块名</b> 空态（无任务）<br>高 <b>111</b>（最小高度＝1 条：<code>contentHeight(forRows: 0)</code> 走 <code>max(rows,1)</code>，不会缩成一条缝）· 占位区 <b>24pt</b>（<code>emptyPlaceholderHeight</code>）·「暂无任务」代码 <b>11pt / 白40%</b>（悬浮面板稿为 9pt <code>text.quaternary</code>）· 页脚与手柄位置同有任务态</p>
+<p class=cap><b>块名</b> 空态（无任务）<br>高 <b>119</b>（= 81 + 38×1，最小高度＝1 条：<code>contentHeight(forRows: 0)</code> 走 <code>max(rows,1)</code>，不会缩成一条缝）· 占位区撑满 <code>topInset 43</code>→页脚之间并居中（代码 <code>emptyPlaceholderHeight 24pt</code>）·「暂无任务」代码 <b>11pt / 白40%</b>（悬浮面板稿为 9pt <code>text.quaternary</code>）· 页脚与手柄位置同有任务态</p>
 </div>
 </div>
 <ol class=lg>
 <li><b>顶部标题行 = 刘海条本体</b><span>展开态<b>不遮挡、不重绘</b>刘海条：左翼 <code>LogoMotionBadge</code>（x=18 / y=19 / 28pt）+ 右翼「+」照旧，中段 <b>209pt</b> 被硬件开孔遮挡 → 刘海形态没有文字标题。其下 <code>topInset = 43pt</code> 空白（图中虚线标出 y=43）</span></li>
-<li><b>任务行（与悬浮模式共用 <code>HUDTaskRows</code>）</b><span>行高 <b>30pt</b> · 行距 <code>3</code> · <code>radius.8</code> · 行底 <code>surface.row</code> 白 4% → hover 白 10% / pressed 白 14% · 行内 padding <b>0 6</b> · 灯到文字 <b>8</b> · 无描边（P2）</span></li>
-<li><b>状态灯 + 状态文案</b><span>灯 <code>metrics.dot 7pt</code> + 微发光 <code>0 0 3px {status.*-soft}</code>：<code>idle #9CA0AA</code> / <code>working #FFC928</code> / <code>waiting #FF6259</code> / <code>done #31D158</code>；文案 <b>9pt / 600</b> 与灯同色（待办 / 进行中 / 等你确认 / 异常 / 已完成），<b>两档红靠文案与动效区分</b>：等你确认＝灯 <code>0.55s</code> 闪烁，异常＝常亮</span></li>
-<li><b>标题 / 来源 / 额度 / 时间 / 尾部箭头</b><span>来源图标 <b>9pt</b>（cloud 白 55% / folder 白 40%）+ 标题 <b>11pt / 500</b> <code>text.primary</code> 单行省略，间距 <b>4</b>；meta 行 <b>9pt</b> 白 40%，间距 <b>6</b>：有额度写 <b>「30天 N 点」</b>、无则 <b>「—」</b>，相对时间档位 <b>N秒 / N分钟 / N小时 / N天前</b>；尾部 <code>arrow.up.right</code> <b>9pt</b> 常态白 20% → hover 白 50%</span></li>
-<li><b>页脚额度区（与悬浮模式共用 <code>HUDUsageFooter</code>）</b><span>行高 <b>20pt</b>（<code>bottom:12</code>）· 分段胶囊每段 <b>13×11</b> <code>radius 3.5</code>、<code>padding 1</code>、底 <code>surface.track</code> 白 10%、选中 <code>accent.normal #0A6CFF</code> + 白字（T1 品牌绿退出售）·「额度已用 <b>62%</b>」<b>8pt / 500</b> <code>text.secondary</code>、值 <code>text.strong</code>（≤20% 转 <code>status.waiting</code>）· 铃铛 + 未读数 <b>9pt / 600</b>、齿轮带 <b>5pt</b> 更新红点 <code>#FF4D4F</code>（<code>0 0 0 .5px rgba(0,0,0,.4)</code>）· 三个热区统一 <b>高 20 / 宽 30 / radius 5</b>，hover 白 12%</span></li>
+<li><b>任务行（与悬浮模式共用 <code>HUDTaskRows</code>）</b><span>行高 <b>34pt</b> · 行距 <code>4</code> · <code>radius.8</code> · 行底 <code>surface.row</code> 白 4% → hover 白 10% / pressed 白 14% · 行内 padding <b>0 7</b>（水平 6→7；垂直向刻度并入固定行高 34）· 灯到文字 <b>8</b> · 无描边（P2）</span></li>
+<li><b>状态灯 + 状态文案</b><span>灯 <code>metrics.dot 8pt</code> + 微发光 <code>0 0 3px {status.*-soft}</code>：<code>idle #9CA0AA</code> / <code>working #FFC928</code> / <code>waiting #FF6259</code> / <code>done #31D158</code>；文案 <b>10pt / 600</b> 与灯同色（待办 / 进行中 / 等你确认 / 异常 / 已完成），<b>两档红靠文案与动效区分</b>：等你确认＝灯 <code>0.55s</code> 闪烁，异常＝常亮</span></li>
+<li><b>标题 / 来源 / 额度 / 时间 / 尾部箭头</b><span>来源图标 <b>9pt</b>（cloud 白 55% / folder 白 40%）+ 标题 <b>12.5pt / 500</b> <code>text.primary</code> 单行省略，间距 <b>4</b>；meta 行 <b>10pt</b> 白 40%，间距 <b>6</b>：有额度写 <b>「30天 N 点」</b>、无则 <b>「—」</b>，相对时间档位 <b>N秒 / N分钟 / N小时 / N天前</b>；尾部 <code>arrow.up.right</code> <b>9pt</b> 常态白 20% → hover 白 50%</span></li>
+<li><b>页脚：周期切换 → 额度 → 铃铛 → 齿轮（与悬浮模式共用 <code>HUDUsageFooter</code>）</b><span>行高 <b>20pt</b>（<code>bottom:14</code>）· <b>结构顺序固定 ①→④</b>：① 周期切换双段胶囊（<b>日 | 月</b>，日在前）：每段 <b>13×11</b> <code>radius 3.5</code>、<code>padding 1</code>、底 <code>surface.track</code> 白 10%、选中 <code>accent.normal #00D4AA</code> + 深墨字 <code>#0F0F11</code>（品牌绿为亮色，白字仅 ≈1.9:1 不可读，深墨 ≈9.8:1） → ② 额度「<b>已用 1,240 / 2,000 点</b>」<b>9pt / 500</b> <code>text.secondary</code>、值 <code>text.strong</code>（≤20% 转 <code>status.waiting</code>）+ 细进度条 <b>30×3</b> <code>radius.full</code>（填充 <code>accent.normal #00D4AA</code> / 底 <code>accent.track rgba(0,212,170,.22)</code>）→ ③ 铃铛 + 未读数 <b>9pt / 600</b> → ④ 齿轮带 <b>5pt</b> 更新红点 <code>#FF4D4F</code>（<code>0 0 0 .5px rgba(0,0,0,.4)</code>）· 热区统一 <b>高 20 / 宽 30 / radius 5</b>，hover 白 12%</span></li>
 <li><b>底部拖拽手柄</b><span>胶囊 <b>44 × 4</b>（<code>metrics.handle-w 44</code> × <code>handle-h-notch 4</code>；悬浮形态走 <code>handle-h 3</code>）<code>radius.full</code> · 常态白 22% → hover 拖动中白 50% · 距底 4 · 命中区只占最底 <b>10pt</b>（<code>resizeHitHeight</code>）不压页脚；拖动改 <code>customExpandedHeight</code>，高度夹在 1–10 条之间</span></li>
 </ol>
 
 <h2>四 · 落地差异（本页与当前代码）</h2>
 <ol class=lg>
-<li><b>异常态动效</b><span>代码里 <code>redBlinking = false</code>（异常常亮）会让 <code>LogoMotionBadge</code> <b>完全不动</b>；本规范把「不动」改成 <b>单圈 2.4s 慢脉冲</b>。改法：<code>LogoMotionState</code> 拆出 <code>error</code>，或给 <code>waiting</code> 加 <code>pulse: .fast / .slow</code></span></li>
-<li><b>页脚额度色</b><span>代码当前用品牌绿 <code>#00D4AA</code> 做额度；按 <b>T1 方案 A</b> 改 <code>accent.normal</code>，与 <code>panel-main.html</code> 一致 —— 否则刘海面板会出现「品牌蓝 + 状态色 + 品牌绿」三种饱和色</span></li>
+<li><b>异常态动效</b><span>代码里 <code>redBlinking = false</code>（异常常亮）会让 <code>LogoMotionBadge</code> <b>完全不动</b>；本规范把「不动」改成 <b>单圈 2.4s 慢脉冲 + 感叹号 1.6s 极慢透明度呼吸</b>。改法：<code>LogoMotionState</code> 拆出 <code>error</code>，或给 <code>waiting</code> 加 <code>pulse: .fast / .slow</code></span></li>
+<li><b>主色：KD 蓝 → 品牌绿 · 语义分工</b><span><code>accent.normal #00D4AA</code> / <code>hover #22E0BB</code> / <code>pressed #00A98A</code> / <code>soft rgba(0,212,170,.16)</code> / <code>track rgba(0,212,170,.22)</code> / <code>line.focus · glow.focus #00D4AA</code> / <code>shadow.cta rgba(0,212,170,.22)</code>，与 <code>panel-main.html</code> 同步。<b>分工</b>：品牌绿<b>只用于交互与额度</b>（CTA / 选中 / 焦点描边 / 进度条 / 额度），状态绿 <code>#31D158</code> <b>只用于状态</b>（已完成灯与对勾）；四态灯色 <code>#9CA0AA / #FFC928 / #FF6259 / #31D158</code> 保持不变</span></li>
 <li><b>圆角 / 空态字号 / 手柄高</b><span>代码 <code>cornerR = 14</code> 两态共用 ← 本页按代码画（<code>NotchShape</code> 注释里的 PDF 规格是展开 16，展开会跳角）；「暂无任务」刘海 <b>11pt</b> vs 悬浮 <b>9pt</b>（建议收敛 9pt）；手柄刘海 <b>4pt</b> vs 悬浮 <b>3pt</b>，登记为形态差异</span></li>
 </ol>
-<footer>纯本地 HTML：无外链字体 / 图片 / 埋点，图形只用内联 SVG + CSS 关键帧（Logo 由 <code>&lt;use&gt;</code> 复用 <code>&lt;defs&gt;</code>，逐实例以 <code>--d</code> 负延迟错相）。token 见 <code>DESIGN.md</code> §2，几何见 <code>NotchRootView.swift</code> / <code>NotchLayout.swift</code>，动效见 <code>LogoMotion.swift</code>。本页只读，不动 <code>manifest.json</code>。</footer>
+<footer>纯本地 HTML：无外链字体 / 图片 / 埋点，图形只用内联 SVG + CSS 关键帧（Logo 各态的动画图元（<code>path/circle/rect</code>）<b>逐个内联进可见的 <code>&lt;svg&gt;</code></b>，动画写在图元自身的 class 上（不用 <code>&lt;defs&gt;</code> 模板 + <code>&lt;use&gt;</code> 克隆承载动画），逐实例以 <code>--d</code> 负延迟错相；五态均为真动画，<code>prefers-reduced-motion: reduce</code> 时退化为静态终态）。token 见 <code>DESIGN.md</code> §2，几何见 <code>NotchRootView.swift</code> / <code>NotchLayout.swift</code>，动效见 <code>LogoMotion.swift</code>。本页只读，不动 <code>manifest.json</code>。</footer>
 </div></body></html>
