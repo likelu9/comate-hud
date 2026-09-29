@@ -591,13 +591,11 @@ struct FloatingPanelContent: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // 图标：与刘海模式同一套视觉（Comate logo + 紧贴右下的状态灯），
+            // 图标：与刘海模式同一套视觉（logo 与状态灯合一的四态动效），
             // 由 layout 绝对定位 → 展开/收起全程不动
-            HUDLogoBadge(store: store,
-                         logoSize: FloatingMetrics.logoSize,
-                         lightSize: FloatingMetrics.lightSize,
-                         glow: FloatingMetrics.lightGlow,
-                         colorful: true)
+            LogoMotionBadge(light: store.primaryLight,
+                            redBlinking: store.primaryRedBlinking,
+                            size: FloatingMetrics.logoSize)
                 .frame(width: FloatingMetrics.iconBox, height: FloatingMetrics.iconBox)
                 .position(x: layout.iconRect.midX, y: layout.iconRect.midY)
 

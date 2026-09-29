@@ -348,9 +348,11 @@ struct NotchRootView: View {
         NotchShape(cornerRadius: cornerR)
             .fill(Color.black)
             .frame(width: currentWidth, height: currentHeight)
-            // 叠加层：logo + 状态灯（与悬浮模式共用 HUDLogoBadge）
+            // 叠加层：logo 与状态灯合一（展开/收起同一效果，与悬浮模式共用 LogoMotionBadge）
             .overlay(alignment: .topLeading) {
-                HUDLogoBadge(store: store, logoSize: 18, lightSize: 6, colorful: expanded)
+                LogoMotionBadge(light: store.primaryLight,
+                                redBlinking: store.primaryRedBlinking,
+                                size: 18)
                     .position(x: wingWidth / 2, y: notchHeight / 2)
             }
             // 叠加层：+号按钮（右翼，收起态）

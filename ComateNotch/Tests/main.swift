@@ -319,6 +319,48 @@ check(NotchScreenTarget.dedupe("DELL U2720Q", index: 0) == "DELL U2720Q", "首�
 check(NotchScreenTarget.dedupe("DELL U2720Q", index: 1) == "DELL U2720Q（2）",
       "第二块同型号补序号，菜单里能区分")
 
+// MARK: - 图标动效（logo 与状态灯合一）
+//
+// 这里只断言「参数常量」，不断言动画本身（动画无法脱离界面验证）。
+// 其中前两条是 review 时最容易在改动里丢掉的约束：C 形必须是长弧（开口朝下）、
+// 追逐光轨必须完全脱离底弧带宽 —— 后者是 demo 原样落地的真 bug：光轨 r250 落在
+// 底弧（r185 + 132 描边 → 覆盖 r119–251）里，两者同色，18pt 下「工作中」看起来是静止的。
+
+let arcOuterEdge = LogoMotionMetrics.arcRadius + LogoMotionMetrics.arcStroke / 2
+
+for (light, expected) in [(TaskLight.gray, LogoMotionState.idle),
+                          (.green, .done), (.yellow, .working), (.red, .waiting)] {
+    eq(LogoMotionState(light: light), expected, "\(light.rawValue) 映射到 \(expected)")
+}
+
+check(LogoMotionMetrics.arcSweep > 180,
+      "底弧是长弧（扫过 \(Int(LogoMotionMetrics.arcSweep))° > 180°），C 形开口朝下")
+check(LogoMotionMetrics.orbitRadius > arcOuterEdge,
+      "追逐光轨（r\(Int(LogoMotionMetrics.orbitRadius))）脱离底弧带宽（r\(Int(arcOuterEdge))），否则会被盖住")
+check(LogoMotionMetrics.arcOpacity < 1,
+      "底弧压暗到 \(LogoMotionMetrics.arcOpacity)，同色光轨才看得出来")
+check(LogoMotionMetrics.orbitLeadWidth > LogoMotionMetrics.orbitMidWidth
+      && LogoMotionMetrics.orbitMidWidth > LogoMotionMetrics.orbitTailWidth,
+      "光轨头 > 中 > 尾（头亮中弱尾淡）")
+check(LogoMotionMetrics.orbitMidOpacity > LogoMotionMetrics.orbitTailOpacity,
+      "中层比尾层亮")
+
+let lead = LogoMotionMetrics.leadTrim
+let mid = LogoMotionMetrics.midTrim
+let tail = LogoMotionMetrics.tailTrim
+check(lead.from == 0 && lead.to > 0 && tail.to < 1,
+      "三段光轨都落在 (0,1) 内，且头段从 0 起")
+check(lead.from == 0 && mid.from < lead.to && mid.from < tail.from && tail.to < 1,
+      "三段起点递增、头与中重叠成彗尾，且都不越过起点（demo 原 dash 值 111.5 / 92.2+62.2 / 165.1+30.0）")
+check(LogoMotionMetrics.leadTrim.to > LogoMotionMetrics.midTrim.to - LogoMotionMetrics.midTrim.from,
+      "头段比中段长（长拖尾锥形）")
+
+let palette = [LogoMotionState.idle, .done, .working, .waiting].map { $0.color }
+eq(Set(palette).count, 4, "四态颜色互不相同")
+check(palette.allSatisfy { $0.hasPrefix("#") && $0.count == 7 }, "四态颜色都是 #RRGGBB")
+check(LogoMotionMetrics.enterDuration > 0 && LogoMotionMetrics.colorDuration > 0,
+      "进出场与换色时长都是正数")
+
 // MARK: - 汇总
 
 print("\n———————————————")

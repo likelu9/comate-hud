@@ -37,6 +37,7 @@ SOURCES=(
     "$SRC/NotchRootView.swift"
     "$SRC/NotchLayout.swift"
     "$SRC/HUDShared.swift"
+    "$SRC/LogoMotion.swift"
     "$SRC/FloatingPanel.swift"
     "$SRC/ActivityReporter.swift"
     "$SRC/UserIdentity.swift"
