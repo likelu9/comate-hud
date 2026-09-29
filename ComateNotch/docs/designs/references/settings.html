@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Comate HUD · 设置窗口 · settings</title>
+<style>/* ===== 0. Token 层 · 1:1 对应 DESIGN.md §2（短别名 = 语义名去域前缀：sp=surface.panel、s-*=surface.*、t1..t4=text.primary/secondary/tertiary/quaternary、tdis=text.disabled、tona=text.on-accent、l-*=line.*（l-warn=§7 新增 line.warn）、ac*=accent.*（ac=normal / ac-h=hover / ac-p=pressed / ac-soft / ac-track / ac-on）、st-*=status.*、dot-*=dot.*、r*=radius.*、sp*=space.*、d-*=dur.*、e-*=ease.*、sh-*=shadow.*、gl-focus=glow.focus）。§7 新增几何：--w-w 520pt · --w-h 460pt · --w-tb 28pt · --nav-w 148pt · --row-h 34pt · --nav-h 28pt · --ctl-h 24pt · --sw 34×20 / 钮 16。--sys-* = macOS 交通灯示意色（系统绘制，非设计 token，§7 登记豁免）。本文件零外链，图标全部内联 SVG。*/:root{--sp:rgba(15,15,17,1);--s-raised:rgba(255,255,255,.06);--s-card:rgba(255,255,255,.045);--s-hover:rgba(255,255,255,.10);--s-press:rgba(255,255,255,.14);--s-hit:rgba(255,255,255,.12);--s-track:rgba(255,255,255,.10);--t1:rgba(245,245,245,1);--t2:rgba(245,245,245,.72);--t3:rgba(245,245,245,.55);--t4:rgba(245,245,245,.46);--tdis:rgba(245,245,245,.30);--tona:rgba(255,255,255,1);--l-panel:rgba(255,255,255,.12);--l-card:rgba(255,255,255,.07);--l-div:rgba(255,255,255,.08);--l-divs:rgba(255,255,255,.14);--l-focus:rgba(59,137,255,1);--l-warn:rgba(255,98,89,.32);--ac:rgba(10,108,255,1);--ac-h:rgba(59,137,255,1);--ac-p:rgba(5,87,214,1);--ac-soft:rgba(10,108,255,.16);--ac-track:rgba(10,108,255,.22);--ac-on:rgba(255,255,255,1);--st-wait:rgba(255,98,89,1);--st-wait-soft:rgba(255,98,89,.14);--st-done:rgba(49,209,88,1);--dot-up:rgba(255,77,79,1);--dot-ring:rgba(0,0,0,.40);--r6:6px;--r8:8px;--r12:12px;--rfull:999px;--sp2:2px;--sp6:6px;--sp8:8px;--sp10:10px;--sp12:12px;--sp16:16px;--sp20:20px;--ff:'SF Pro Rounded',ui-rounded,-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;--fm:ui-monospace,SFMono-Regular,Menlo,monospace;--d-fast:120ms;--e-std:cubic-bezier(.25,.10,.25,1);--sh-win:0 24px 48px rgba(0,0,0,.48);--sh-cta:0 5px 9px rgba(10,108,255,.22);--sh-knob:0 1px 2px rgba(0,0,0,.40);--w-w:520px;--w-h:460px;--w-tb:28px;--nav-w:148px;--row-h:34px;--nav-h:28px;--ctl-h:24px;--sw-w:34px;--sw-h:20px;--sw-k:16px;--sys-r:#FF5F57;--sys-y:#FEBC2E;--sys-g:#28C840;}*,*::before,*::after{box-sizing:border-box}html,body{margin:0}body{background:#060608;color:var(--t1);font:400 12px/1.55 var(--ff);-webkit-font-smoothing:antialiased;padding:28px 24px 64px}.wr{max-width:1260px;margin:0 auto}h1{display:flex;align-items:center;gap:9px;margin:0;font-size:22px;font-weight:600;letter-spacing:-.2px}h2{margin:32px 0 4px;font-size:16px;font-weight:600;padding-left:8px;border-left:3px solid var(--ac)}h3{margin:0;font-size:13px;font-weight:600}p{margin:0}.lead{margin-top:8px;max-width:920px;font-size:13px;line-height:20px;color:var(--t2)}.lead mark{background:var(--ac-soft);color:var(--ac-h);border-radius:3px;padding:0 4px;font:400 11px/1.5 var(--fm)}.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.pill{font-size:10.5px;font-weight:500;padding:3px 10px;border-radius:var(--rfull);background:var(--s-raised);border:1px solid var(--l-card);color:var(--t3)}.pill.on{color:var(--ac-h);background:var(--ac-soft);border-color:rgba(59,137,255,.35)}.sub{margin:6px 0 16px 12px;font-size:12px;line-height:18px;color:var(--t3);max-width:940px}code{font:400 10.5px/1.5 var(--fm);color:var(--t3)}code i{font-style:normal;color:var(--t4)}.stage{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}.legend{flex:1;min-width:360px}.grid{display:flex;flex-wrap:wrap;gap:20px;margin-top:12px}.card{padding:14px;border-radius:var(--r8);border:1px solid var(--l-card);background:rgba(255,255,255,.02)}.card>header{display:flex;align-items:center;gap:8px;margin-bottom:10px}.tag{font:500 9px/1 var(--ff);padding:3px 7px;border-radius:var(--rfull);background:var(--s-raised);color:var(--t3);border:1px solid var(--l-div)}.tag.on{color:var(--ac-h);background:var(--ac-soft);border-color:rgba(59,137,255,.3)}.tag.warn{color:var(--st-wait);background:var(--st-wait-soft);border-color:var(--l-warn)}.cap{margin-top:10px;font-size:10.5px;line-height:16px;color:var(--t4)}.cap b{color:var(--t2);font-weight:600}.lg{margin:0;padding-left:20px;font-size:11.5px;line-height:17px;color:var(--t3)}.lg li{margin-bottom:7px}.lg b{color:var(--t1);font-weight:600}.lg span{display:block;margin-top:2px}/* ===== 1. 模拟桌面 ===== */.desk{flex:none;padding:20px;border-radius:12px;border:1px solid var(--l-card);background:radial-gradient(120% 90% at 25% -10%,#181B22 0%,#0B0B0D 55%,#060608 100%)}.menubar{display:flex;align-items:center;gap:8px;height:22px;margin:-4px -4px 10px;padding:0 8px;border-radius:6px;background:rgba(0,0,0,.35)}.menubar .ap{width:11px;height:11px;border-radius:var(--rfull);background:var(--t4);flex:none}.menubar b{font-size:9px;font-weight:500;color:var(--t3);letter-spacing:.2px}.menubar em{margin-left:auto;font-style:normal;font-size:9px;color:var(--t4)}.frame{position:relative}.pin{position:absolute;left:-11px;width:15px;height:15px;border-radius:var(--rfull);border:1px solid rgba(59,137,255,.55);background:var(--ac-soft);color:var(--ac-h);font:600 8px/13px var(--fm);text-align:center;z-index:5}.pin.r{left:auto;right:-11px}/* ===== 2. 设置窗口（1:1 产品组件）===== */.win{width:var(--w-w);background:var(--sp);border:1px solid var(--l-panel);border-radius:var(--r12);box-shadow:var(--sh-win);overflow:hidden;display:flex;flex-direction:column}.win.tall{height:var(--w-h)}.tb{height:var(--w-tb);flex:none;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--l-div)}.tb .tbt{font-size:13px;font-weight:600;color:var(--t2)}.lights{position:absolute;left:12px;top:8px;display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:var(--rfull)}.lights .c1{background:var(--sys-r)}.lights .c2{background:var(--sys-y)}.lights .c3{background:var(--sys-g)}.body{flex:1;display:flex;min-height:0}/* 侧栏：surface.raised + line.divider 兜底（T3） */.nav{width:var(--nav-w);flex:none;background:var(--s-raised);border-right:1px solid var(--l-div);padding:var(--sp10) var(--sp8);display:flex;flex-direction:column;gap:var(--sp2)}.ni{height:var(--nav-h);display:flex;align-items:center;gap:var(--sp8);padding:0 var(--sp8);border-radius:var(--r6);font-size:12px;font-weight:400;color:var(--t2);cursor:pointer;transition:background var(--d-fast) var(--e-std),color var(--d-fast) var(--e-std)}.ni .ic{width:14px;height:14px;flex:none;color:var(--t3)}.ni:hover{background:var(--s-hit);color:var(--t1)}.ni.on{background:var(--ac-soft);color:var(--t1);font-weight:500}.ni.on .ic{color:var(--ac-h)}.ni.dis{color:var(--tdis);pointer-events:none}.nav .sep{height:1px;margin:var(--sp6) var(--sp8);background:var(--l-div)}.nav .foot{margin-top:auto;padding:var(--sp8);font:400 9px/13px var(--ff);color:var(--t4)}/* 右内容区 */.pane{flex:1;min-width:0;padding:18px var(--sp20) var(--sp20);display:flex;flex-direction:column}.pt{font-size:13px;font-weight:600;line-height:18px;color:var(--t1)}.ps{font-size:9px;line-height:13px;color:var(--t4);margin-top:var(--sp2)}.grp{margin-top:var(--sp16)}.grp>h4{margin:0 0 var(--sp6);font-size:11px;font-weight:600;line-height:16px;color:var(--t2);display:flex;align-items:center;gap:6px}.cb{background:var(--s-card);border:1px solid var(--l-card);border-radius:var(--r8);overflow:hidden}.row{min-height:var(--row-h);display:flex;align-items:center;gap:var(--sp12);padding:var(--sp6) var(--sp10)}.row+.row{border-top:1px solid var(--l-div)}.row.act{cursor:pointer;transition:background var(--d-fast) var(--e-std)}.row.act:hover{background:var(--s-hover)}.row.act:active{background:var(--s-press)}.rm{flex:1;min-width:0}.rl{display:block;font-size:12px;line-height:16px;color:var(--t1)}.rds{display:block;font-size:9px;line-height:13px;color:var(--t4);margin-top:var(--sp2)}.rv{flex:none;font-size:12px;line-height:16px;color:var(--t2)}.chev{width:12px;height:12px;flex:none;color:var(--t4)}.ava{width:28px;height:28px;flex:none;border-radius:var(--rfull);background:var(--s-raised);border:1px solid var(--l-card);display:grid;place-items:center;font:600 11px/1 var(--ff);color:var(--t2)}.ctl{flex:none;display:flex;align-items:center;gap:var(--sp8)}/* 开关 34×20 · 钮 16 · radius.full */.sw{position:relative;width:var(--sw-w);height:var(--sw-h);flex:none;border-radius:var(--rfull);background:var(--s-track);cursor:pointer;transition:background var(--d-fast) var(--e-std)}.sw i{position:absolute;top:2px;left:2px;width:var(--sw-k);height:var(--sw-k);border-radius:var(--rfull);background:var(--tona);box-shadow:var(--sh-knob);transition:left var(--d-fast) var(--e-std)}.sw.on{background:var(--ac)}.sw.on i{left:16px}.sw.dis{opacity:.4;pointer-events:none}/* 单选 14pt */.rad{width:14px;height:14px;flex:none;border-radius:var(--rfull);border:1px solid var(--l-divs);background:var(--s-track);position:relative;cursor:pointer}.rad.on{border-color:var(--ac);background:var(--ac)}.rad.on::after{content:'';position:absolute;inset:3.5px;border-radius:var(--rfull);background:var(--tona)}.rad.dis{opacity:.4;pointer-events:none}/* 下拉 24pt */.pop{height:var(--ctl-h);min-width:132px;padding:0 var(--sp8);display:inline-flex;align-items:center;justify-content:space-between;gap:var(--sp8);border-radius:var(--r6);background:var(--s-raised);border:1px solid var(--l-divs);font-size:12px;color:var(--t1);cursor:pointer;transition:background var(--d-fast) var(--e-std),border-color var(--d-fast) var(--e-std)}.pop .ic{width:10px;height:10px;color:var(--t3)}.pop:hover{background:var(--s-hit)}.pop.dis{opacity:.4;pointer-events:none}/* 按钮 24pt */.btn{height:var(--ctl-h);padding:0 var(--sp12);display:inline-flex;align-items:center;gap:var(--sp6);border:0;border-radius:var(--r6);font:600 12.5px/1 var(--ff);cursor:pointer;transition:background var(--d-fast) var(--e-std),opacity var(--d-fast) var(--e-std)}.btn .ic{width:12px;height:12px}.btn.pri{background:var(--ac);color:var(--ac-on);box-shadow:var(--sh-cta)}.btn.pri:hover{background:var(--ac-h)}.btn.pri:active{background:var(--ac-p)}.btn.sec{background:var(--ac-soft);color:var(--ac-h)}.btn.sec:hover{background:var(--ac-track)}.btn.gho{background:var(--s-raised);color:var(--t1);border:1px solid var(--l-divs)}.btn.gho:hover{background:var(--s-hit)}.btn:disabled,.btn.dis{opacity:.4;cursor:not-allowed}.foc{outline:2px solid var(--l-focus);outline-offset:1px}/* 警示（登录失效）*/.warn{background:var(--st-wait-soft);border:1px solid var(--l-warn);border-radius:var(--r8);display:flex;align-items:center;gap:var(--sp10);padding:var(--sp10) var(--sp12)}.wdot{width:7px;height:7px;flex:none;border-radius:var(--rfull);background:var(--st-wait);box-shadow:0 0 3px var(--st-wait-soft)}/* 更新行三态 */.up{display:flex;align-items:center;gap:var(--sp6);font-size:12px;line-height:16px;color:var(--t2)}.up.ok .ic{color:var(--st-done)}.up.new{color:var(--ac-h);font-weight:500;cursor:pointer}.up .ic{width:12px;height:12px;color:var(--t3)}.badge{display:inline-block;width:5px;height:5px;flex:none;border-radius:var(--rfull);background:var(--dot-up);box-shadow:0 0 0 1px var(--dot-ring)}.crop{width:340px;background:var(--sp);border:1px solid var(--l-panel);border-radius:var(--r8);padding:var(--sp12);display:flex;flex-direction:column;gap:var(--sp6)}.crop .cb{width:100%}.lab{font:500 8px/1 var(--ff);color:var(--t4);letter-spacing:.2px;margin-bottom:4px}.gm::after{content:'该行不渲染';position:absolute;inset:0;display:grid;place-items:center;font:500 9px/1 var(--ff);color:var(--t4);border:1px dashed var(--l-divs);border-radius:var(--r8);background:rgba(0,0,0,.10)}.gm{position:relative}@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}</style></head><body><svg width=0 height=0 style="position:absolute" aria-hidden=true>
+<symbol id="ic-user" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="5.6" r="2.6"/><path d="M3.2 13.4c.6-2.3 2.5-3.6 4.8-3.6s4.2 1.3 4.8 3.6"/></symbol>
+<symbol id="ic-display" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.6" y="2.6" width="12.8" height="8.6" rx="1.6"/><path d="M5.4 13.4h5.2" stroke-linecap="round"/></symbol>
+<symbol id="ic-general" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M2.4 4.6h11.2M2.4 8h11.2M2.4 11.4h11.2"/><circle cx="5.6" cy="4.6" r="1.5" fill="currentColor" stroke="none"/><circle cx="10.4" cy="8" r="1.5" fill="currentColor" stroke="none"/><circle cx="6.8" cy="11.4" r="1.5" fill="currentColor" stroke="none"/></symbol>
+<symbol id="ic-info" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4" stroke-linecap="round"/><circle cx="8" cy="4.9" r=".85" fill="currentColor" stroke="none"/></symbol>
+<symbol id="ic-chev-r" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 2.4 8 6l-3.6 3.6"/></symbol>
+<symbol id="ic-chev-d" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 4.4 6 7.8l3.4-3.4"/></symbol>
+<symbol id="ic-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.4 6.3 4.9 8.8l4.7-5.6"/></symbol>
+<symbol id="ic-update" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="4.9"/><path d="M6 3.4v5M3.9 6.4 6 8.5l2.1-2.1"/></symbol>
+<symbol id="ic-refresh" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9.6 4.6A4 4 0 1 0 10 6.4"/><path d="M9.9 1.9v2.9H7"/></symbol>
+<symbol id="ic-logout" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 13.4H3.6a1 1 0 0 1-1-1V3.6a1 1 0 0 1 1-1h2.8"/><path d="M10.2 10.6 13.4 8l-3.2-2.6M13 8H6.6"/></symbol>
+<symbol id="ic-ext" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.4H3a1 1 0 0 0-1 1V9a1 1 0 0 0 1 1h5.6a1 1 0 0 0 1-1V7"/><path d="M7.2 2.2h2.6v2.6M9.6 2.4 5.8 6.2"/></symbol>
+<symbol id="ic-warn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M8 2.6 14 13H2L8 2.6Z"/><path d="M8 6.6v3.1M8 11.4h.01"/></symbol>
+<symbol id="ic-notch" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.6" y="3" width="12.8" height="10" rx="2.2"/><path d="M6.2 3v2.4a1 1 0 0 0 1 1h1.6a1 1 0 0 0 1-1V3" fill="currentColor" stroke="none"/></symbol>
+</svg><div class="wr">
+<header><h1><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="3.5" width="18" height="13" rx="4" fill="none" stroke="#0A6CFF" stroke-width="1.5"/><circle cx="4.6" cy="7" r="1.1" fill="#0A6CFF"/><circle cx="7.6" cy="7" r="1.1" fill="#0A6CFF"/><path d="M2 11.5h7.5M2 14h4.5" stroke="#0A6CFF" stroke-width="1.5" stroke-linecap="round"/></svg>设置窗口 · settings</h1>
+<p class=lead>原「页脚齿轮 → 原生 NSMenu」升级为 <strong>独立 KD 深色设置窗口</strong>（左分类导航 + 右表单）的 <strong>1:1 像素稿</strong>（pt = px，缩放 100%）。窗口 <mark>520 × 460 pt</mark>、侧栏 <mark>148 pt</mark>，用系统 macOS 窗口（交通灯系统绘制，非自定义）。全部控件均原生可实现：<code>NSSwitch / NSButton(radio) / NSPopUpButton / NSButton</code>。</p>
+<div class=meta><span class="pill on">第二阶段 · 新形态</span><span class=pill>窗口 520 × 460 pt</span><span class=pill>侧栏 148 pt</span><span class=pill>行高 34 pt · 控件高 24 pt</span><span class=pill>开关 34×20 · 单选 14</span><span class=pill>圆角 12 / 8 / 6</span><span class=pill>零外链 · 图标内联 SVG</span></div></header>
+
+<h2>一 · 设置窗口 1:1 · 账号页（默认 · 已登录）</h2>
+<p class=sub>窗口 = 系统标题栏（28pt，「设置」居中）+ 左侧分类导航（148pt，<code>surface.raised</code> 白6% 底 + <code>line.divider</code> 白8% 右描边兜底，T3）+ 右侧表单内容区（内边距 18 / 20 / 20）。分类固定 4 项固定序：<b>账号 → 显示 → 通用 → 关于</b>；表单按「分组卡片」组织：卡底 <code>surface.card</code> 白4.5% + <code>line.card</code> 白7% 描边 + <code>radius.8</code>，行间 <code>line.divider</code>。</p>
+<div class=stage>
+<section class=desk>
+<div class=menubar><span class=ap></span><b>桌面（模拟，非产品 UI）</b><em>Comate HUD</em></div>
+<div class=frame>
+<span class=pin style="top:-6px">1</span><span class="pin r" style="top:30px">2</span><span class="pin r" style="top:78px">3</span><span class="pin r" style="top:196px">4</span>
+<div class="win tall">
+<div class=tb><span class=lights><i class=c1></i><i class=c2></i><i class=c3></i></span><span class=tbt>设置</span></div>
+<div class=body>
+<aside class=nav>
+<a class="ni on"><svg class=ic><use href=#ic-user /></svg>账号</a>
+<a class=ni><svg class=ic><use href=#ic-display /></svg>显示</a>
+<a class=ni><svg class=ic><use href=#ic-general /></svg>通用</a>
+<a class=ni><svg class=ic><use href=#ic-info /></svg>关于</a>
+<div class=sep></div>
+<div class=foot>Comate HUD 1.4.2 (2410)<br>macOS 14.5</div>
+</aside>
+<div class=pane>
+<div class=pt>账号</div>
+<div class=ps>WPS 账号与登录状态</div>
+<div class=grp><h4>登录信息</h4>
+<div class=cb>
+<div class=row><span class=ava>李</span><span class=rm><span class=rl>账号</span><span class=rds>个人版 · 30 天 1,240 / 2,000 点</span></span><span class=rv>李可</span></div>
+<div class=row><span class=rm><span class=rl>企业</span></span><span class=rv>金山办公</span></div>
+</div></div>
+<div class=grp><h4>操作</h4>
+<div class=cb>
+<div class="row act"><svg class=ic style="width:14px;height:14px;color:var(--t3)"><use href=#ic-logout /></svg><span class=rm><span class=rl>退出登录</span><span class=rds>退出后任务列表与额度读数将被清空</span></span><svg class=chev><use href=#ic-chev-r /></svg></div>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class=legend>
+<h3>逐块标注 · 块名 / 关键 token 与数值 / 尺寸</h3>
+<ol class=lg style="margin-top:8px">
+<li><b>① 窗口 + 系统标题栏</b><span><code>surface.panel <i>#0F0F11</i></code> · 描边 <code>line.panel <i>1pt 白12%</i></code> · <code>radius.12</code> · 投影 <code>shadow.window</code> · 尺寸 <b>520 × 460 pt</b> · 标题栏 <b>28pt</b>（系统 NSWindow；标题「设置」13pt/600 + <code>text.secondary</code>，底分隔 <code>line.divider</code>）；交通灯系统绘制，本稿仅示意位置（<code>--sys-*</code> 豁免，§7）</span></li>
+<li><b>② 左侧分类导航</b><span>宽 <b>148pt</b> · 底 <code>surface.raised <i>白6%</i></code>（T3）+ 右描边 <code>line.divider <i>白8%</i></code> · 内边距 <b>10 / 8</b> · 项高 <b>28pt</b> · 间距 <code>space.2</code> · 圆角 <code>radius.6</code> · 图标 <b>14</b> + <code>font.body <i>12pt</i></code>（间距 <code>space.8</code>）；底部版本 <code>font.meta <i>9pt</i></code> + <code>text.quaternary</code></span></li>
+<li><b>③ 导航项四态</b><span>常态 <code>text.secondary</code> + 图标 <code>text.tertiary</code> · hover <code>surface.hit <i>白12%</i></code> · 选中 <code>accent.soft <i>蓝16%</i></code> + <code>text.primary</code>(500) + 图标 <code>accent.hover</code> · focus <code>line.focus 2pt/offset 1</code>；<code>dur.fast 120ms</code>，只变色不变形（P5）</span></li>
+<li><b>④ 内容区（标题 + 分组卡片 + 行）</b><span>内边距 <b>18 / 20 / 20</b>；页标题 <code>font.h1 <i>13pt/600</i></code>（行高 18）+ 副标 <code>font.meta <i>9pt</i></code>；组标题 <code>font.label <i>11pt/600</i></code>（行高 16，下距 <code>space.6</code>），组间距 <code>space.16</code>；卡底 <code>surface.card <i>白4.5%</i></code> + <code>line.card <i>白7%</i></code> + <code>radius.8</code>；行高 <b>34pt</b>、行内左右 <code>space.10</code>、行内块间距 <code>space.12</code>、行间 <code>line.divider</code>，行 hover <code>surface.row-hover <i>白10%</i></code> / pressed <code>surface.row-pressed <i>白14%</i></code></span></li>
+<li><b>⑤ 账号 / 企业信息行（只读）</b><span>原文 <b>「账号 李可」</b>、<b>「企业 金山办公」</b>；标签 + 值同行两端对齐，值 <code>text.secondary</code> 12pt；头像 <b>28pt</b> <code>radius.full</code> + <code>surface.raised</code> + <code>line.card</code>，缩写 <code>font.label 11pt/600</code>；<b>只读行无 hover、不可点</b></span></li>
+<li><b>⑥ 退出登录入口</b><span>可点行；左图标 <b>14</b> <code>text.tertiary</code> + 标签 <code>text.primary</code> + 副标 <code>font.meta 9pt</code> + <code>text.quaternary</code>，右 chevron <b>12</b> <code>text.quaternary</code>；<b>不用红色</b>——破坏性语义留给二次确认弹窗的 <code>status.waiting</code>（P3 / T6）</span></li>
+</ol>
+
+</section>
+</div>
+<style>.twrap{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}.ico{width:44px;height:44px;flex:none;border-radius:var(--r12);background:var(--s-raised);border:1px solid var(--l-card);display:grid;place-items:center;color:var(--ac)}.pnm{font:700 22px/1 var(--ff);color:var(--t1);letter-spacing:-.3px}.ver{display:inline-flex;align-items:center;height:18px;padding:0 8px;border-radius:var(--rfull);background:var(--s-raised);border:1px solid var(--l-div);font:500 10.5px/1 var(--ff);color:var(--t3)}.brd{display:flex;align-items:center;gap:var(--sp12);padding:var(--sp12) var(--sp10)}.cond{font:500 9px/1 var(--ff);margin-left:auto;color:var(--t4)}</style>
+<h2>二 · 显示页（完整版）</h2>
+<p class=sub>显示页是设置窗口里<b>控件最全</b>的一页：单选组、条件下拉、单选下拉（1–10）、条件动作按钮。四项全为原生控件 <code>NSButton(radio) / NSPopUpButton / NSButton</code>；下拉与按钮统一高 <code>24pt</code>、<code>radius.6</code>。带 <span class=tag>条件</span> 的两行按状态出现/消失，<b>不留空位</b>（下方行上移、卡高随内容收回）。</p>
+<div class=stage>
+<section class=desk>
+
+<div class=frame>
+<div class="win tall">
+<div class=tb><span class=lights><i class=c1></i><i class=c2></i><i class=c3></i></span><span class=tbt>设置</span></div>
+<div class=body>
+<aside class=nav>
+<a class=ni><svg class=ic><use href=#ic-user /></svg>账号</a>
+<a class="ni on"><svg class=ic><use href=#ic-display /></svg>显示</a>
+<a class=ni><svg class=ic><use href=#ic-general /></svg>通用</a>
+<a class=ni><svg class=ic><use href=#ic-info /></svg>关于</a>
+<div class=sep></div>
+<div class=foot>Comate HUD 1.4.2 (2410)<br>macOS 14.5</div>
+</aside>
+<div class=pane>
+<div class=pt>显示</div>
+<div class=ps>面板形态、聚焦屏幕与记录条数</div>
+<div class=grp><h4>显示模式</h4>
+<div class=cb>
+<div class="row act"><span class="rad on"></span><span class=rm><span class=rl>刘海模式</span><span class=rds>收起条贴合物理刘海，与开孔无缝</span></span></div>
+<div class="row act"><span class=rad></span><span class=rm><span class=rl>悬浮模式</span><span class=rds>面板悬浮在屏幕顶部，保留 12pt 外边距</span></span></div>
+</div></div>
+<div class=grp><h4>刘海所在屏幕<span class=cond>条件：刘海模式且屏幕数 &gt; 1</span></h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>刘海所在屏幕</span><span class=rds>多屏时决定收起条挂在哪块屏</span></span><span class=ctl><span class=pop>跟随主屏<svg class=ic><use href=#ic-chev-d /></svg></span></span></div>
+</div></div>
+<div class=grp><h4>任务记录</h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>最近记录条数</span><span class=rds>超出后列表滚动，最大可视高 347pt</span></span><span class=ctl><span class=pop>最近 5 条<svg class=ic><use href=#ic-chev-d /></svg></span></span></div>
+</div></div>
+<div class=grp><h4>面板高度<span class=cond>条件：用户自定义过高度</span></h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>恢复默认高度</span><span class=rds>当前 312pt · 默认 250pt</span></span><span class=ctl><button class="btn sec" type=button>恢复默认高度</button></span></div>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class=legend>
+<h3>逐块标注 · 块名 / 关键 token 与数值 / 尺寸</h3>
+<ol class=lg style="margin-top:8px">
+<li><b>① 显示模式（单选组）</b><span>选项原文 <b>「刘海模式」「悬浮模式」</b>，二选一、必选；单圆 <b>14pt</b> <code>radius.full</code>，未选中 <code>line.divider-strong <i>白14%</i></code> + <code>surface.track <i>白10%</i></code>，选中 <code>accent.normal</code> 底/描边 + 中心白点（<code>inset 3.5pt</code>）；行高 <b>34pt</b>，整行可点；切换 <code>dur.fast</code> 并立即持久化</span></li>
+<li><b>② 刘海所在屏幕（条件 · 下拉）</b><span><code>NSPopUpButton</code>：高 <b>24pt</b> · 最小宽 <b>132</b> · <code>radius.6</code> · <code>surface.raised</code> + <code>line.divider-strong</code> · 值 12pt + <code>text.primary</code> · 尾 chevron <b>10</b> <code>text.tertiary</code> · hover <code>surface.hit</code>；选项含 <b>「跟随主屏」</b>（默认）；<b>出现条件</b>：刘海模式 <b>且</b> 屏幕数 &gt; 1</span></li>
+<li><b>③ 最近记录条数（下拉 1–10）</b><span>原文 <b>「最近 1 条」…「最近 10 条」</b>（默认 5）；控件同 ②；条数 × 30 + (n−1) × 3 超过 <code>metrics.rows-max-h <i>347pt</i></code> 时列表内部滚动，面板不再长高</span></li>
+<li><b>④ 恢复默认高度（条件 · 动作按钮）</b><span>次按钮 <code>.btn.sec</code>：底 <code>accent.soft <i>蓝16%</i></code> + 文字 <code>accent.hover</code> + <code>radius.6</code> + 高 <b>24pt</b> + 内边距 <code>space.12</code> + 字 <code>font.btn <i>12.5pt/600</i></code>；hover <code>accent.track</code>，pressed <code>accent.pressed</code>；<b>是动作不是开关</b>（点完回默认 250pt 并自隐）；<b>出现条件</b>：用户拖手柄改过高度且 ≠ 默认</span></li>
+</ol>
+
+</section>
+</div>
+
+<h2>三 · 通用页 / 关于页（简化版 · 控件齐备）</h2>
+<p class=sub>两页均按<b>完整窗口壳</b>绘制（侧栏 4 项齐备、选中项正确），内容区最小化：只保留该分类的必备控件，不补装饰性行。</p>
+<div class=twrap>
+<section class=desk>
+
+<div class=win>
+<div class=tb><span class=lights><i class=c1></i><i class=c2></i><i class=c3></i></span><span class=tbt>设置</span></div>
+<div class=body>
+<aside class=nav>
+<a class=ni><svg class=ic><use href=#ic-user /></svg>账号</a>
+<a class=ni><svg class=ic><use href=#ic-display /></svg>显示</a>
+<a class="ni on"><svg class=ic><use href=#ic-general /></svg>通用</a>
+<a class=ni><svg class=ic><use href=#ic-info /></svg>关于</a>
+<div class=sep></div>
+<div class=foot>Comate HUD 1.4.2 (2410)</div>
+</aside>
+<div class=pane>
+<div class=pt>通用</div>
+<div class=ps>启动与后台行为</div>
+<div class=grp><h4>启动</h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>开机自启动</span><span class=rds>以系统 LaunchAgent 实际状态为准，非本地缓存</span></span><span class=ctl><span class="sw on"><i></i></span></span></div>
+</div></div>
+
+</div>
+</div>
+</div>
+</section>
+<section class=desk>
+
+<div class=win>
+<div class=tb><span class=lights><i class=c1></i><i class=c2></i><i class=c3></i></span><span class=tbt>设置</span></div>
+<div class=body>
+<aside class=nav>
+<a class=ni><svg class=ic><use href=#ic-user /></svg>账号</a>
+<a class=ni><svg class=ic><use href=#ic-display /></svg>显示</a>
+<a class=ni><svg class=ic><use href=#ic-general /></svg>通用</a>
+<a class="ni on"><svg class=ic><use href=#ic-info /></svg>关于</a>
+<div class=sep></div>
+<div class=foot>Comate HUD 1.4.2 (2410)</div>
+</aside>
+<div class=pane>
+<div class=pt>关于</div>
+<div class=ps>版本与更新</div>
+<div class="brd"><span class=ico><svg width="22" height="22" aria-hidden=true><use href=#ic-notch /></svg></span><span><span class=pnm>Comate HUD</span><span class=ver style="margin-top:6px">v1.4.2 (2410)</span></span></div>
+<div class=grp><h4>更新</h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>检查更新</span><span class=rds>手动触发一次版本检查</span></span><span class=ctl><button class="btn gho" type=button>检查更新</button></span></div>
+<div class="row act"><svg class=ic style="width:14px;height:14px;color:var(--t3)"><use href=#ic-info /></svg><span class=rm><span class=rl>关于 Comate HUD</span><span class=rds>打开独立关于窗（图标 / 四态图例 / 系统要求）</span></span><svg class=chev><use href=#ic-chev-r /></svg></div>
+</div></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<p class=cap style="margin-left:12px"><b>通用页 · 开机自启动：</b>轨道 <b>34 × 20pt</b> <code>radius.full</code>，off <code>surface.track</code> / on <code>accent.normal</code>；钮 <b>16pt</b> + <code>text.on-accent</code> + <code>shadow.knob</code>，<code>left 2 → 16</code>；状态每次开窗读一次 LaunchAgent，不缓存（见 D）。<br><b>关于页 · 品牌区：</b>图标 <b>44pt</b> + <code>radius.12</code> + <code>surface.raised</code>；产品名 <code>font.display <i>22pt/700</i></code>（全 HUD 唯一 700）；版本胶囊 <b>18pt</b> + <code>font.mini <i>10.5pt</i></code> + <code>text.tertiary</code>。<br><b>更新行 / 关于入口：</b>常态 <b>「检查更新」</b> + <code>.btn.gho</code>；三态 + 红点见 G；「关于 Comate HUD」可点行 + chevron 跳独立关于窗（不内嵌）。</p>
+<style>
+.ni.hv{background:var(--s-hit);color:var(--t1)}
+.pop.hv{background:var(--s-hit)}
+.btn.pri.hv{background:var(--ac-h)}
+.btn.sec.hv{background:var(--ac-track)}
+.btn.gho.hv{background:var(--s-hit)}
+.up .rl{display:inline-block}
+.mid{display:flex;gap:14px;flex-wrap:wrap}
+</style>
+<h2>四 · 状态与条件变体</h2>
+<p class=sub>每块只画<b>变化的那一层</b>（单行 / 单控件 / 单个导航项），值仍 1:1。交互态一律只改颜色与透明度：<code>dur.fast 120ms</code> + <code>ease.standard</code>，按下 <code>dur.instant 80ms</code>；禁用统一 <code>opacity .4</code>（KD 规则，T7）。</p>
+<div class=grid>
+
+<div class=card><header><h3>A · 侧栏导航项四态</h3><span class="tag on">nav</span></header>
+<div class=nav style="width:140px;border-right:0;border-radius:8px">
+<a class="ni on"><svg class=ic><use href=#ic-user /></svg>账号 · 选中</a>
+<a class="ni hv"><svg class=ic><use href=#ic-display /></svg>显示 · hover</a>
+<a class="ni foc"><svg class=ic><use href=#ic-general /></svg>通用 · focus</a>
+<a class=ni><svg class=ic><use href=#ic-info /></svg>关于 · 常态</a>
+</div>
+<p class=cap>项 <b>140 × 28pt</b> · <code>radius.6</code> · 间距 <code>space.2</code> · 图标 14 · 选中 <code>accent.soft</code> + <code>text.primary</code>（图标 <code>accent.hover</code>）· hover <code>surface.hit</code> · focus <code>line.focus 2pt/offset 1</code> · 常态 <code>text.secondary</code>；选中态全局唯一。</p></div>
+
+<div class=card><header><h3>B · 未登录态（账号页）</h3><span class=tag>登录</span></header>
+<div class=crop>
+<div class=cb><div class="row act"><span class=rm><span class=rl>WPS 账号</span><span class=rds>未登录 · 登录后可同步任务与额度</span></span><span class=ctl><button class="btn pri" type=button>登录 WPS 账号…</button></span></div></div>
+</div>
+<p class=cap>该态下<b>「企业」行整行不渲染</b>（无数据不留空行）。主按钮 <code>accent.normal</code> + <code>text.on-accent</code> + <code>shadow.cta</code>，高 <b>24pt</b>；原文 <b>「登录 WPS 账号…」</b>（省略号 = 拉起系统授权，非站内页）。</p></div>
+
+<div class=card><header><h3>C · 登录失效警示态</h3><span class="tag warn">警示</span></header>
+<div class=crop>
+<div class=warn><span class=wdot></span><span class=rm><span class=rl>登录已失效，重新登录</span><span class=rds>上次授权已过期，需重新授权才能同步任务</span></span><button class="btn pri" type=button>重新登录</button></div>
+</div>
+<p class=cap>警示底 <code>status.waiting-soft</code> + 描边 <code>line.warn</code>（<i>rgba(255,98,89,.32)</i>，§7 新增）+ <code>radius.8</code>，内边距 <b>10 / 12</b>；灯 <b>7pt</b> <code>status.waiting</code> + <code>glow.status</code>；原文 <b>「登录已失效，重新登录」</b>。红点取 <code>status.waiting</code>（异常语义），<b>不用</b> <code>dot.update</code>（T6）；本块饱和色 = 蓝 + 红 = 2 种。</p></div>
+
+<div class=card><header><h3>D · 开关 on / off</h3><span class="tag on">NSSwitch</span></header>
+<div class=crop>
+<div class=cb>
+<div class=row><span class=rm><span class=rl>开机自启动</span></span><span class=ctl><span class=sw><i></i></span></span></div>
+<div class=row><span class=rm><span class=rl>开机自启动</span></span><span class=ctl><span class="sw on"><i></i></span></span></div>
+<div class=row><span class=rm><span class=rl>键盘 focus</span></span><span class=ctl><span class="sw on foc"><i></i></span></span></div>
+<div class=row><span class=rm><span class=rl>禁用（写入被系统拒绝）</span></span><span class=ctl><span class="sw dis"><i></i></span></span></div>
+</div>
+</div>
+<p class=cap>轨道 <b>34 × 20pt</b> <code>radius.full</code>：off <code>surface.track</code> / on <code>accent.normal</code>；钮 <b>16pt</b> + <code>text.on-accent</code> + <code>shadow.knob</code>，位移 <code>left 2 → 16</code>（<code>dur.fast</code>）。禁用 <code>opacity .4</code> 但<b>仍显示真实状态</b>，不置灰成 off。</p></div>
+
+<div class=card><header><h3>E · 单选 / 下拉四态</h3><span class="tag on">radio · popup</span></header>
+<div class=crop>
+<div class=cb style="padding:12px 10px">
+<div class=lab>单选 NSButton(radio) · 未选中 / 选中 / focus / 禁用</div>
+<div class=ctl><span class=rad></span><span class="rad on"></span><span class="rad foc"></span><span class="rad dis"></span></div>
+<div class=lab style="margin-top:12px">下拉 NSPopUpButton · 常态 / hover / 禁用</div>
+<div class=ctl><span class=pop>跟随主屏<svg class=ic><use href=#ic-chev-d /></svg></span><span class="pop hv">最近 5 条<svg class=ic><use href=#ic-chev-d /></svg></span><span class="pop dis">最近 1 条<svg class=ic><use href=#ic-chev-d /></svg></span></div>
+</div>
+</div>
+<p class=cap>单选 <b>14pt</b> <code>radius.full</code>：未选中 描边 <code>line.divider-strong</code> + 底 <code>surface.track</code>；选中 底/描边 <code>accent.normal</code> + 中心白点（<code>inset 3.5pt</code>）。下拉 <b>24pt</b> / 最小宽 <b>132</b> / <code>radius.6</code> / <code>surface.raised</code> + <code>line.divider-strong</code>，hover <code>surface.hit</code>。禁用均 <code>opacity .4</code>；<b>单选项命中区 = 整行 34pt</b>。</p></div>
+
+<div class=card><header><h3>F · 按钮 hover / focus / 禁用</h3><span class="tag on">NSButton</span></header>
+<div class=crop>
+<div class=cb style="padding:12px 10px">
+<div class=lab>主按钮 .btn.pri（品牌蓝实底）</div>
+<div class=ctl style="flex-wrap:wrap"><button class="btn pri" type=button>检查更新</button><button class="btn pri hv" type=button>hover</button><button class="btn pri foc" type=button>focus</button><button class="btn pri" type=button disabled>禁用</button></div>
+<div class=lab style="margin-top:12px">次按钮 .btn.sec / 中性 .btn.gho</div>
+<div class=ctl style="flex-wrap:wrap"><button class="btn sec" type=button>恢复默认高度</button><button class="btn sec hv" type=button>hover</button><button class="btn gho" type=button>检查更新</button><button class="btn gho foc" type=button>focus</button><button class="btn gho" type=button disabled>禁用</button></div>
+</div>
+</div>
+<p class=cap>三型统一 高 <b>24pt</b> · <code>radius.6</code> · 内边距 <code>space.12</code> · 字 <code>font.btn <i>12.5pt/600</i></code> · 图标 12。<b>主</b> <code>accent.normal</code>→<code>accent.hover</code>→<code>accent.pressed</code> + <code>shadow.cta</code>；<b>次</b> <code>accent.soft</code>→<code>accent.track</code>；<b>中性</b> <code>surface.raised</code>+<code>line.divider-strong</code>→<code>surface.hit</code>。focus <code>line.focus 2pt/offset 1</code>；禁用 <code>opacity .4</code>。</p></div>
+
+<div class=card><header><h3>G · 检查更新三态（+ 检查中）</h3><span class=tag>关于页</span></header>
+<div class=crop>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>检查更新</span><span class=rds>手动触发一次版本检查</span></span><span class=ctl><button class="btn gho" type=button>检查更新</button></span></div>
+<div class="row act"><span class="rm up ok"><svg class=ic><use href=#ic-check /></svg><span class=rl>已是最新版本 v1.4.2</span></span></div>
+<div class=row><span class="rm up"><span class=badge style="background:var(--t3);box-shadow:none"></span><span class=rl>正在检查更新…</span></span></div>
+<div class="row act"><span class="rm up new"><span class=badge></span><svg class=ic><use href=#ic-update /></svg><span class=rl>检测到新版 v1.4.3</span></span><svg class=chev><use href=#ic-chev-r /></svg></div>
+</div>
+</div>
+<p class=cap>① <b>「检查更新」</b> <code>text.primary</code> + 中性按钮。② <b>「已是最新版本 vX.Y.Z」</b> <code>text.secondary</code> + <code>status.done</code> ✓，不可点。③ <b>「检测到新版 vX.Y.Z」</b> <code>accent.hover</code> + 5pt <code>dot.update</code>（1pt <code>dot.update-ring</code>）+ chevron，整行可点 → 跳下载。检查中显示「正在检查更新…」+ 按钮临时 disabled。</p></div>
+
+<div class=card><header><h3>H · 条件项 可见 / 隐藏</h3><span class="tag warn">条件渲染</span></header>
+<div class=mid>
+<div class=crop style="width:290px">
+<div class=lab>可见 · 用户改过高度（≠ 默认）</div>
+<div class=cb><div class="row act"><span class=rm><span class=rl>恢复默认高度</span><span class=rds>当前 312pt · 默认 250pt</span></span><span class=ctl><button class="btn sec" type=button>恢复默认高度</button></span></div></div>
+</div>
+<div class=crop style="width:290px">
+<div class=lab>隐藏 · 高度 = 默认 250pt</div>
+<div class="cb gm" style="height:62px"></div>
+</div>
+</div>
+<p class=cap>条件不成立时<b>整卡连标题一起不渲染</b>（不置灰、不留空行），下方行上移 <code>space.16 16pt</code> 组距；同规则：「刘海所在屏幕」（需 刘海模式 且 屏幕数 &gt; 1）。动作按钮点完即把自己条件置回 false（自行消失），无需 toast。</p></div>
+
+</div>
+</div></body></html>

@@ -1,0 +1,42 @@
+/* @kd-registry: badge v3.0 */
+/* ══ Badge 徽标（对齐 @kdocs/kdesign Badge） ══ */
+
+.kd-badge {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.kd-badge-content {
+  display: inline-block;
+  height: 18px;
+  padding: 0 4px;
+  font-size: var(--kd-font-size-small);
+  line-height: 14px;
+  color: var(--kd-color-text-white);
+  text-align: center;
+  white-space: nowrap;
+  background-color: rgba(var(--kd-color-orange-6), 1);
+  border: 2px solid var(--kd-color-background-bottom);
+  border-radius: var(--kd-border-radius-extra-large);
+  box-sizing: border-box;
+}
+
+.kd-badge-content.is-fixed {
+  position: absolute;
+  top: 0;
+  right: 10px;
+  transform: translateY(-50%) translateX(100%);
+}
+
+.kd-badge-content.is-fixed.is-dot {
+  right: 5px;
+}
+
+.kd-badge-content.is-dot {
+  right: 0;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: var(--kd-border-radius-circle);
+}

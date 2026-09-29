@@ -1,0 +1,104 @@
+/* @kd-registry: segmented v3.3 */
+/* ══ Segmented 分段控制器（对齐 KdSegmentedController · Vue3 theme-chalk） ══ */
+
+.kd-segmented-controller {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: row;
+  box-sizing: border-box;
+  height: 28px;
+  padding: 2px;
+  border-radius: var(--kd-border-radius-middle);
+}
+
+.kd-segmented-controller--large {
+  height: 32px;
+}
+
+/* ─── 描边型 outlined（默认） ─── */
+.kd-segmented-controller,
+.kd-segmented-controller--outlined {
+  border: 1px solid var(--kd-color-line-regular);
+  background: var(--kd-color-fill-base);
+}
+
+.kd-segmented-controller .kd-segmented-item .kd-button.is-active:not(:disabled),
+.kd-segmented-controller--outlined .kd-segmented-item .kd-button.is-active:not(:disabled) {
+  background: var(--kd-color-state-pressed);
+}
+
+/* ─── 填充型 filled ─── */
+.kd-segmented-controller--filled {
+  border: none;
+  background: var(--kd-color-state-hover);
+  padding: 2px 3px;
+}
+
+.kd-segmented-controller--filled .kd-segmented-item .kd-button.is-active:not(:disabled) {
+  background: var(--kd-color-fill-base);
+}
+
+/* ─── 胶囊型 round ─── */
+.kd-segmented-controller--round {
+  border: none;
+  background: var(--kd-color-state-hover);
+  border-radius: var(--kd-border-radius-circle);
+  padding: 2px 3px;
+}
+
+.kd-segmented-controller--round .kd-segmented-item .kd-button {
+  border-radius: var(--kd-border-radius-circle);
+}
+
+.kd-segmented-controller--round .kd-segmented-item .kd-button.is-active:not(:disabled) {
+  background: var(--kd-color-fill-base);
+}
+
+.kd-segmented-controller--round .kd-segmented-item .kd-button.kd-button-icon {
+  width: 22px;
+  min-width: 22px;
+  padding: 0;
+}
+
+/* ─── 选项 ─── */
+.kd-segmented-item {
+  display: inline-flex;
+  position: relative;
+}
+
+.kd-segmented-item + .kd-segmented-item {
+  padding-inline-start: 2px;
+}
+
+.kd-segmented-item .kd-button:not(.kd-button-icon) {
+  height: 22px;
+  padding: 0 18px;
+  min-width: 0;
+  width: auto;
+}
+
+.kd-segmented-controller--large .kd-segmented-item .kd-button:not(.kd-button-icon) {
+  height: 26px;
+}
+
+.kd-segmented-controller--large .kd-segmented-item .kd-button.kd-button-icon {
+  width: 26px;
+  min-width: 26px;
+}
+
+.kd-segmented-item .kd-button .kd-button-prefix-icon {
+  margin-inline-end: 0;
+}
+
+.kd-segmented-item .kd-button [class*='kd-icon'] + span,
+.kd-segmented-item .kd-button .kd-button-prefix-icon + span {
+  margin-inline-start: 4px;
+}
+
+.kd-segmented-item.is-disabled {
+  cursor: not-allowed;
+}
+
+.kd-segmented-item.is-disabled .kd-button {
+  pointer-events: none;
+}

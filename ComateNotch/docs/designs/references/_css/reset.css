@@ -1,0 +1,20 @@
+/* @kd-registry: reset v2.0 */
+/* ══════════════════════════════════════════════════════════════
+   KDesign 全局重置
+   ══════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-size: var(--kd-font-size-base);
+  color: var(--kd-color-text-primary);
+  background: var(--kd-color-background-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { text-decoration: none; color: inherit; }
+button { border: none; background: transparent; font: inherit; color: inherit; cursor: pointer; }
+input, textarea, select { min-width: 0; max-width: 100%; }
+img, video, canvas, svg { max-width: 100%; }

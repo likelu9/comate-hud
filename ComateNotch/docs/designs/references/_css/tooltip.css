@@ -1,0 +1,151 @@
+/* @kd-registry: tooltip v3.4 */
+/* ══ Tooltip 文字提示 ══ */
+
+.kd-tooltip {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  /* 箭头尖端到触发器的可视间距 4px；8px 箭头 @ bottom/top/left/right:-5px 约伸出 7px */
+  --kd-tooltip-gap: 4px;
+  --kd-tooltip-arrow-overhang: 7px;
+  --kd-tooltip-offset: calc(var(--kd-tooltip-gap) + var(--kd-tooltip-arrow-overhang));
+}
+
+.kd-tooltip-content {
+  position: absolute;
+  z-index: var(--kd-z-index-tip, 1050);
+  padding: 6px 12px;
+  border-radius: var(--kd-border-radius-middle);
+  border: 1px solid var(--kd-color-line-regular);
+  background: var(--kd-color-fill-base);
+  box-shadow: var(--kd-box-shadow-large);
+  font-size: var(--kd-font-size-sub-base);
+  line-height: 20px;
+  color: var(--kd-color-text-primary);
+  max-width: 300px;
+  word-break: break-word;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--kd-fade-linear-transition), visibility var(--kd-fade-linear-transition);
+}
+
+.kd-tooltip.is-open .kd-tooltip-content,
+.kd-tooltip:not(.is-disabled):hover .kd-tooltip-content,
+.kd-tooltip:not(.is-disabled):focus-within .kd-tooltip-content {
+  opacity: 1;
+  visibility: visible;
+}
+
+.kd-tooltip.is-multiline .kd-tooltip-content {
+  white-space: normal;
+  width: max-content;
+  max-width: 320px;
+}
+
+.kd-tooltip.is-disabled {
+  cursor: not-allowed;
+}
+
+/* Arrow: 旋转方块，作为 .kd-tooltip-content 的子元素 */
+.kd-tooltip-arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--kd-color-fill-base);
+  border: 1px solid var(--kd-color-line-regular);
+  transform: rotate(45deg);
+}
+
+/* ── Effect: light（默认） ── */
+
+/* ── Effect: dark ── */
+.kd-tooltip-dark .kd-tooltip-content {
+  border-color: var(--kd-color-feedback-regular);
+  background: var(--kd-color-feedback-regular);
+  color: var(--kd-color-text-white);
+  box-shadow: var(--kd-box-shadow-middle);
+}
+.kd-tooltip-dark .kd-tooltip-arrow {
+  background: var(--kd-color-feedback-regular);
+  border-color: var(--kd-color-feedback-regular);
+}
+
+/* ── Placement: top（箭头在内容框底部；可视间距 4px 对齐 KD 站点） ── */
+.kd-tooltip-top .kd-tooltip-content {
+  bottom: calc(100% + var(--kd-tooltip-offset));
+  left: 50%;
+  transform: translateX(-50%);
+}
+.kd-tooltip-top .kd-tooltip-arrow {
+  bottom: -5px;
+  left: 50%;
+  margin-left: -4px;
+  border-top-color: transparent;
+  border-left-color: transparent;
+}
+
+/* ── Placement: bottom（箭头在内容框顶部） ── */
+.kd-tooltip-bottom .kd-tooltip-content {
+  top: calc(100% + var(--kd-tooltip-offset));
+  left: 50%;
+  transform: translateX(-50%);
+}
+.kd-tooltip-bottom .kd-tooltip-arrow {
+  top: -5px;
+  left: 50%;
+  margin-left: -4px;
+  border-bottom-color: transparent;
+  border-right-color: transparent;
+}
+
+/* ── Placement: left（箭头在内容框右侧，尖端朝右） ── */
+.kd-tooltip-left .kd-tooltip-content {
+  right: calc(100% + var(--kd-tooltip-offset));
+  top: 50%;
+  transform: translateY(-50%);
+}
+.kd-tooltip-left .kd-tooltip-arrow {
+  right: -5px;
+  top: 50%;
+  margin-top: -4px;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+}
+
+/* ── Placement: right（箭头在内容框左侧，尖端朝左） ── */
+.kd-tooltip-right .kd-tooltip-content {
+  left: calc(100% + var(--kd-tooltip-offset));
+  top: 50%;
+  transform: translateY(-50%);
+}
+.kd-tooltip-right .kd-tooltip-arrow {
+  left: -5px;
+  top: 50%;
+  margin-top: -4px;
+  border-top-color: transparent;
+  border-right-color: transparent;
+}
+
+/* Tree 截断文案：挂到 body 的浮动提示（仅 overflow 时由 JS 显示） */
+.kd-tree-overflow-tip {
+  position: fixed;
+  display: block;
+  z-index: 1060;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+.kd-tree-overflow-tip[hidden] { display: none !important; }
+.kd-tree-overflow-tip .kd-tooltip-content {
+  position: absolute;
+  bottom: var(--kd-tooltip-offset);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: normal;
+  width: max-content;
+  max-width: 320px;
+  opacity: 1;
+  visibility: visible;
+}

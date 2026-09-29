@@ -1,0 +1,29 @@
+/* @kd-registry: divider v2.0 */
+/* ══ Divider 分割线 ══ */
+
+.kd-divider-horizontal {
+  display: flex; clear: both; width: 100%;
+  border: none; border-top: 1px solid var(--kd-color-line-regular);
+  margin: 24px 0;
+}
+
+.kd-divider-with-text {
+  display: flex; align-items: center; margin: 16px 0; border-top: 0;
+  font-size: var(--kd-font-size-middle); line-height: var(--kd-line-height-middle);
+  color: var(--kd-color-text-primary);
+}
+.kd-divider-with-text::before,
+.kd-divider-with-text::after {
+  content: ''; flex: 1; border-top: 1px solid var(--kd-color-line-regular);
+}
+.kd-divider-inner-text { padding: 0 1em; white-space: nowrap; }
+.kd-divider-with-text-left::before { flex: 0 0 5%; }
+.kd-divider-with-text-left::after  { flex: 0 0 95%; }
+
+.kd-divider-vertical {
+  display: inline-block; height: 0.9em; border: none;
+  border-left: 1px solid var(--kd-color-line-regular);
+  margin: 0 8px; vertical-align: middle; position: relative; top: -0.06em;
+}
+
+.kd-divider-dashed { border-style: dashed; }

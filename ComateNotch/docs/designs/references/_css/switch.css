@@ -1,0 +1,32 @@
+/* @kd-registry: switch v2.0 */
+/* ══ Switch 开关 ══ */
+
+.kd-switch {
+  position: relative; display: inline-block;
+  width: 28px; height: 16px;
+  border-radius: var(--kd-border-radius-circle);
+  background: var(--kd-color-fill-heavy);
+  cursor: pointer; user-select: none;
+  transition: background-color .3s, border-color .3s;
+}
+
+/* Checked (class-based) */
+.kd-switch.is-checked { background: var(--kd-color-public-normal); }
+
+.kd-switch-handle {
+  position: absolute;
+  width: 12px; height: 12px;
+  border-radius: var(--kd-border-radius-circle);
+  background: var(--kd-color-fill-base);
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transform: translate(2px, 2px);
+  transition: transform .3s;
+}
+
+/* Handle position: checked (class-based) */
+.kd-switch.is-checked .kd-switch-handle { transform: translate(14px, 2px); }
+
+/* Disabled (class-based) */
+.kd-switch.is-disabled { opacity: var(--kd-opacity-disabled); cursor: not-allowed; }
+
+.kd-switch-original { position: absolute; opacity: 0; width: 0; height: 0; }

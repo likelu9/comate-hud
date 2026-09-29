@@ -1,0 +1,121 @@
+<style>
+.twrap{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.ico{width:44px;height:44px;flex:none;border-radius:var(--r12);background:var(--s-raised);border:1px solid var(--l-card);display:grid;place-items:center;color:var(--ac)}
+.pnm{font:700 22px/1 var(--ff);color:var(--t1);letter-spacing:-.3px}
+.ver{display:inline-flex;align-items:center;height:18px;padding:0 8px;border-radius:var(--rfull);background:var(--s-raised);border:1px solid var(--l-div);font:500 10.5px/1 var(--ff);color:var(--t3)}
+.brd{display:flex;align-items:center;gap:var(--sp12);padding:var(--sp12) var(--sp10)}
+.cond{font:500 9px/1 var(--ff);margin-left:auto;color:var(--t4)}
+</style>
+<h2>二 · 显示页（完整版）</h2>
+<p class=sub>显示页是设置窗口里<b>控件最全</b>的一页：单选组（显示模式）、条件下拉（刘海所在屏幕）、单选下拉（最近记录条数 1–10）、条件动作按钮（恢复默认高度）。四项全部为原生控件：<code>NSButton(radio) / NSPopUpButton / NSButton</code>；下拉与按钮统一高 <code>24pt</code>、<code>radius.6</code>。带 <span class=tag>条件</span> 的两行按状态出现/消失，<b>不预留空位</b>（消失时下方行上移，卡高随内容收回）。</p>
+<div class=stage>
+<section class=desk>
+<div class=menubar><span class=ap></span><b>桌面（模拟，非产品 UI）</b><em>Comate HUD</em></div>
+<div class=frame>
+<div class="win tall">
+<div class=tb><span class=lights><i class=c1></i><i class=c2></i><i class=c3></i></span><span class=tbt>设置</span></div>
+<div class=body>
+<aside class=nav>
+<a class=ni><svg class=ic><use href=#ic-user /></svg>账号</a>
+<a class="ni on"><svg class=ic><use href=#ic-display /></svg>显示</a>
+<a class=ni><svg class=ic><use href=#ic-general /></svg>通用</a>
+<a class=ni><svg class=ic><use href=#ic-info /></svg>关于</a>
+<div class=sep></div>
+<div class=foot>Comate HUD 1.4.2 (2410)<br>macOS 14.5</div>
+</aside>
+<div class=pane>
+<div class=pt>显示</div>
+<div class=ps>面板形态、聚焦屏幕与记录条数</div>
+<div class=grp><h4>显示模式</h4>
+<div class=cb>
+<div class="row act"><span class="rad on"></span><span class=rm><span class=rl>刘海模式</span><span class=rds>收起条贴合物理刘海，与开孔无缝</span></span></div>
+<div class="row act"><span class=rad></span><span class=rm><span class=rl>悬浮模式</span><span class=rds>面板悬浮在屏幕顶部，保留 12pt 外边距</span></span></div>
+</div></div>
+<div class=grp><h4>刘海所在屏幕<span class=cond>条件：刘海模式且屏幕数 &gt; 1</span></h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>刘海所在屏幕</span><span class=rds>多屏时决定收起条挂在哪块屏</span></span><span class=ctl><span class=pop>跟随主屏<svg class=ic><use href=#ic-chev-d /></svg></span></span></div>
+</div></div>
+<div class=grp><h4>任务记录</h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>最近记录条数</span><span class=rds>超出后列表滚动，最大可视高 347pt</span></span><span class=ctl><span class=pop>最近 5 条<svg class=ic><use href=#ic-chev-d /></svg></span></span></div>
+</div></div>
+<div class=grp><h4>面板高度<span class=cond>条件：用户自定义过高度</span></h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>恢复默认高度</span><span class=rds>当前 312pt · 默认 250pt</span></span><span class=ctl><button class="btn sec" type=button>恢复默认高度</button></span></div>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class=legend>
+<h3>逐块标注 · 块名 / 关键 token 与数值 / 尺寸</h3>
+<ol class=lg style="margin-top:8px">
+<li><b>① 显示模式（单选组 · 单选选中/未选中）</b><span>选项原文 <b>「刘海模式」「悬浮模式」</b>，二选一、必选、无「都不选」态；单圆 <b>14pt</b> <code>radius.full</code>，未选中 <code>line.divider-strong <i>白14%</i></code> 描边 + <code>surface.track <i>白10%</i></code> 底，选中 <code>accent.normal</code> 底 + 描边 + 中心白点（<code>text.on-accent</code>，inset 3.5pt）；行高 <code>34pt</code>、<b>整行可点为命中区</b>（≥ 行高 34）；切换 <code>dur.fast 120ms</code>，切换后立即持久化</span></li>
+<li><b>② 刘海所在屏幕（条件 · 下拉单选）</b><span><code>NSPopUpButton</code> 视觉：高 <code>metrics.settings-ctl-h <i>24pt</i></code> · 最小宽 <b>132pt</b> · <code>radius.6</code> · 底 <code>surface.raised <i>白6%</i></code> + 描边 <code>line.divider-strong <i>白14%</i></code> · 值 <code>font.body 12pt</code> + <code>text.primary</code> · 尾部 chevron <b>10pt</b> <code>text.tertiary</code> · hover <code>surface.hit</code>；选项含 <b>「跟随主屏」</b>（默认）与各屏幕名；<b>出现条件</b>：显示模式 = 刘海模式 <b>且</b> 屏幕数 &gt; 1，否则整行与分组不渲染</span></li>
+<li><b>③ 最近记录条数（下拉单选 1–10）</b><span>选项原文 <b>「最近 1 条」…「最近 10 条」</b>（1..10，单选，默认 5）；控件同 ② ；<b>与列表最大可视高 347pt 的关系</b>：条数 × 行高 30 + (n−1) × 行距 3 超过 347 时列表内部滚动，面板高度不再增长（避免遮住桌面）</span></li>
+<li><b>④ 恢复默认高度（条件 · 动作按钮）</b><span>次按钮 <code>.btn.sec</code>：底 <code>accent.soft <i>蓝16%</i></code> + 文字 <code>accent.hover</code> + <code>radius.6</code> + 高 <b>24pt</b> + 左右内边距 <code>space.12</code> + 字 <code>font.btn <i>12.5pt/600</i></code>；hover 底 <code>accent.track <i>蓝22%</i></code>，pressed 用 <code>accent.pressed</code>；<b>是动作不是开关</b>（不保留高度值、点完即回到默认 250pt 并把本行隐藏）；<b>出现条件</b>：用户拖拽手柄改过高度且 ≠ 默认值</span></li>
+</ol>
+<p class=cap><b>显示页同屏饱和色：</b>仅 <code>accent.normal</code> 一种（单选选中 + 次按钮），满足「≤ 2 种」——无警示态、无状态灯、无更新红点。</p>
+</section>
+</div>
+
+<h2>三 · 通用页 / 关于页（简化版 · 控件齐备）</h2>
+<p class=sub>两页均按<b>完整窗口壳</b>绘制（侧栏 4 项齐备、选中项正确），内容区仅做最小化：每页只保留该分类的必备控件，不补装饰性行。通用页只有 <b>1 个开关</b>（开机自启动）；关于页是「品牌区 + 更新行 + 关于入口」三段。</p>
+<div class=twrap>
+<section class=desk>
+<div class=menubar><span class=ap></span><b>桌面（模拟）</b><em>通用</em></div>
+<div class=win>
+<div class=tb><span class=lights><i class=c1></i><i class=c2></i><i class=c3></i></span><span class=tbt>设置</span></div>
+<div class=body>
+<aside class=nav>
+<a class=ni><svg class=ic><use href=#ic-user /></svg>账号</a>
+<a class=ni><svg class=ic><use href=#ic-display /></svg>显示</a>
+<a class="ni on"><svg class=ic><use href=#ic-general /></svg>通用</a>
+<a class=ni><svg class=ic><use href=#ic-info /></svg>关于</a>
+<div class=sep></div>
+<div class=foot>Comate HUD 1.4.2 (2410)</div>
+</aside>
+<div class=pane>
+<div class=pt>通用</div>
+<div class=ps>启动与后台行为</div>
+<div class=grp><h4>启动</h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>开机自启动</span><span class=rds>以系统 LaunchAgent 实际状态为准，非本地缓存</span></span><span class=ctl><span class="sw on"><i></i></span></span></div>
+</div></div>
+<p class=cap style="margin-top:12px">开关 <b>34 × 20pt</b>「on」态已绘制；off / hover / focus / disabled 见第四节 D。</p>
+</div>
+</div>
+</div>
+</section>
+<section class=desk>
+<div class=menubar><span class=ap></span><b>桌面（模拟）</b><em>关于</em></div>
+<div class=win>
+<div class=tb><span class=lights><i class=c1></i><i class=c2></i><i class=c3></i></span><span class=tbt>设置</span></div>
+<div class=body>
+<aside class=nav>
+<a class=ni><svg class=ic><use href=#ic-user /></svg>账号</a>
+<a class=ni><svg class=ic><use href=#ic-display /></svg>显示</a>
+<a class=ni><svg class=ic><use href=#ic-general /></svg>通用</a>
+<a class="ni on"><svg class=ic><use href=#ic-info /></svg>关于</a>
+<div class=sep></div>
+<div class=foot>Comate HUD 1.4.2 (2410)</div>
+</aside>
+<div class=pane>
+<div class=pt>关于</div>
+<div class=ps>版本与更新</div>
+<div class="brd"><span class=ico><svg width="22" height="22" aria-hidden=true><use href=#ic-notch /></svg></span><span><span class=pnm>Comate HUD</span><span class=ver style="margin-top:6px">v1.4.2 (2410)</span></span></div>
+<div class=grp><h4>更新</h4>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>检查更新</span><span class=rds>手动触发一次版本检查</span></span><span class=ctl><button class="btn gho" type=button>检查更新</button></span></div>
+<div class="row act"><svg class=ic style="width:14px;height:14px;color:var(--t3)"><use href=#ic-info /></svg><span class=rm><span class=rl>关于 Comate HUD</span><span class=rds>打开独立关于窗（图标 / 四态图例 / 系统要求）</span></span><svg class=chev><use href=#ic-chev-r /></svg></div>
+</div></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<p class=cap style="margin-left:12px">
+<b>通用页 · 开机自启动：</b>开关 <b>34 × 20pt</b> · <code>radius.full</code> · 轨道 off <code>surface.track <i>白10%</i></code> / on <code>accent.normal</code> · 钮 <b>16pt</b> + <code>text.on-accent</code> + 新增 <code>shadow.knob <i>0 1 2 rgba(0,0,0,.4)</i></code> · 钮位移 <code>left 2 → 16</code>、<code>dur.fast 120ms</code> · 命中区即视觉 34×20（原生 <code>NSSwitch</code> 自带命中扩展）· 状态<b>每次开窗读一次 LaunchAgent</b>，不缓存、不乐观更新。<br>
+<b>关于页 · 品牌区：</b>图标 <b>44pt</b> + <code>radius.12</code> + <code>surface.raised</code> + <code>line.card</code>；产品名 <code>font.display <i>22pt/700</i></code> + <code>text.primary</code>（全 HUD 唯一 700）；版本胶囊 <b>18pt</b> + <code>font.mini <i>10.5pt</i></code> + <code>text.tertiary</code>。<br>
+<b>关于页 · 更新行 / 关于入口：</b>常态文案 <b>「检查更新」</b> + 中性按钮 <code>.btn.gho</code>（<code>surface.raised</code> + <code>line.divider-strong</code>，hover <code>surface.hit</code>）；点击后原地换文案，三态 + 红点见第四节 G；「关于 Comate HUD」为可点行 + chevron，跳独立关于窗，<b>不在本窗口内嵌</b>。</p>

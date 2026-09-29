@@ -1,0 +1,180 @@
+/* @kd-registry: scrollbar v2.0 */
+/* ══ ScrollBar 滚动条（Figma KSCrollBar 2414:40232） ══ */
+
+.kd-scrollbar {
+  --kd-scrollbar-thumb: rgba(var(--kd-color-gray-9), 1);
+  --kd-scrollbar-thumb-opacity: 0.2;
+  --kd-scrollbar-thumb-opacity-active: 0.4;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  color: var(--kd-scrollbar-thumb);
+}
+
+.kd-scrollbar-thumb {
+  background: var(--kd-scrollbar-thumb);
+  opacity: var(--kd-scrollbar-thumb-opacity);
+  border-radius: var(--kd-border-radius-circle);
+  box-sizing: border-box;
+  will-change: transform;
+}
+
+.kd-scrollbar:hover .kd-scrollbar-thumb,
+.kd-scrollbar.is-hover .kd-scrollbar-thumb,
+.kd-scrollbar:active .kd-scrollbar-thumb,
+.kd-scrollbar.is-pressed .kd-scrollbar-thumb,
+.kd-scrollbar:hover .kd-scrollbar-arrow,
+.kd-scrollbar.is-hover .kd-scrollbar-arrow,
+.kd-scrollbar:active .kd-scrollbar-arrow,
+.kd-scrollbar.is-pressed .kd-scrollbar-arrow {
+  opacity: var(--kd-scrollbar-thumb-opacity-active);
+}
+
+.kd-scrollbar:focus {
+  outline: none;
+}
+
+.kd-scrollbar:focus-visible .kd-scrollbar-thumb {
+  box-shadow: 0 0 0 1px var(--kd-color-line-public);
+}
+
+/* 演示态：强制 hover / pressed（与 :hover/:active 等价，Figma 中二者同为 0.4） */
+.kd-scrollbar.is-hover .kd-scrollbar-thumb,
+.kd-scrollbar.is-pressed .kd-scrollbar-thumb,
+.kd-scrollbar.is-hover .kd-scrollbar-arrow,
+.kd-scrollbar.is-pressed .kd-scrollbar-arrow {
+  opacity: var(--kd-scrollbar-thumb-opacity-active);
+}
+
+/* ── 纵向 · 无箭头：槽宽 14 = 4 + 拇指 6 + 4 ── */
+.kd-scrollbar-vertical:not(.kd-scrollbar-with-arrows) {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  width: 14px;
+  height: 100%;
+  min-height: 32px;
+  padding: 0 4px;
+}
+
+.kd-scrollbar-vertical:not(.kd-scrollbar-with-arrows) .kd-scrollbar-thumb {
+  width: 6px;
+  height: 100%;
+}
+
+/* ── 横向 · 无箭头：槽高 14 = 4 + 拇指 6 + 4 ── */
+.kd-scrollbar-horizontal:not(.kd-scrollbar-with-arrows) {
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  width: 100%;
+  min-width: 32px;
+  height: 14px;
+  padding: 4px 0;
+}
+
+.kd-scrollbar-horizontal:not(.kd-scrollbar-with-arrows) .kd-scrollbar-thumb {
+  height: 6px;
+  width: 100%;
+}
+
+/* ── 带箭头 ── */
+.kd-scrollbar-with-arrows {
+  gap: 4px;
+}
+
+.kd-scrollbar-vertical.kd-scrollbar-with-arrows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 20px;
+  height: 100%;
+  min-height: 98px;
+}
+
+.kd-scrollbar-horizontal.kd-scrollbar-with-arrows {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 20px;
+  width: 100%;
+  min-width: 98px;
+}
+
+.kd-scrollbar-track {
+  display: flex;
+  flex: 1 0 0;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.kd-scrollbar-vertical .kd-scrollbar-track {
+  width: 100%;
+  justify-content: center;
+}
+
+.kd-scrollbar-vertical .kd-scrollbar-track .kd-scrollbar-thumb {
+  width: 6px;
+  height: 40%; /* 示例占比；真实场景按滚动比例设置 height */
+  align-self: flex-start;
+}
+
+.kd-scrollbar-horizontal .kd-scrollbar-track {
+  height: 100%;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.kd-scrollbar-horizontal .kd-scrollbar-track .kd-scrollbar-thumb {
+  height: 6px;
+  width: 40%;
+  align-self: center;
+}
+
+.kd-scrollbar-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  color: var(--kd-scrollbar-thumb);
+  opacity: var(--kd-scrollbar-thumb-opacity);
+  cursor: pointer;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.kd-scrollbar-arrow .kd-icon,
+.kd-scrollbar-arrow svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  max-width: none;
+}
+
+/* 可放在滚动容器右/下沿叠加（场景壳） */
+.kd-scrollbar-overlay {
+  position: absolute;
+  z-index: 2;
+  pointer-events: auto;
+}
+.kd-scrollbar-overlay.kd-scrollbar-vertical {
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+.kd-scrollbar-overlay.kd-scrollbar-horizontal {
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* [hidden] 必须压过 .kd-scrollbar-vertical { display:flex }，否则无溢出仍可见 */
+.kd-scrollbar[hidden] {
+  display: none !important;
+}

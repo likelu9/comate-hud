@@ -1,0 +1,93 @@
+<style>
+.ni.hv{background:var(--s-hit);color:var(--t1)}
+.pop.hv{background:var(--s-hit)}
+.btn.pri.hv{background:var(--ac-h)}
+.btn.sec.hv{background:var(--ac-track)}
+.btn.gho.hv{background:var(--s-hit)}
+.up .rl{display:inline-block}
+.mid{display:flex;gap:14px;flex-wrap:wrap}
+</style>
+<h2>四 · 状态与条件变体</h2>
+<p class=sub>下列每块都只画<b>变化的那一层</b>（单行 / 单控件 / 单个导航项），值仍为 1:1。交互态一律<b>只改颜色与透明度</b>：<code>dur.fast 120ms</code> + <code>ease.standard</code>，pressed 用 <code>dur.instant 80ms</code>；禁用态统一 <code>opacity .4</code>（KD 规则，T7），不换灰色替代色。</p>
+<div class=grid>
+
+<div class=card><header><h3>A · 侧栏导航项四态</h3><span class="tag on">nav</span></header>
+<div class=nav style="width:140px;border-right:0;border-radius:8px">
+<a class="ni on"><svg class=ic><use href=#ic-user /></svg>账号 · 选中</a>
+<a class="ni hv"><svg class=ic><use href=#ic-display /></svg>显示 · hover</a>
+<a class="ni foc"><svg class=ic><use href=#ic-general /></svg>通用 · focus</a>
+<a class=ni><svg class=ic><use href=#ic-info /></svg>关于 · 常态</a>
+</div>
+<p class=cap>项 <b>140 × 28pt</b> · <code>radius.6</code> · 间距 <code>space.2</code> · 图标 14 · 选中 <code>accent.soft</code>+<code>text.primary</code>+图标 <code>accent.hover</code> · hover <code>surface.hit</code> · focus <code>line.focus 2pt offset 1</code> · 常态 <code>text.secondary</code>。选中态<b>全局唯一</b>，切页时旧的立刻回常态。</p></div>
+
+<div class=card><header><h3>B · 未登录态（账号页）</h3><span class=tag>登录</span></header>
+<div class=crop>
+<div class=cb><div class="row act"><span class=rm><span class=rl>WPS 账号</span><span class=rds>未登录 · 登录后可同步任务与额度</span></span><span class=ctl><button class="btn pri" type=button>登录 WPS 账号…</button></span></div></div>
+</div>
+<p class=cap>该态下<b>「企业」行整行不渲染</b>（无数据不留空行）· 主按钮 <code>accent.normal</code> + <code>text.on-accent</code> + <code>shadow.cta</code> · 按钮高 <b>24pt</b> · 文案原文 <b>「登录 WPS 账号…」</b>（省略号表示会拉起系统弹窗/浏览器，非本站内页）。</p></div>
+
+<div class=card><header><h3>C · 登录失效警示态</h3><span class="tag warn">警示</span></header>
+<div class=crop>
+<div class=warn><span class=wdot></span><span class=rm><span class=rl>登录已失效，重新登录</span><span class=rds>上次授权已过期，需重新授权才能同步任务</span></span><button class="btn pri" type=button>重新登录</button></div>
+</div>
+<p class=cap>警示底 <code>status.waiting-soft <i>白/红14%</i></code> + 描边 <code>line.warn <i>rgba(255,98,89,.32)</i></code>（§7 新增）+ <code>radius.8</code> + 内边距 10 / 12 · 警示灯 <b>7pt</b> <code>status.waiting</code> + <code>glow.status</code> · 文案原文 <b>「登录已失效，重新登录」</b>。红点<b>语义用 <code>status.waiting</code>（异常）而非 <code>dot.update</code></b>（T6：红点专表「有更新」）；本块同屏饱和色 = 蓝 + 红，恰 2 种（合格）。</p></div>
+
+<div class=card><header><h3>D · 开关 on / off</h3><span class="tag on">NSSwitch</span></header>
+<div class=crop>
+<div class=cb>
+<div class=row><span class=rm><span class=rl>开机自启动</span></span><span class=ctl><span class=sw><i></i></span></span></div>
+<div class=row><span class=rm><span class=rl>开机自启动</span></span><span class=ctl><span class="sw on"><i></i></span></span></div>
+<div class=row><span class=rm><span class=rl>键盘 focus</span></span><span class=ctl><span class="sw on foc"><i></i></span></span></div>
+<div class=row><span class=rm><span class=rl>禁用（写入被系统拒绝）</span></span><span class=ctl><span class="sw dis"><i></i></span></span></div>
+</div>
+</div>
+<p class=cap>轨道 <b>34 × 20pt</b> <code>radius.full</code>：off <code>surface.track</code> / on <code>accent.normal</code>；钮 <b>16pt</b> <code>text.on-accent</code> + <code>shadow.knob</code>，位移 <b>left 2 → 16</code></b>（<code>dur.fast</code>）。禁用用 <code>opacity .4</code> + <code>pointer-events:none</code>，<b>仍显示真实状态</b>（不置灰成 off，避免用户误读成「已关闭」）。</p></div>
+
+<div class=card><header><h3>E · 单选 / 下拉四态</h3><span class="tag on">radio · popup</span></header>
+<div class=crop>
+<div class=cb style="padding:12px 10px">
+<div class=lab>单选 NSButton(radio) · 未选中 / 选中 / focus / 禁用</div>
+<div class=ctl><span class=rad></span><span class="rad on"></span><span class="rad foc"></span><span class="rad dis"></span></div>
+<div class=lab style="margin-top:12px">下拉 NSPopUpButton · 常态 / hover / 禁用</div>
+<div class=ctl><span class=pop>跟随主屏<svg class=ic><use href=#ic-chev-d /></svg></span><span class="pop hv">最近 5 条<svg class=ic><use href=#ic-chev-d /></svg></span><span class="pop dis">最近 1 条<svg class=ic><use href=#ic-chev-d /></svg></span></div>
+</div>
+</div>
+<p class=cap>单选 <b>14pt</b> <code>radius.full</code>：未选中 描边 <code>line.divider-strong</code> + 底 <code>surface.track</code>；选中 底/描边 <code>accent.normal</code> + 中心白点（<code>inset 3.5pt</code>）。下拉 <b>24pt</b> 高 / 最小宽 132 / <code>radius.6</code> / <code>surface.raised</code> + <code>line.divider-strong</code>，hover <code>surface.hit</code>。两者禁用均 <code>opacity .4</code>；<b>单选项的命中区是整行 34pt</b>，不是 14pt 圆点。</p></div>
+
+<div class=card><header><h3>F · 按钮 hover / focus / 禁用</h3><span class="tag on">NSButton</span></header>
+<div class=crop>
+<div class=cb style="padding:12px 10px">
+<div class=lab>主按钮 .btn.pri（品牌蓝实底）</div>
+<div class=ctl style="flex-wrap:wrap"><button class="btn pri" type=button>检查更新</button><button class="btn pri hv" type=button>hover</button><button class="btn pri foc" type=button>focus</button><button class="btn pri" type=button disabled>禁用</button></div>
+<div class=lab style="margin-top:12px">次按钮 .btn.sec / 中性 .btn.gho</div>
+<div class=ctl style="flex-wrap:wrap"><button class="btn sec" type=button>恢复默认高度</button><button class="btn sec hv" type=button>hover</button><button class="btn gho" type=button>检查更新</button><button class="btn gho foc" type=button>focus</button><button class="btn gho" type=button disabled>禁用</button></div>
+</div>
+</div>
+<p class=cap>三型统一：高 <b>24pt</b> · <code>radius.6</code> · 左右内边距 <code>space.12</code> · 字 <code>font.btn 12.5pt/600</code> · 图标 12pt。<b>主</b> <code>accent.normal</code> → hover <code>accent.hover</code> → pressed <code>accent.pressed</code>，投影 <code>shadow.cta</code>；<b>次</b> <code>accent.soft</code> → hover <code>accent.track</code>（<code>accent.hover</code> 作文字色）；<b>中性</b> <code>surface.raised</code>+<code>line.divider-strong</code> → hover <code>surface.hit</code>。focus 环一律 <code>line.focus 2pt + offset 1</code>；禁用 <code>opacity .4</code>（<code>accent.disabled</code> 本窗口不使用 → §7 登记）。</p></div>
+
+<div class=card><header><h3>G · 检查更新三态（+ 检查中）</h3><span class=tag>关于页</span></header>
+<div class=crop>
+<div class=cb>
+<div class="row act"><span class=rm><span class=rl>检查更新</span><span class=rds>手动触发一次版本检查</span></span><span class=ctl><button class="btn gho" type=button>检查更新</button></span></div>
+<div class="row act"><span class="rm up ok"><svg class=ic><use href=#ic-check /></svg><span class=rl>已是最新版本 v1.4.2</span></span></div>
+<div class="row"><span class="rm up"><span class=badge style="background:var(--t3);box-shadow:none"></span><span class=rl>正在检查更新…</span></span></div>
+<div class="row act"><span class="rm up new"><span class=badge></span><svg class=ic><use href=#ic-update /></svg><span class=rl>检测到新版 v1.4.3</span></span><svg class=chev><use href=#ic-chev-r /></svg></div>
+</div>
+</div>
+<p class=cap>① 常态原文 <b>「检查更新」</b> <code>text.primary</code> + 中性按钮。② 无更新 <b>「已是最新版本 vX.Y.Z」</b> <code>text.secondary</code> + <code>status.done</code> ✓ 图标，<b>不可点</b>。③ 有更新 <b>「检测到新版 vX.Y.Z」</b> <code>accent.hover</code> + 5pt <code>dot.update</code> 红点（1pt <code>dot.update-ring</code>）+ 尾部 chevron，整行可点 → 跳转下载页；<b>竞态兜底</b>：检查中显示「正在检查更新…」（<code>text.tertiary</code> + 中性点），按钮临时 <code>disabled</code>。本块饱和色 = 蓝 + 红点，共 2 种。</p></div>
+
+<div class=card><header><h3>H · 条件项 可见 / 隐藏</h3><span class="tag warn">条件渲染</span></header>
+<div class=mid>
+<div class=crop style="width:300px">
+<div class=lab>可见 · 用户改过高度（≠ 默认）</div>
+<div class=cb><div class="row act"><span class=rm><span class=rl>恢复默认高度</span><span class=rds>当前 312pt · 默认 250pt</span></span><span class=ctl><button class="btn sec" type=button>恢复默认高度</button></span></div></div>
+</div>
+<div class=crop style="width:300px">
+<div class=lab>隐藏 · 高度 = 默认 250pt</div>
+<div class="cb gm" style="height:62px"></div>
+</div>
+</div>
+<p class=cap>同一分组的「面板高度」卡片：条件不成立时<b>整卡连标题一起不渲染</b>（不是置灰、不留 34pt 空行），上方「任务记录」下移 <code>space.16 16pt</code> 组距。<b>同规则还有「刘海所在屏幕」</b>（需 刘海模式 且 屏幕数 &gt; 1），二者都是「有数据才出现」的可见项；动作按钮点完即把自身条件置回 false（自己消失），无需额外 toast。</p></div>
+
+</div>
+<p class=cap><b>状态规则速查：</b>① 一个分类页里选中态唯一（导航 1 个 + 单选每组件 1 个）；② 三态语义色（<code>status.waiting</code> 警示 / <code>dot.update</code> 更新 / <code>status.done</code> 成功）<b>同一视图最多出现 1 个</b>，与 <code>accent.normal</code> 合计不超 2 种饱和色；③ 条件行按「有数据才渲染」处理，消失不留空位；④ 禁用一律 <code>opacity .4</code> 且不改变真实值；⑤ 焦点环 <code>line.focus</code> 对全部可交互元素可达，Tab 序 = 视觉序（导航 → 表单 → 页脚）；⑥ <code>prefers-reduced-motion</code> 下开关钮位移与红点闪烁退化为终态。</p>

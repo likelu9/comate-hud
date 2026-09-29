@@ -1,0 +1,39 @@
+/* @kd-registry: radio v2.0 */
+/* ══ Radio 单选框 ══ */
+
+.kd-radio { display: inline-flex; align-items: center; cursor: pointer; user-select: none; }
+.kd-radio-input { position: relative; display: inline-flex; align-items: center; }
+.kd-radio-inner {
+  width: 14px; height: 14px;
+  border: 1px solid var(--kd-color-line-heavy);
+  border-radius: var(--kd-border-radius-circle);
+  background: var(--kd-color-fill-base);
+  display: block; position: relative;
+  transition: border-color .25s cubic-bezier(.71,-.46,.29,1.46);
+}
+.kd-radio-original { position: absolute; opacity: 0; width: 0; height: 0; }
+
+/* Dot */
+.kd-radio-inner::after {
+  content: ''; position: absolute;
+  top: 50%; left: 50%; width: 6px; height: 6px;
+  margin-top: -3px; margin-left: -3px;
+  border-radius: var(--kd-border-radius-circle);
+  background: var(--kd-color-public-normal);
+  transform: scale(0);
+  transition: transform .25s cubic-bezier(.71,-.46,.29,1.46);
+}
+
+/* Checked (class-based) */
+.kd-radio-input.is-checked .kd-radio-inner { border-color: var(--kd-color-line-public); }
+.kd-radio-input.is-checked .kd-radio-inner::after { transform: scale(1); }
+
+/* Hover */
+.kd-radio-input:hover:not(.is-disabled):not(.is-checked) .kd-radio-inner { background: var(--kd-color-state-hover); }
+.kd-radio-input.is-checked:hover:not(.is-disabled) .kd-radio-inner { background: var(--kd-color-public-light); }
+
+/* Disabled (class-based) */
+.kd-radio-input.is-disabled { pointer-events: none; }
+.kd-radio.is-disabled { opacity: var(--kd-opacity-disabled); cursor: not-allowed; }
+
+.kd-radio-label { padding-left: 4px; font-size: var(--kd-font-size-sub-base); line-height: 20px; }
