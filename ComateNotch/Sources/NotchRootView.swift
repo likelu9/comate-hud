@@ -352,7 +352,7 @@ struct NotchRootView: View {
             .overlay(alignment: .topLeading) {
                 LogoMotionBadge(light: store.primaryLight,
                                 redBlinking: store.primaryRedBlinking,
-                                size: 18)
+                                size: 28)   // 试值：18pt 下光轨太细看不出来；上限受收起条高度 38 与单翼宽度 36 约束
                     .position(x: wingWidth / 2, y: notchHeight / 2)
             }
             // 叠加层：+号按钮（右翼，收起态）
