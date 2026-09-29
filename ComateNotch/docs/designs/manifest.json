@@ -1,7 +1,7 @@
 {
   "design": "Comate HUD · 深色 KDesign 设计规范",
   "version": "1.0",
-  "stage": "skeleton",
+  "stage": "surfaces",
   "status": "wip",
   "platform": "macOS 14+ / Swift + AppKit",
   "basis": "kd-foundation@3.0.0 + kd-design-language@1.0.0",
@@ -155,44 +155,44 @@
     {
       "id": "panel-main",
       "name": "主 HUD 面板",
-      "file": "pending/panel-main.html",
-      "notes": "待第二阶段。圆角 16、描边白 12% 1pt、内边距 12/8/12、标题行高 18、11pt semibold 标题。"
+      "file": "references/panel-main.html",
+      "notes": "已交付。圆角 16、描边白 12% 1pt、内边距 12/8/12、标题行高 18、11pt semibold 标题。含行 hover/pressed/tooltip、手柄三态、加载骨架、空态、未登录态。"
     },
     {
       "id": "notch-collapsed",
       "name": "刘海收起条",
-      "file": "pending/notch-collapsed.html",
-      "notes": "待第二阶段。281×38（有刘海）/ 268×34（无刘海）、底圆角 14、底色纯黑与硬件无缝、拖拽手柄 44×3。"
+      "file": "references/notch.html",
+      "notes": "已交付。281×38（有刘海）/ 268×34（无刘海）、底圆角 14、底色纯黑与硬件无缝、中段 209 为硬件开孔不可绘制；含左翼 logo 五态小样与展开面板（有任务/空态）。"
     },
     {
       "id": "task-list",
       "name": "任务列表区",
-      "file": "pending/task-list.html",
-      "notes": "待第二阶段。行间距 3、状态灯 7pt、行底 surface.row、悬停 .10、按下 .14、最大可视高 347。"
+      "file": "references/panel-main.html",
+      "notes": "已交付（含在主面板页内）。行间距 3、状态灯 7pt、行底 surface.row、悬停 .10、按下 .14、最大可视高 347。"
     },
     {
       "id": "footer-quota",
       "name": "页脚额度区",
-      "file": "pending/footer-quota.html",
-      "notes": "待 T1 拍板。品牌绿退出后走 accent.normal 进度 + text.secondary 文案 + 阈值语义色。"
+      "file": "references/panel-main.html",
+      "notes": "已交付（含在面板/刘海两页的页脚区）。按 T1 方案 A：品牌绿退出，进度走 accent.normal + text.secondary 文案 + 阈值语义色。T10 待确认是否改为「已用/总量 + 进度条」。"
     },
     {
       "id": "empty-state",
       "name": "空态占位",
-      "file": "pending/empty-state.html",
-      "notes": "待第二阶段。占位高 24、文案 text.quaternary 9pt。"
+      "file": "references/panel-main.html",
+      "notes": "已交付（含在主面板/刘海两页内）。占位高 24、文案 text.quaternary 9pt、「暂无任务」。"
     },
     {
       "id": "about",
       "name": "关于窗口",
-      "file": "pending/about.html",
-      "notes": "待 T1 拍板。主 CTA 改品牌蓝、四态图例、更新红点、顶部品牌氛围光。"
+      "file": "references/about.html",
+      "notes": "已交付。主 CTA 改品牌蓝、四态图例、更新红点、顶部品牌氛围光（紫色处置见 T11）；含更新三态小样。"
     },
     {
       "id": "settings",
       "name": "设置面板",
-      "file": "pending/settings.html",
-      "notes": "待 T3 确认悬浮层可见度。左分类导航 surface.raised + line.divider 兜底。"
+      "file": "references/settings.html",
+      "notes": "已交付。左分类导航 surface.raised + line.divider 兜底；账号/显示/通用/关于 4 分类；含登录失效警示态与控件状态变体。"
     }
   ],
   "references": [
@@ -209,6 +209,9 @@
     { "id": "T6", "title": "更新红点 #FF4D4F 与 status.waiting #FF6259 并存规则", "recommend": "保留双色 + 禁止相邻", "blocking": [] },
     { "id": "T7", "title": "禁用态统一用 opacity .4 还是 text.disabled", "recommend": "控件用 opacity，静态文案用色值", "blocking": [] },
     { "id": "T8", "title": "text.disabled 对比度 2.3:1 的接受范围", "recommend": "仅限非必要信息", "blocking": [] },
-    { "id": "T9", "title": "第二阶段 7 个界面的排期与顺序", "recommend": "主面板 → 刘海条 → 任务列表 → 设置 → 关于 → 页脚/空态", "blocking": [] }
+    { "id": "T9", "title": "第二阶段界面的排期与范围", "recommend": "主面板 → 设置 → 关于 → 刘海形态已按序交付；剩登录窗、更新提示待补", "blocking": [], "status": "delivered" },
+    { "id": "T10", "title": "页脚额度区改写：由「日/月胶囊 + 百分比」改为「已用/总量 + 进度条 + 详情入口」", "recommend": "可落地（UsageAPI.Limit 已有 used/total/remain/percent），但改动比现状大、页脚仅 20pt 高，需权衡", "blocking": ["footer-quota"] },
+    { "id": "T11", "title": "关于弹窗紫色品牌光晕（#937EE6/#4526BF）处置：A 改 KD 蓝渐变 / B 保留紫但仅限关于弹窗", "recommend": "A", "blocking": ["about"] },
+    { "id": "T12", "title": "设计稿示例数据（昵称/企业/版本 v1.4.2、v1.5.0）仅为占位，实现时取真实值（当前 1.4.5 / build 14）", "recommend": "接受", "blocking": [] }
   ]
 }
