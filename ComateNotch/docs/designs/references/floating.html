@@ -1,0 +1,525 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Comate HUD · 悬浮窗形态 · floating</title>
+<style>
+/* ===== 0. Token 层（取自 DESIGN.md §2；本文件不新增语义色，状态色只做状态语义）===== */
+:root{
+--f:'SF Pro Rounded',ui-rounded,-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;--m:ui-monospace,SFMono-Regular,Menlo,monospace;
+--ac:#00D4AA;--ach:#22E0BB;--acp:#00A98A;--acs:rgba(0,212,170,.16);--act:rgba(0,212,170,.22);--acon:#0F0F11;
+--idle:#9CA0AA;--work:#FFC928;--wait:#FF6259;--done:#31D158;
+--tp:rgba(245,245,245,1);--ts:rgba(245,245,245,.72);--tt:rgba(245,245,245,.55);--tq:rgba(245,245,245,.46);--td:rgba(245,245,245,.4);
+--panel:#0F0F11;--raised:rgba(255,255,255,.06);--line-card:rgba(255,255,255,.07);--line-panel:rgba(255,255,255,.12);--line-div:rgba(255,255,255,.08);
+/* 本次新增：悬浮图标 chip 四态 */
+--chip:rgba(255,255,255,.06);--chip-line:rgba(255,255,255,.08);
+--chip-h:rgba(255,255,255,.10);--chip-hl:rgba(255,255,255,.10);
+--chip-p:rgba(255,255,255,.14);--chip-pl:rgba(255,255,255,.12);
+--chip-e:rgba(255,255,255,.12);--chip-el:rgba(255,255,255,.14);
+--row:rgba(255,255,255,.04);--hit:rgba(255,255,255,.12);--track:rgba(255,255,255,.1);
+--gd:rgba(0,212,170,.45);--gds:rgba(0,212,170,.32);
+--desk:linear-gradient(135deg,#4E5666 0%,#31353E 52%,#22252C 100%);
+--desk-light:linear-gradient(135deg,#EFEFF2 0%,#D8D9DE 100%)}
+*,*::before,*::after{box-sizing:border-box}html,body{margin:0}
+body{background:#060608;color:var(--tp);font:400 12px/1.55 var(--f);-webkit-font-smoothing:antialiased;padding:28px 24px 64px}
+.wr{max-width:1280px;margin:0 auto}
+h1{display:flex;align-items:center;gap:9px;margin:0;font-size:22px;font-weight:600;letter-spacing:-.2px}
+h2{margin:34px 0 4px;font-size:16px;font-weight:600;padding-left:8px;border-left:3px solid var(--ac)}
+h3{margin:0 0 7px;font-size:13px;font-weight:600}p{margin:0}
+.lead{margin-top:8px;max-width:980px;font-size:13px;line-height:20px;color:var(--ts)}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pill{font-size:10.5px;font-weight:500;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line-card);color:var(--tt)}
+.pill.on{color:var(--ach);background:var(--acs);border-color:rgba(0,212,170,.35)}
+.sub{margin:6px 0 16px 12px;font-size:12px;line-height:18px;color:var(--tt);max-width:1000px}
+.sub b{color:var(--ts);font-weight:600}
+code{font:400 9px/1.5 var(--m);color:var(--ach)}
+mark{background:var(--acs);color:var(--ach);border-radius:3px;padding:0 4px;font:400 10px/1.5 var(--m)}
+.dh,.dv{display:flex;gap:6px;font:400 8.5px/1 var(--m);color:var(--ach)}
+.dh{align-items:center;height:12px}.dv{flex-direction:column;align-items:center;width:11px}
+.dh i,.dv i{position:relative;background:var(--gd)}
+.dh i{flex:1;height:1px}.dv i{flex:1;width:1px}
+.dh i::before,.dh i::after{content:'';position:absolute;top:-2px;height:5px;width:1px;background:var(--gd)}
+.dv i::before,.dv i::after{content:'';position:absolute;left:-2px;width:5px;height:1px;background:var(--gd)}
+.dh i::before,.dv i::before{left:0;top:0}.dh i::after,.dv i::after{right:0;bottom:0}
+
+/* ── 差异对照表 ── */
+.cmp{width:100%;border-collapse:collapse;margin:10px 0 0;font-size:11.5px;line-height:17px}
+.cmp th,.cmp td{text-align:left;padding:8px 10px;vertical-align:top;border-bottom:1px solid var(--line-div)}
+.cmp thead th{font-size:10.5px;font-weight:600;color:var(--tt);background:var(--row);border-bottom:1px solid rgba(255,255,255,.14)}
+.cmp thead th.f{color:var(--ach)}
+.cmp td.k{width:118px;color:var(--tt);font-weight:500;white-space:nowrap}
+.cmp td.n{color:var(--ts);width:38%}
+.cmp td.fl{color:var(--tp);background:rgba(0,212,170,.035)}
+.cmp td.fl b{color:var(--ach);font-weight:600}
+.cmp tr:last-child td{border-bottom:1px solid rgba(255,255,255,.14)}
+
+/* ── chip / 图形 ── */
+.chip{width:36px;height:36px;border-radius:10px;background:var(--chip);border:1px solid var(--chip-line);display:grid;place-items:center;
+transition:background 120ms cubic-bezier(.25,.10,.25,1),border-color 120ms cubic-bezier(.25,.10,.25,1)}
+.chip[data-chip=hover]{background:var(--chip-h);border-color:var(--chip-hl)}
+.chip[data-chip=pressed]{background:var(--chip-p);border-color:var(--chip-pl)}
+.chip[data-chip=expanding]{background:var(--chip-e);border-color:var(--chip-el);box-shadow:0 0 0 1px rgba(255,255,255,.03),0 2px 8px rgba(0,0,0,.35)}
+.ng{display:block;width:30px;height:30px}
+.ng28{display:block;width:28px;height:28px}
+.c-id{color:var(--idle)}.c-wk{color:var(--work)}.c-wt,.c-er{color:var(--wait)}.c-dn{color:var(--done)}
+.t-id{color:var(--idle)}.t-wk{color:var(--work)}.t-wt{color:var(--wait)}.t-dn{color:var(--done)}
+
+/* ── Logo 五态：图形与动画与 notch.html 完全一致（同一套矢量，逐图元内联，不用 defs+use）── */
+@keyframes ng-spin{to{transform:rotate(360deg)}}
+@keyframes ng-ripple{0%{transform:scale(.62);opacity:.46}100%{transform:scale(1.46);opacity:0}}
+@keyframes ng-breath{0%{transform:scale(.55);opacity:.32}100%{transform:scale(1.18);opacity:1}}
+@keyframes ng-wave{0%{transform:scale(.73);opacity:.38}100%{transform:scale(1.24);opacity:0}}
+@keyframes ng-slow{0%{transform:scale(.73);opacity:.28}100%{transform:scale(1.2);opacity:0}}
+@keyframes ng-bob{0%{transform:translateY(0);opacity:.72}100%{transform:translateY(-5px);opacity:1}}
+@keyframes ng-draw{0%{stroke-dashoffset:175}36%{stroke-dashoffset:0}100%{stroke-dashoffset:0}}
+@keyframes ng-spark{0%,50%{opacity:0;transform:scale(.2)}100%{opacity:.85;transform:scale(1)}}
+@keyframes ng-ebr{0%,100%{opacity:.6}50%{opacity:1}}
+.sg-arc{fill:none;stroke:currentColor;stroke-width:132;opacity:.55}
+.sg-orb,.sg-rip,.sg-core,.sg-wv,.sg-wvs,.sg-bob{transform-box:view-box;transform-origin:300px 300px}
+.sg-orb{animation:ng-spin 1.15s linear infinite var(--d,0s)}
+.sg-orb circle{fill:none;stroke:currentColor;stroke-linecap:round}
+.sg-o1{stroke-width:38;stroke-dasharray:111.5 1572.5}
+.sg-o2{stroke-width:26;opacity:.7;stroke-dasharray:62.2 1621.8;stroke-dashoffset:-92.2}
+.sg-o3{stroke-width:16;opacity:.34;stroke-dasharray:30 1654;stroke-dashoffset:-165.1}
+.sg-rip{fill:none;stroke:currentColor;stroke-width:8;animation:ng-ripple 4.2s ease-out infinite var(--d,0s)}
+.sg-core{fill:currentColor;animation:ng-breath 1.9s ease-in-out infinite alternate var(--d,0s)}
+.sg-wv{fill:none;stroke:currentColor;stroke-width:8;animation:ng-wave 1.6s ease-out infinite var(--d,0s)}
+.sg-wv2{animation-delay:calc(var(--d,0s) - .72s)}
+.sg-wvs{fill:none;stroke:currentColor;stroke-width:8;animation:ng-slow 2.4s ease-out infinite var(--d,0s)}
+.sg-bob{fill:currentColor;animation:ng-bob 1.15s ease-in-out infinite alternate var(--d,0s)}
+.sg-still,.sg-dot{fill:currentColor}
+.sg-ebr{animation:ng-ebr 1.6s ease-in-out infinite var(--d,0s)}
+.sg-ck{fill:none;stroke:currentColor;stroke-width:30;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:175;animation:ng-draw 1.7s ease-out infinite var(--d,0s)}
+.sg-spk{fill:currentColor;transform-box:view-box;animation:ng-spark 1.7s ease-out infinite var(--d,0s)}
+.sg-sp1{transform-origin:389px 230px}
+.sg-sp2{transform-origin:218px 256px;animation-delay:calc(var(--d,0s) + .06s)}
+.sg-sp3{transform-origin:370px 374px;animation-delay:calc(var(--d,0s) + .12s)}
+/* 相位帧（真冻结）＝ play-state:paused + 负 animation-delay，渲染即定格在 t=|delay|。必须排在所有 .sg-* 动画声明之后 */
+.frz,.frz *{animation-play-state:paused}
+
+/* ── 桌面/壁纸演示底 ── */
+.wall{width:64px;height:64px;border-radius:8px;display:grid;place-items:center;background:var(--desk);border:1px solid var(--line-card)}
+.wall.lt{background:var(--desk-light)}
+.wall.flat{background:var(--panel)}
+/* ── 四态 chip 卡 ── */
+.chips4{display:grid;grid-template-columns:repeat(auto-fit,minmax(234px,1fr));gap:12px;margin-top:14px}
+.ccard{padding:12px;border-radius:10px;background:var(--row);border:1px solid var(--line-card)}
+.ctop{display:flex;align-items:center;gap:12px}
+.cmeta{display:flex;flex-direction:column;gap:4px;font-size:10.5px;line-height:15px;color:var(--tt)}
+.cmeta b{font-size:12px;font-weight:600;color:var(--tp)}
+.cmeta code{color:var(--ach)}
+.cmeta em{font-style:normal;color:var(--tq);font:400 9px/13px var(--m)}
+
+/* ── 几何图 ── */
+.geo{display:flex;flex-wrap:wrap;align-items:flex-end;gap:26px;margin-top:14px;padding:16px;border-radius:10px;background:var(--row);border:1px solid var(--line-card)}
+.gbox{position:relative;width:60px;height:60px}
+.gwin{position:absolute;inset:0;border:1px dashed rgba(0,212,170,.5);border-radius:3px}
+.ghit{position:absolute;inset:8px;border:1px dashed rgba(255,255,255,.3);border-radius:5px}
+.geochip{position:absolute;inset:12px;border-radius:10px;background:var(--chip);border:1px solid var(--chip-line);display:grid;place-items:center}
+.gcross{position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;pointer-events:none}
+.gcross::before,.gcross::after{content:'';position:absolute;background:rgba(0,212,170,.75)}
+.gcross::before{left:0;right:0;top:6px;height:1px}.gcross::after{top:0;bottom:0;left:6px;width:1px}
+.glegend{display:flex;flex-direction:column;gap:6px;font:400 10px/15px var(--m);color:var(--tt);max-width:520px}
+.glegend i{display:inline-block;width:9px;height:9px;margin-right:6px;vertical-align:-1px;border-radius:2px}
+.glegend i.a{background:var(--chip);border:1px solid var(--chip-line)}
+.glegend i.b{border:1px dashed rgba(255,255,255,.32)}
+.glegend i.c{border:1px dashed rgba(0,212,170,.55)}
+.glegend i.d{border:1px solid rgba(255,255,255,.2)}
+.glegend b{color:var(--tp);font-weight:600}
+
+/* ── 五态 × chip 小样 ── */
+.srows{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.srow{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--row);border:1px solid var(--line-card)}
+.sname{flex:none;width:118px;font-size:11px;font-weight:600;line-height:16px}
+.sname i{display:inline-block;width:8px;height:8px;border-radius:999px;background:currentColor;margin-right:5px;vertical-align:1px}
+.sname span{display:block;font:400 9px/13px var(--m);color:var(--tq);margin-top:1px}
+.shots{display:flex;gap:10px;flex:none;flex-wrap:wrap}
+.shot{text-align:center}
+.shot>.wall{width:54px;height:54px;border-radius:7px}
+.shot span{display:block;margin-top:3px;font:400 8px/1.3 var(--m);color:var(--tq);white-space:nowrap}
+.shot.live span{color:var(--ach)}
+.snote{flex:1;min-width:300px;font-size:10.5px;line-height:17px;color:var(--ts)}
+.snote b{color:#fff;font-weight:600}
+
+/* ── 28 vs 30 ── */
+.sz2{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px}
+.szcol{flex:1;min-width:320px;padding:12px 14px;border-radius:10px;background:var(--row);border:1px solid var(--line-card)}
+.szrow{display:flex;gap:12px;align-items:flex-end;margin-top:10px;flex-wrap:wrap}
+.szcell{display:flex;flex-direction:column;align-items:center;gap:5px}
+.szcell>span{font:400 8px/1 var(--m);color:var(--tq);white-space:nowrap}
+.bar28,.bar30{display:grid;place-items:center;border:1px solid var(--line-card)}
+.bar28{width:52px;height:34px;background:#000;border-radius:0 0 8px 8px;border-top:0}
+.dt{width:100%;border-collapse:collapse;margin-top:12px;font-size:10.5px;line-height:16px}
+.dt th,.dt td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line-div)}
+.dt th{font-weight:600;color:var(--tt);font-size:9.5px}
+.dt td.v{font:400 10px/16px var(--m);color:var(--ach);white-space:nowrap}
+.dt td.v2{font:400 10px/16px var(--m);color:var(--ts);white-space:nowrap}
+
+/* ── 收起 → 展开 形态图 ── */
+.scene{position:relative;width:336px;height:240px;border-radius:10px;background:var(--desk);border:1px solid var(--line-card)}
+.stack{display:flex;flex-direction:column;gap:18px;margin-top:14px}
+.scene.crop{overflow:hidden}
+.scene.wide{width:424px}
+.cwin{position:absolute;left:12px;top:10px;width:60px;height:60px;border:1px dashed rgba(0,212,170,.55);border-radius:3px}
+.cwin .chip{position:absolute;left:12px;top:12px}
+.cpanel{position:absolute;left:20px;top:68px;width:280px;height:145px;border-radius:16px;background:var(--panel);border:1px solid var(--line-panel)}
+.cpanel .ph{display:flex;align-items:center;gap:6px;height:18px;padding:0 12px;margin-top:8px}
+.cpanel .ph b{font-size:11px;font-weight:600;color:rgba(255,255,255,.7)}
+.cpanel .pp{flex:none;width:18px;height:18px;border-radius:4px;display:grid;place-items:center;color:var(--tt);margin-left:auto}
+.cpanel .pr{margin:6px 12px 0;height:34px;border-radius:8px;background:var(--row);display:flex;align-items:center;gap:8px;padding:0 7px}
+.cpanel .pr+.pr{margin-top:3px}
+.cpanel .lt{flex:none;width:8px;height:8px;border-radius:999px;background:currentColor;box-shadow:0 0 3px currentColor}
+.cpanel .tx{font:500 10.5px/1 var(--f);color:var(--tp);white-space:nowrap;overflow:hidden}
+.cpanel .pf{position:absolute;left:12px;right:12px;bottom:12px;height:20px;display:flex;align-items:center;gap:6px}
+.seg{display:flex;padding:1px;border-radius:4px;background:var(--track)}
+.seg span{width:13px;height:11px;display:grid;place-items:center;border-radius:3.5px;font:600 8px/1 var(--f);color:rgba(255,255,255,.45)}
+.seg .on{background:var(--ac);color:var(--acon)}
+.pg{flex:none;width:30px;height:3px;border-radius:999px;background:var(--act);overflow:hidden}
+.pg i{display:block;height:100%;border-radius:999px;background:var(--ac)}
+.ftx{font:500 9px/10px var(--f);color:var(--ts);white-space:nowrap}.ftx b{color:rgba(245,245,245,.92)}
+.anchor{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:999px;border:1.5px solid var(--ach);background:rgba(0,212,170,.25)}
+.gapdim{position:absolute;width:11px;display:flex;flex-direction:column;align-items:center;font:400 8px/1 var(--m);color:var(--ach)}
+.gapdim i{flex:1;width:1px;background:var(--gd);position:relative}
+.gapdim i::before,.gapdim i::after{content:'';position:absolute;left:-2px;width:5px;height:1px;background:var(--gd)}
+.gapdim i::before{top:0}.gapdim i::after{bottom:0}
+.dimline{position:absolute;height:12px;display:flex;align-items:center;gap:6px;font:400 8.5px/1 var(--m);color:var(--ach)}
+.dimline i{flex:1;height:1px;background:var(--gd);position:relative}
+.dimline i::before,.dimline i::after{content:'';position:absolute;top:-2px;height:5px;width:1px;background:var(--gd)}
+.dimline i::before{left:0}.dimline i::after{right:0}
+.dimline.above{height:12px}
+.lbl{position:absolute;font:400 8px/1.3 var(--m);color:var(--ach);white-space:nowrap}
+.strip{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+
+ol.lg{counter-reset:lg;margin:12px 0 0;padding:0;list-style:none}
+ol.lg li{display:flex;gap:9px;padding:7px 10px;border-radius:6px;background:var(--row);margin-bottom:3px;font-size:11px;line-height:17px}
+ol.lg li::before{counter-increment:lg;content:counter(lg);flex:none;width:15px;height:15px;margin-top:1px;border-radius:999px;
+border:1px solid rgba(0,212,170,.55);background:var(--acs);color:var(--ach);font:600 8px/13px var(--m);text-align:center}
+ol.lg b{font-weight:600;color:var(--tp);flex:none}ol.lg span{color:var(--tt)}
+.cap{margin-top:8px;max-width:340px;font-size:9px;line-height:15px;color:var(--tq)}
+.cap b{font-weight:600;color:var(--ts)}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-div);font-size:10.5px;line-height:18px;color:var(--tq)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<div class=wr>
+<header><h1><svg width=20 height=20 viewBox="0 0 20 20"><rect x=1 y=1 width=18 height=18 rx=5 fill=none stroke=#00D4AA stroke-width=1.5/><rect x=5 y=5 width=10 height=10 rx=3 fill=rgba(0,212,170,.28) stroke=#00D4AA stroke-width=1.2/><circle cx=10 cy=10 r=1.6 fill="#00D4AA"/></svg>悬浮窗形态 · floating 图标</h1>
+<p class=lead>Comate HUD 的<strong>悬浮窗态（FloatingMode）图标</strong>一面 <strong>1:1 像素稿</strong>（pt = px，100%）。悬浮模式下图标与刘海模式是<mark>同一套五态指示图形</mark>（不改形状、不改色、不改节奏），只做两件事：图形边长 <b>28 → 30pt</b>，并在图形下加一层 <b>36×36 半透明 chip</b> 承托。收起态窗口 <b>60×60</b>（<code>iconBox 44 + pad 8×2</code>，全透明）；hover 进 44pt 命中盒即展开，面板<mark>从图标下缘锚点展开</mark>、图标全程不动。几何取自 <code>FloatingPanel.swift</code>（<code>FloatingMetrics</code> / <code>layoutGeometry</code>），图形与动效取自 <code>LogoMotion.swift</code>。</p>
+<div class=meta><span class="pill on">第二阶段 · surfaces-wip</span><span class=pill>图形 30pt（刘海 28pt）</span><span class=pill>chip 36×36 · r10 · 白 6% + 描边白 8%</span><span class=pill>命中盒 44pt 不变</span><span class=pill>窗口 60×60 · pad 8 · gap 6</span><span class=pill>锚点 = 图标下缘（anchor ≈ 0.079, 0）</span><span class=pill>五态真动画 · 相位帧为真冻结</span><span class=pill>零外链</span></div></header>
+
+<h2>一 · 与刘海模式的差异（一图对齐）</h2>
+<p class=sub>同一支 <code>LogoMotionBadge</code>、同一支色板、同一套关键帧；差异只在<b>底</b>、<b>尺寸</b>、<b>命中盒</b>与<b>展开锚点</b>。下表逐项对照，「悬浮窗模式」列为本次新增部分。</p>
+<table class=cmp>
+<thead><tr><th>维度</th><th>刘海模式 · notch</th><th class=f>悬浮窗模式 · floating（本次）</th></tr></thead>
+<tbody>
+<tr><td class=k>底色</td><td class=n>纯黑 <code>surface.bar #000000</code>——需与硬件开孔无缝，不能用近黑，否则开孔旁露色差</td><td class=fl><b>半透明 chip</b> <code>rgba(255,255,255,.06)</code> + 描边 <code>1px rgba(255,255,255,.08)</code>，压在桌面壁纸/面板之上</td></tr>
+<tr><td class=k>图形尺寸</td><td class=n><b>28pt</b>（<code>LogoMotionBadge(size: 28)</code>）</td><td class=fl><b>30pt</b>（<code>FloatingMetrics.logoSize</code>）</td></tr>
+<tr><td class=k>背景块</td><td class=n><b>无</b>——图形直接落在黑色条身上，无需承托</td><td class=fl><b>36×36 chip</b> · <code>radius 10</code> · 图形四周留 <b>3pt</b>、chip 距命中盒四周留 <b>4pt</b></td></tr>
+<tr><td class=k>命中盒</td><td class=n><b>无独立命中盒</b>——整条左翼（<code>wingWidth 36</code>）都可点，hover 由条容器接管</td><td class=fl><b>44pt 独立命中盒</b>（<code>iconBox 44</code>，判定再各留 4pt 容差）；<b>chip 不得改变它</b></td></tr>
+<tr><td class=k>hover</td><td class=n><b>无</b>——收起条没有图标级 hover 底色，指针进来即展开</td><td class=fl><b>有</b>——chip 底 <code>白 6% → 10%</code>，<code>dur.fast 120ms</code> 过渡</td></tr>
+<tr><td class=k>是否随窗口移动</td><td class=n><b>有</b>——收起/展开只改高度与 y，左右边缘全程不动，随屏幕/显示器走</td><td class=fl><b>有</b>——图标中心 <code>iconCenter</code> 固定（可拖拽落点并持久化），展开时窗口长大而图标不动</td></tr>
+<tr><td class=k>展开方式</td><td class=n>同一黑色形状向下生长（<code>NotchShape</code> 只变高度），顶部直角贴屏幕顶边</td><td class=fl>图标不动，<b>面板从图标下缘</b>向下展开（<code>gap 6</code>）；下方不够且上方更宽裕时翻到上方</td></tr>
+<tr><td class=k>展开动效</td><td class=n>高度动画 <code>dur.panel 250ms</code></td><td class=fl><code>scale .94→1</code> + <code>opacity 0→1</code>，<code>easeInOut 200ms</code>，<code>scaleEffect(anchor:)</code> 锚在贴着图标的那条边</td></tr>
+<tr><td class=k>收起态窗口</td><td class=n>281×38 / 268×34（不透明黑色形状）</td><td class=fl><b>60×60 全透明</b>（<code>iconBox 44 + pad 8×2</code>；<code>isOpaque=false</code>、<code>hasShadow=false</code>）</td></tr>
+<tr><td class=k>图形素材</td><td class=n colspan=2 style="color:var(--tp)">完全复用：C 形底弧 <code>r185 / 描边 132 / α.55 / 130°→410°</code> 固定不变，只换色与弧内指示；五态色 <code>#9CA0AA / #FFC928 / #FF6259 / #31D158</code> 与任务行状态灯共用同一支色板。<b>本次不改任何一态的图形或节奏。</b></td></tr>
+</tbody></table>
+<div class=meta style="margin-top:10px"><span class=pill>品牌绿 <code>#00D4AA</code> 是交互主色，<b>不给状态灯上色</b>（状态色只做状态语义）</span><span class=pill>chip 用中性白，不引入第三种颜色</span></div>
+
+<h2>二 · 图标 = 30pt 图形 + 36×36 半透明 chip</h2>
+<p class=sub>为什么加 chip：悬浮态窗口是<mark>全透明</mark>的，30pt 图形会直接压在用户桌面壁纸上——壁纸明暗不可控，纯色灯压在浅色壁纸上会糊，<code>α.55</code> 的底弧更是直接消失。chip 提供一层<b>受控的中性底</b>，让同一套五态在任何壁纸上都读得出来。三件事锁死：<b>①</b> chip 36 &lt; 命中盒 44；<b>②</b> chip 不超出窗口可用区；<b>③</b> 命中盒仍是 44pt，chip 只是可视层、不参与判定。</p>
+
+<h3>2.1 尺寸关系（1:1，值即 pt）</h3>
+<div class=geo>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+<div class=dh style="width:60px;margin-left:11px"><i></i>60 pt<i></i></div>
+<div style="display:flex;align-items:center;gap:6px">
+<div class=dv style="height:60px"><i></i>60<i></i></div>
+<div class=gbox data-geo=window>
+<div class=gwin></div>
+<div class=ghit data-geo=hitbox></div>
+<div class=geochip data-geo=chip><svg class="ng c-id" data-geo=glyph viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-still" cx=300 cy=300 r="26"/></svg></div>
+<div class=gcross></div>
+</div>
+</div>
+</div>
+<div class=glegend>
+<div><i class=c></i><b>窗口 60×60</b>（收起态 <code>iconBox 44 + pad 8×2</code>，全透明；虚线＝窗口边界）</div>
+<div><i class=b></i><b>命中盒 44×44</b>（<code>iconBox</code> / <code>iconHitRect</code>，判定另加 4pt 容差；<b>chip 不得改变此值</b>）</div>
+<div><i class=a></i><b>chip 36×36</b> · radius 10 · 白 6% + 描边白 8%（距命中盒四周各 <b>4pt</b>、距窗口边缘各 <b>12pt</b>）</div>
+<div><i class=d></i><b>图形 30×30</b>（<code>logoSize 30</code>，距 chip 四周各 <b>3pt</b>）</div>
+<div style="margin-top:2px;color:var(--tq)">比例：36/44 = 0.818 · 30/36 = 0.833 · chip 面积 ≈ 图形的 1.44 倍</div>
+</div>
+<p class=cap style="max-width:302px"><b>可用区判定</b> 收起态窗口内 <code>pad 8</code> 是留给图形外发光（见 <code>FloatingMetrics.pad</code> 注释）的余量、不是可视区；chip 36 落在 44 命中盒内 → 距窗口边缘 12pt，<b>不越界、不被窗口裁切</b>。展开态窗口长大，chip 位置与尺寸不变。</p>
+</div>
+
+<h3 style="margin-top:20px">2.2 chip 四态</h3>
+<p class=sub>四态只改 chip 的<b>底与描边</b>（中性白，透明度阶梯 6 / 10 / 14 / 12%），不动图形、不动色相、不动 44pt 命中盒。<code>hover</code> 与代码一致：指针进 44pt 命中盒 <b>+4pt 容差</b>即算 hover（<code>evaluateHoverFromScreen</code>）。</p>
+<div class=chips4>
+<div class=ccard><div class=ctop><div class=wall><div class="chip" data-chip=normal><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-still" cx=300 cy=300 r="26"/></svg></div></div>
+<div class=cmeta><b>① 常态</b><span>底 <code>rgba(255,255,255,.06)</code></span><span>描边 <code>1px rgba(255,255,255,.08)</code></span><em>chip.normal</em></div></div></div>
+<div class=ccard><div class=ctop><div class=wall><div class="chip" data-chip=hover><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-still" cx=300 cy=300 r="26"/></svg></div></div>
+<div class=cmeta><b>② hover</b><span>底 <code>rgba(255,255,255,.10)</code></span><span>描边 <code>1px rgba(255,255,255,.10)</code></span><em>chip.hover · 120ms</em></div></div></div>
+<div class=ccard><div class=ctop><div class=wall><div class="chip" data-chip=pressed><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-still" cx=300 cy=300 r="26"/></svg></div></div>
+<div class=cmeta><b>③ 按下</b><span>底 <code>rgba(255,255,255,.14)</code></span><span>描边 <code>1px rgba(255,255,255,.12)</code></span><em>chip.pressed · 与任务行 pressed .14 同档</em></div></div></div>
+<div class=ccard><div class=ctop><div class=wall><div class="chip" data-chip=expanding><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-still" cx=300 cy=300 r="26"/></svg></div></div>
+<div class=cmeta><b>④ 展开中</b><span>底 <code>rgba(255,255,255,.12)</code>（hover 之上轻提亮）</span><span>描边 <code>1px rgba(255,255,255,.14)</code> + 极淡投影</span><em>chip.expanding · 面板展开期间保持</em></div></div></div>
+</div>
+<ol class=lg>
+<li><b>四态阶梯</b><span><code>.06 → .10（hover）→ .14（按下）</code>；展开中取 <b>.12</b>——比 hover 略亮半档、比按下略收敛，读作「已激活但未被按下」。展开中<b>不换色相、不加高亮描边、不用品牌绿</b>（品牌绿是交互主色，在别处承担按钮/进度/焦点，不抢状态灯）</span></li>
+<li><b>命中盒不变</b><span>chip 只是 <code>LogoMotionBadge</code> 外面的一层修饰；<code>iconHitRect</code> 仍取 <code>iconBox 44×44</code>，<code>evaluateHoverFromScreen</code> 的 <code>insetBy(-4)</code> 容差也不变。chip 36 &lt; 44，四周 4pt 仍属命中区</span></li>
+<li><b>不越界</b><span>chip 距窗口四边各 <b>12pt</b>（<code>pad 8 + 4</code>），永远落在 <code>windowSize</code> 内；<code>pad 8</code> 本是为图形外发光留的余量，chip 恰好复用这段余量而不侵占</span></li>
+<li><b>浅色壁纸风险（登记待确认）</b><span>悬浮窗口是全透明的，chip 会压在真实壁纸上：壁纸接近纯白时 <code>白 6%</code> 与 <code>白 8%</code> 描边<b>几乎不可见</b>。本次按需求只画 <code>白 6%</code> 规格，但建议实现时对极浅壁纸加一层 <code>rgba(15,15,17,.35)</code> 深色兜底衬（登记为 <b>T14</b>，未拍板前不落地）</span></li>
+</ol>
+
+<h2>三 · 五态 × chip（真动画 + 相位帧）</h2>
+<p class=sub>五态图形<b>与刘海模式逐图元完全一致</b>（同一套 <code>.sg-*</code> 矢量与关键帧，逐实例内联进可见 <code>&lt;svg&gt;</code>、动画写在图元自身 class 上，不走 <code>&lt;defs&gt;</code> 模板 + <code>&lt;use&gt;</code> 克隆）。本节每态给两组：<b>live</b>＝正在跑的真动画；<b>相位帧</b>＝用 <mark>animation-play-state:paused + 负 animation-delay</mark> 真正冻结在 <code>t=|delay|</code> 的静态帧（不是截屏、不是人工插值，与 live 同一套关键帧同一份实现）。尺寸按悬浮态 <b>30pt</b>、chip <b>36×36</b>。</p>
+<div class=srows>
+
+<div class=srow data-state=idle>
+<div class=sname><i class=t-id></i>空闲<span>idle · #9CA0AA</span></div>
+<div class=shots>
+<div class="shot live"><div class=wall><div class=chip><svg class="ng c-id" data-live=idle viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div></div><span>live 真动画</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-id frz" style="--d:0s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div></div><span>相位帧 t=0</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-id frz" style="--d:-.4s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div></div><span>相位帧 t=0.4s</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-id frz" style="--d:-.8s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div></div><span>相位帧 t=0.8s</span></div>
+</div>
+<p class=snote><b>灰 #9CA0AA · 真动画：中心柔光点 <code>ng-breath 1.9s ease-in-out alternate</code>（scale .55→1.18、α .32→1）+ 外扩涟漪环 <code>ng-ripple 4.2s ease-out infinite</code>（scale .62→1.46、α .46→0）</b><br>这是五态里<b>最慢的一档</b>：涟漪 4.2s 单程 ≈ 与呼吸往返（1.9×2=3.8s）近似锁相、每轮漂移 0.4s，避免机械同步。图上三张相位帧分别定格在 0 / 0.4 / 0.8s：涟漪直径与透明度都不同（实测值见第六节），0.4s 与 0.8s 的帧间差异肉眼可辨。上端取 <b>1.46 而非更大</b>：再大就会反超异常态单圈的振幅，「空闲最弱」的层级就不成立。<b>本次不改这一态的任何参数</b>，只把承载它的图形代号从 28pt 换成 30pt、底下加 chip。</p>
+</div>
+
+<div class=srow data-state=working>
+<div class=sname><i class=t-wk></i>工作中<span>working · #FFC928</span></div>
+<div class=shots>
+<div class="shot live"><div class=wall><div class=chip><svg class="ng c-wk" data-live=working viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div></div><span>live 真动画</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-wk frz" style="--d:0s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div></div><span>相位帧 t=0</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-wk frz" style="--d:-.29s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div></div><span>相位帧 t=0.29s</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-wk frz" style="--d:-.58s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div></div><span>相位帧 t=0.58s</span></div>
+</div>
+<p class=snote><b>黄 #FFC928 · 真动画：三段光轨追逐 <code>ng-spin 1.15s linear infinite</code></b><br>三段弧同绕 <code>r268</code> 圆环（周长 1,683.9）整体 <code>rotate 0→360°</code> <b>线性单向</b>（不用 alternate 往返）：起始相位 0 / 92.2 / 165.1，弧长 111.5 / 62.2 / 30，头 <b>38 描边 α1</b>、中 <b>26 α.70</b>、尾 <b>16 α.34</b>；光轨外扩到 r268 是为脱离底弧 132 描边的带宽，否则同色叠在弧上「看不出在转」。三张相位帧 = 0 / 90.8° / 181.6°，光轨位置完全错开。</p>
+</div>
+
+<div class=srow data-state=waiting>
+<div class=sname><i class=t-wt></i>等待确认<span>waiting · #FF6259</span></div>
+<div class=shots>
+<div class="shot live"><div class=wall><div class=chip><svg class="ng c-wt" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wv" cx=300 cy=300 r="82"/><circle class="sg-wv sg-wv2" cx=300 cy=300 r="82"/><rect class="sg-bob" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></svg></div></div><span>live 真动画</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-wt frz" style="--d:0s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wv" cx=300 cy=300 r="82"/><circle class="sg-wv sg-wv2" cx=300 cy=300 r="82"/><rect class="sg-bob" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></svg></div></div><span>相位帧 t=0</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-wt frz" style="--d:-.53s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wv" cx=300 cy=300 r="82"/><circle class="sg-wv sg-wv2" cx=300 cy=300 r="82"/><rect class="sg-bob" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></svg></div></div><span>相位帧 t=0.53s</span></div>
+</div>
+<p class=snote><b>红 #FF6259 · 真动画（最吵的一档，要打断你）：双圈错相脉冲 <code>ng-wave 1.6s ease-out</code> + 感叹号 <code>ng-bob 1.15s</code> 上浮</b><br>两圈同形脉冲环 <code>r82 / 描边 8</code>（scale .73→1.24、α .38→0），第二圈错开 45% 相位（<code>-.72s</code>）形成连续外扩；感叹号竖条上浮 −5pt（<code>α .72→1</code>）、<b>圆点不浮动</b>。与「异常」<b>共用同一图形与同一个红</b>，只靠节奏区分——所以 chip 上<b>不能</b>再叠任何第二种红/橙。</p>
+</div>
+
+<div class=srow data-state=fault>
+<div class=sname><i class=t-wt></i>异常<span>fault · #FF6259 · 不闪</span></div>
+<div class=shots>
+<div class="shot live"><div class=wall><div class=chip><svg class="ng c-er" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wvs" cx=300 cy=300 r="82"/><g class="sg-ebr"><rect class="sg-still" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></g></svg></div></div><span>live 真动画</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-er frz" style="--d:0s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wvs" cx=300 cy=300 r="82"/><g class="sg-ebr"><rect class="sg-still" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></g></svg></div></div><span>相位帧 t=0</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-er frz" style="--d:-1.2s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-wvs" cx=300 cy=300 r="82"/><g class="sg-ebr"><rect class="sg-still" x=285 y=248 width=30 height=72 rx="15"/><circle class="sg-dot" cx=300 cy=362 r="16"/></g></svg></div></div><span>相位帧 t=1.2s</span></div>
+</div>
+<p class=snote><b>红 #FF6259 · 真动画：单圈 <code>ng-slow 2.4s ease-out</code> 慢脉冲 + 感叹号 <code>ng-ebr 1.6s</code> 极慢透明度呼吸（不浮动）</b><br>与「等待确认」同形同色，只降两处强度：脉冲只剩 <b>1 圈</b>、时长 1.6→2.4s、scale 顶到 1.20（比 1.24 收敛）、峰值 α .38→.28；竖条与圆点<b>不浮动</b>。落在 chip 上时这层节奏差就是唯一区分手段，chip 的底色透明度<b>不随状态改变</b>——四态 chip 是交互态，五态图形才是状态语义，两者不得互相染色。</p>
+</div>
+
+<div class=srow data-state=done>
+<div class=sname><i class=t-dn></i>已完成<span>done · #31D158</span></div>
+<div class=shots>
+<div class="shot live"><div class=wall><div class=chip><svg class="ng c-dn" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><path class="sg-ck" d="M245 304 284 343 365 255"/><circle class="sg-spk sg-sp1" cx=389 cy=230 r="8"/><circle class="sg-spk sg-sp2" cx=218 cy=256 r="6"/><circle class="sg-spk sg-sp3" cx=370 cy=374 r="5"/></svg></div></div><span>live 真动画</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-dn frz" style="--d:0s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><path class="sg-ck" d="M245 304 284 343 365 255"/><circle class="sg-spk sg-sp1" cx=389 cy=230 r="8"/><circle class="sg-spk sg-sp2" cx=218 cy=256 r="6"/><circle class="sg-spk sg-sp3" cx=370 cy=374 r="5"/></svg></div></div><span>相位帧 t=0</span></div>
+<div class=shot><div class=wall><div class=chip><svg class="ng c-dn frz" style="--d:-1.5s" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><path class="sg-ck" d="M245 304 284 343 365 255"/><circle class="sg-spk sg-sp1" cx=389 cy=230 r="8"/><circle class="sg-spk sg-sp2" cx=218 cy=256 r="6"/><circle class="sg-spk sg-sp3" cx=370 cy=374 r="5"/></svg></div></div><span>相位帧 t=1.5s</span></div>
+</div>
+<p class=snote><b>绿 #31D158 · 真动画：对勾描出 <code>ng-draw</code> 一次 + 3 颗星点 <code>ng-spark</code> 依次聚开</b><br>对勾路径长 175、自左向右 trim 0→1（<code>0.62s ease-out</code>，本页 1.7s 循环回放、前 36% 完成描出），描边 30 圆头；星点 <code>r8/r6/r5</code> 分置 (389,230)/(218,256)/(370,374)，<code>0.86s ease-out</code> 依次聚开（间隔 0.06s）。真实实现到终态即停，本页循环回放便于核对。<b>唯一一处容易和品牌绿撞的地方</b>：状态绿 <code>#31D158</code> 只在这里出现，chip 与面板上的交互绿 <code>#00D4AA</code> 不在同屏紧邻位置出现。</p>
+</div>
+
+</div>
+<p class=cap style="max-width:1000px;margin-top:10px"><b>五态共性（与刘海模式一字不改）</b> 底弧固定不随状态变；弧内指示 <code>opacity + scale .92</code> 交叉淡入 <code>0.52s ease-out</code>、颜色过渡 <code>0.5s ease-in-out</code>；色板与任务行状态灯共用同一支；五态均以 <b>真 CSS 关键帧</b>运行，系统「减弱动态效果」时 <code>prefers-reduced-motion: reduce</code> 令 <code>animation:none</code> 退化为静态终态。<b>悬浮态新增的只有 chip</b>：它不参与动画、不随状态变色，只在四态间改底与描边。</p>
+
+<h2>四 · 28pt（刘海）vs 30pt（悬浮 chip）</h2>
+<p class=sub>两档尺寸同屏对照。<b>同一份图形、同一组关键帧</b>，只改承载它的画布边长：刘海条里 <b>28pt</b> 直接压在纯黑底上（无 chip）；悬浮态 <b>30pt</b> 落在 36×36 chip 里。图形大 7.1%，振幅同比放大。</p>
+<div class=sz2>
+<div class=szcol>
+<h3>刘海收起条 · 28pt · 纯黑底 · 无 chip</h3>
+<p class=sub style="margin:0 0 6px 0;font-size:10.5px">左翼 <code>wingWidth 36</code>，图形 28pt 居中（<code>x = 18</code>），底为了与硬件开孔无缝必须是纯黑 <code>#000000</code>。</p>
+<div class=szrow>
+<div class=szcell><div class=bar28><svg class="ng28 c-id" data-size=28 data-state=idle viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div><span>空闲 · 28pt</span></div>
+<div class=szcell><div class=bar28><svg class="ng28 c-wk" data-size=28 data-state=working viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div><span>工作中 · 28pt</span></div>
+<div class=szcell><div class=bar28><svg class="ng28 c-dn" data-size=28 data-state=done viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><path class="sg-ck" d="M245 304 284 343 365 255"/><circle class="sg-spk sg-sp1" cx=389 cy=230 r="8"/><circle class="sg-spk sg-sp2" cx=218 cy=256 r="6"/><circle class="sg-spk sg-sp3" cx=370 cy=374 r="5"/></svg></div><span>已完成 · 28pt</span></div>
+</div>
+<p class=cap style="max-width:100%">底弧直径 <b>2×185/600×28 = 17.27pt</b>；涟漪环 r42 在 28pt 下起始直径 <b>3.92pt</b>、外扩到 <b>9.24pt</b>（实测见第六节）。</p>
+</div>
+<div class=szcol>
+<h3>悬浮图标 · 30pt · 36×36 chip</h3>
+<p class=sub style="margin:0 0 6px 0;font-size:10.5px">收起态窗口 <code>60×60</code>，chip 36 承托 30pt 图形；底是<b>半透明</b>的（白 6%），压在桌面壁纸上。</p>
+<div class=szrow>
+<div class=szcell><div class=wall style="width:54px;height:54px"><div class=chip><svg class="ng c-id" data-size=30 data-state=idle viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div></div><span>空闲 · 30pt</span></div>
+<div class=szcell><div class=wall style="width:54px;height:54px"><div class=chip><svg class="ng c-wk" data-size=30 data-state=working viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div></div><span>工作中 · 30pt</span></div>
+<div class=szcell><div class=wall style="width:54px;height:54px"><div class=chip><svg class="ng c-dn" data-size=30 data-state=done viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><path class="sg-ck" d="M245 304 284 343 365 255"/><circle class="sg-spk sg-sp1" cx=389 cy=230 r="8"/><circle class="sg-spk sg-sp2" cx=218 cy=256 r="6"/><circle class="sg-spk sg-sp3" cx=370 cy=374 r="5"/></svg></div></div><span>已完成 · 30pt</span></div>
+</div>
+<p class=cap style="max-width:100%">底弧直径 <b>2×185/600×30 = 18.50pt</b>（+1.23pt / +7.1%）；chip 36 是图形的 <b>1.20 倍</b>，图形四周留 3pt。</p>
+</div>
+</div>
+<table class=dt>
+<thead><tr><th>量</th><th>刘海 · 28pt</th><th>悬浮 · 30pt</th><th>差</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>图形画布</td><td class=v2>28 × 28</td><td class=v>30 × 30</td><td class=v2>+2pt（+7.1%）</td><td>同一 600 视框，等比缩放</td></tr>
+<tr><td>底弧直径（r185）</td><td class=v2>17.27pt</td><td class=v>18.50pt</td><td class=v2>+1.23pt</td><td><code>2×185/600×size</code></td></tr>
+<tr><td>承载底</td><td class=v2>纯黑 #000（无块）</td><td class=v>36×36 chip · r10</td><td class=v2>新增</td><td>28 有硬件开孔兜底，30 没有，必须自带底</td></tr>
+<tr><td>命中盒</td><td class=v2>整翼 36（无独立盒）</td><td class=v>44 × 44</td><td class=v2>新增</td><td>chip 36 仍在 44 内</td></tr>
+<tr><td>图形 : 承载</td><td class=v2>28 / 36 = 0.778</td><td class=v>30 / 36 = 0.833</td><td class=v2>+0.055</td><td>30pt 在 chip 里的留白比例与刘海条接近</td></tr>
+<tr><td>空闲涟漪振幅（实测）</td><td class=v2 id=m28r>2.430 → 5.720pt · Δ3.290pt</td><td class=v id=m30r>2.604 → 6.134pt · Δ3.525pt</td><td class=v2 id=mdrk>+0.235pt / +7.1%</td><td>冻结时刻法，见第六节 §6.3</td></tr>
+<tr><td>空闲呼吸点振幅（实测）</td><td class=v2 id=m28b>1.330 → 2.860pt · Δ1.529pt</td><td class=v id=m30b>1.430 → 3.070pt · Δ1.638pt</td><td class=v2 id=mdbk>+0.109pt / +7.1%</td><td>冻结时刻法，见第六节 §6.3</td></tr>
+</tbody></table>
+<ol class=lg>
+<li><b>为什么不把悬浮态也做成 28pt</b><span>悬浮态没有硬件开孔那层纯黑底，图形四周是用户壁纸——同样的 28pt 在杂乱壁纸上可辨性明显低于黑色条身。加 2pt 到 30pt 后底弧从 17.27→18.50pt，涟漪整体振幅同比 +7%，这是给「没有黑底可倚」付的补偿</span></li>
+<li><b>为什么 chip 不是 28×28 或 34×34</b><span>34 距 44 命中盒只剩 5pt 边距，视觉上 chip 会「顶到」命中区边界；32 会让 30pt 图形只剩 1pt 留白、看起来要溢出来。36 给出 <b>3pt 内留白 + 4pt 外留白</b>，是 44 命中盒下唯一同时满足内不挤、外不贴的解</span></li>
+<li><b>两档必须共用同一份矢量</b><span>禁止为 30pt 单独描一套图形或单独调关键帧——一旦分叉，刘海与悬浮在切换的一瞬间会「跳形」。实现上只传 <code>size:</code> 一个参数（<code>LogoMotionBadge(size: 28 / 30)</code>）</span></li>
+</ol>
+
+<h2>五 · 收起（chip + 图标）→ 展开（面板从图标下缘展开）</h2>
+<p class=sub>形态说明图，全部 1:1。收起态窗口 <b>60×60</b>（虚线框，实际全透明不可见）；展开时<b>窗口先瞬时长大（全透明不可见），面板再从小图标下边缘动画展开，图标全程不动</b>。面板收起态的矩形落在窗口外，被窗口直接裁掉 → 所以看不到它。</p>
+<div class=stack>
+
+<div>
+<h3>5.1 展开态与锚点关系（1:1）</h3>
+<div class="scene wide" data-scene=open>
+<div class=cwin><div class=chip><svg class="ng c-wk" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div></div>
+<div class=cpanel style="opacity:1">
+<div class=ph><b>Comate HUD</b><span class=pp><svg width=11 height=11 viewBox="0 0 12 12" fill=none stroke=currentColor stroke-width=1.4 stroke-linecap=round><path d="M6 2.2v7.6M2.2 6h7.6"/></svg></span></div>
+<div class="pr t-wk"><i class=lt></i><span class=tx>补全 infer 接口单测</span></div>
+<div class="pr t-dn"><i class=lt></i><span class=tx>收敛四态色板到 Logo</span></div>
+<div class=pf><span class=seg><span class=on data-accent-bg data-accent-text>日</span><span>月</span></span><span class=ftx>已用 <b>1,240</b> / 2,000 点</span><span class=pg><i style="width:62%"></i></span></div>
+</div>
+<div class=gcross style="left:42px;top:40px;position:absolute"></div>
+<div class=anchor style="left:42.1px;top:68px"></div>
+<div class=gapdim style="left:68px;top:62px;height:6px"><i></i></div>
+<div class=dimline style="left:20px;top:222px;width:280px"><i></i>面板 280 × 145<i></i></div>
+<div class=lbl style="left:76px;top:12px">窗口 60×60（全透明）</div>
+<div class=lbl style="left:76px;top:26px">命中盒 44 · chip 36 · 图形 30</div>
+<div class=lbl style="left:76px;top:40px">图标中心 (42, 40) ↔ 锚点 x 42.1</div>
+<div class=lbl style="left:82px;top:64px">gap 6（图标下缘 → 面板上缘）</div>
+<div class=lbl style="left:306px;top:76px">面板 <b>16</b> 圆角</div>
+<div class=lbl style="left:306px;top:90px">左缘对齐图标左缘</div>
+<div class=lbl style="left:306px;top:104px">（x = icon.minX）</div>
+</div>
+</div>
+
+<div>
+<h3>5.2 三段形态</h3>
+<div class=strip style="gap:12px">
+<div><div class="scene crop" style="height:118px"><div class=cwin><div class=chip><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div></div><div class=cpanel style="opacity:0"><div class=ph><b>Comate HUD</b></div></div><div class=dimline style="left:12px;top:80px;width:60px"><i></i>60<i></i></div></div>
+<div class=cap style="max-width:336px"><b>① 收起</b> 窗口 60×60，只有 chip + 图标；面板 <code>opacity 0 / scale .94</code> 且矩形在窗口外，被裁掉 → 完全看不见。</div></div>
+<div><div class="scene crop" style="height:118px"><div class=cwin><div class=chip><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div></div><div class=cpanel style="opacity:.55;transform:scale(.94);transform-origin:22.1px 0"><div class=ph><b>Comate HUD</b></div></div><div class=lbl style="left:100px;top:20px">scale .94 · α .55</div></div>
+<div class=cap style="max-width:336px"><b>② 展开中</b> <code>scale .94→1</code> + <code>opacity 0→1</code>，<code>200ms easeInOut</code>；<code>scaleEffect(anchor: UnitPoint(x:22.1/280, y:0))</code> → <b>从贴着图标下缘那条边长出来</b>。</div></div>
+<div><div class="scene crop" style="height:118px"><div class=cwin><div class=chip><svg class="ng c-wk" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></div></div><div class=cpanel style="opacity:1;transform:scale(1);transform-origin:22.1px 0"><div class=ph><b>Comate HUD</b></div><div class="pr t-wk"><i class=lt></i><span class=tx>补全 infer 接口单测</span></div></div></div>
+<div class=cap style="max-width:336px"><b>③ 展开</b> 面板 <b>280 × H</b>（<code>expandedWidth</code>，高随内容 <code>81+38n</code> 夹在 1–10 条）；图标中心 <code>(42, 40)</code> 与 chip <b>全程不动</b>。</div></div>
+</div>
+</div>
+</div>
+<ol class=lg>
+<li><b>图标中心是唯一不动点</b><span>收起、展开中、展开三态里 <code>iconRect</code> 完全相同（<code>position(x: iconRect.midX, y: iconRect.midY)</code>，不受 <code>isExpanded</code> 影响）。窗口长大时 <code>iconCenter</code> 也不变——所以 chip 在屏幕上不位移、不缩放、不改尺寸，只改四态底色</span></li>
+<li><b>面板锚点：竖向贴图标下缘，横向对齐图标左缘</b><span><code>anchor = UnitPoint(x: (iconCenterX − panel.minX)/panel.width, y: 0)</code>。代码里面板 <b>左对齐图标左缘</b>（<code>x = min(max(icon.minX, …))</code>）→ 宽度 280 时 <code>anchor.x = 22/280 ≈ 0.0786</code>，所以「不为 0.5」是刻意的：锚点落在面板左上角内侧，缩小动画看起来才像从图标底下钻出来，而不是从面板正中间撑开</span></li>
+<li><b>gap 6 与 4pt 容差刚好接上</b><span><code>gap 6</code> 是图标与面板之间的空隙；展开态 hover 判定把面板与图标矩形各外扩 <b>4pt</b>（<code>insetBy(dx:-4, dy:-4)</code>），6 − 4 − 4 &lt; 0 → 两者判定区<b>重叠</b>，鼠标从图标走向面板的途中不会掉进「空档」而被误收起</span></li>
+<li><b>面板本体样式与刘海展开面板一致</b><span>底 <code>surface.panel #0F0F11</code> · 圆角 <code>16</code> · 描边 <code>1px 白 12%</code> · 内边距 <code>12 / 8 / 12</code> · 区块 6 · 列表行 34/3 · 页脚 20 · 手柄 44×3。<b>chip 与面板之间无连线、无箭头、无三角尖</b>——只用 6pt 空隙表达层级（P2）</span></li>
+</ol>
+
+<h2>六 · 自测报告（DOM 量测，无截图）</h2>
+<p class=sub>本机无头截屏不可用，全部结论来自 <b>DOM 量测</b>：<code>getBoundingClientRect()</code> / <code>getComputedStyle()</code> / <code>document.getAnimations()</code>，动效数据用<b>冻结时刻法</b>（<code>a.pause()</code> 后写 <code>a.currentTime = t</code>）与<b>相位帧读回</b>两种独立手段交叉验证。视口 <code>1280×900</code>，页面 100%，<b>pt = px</b>。以下数字均为实测值。</p>
+
+<h3>6.1 chip ↔ 44pt 命中盒 ↔ 30pt 图形（§2.1 的实测）</h3>
+<table class=dt>
+<thead><tr><th>元素</th><th>选择器</th><th>实测 getBoundingClientRect</th><th>期望</th><th>结论</th></tr></thead>
+<tbody>
+<tr><td>窗口（收起态）</td><td><code>.gbox[data-geo=window]</code></td><td class=v>60.000 × 60.000</td><td class=v2>60 × 60</td><td>✅</td></tr>
+<tr><td>命中盒</td><td><code>[data-geo=hitbox]</code></td><td class=v>44.000 × 44.000</td><td class=v2>44 × 44</td><td>✅</td></tr>
+<tr><td>chip</td><td><code>[data-geo=chip]</code></td><td class=v>36.000 × 36.000</td><td class=v2>36 × 36</td><td>✅</td></tr>
+<tr><td>图形</td><td><code>[data-geo=glyph]</code></td><td class=v>30.000 × 30.000</td><td class=v2>30 × 30</td><td>✅</td></tr>
+<tr><td>同心关系</td><td class=v2>命中盒−chip</td><td class=v>(44−36)/2 = <b>4pt</b></td><td class=v2>chip 四周 4pt 仍属命中区</td><td>✅</td></tr>
+<tr><td>同心关系</td><td class=v2>窗口−命中盒</td><td class=v>(60−44)/2 = <b>8pt</b>（= <code>pad</code>）</td><td class=v2>不越界</td><td>✅</td></tr>
+<tr><td>同心关系</td><td class=v2>窗口−chip</td><td class=v>12pt × 12pt</td><td class=v2>chip 距窗口边缘 12pt，<b>不超出可用区</b></td><td>✅</td></tr>
+<tr><td>同心关系</td><td class=v2>chip−图形</td><td class=v>(36−30)/2 = <b>3pt</b></td><td class=v2>图形不贴 chip 边</td><td>✅</td></tr>
+</tbody></table>
+<p class=sub style="margin:10px 0 0 12px"><b>chip 四态的 computed 实测</b>（几何全部 36.000×36.000、<code>border-radius: 10px</code>、内含图形 30×30，<b>四态尺寸完全一致、只有颜色变</b>）：</p>
+<table class=dt>
+<thead><tr><th>态</th><th>computed background-color</th><th>computed border</th><th>实测尺寸</th><th>内含图形</th></tr></thead>
+<tbody>
+<tr><td>① 常态</td><td class=v>rgba(255,255,255,0.06)</td><td class=v2>1px rgba(255,255,255,0.08)</td><td class=v2>36.000 × 36.000</td><td class=v2>30 × 30</td></tr>
+<tr><td>② hover</td><td class=v>rgba(255,255,255,0.10)</td><td class=v2>1px rgba(255,255,255,0.10)</td><td class=v2>36.000 × 36.000</td><td class=v2>30 × 30</td></tr>
+<tr><td>③ 按下</td><td class=v>rgba(255,255,255,0.14)</td><td class=v2>1px rgba(255,255,255,0.12)</td><td class=v2>36.000 × 36.000</td><td class=v2>30 × 30</td></tr>
+<tr><td>④ 展开中</td><td class=v>rgba(255,255,255,0.12)</td><td class=v2>1px rgba(255,255,255,0.14)</td><td class=v2>36.000 × 36.000</td><td class=v2>30 × 30</td></tr>
+</tbody></table>
+<p class=cap style="max-width:1020px"><b>结论</b> 四态阶梯 <code>.06 / .10 / .14 / .12</code> 与设计值逐位一致；<b>命中盒 44 与图形 30 在四态间零变化</b> → chip 确实是纯可视层，不改变 <code>iconBox</code>，也不挤压图形。</p>
+
+<h3>6.2 动画实例与 0×0 检查（<code>document.getAnimations()</code>）</h3>
+<table class=dt>
+<thead><tr><th>指标</th><th>实测</th><th>判据</th><th>结论</th></tr></thead>
+<tbody>
+<tr><td>动画实例总数</td><td class=v><b>59</b></td><td class=v2>—</td><td class=v2>其中 live 真动画 32、相位帧（paused）27</td></tr>
+<tr><td><b>目标 rect 为 0×0 的个数</b></td><td class=v><b>0</b></td><td class=v2><b>必须为 0</b></td><td>✅ <b>动画全部作用在可见图元上</b></td></tr>
+<tr><td>动画实例承载元素</td><td class=v2>每个都是有其自身包围盒的 <code>circle / rect / path / g</code></td><td class=v2>—</td><td class=v2>无 <code>&lt;defs&gt;</code> 模板 + <code>&lt;use&gt;</code> 克隆承载动画</td></tr>
+<tr><td><code>prefers-reduced-motion: reduce</code></td><td class=v><b>0</b></td><td class=v2>退化为静态终态</td><td>✅ 全部动画关闭后仍无宽度塌陷</td></tr>
+</tbody></table>
+<p class=cap style="max-width:1020px"><b>0×0 = 0 的含义</b> 若动画被挂到 <code>&lt;defs&gt;</code> 里的模板图元、靠 <code>&lt;use&gt;</code> 克隆渲染，可见克隆不会动，而 <code>getAnimations()</code> 仍会列出那些形状（其中一部分包围盒为 0×0）。本页 59 条动画<b>没有一条</b>落在 0×0 目标上 → 动画确实作用在页面里看得见的图元。</p>
+
+<h3>6.3 冻结时刻法 · 空闲态涟漪（③ 要求项）</h3>
+<p class=sub style="margin-left:12px">目标：<code>[data-live=idle] .sg-rip</code>（30pt 画布内的 <code>r42 / 描边 8</code> 涟漪环）。<code>a.pause()</code> 后把全部动画 <code>currentTime</code> 钉到 0 / 400 / 800ms，读包围盒与 computed opacity。</p>
+<table class=dt>
+<thead><tr><th>t</th><th>涟漪直径（实测）</th><th>涟漪 opacity（实测）</th><th>呼吸点直径</th><th>呼吸点 opacity</th></tr></thead>
+<tbody>
+<tr><td class=v2>0 ms</td><td class=v>2.604 pt</td><td class=v>0.460</td><td class=v2>1.430 pt</td><td class=v2>0.320</td></tr>
+<tr><td class=v2>400 ms</td><td class=v>3.145 pt</td><td class=v>0.390</td><td class=v2>1.579 pt</td><td class=v2>0.382</td></tr>
+<tr><td class=v2>800 ms</td><td class=v>3.644 pt</td><td class=v>0.324</td><td class=v2>2.030 pt</td><td class=v2>0.569</td></tr>
+<tr><td class=v2><b>三值互不相同</b></td><td class=v><b>✅ 2.604 / 3.145 / 3.644</b>（Δ=1.040pt）</td><td class=v><b>✅ 0.460 / 0.390 / 0.324</b>（Δ=0.136）</td><td class=v><b>✅ 1.430 / 1.579 / 2.030</b></td><td class=v><b>✅ 0.320 / 0.382 / 0.569</b></td></tr>
+</tbody></table>
+<p class=cap style="max-width:1020px"><b>结论</b> 涟漪的直径与透明度在三个时刻<b>都互不相等</b>，且趋势单调（直径递增、透明度递减）——与 <code>ng-ripple</code> 的 <code>scale .62→1.46 / α .46→0</code> 一致，说明空闲态在 30pt 下确实「看得出在动」，不是亚像素静止。</p>
+
+<h3>6.4 相位帧是真冻结（不是错相采样）</h3>
+<p class=sub style="margin-left:12px">每张相位帧 = <code>animation-play-state:paused</code> + 负 <code>animation-delay</code>，渲染时定格在 <code>t=|delay|</code>。下图为 fresh load（未做任何 pause 干预）后直接读回的值。</p>
+<table class=dt>
+<thead><tr><th>状态</th><th>帧（t）</th><th>关键图元实测</th><th>相位差</th></tr></thead>
+<tbody>
+<tr><td class=v2 rowspan=3>空闲</td><td class=v2>t=0</td><td class=v>涟漪 2.604pt / α .460 · 呼吸点 1.430pt / α .320</td><td class=v2>0°</td></tr>
+<tr><td class=v2>t=0.4s</td><td class=v>涟漪 3.145pt / α .390 · 呼吸点 1.579pt / α .382</td><td class=v2>9.5% 周期</td></tr>
+<tr><td class=v2>t=0.8s</td><td class=v>涟漪 3.644pt / α .324 · 呼吸点 2.030pt / α .569</td><td class=v2>19.0% 周期</td></tr>
+<tr><td class=v2 rowspan=3>工作中</td><td class=v2>t=0</td><td class=v>光轨组 26.800pt · <b>rotate 0°</b></td><td class=v2>0°</td></tr>
+<tr><td class=v2>t=0.29s</td><td class=v>光轨组 27.164pt · <b>rotate 90.8°</b></td><td class=v2>25.2% 周期</td></tr>
+<tr><td class=v2>t=0.58s</td><td class=v>光轨组 27.522pt · <b>rotate −178.4°（=181.6°）</b></td><td class=v2>50.4% 周期</td></tr>
+<tr><td class=v2 rowspan=2>等待确认</td><td class=v2>t=0</td><td class=v>脉冲环 5.986pt / α .380 · 竖条 α .720</td><td class=v2>—</td></tr>
+<tr><td class=v2>t=0.53s</td><td class=v>脉冲环 8.017pt / α .195 · 竖条 α .841</td><td class=v2>33% 周期</td></tr>
+<tr><td class=v2 rowspan=2>异常</td><td class=v2>t=0</td><td class=v>脉冲环 5.986pt / α .280（单圈 · 更慢）</td><td class=v2>—</td></tr>
+<tr><td class=v2>t=1.2s</td><td class=v>脉冲环 8.625pt / α .088</td><td class=v2>50% 周期</td></tr>
+<tr><td class=v2 rowspan=2>已完成</td><td class=v2>t=0</td><td class=v>对勾包围盒 6.000pt（未描出）· 星点 0.160pt / α 0</td><td class=v2>—</td></tr>
+<tr><td class=v2>t=1.5s</td><td class=v>对勾包围盒 6.000pt（已描出）· 星点 0.746pt / α 0.779</td><td class=v2>88% 周期</td></tr>
+</tbody></table>
+<p class=cap style="max-width:1020px"><b>冻结有效性</b> 相隔 <b>500ms</b> 两次读回，<b>全部 12 张相位帧的图元包围盒与透明度逐帧完全一致</b> → 确系真冻结。<br><b>对照实验（证明 live 确实在动）</b> 同一时刻读 <code>[data-live=idle]</code> 的涟漪 + 呼吸点：<code>[4.014pt, 2.492pt]</code> → 500ms 后 <code>[4.554pt, 2.995pt]</code>，<b>两个值都变了</b>。若页面整体静止（或动画挂在 <code>&lt;defs&gt;</code> 上不生效），这里会与前一行一样不变。</p>
+
+<h3>6.5 28pt vs 30pt 振幅（§4 表格实测值）</h3>
+<table class=dt>
+<thead><tr><th>图元</th><th>28pt（刘海）全周期直径</th><th>30pt（悬浮 chip）全周期直径</th><th>Δ 差</th><th>opacity 区间（两档相同）</th></tr></thead>
+<tbody>
+<tr><td>空闲涟漪 <code>ng-ripple</code></td><td class=v2>2.430 → 5.720 pt · 振幅 <b>3.290pt</b></td><td class=v>2.604 → 6.134 pt · 振幅 <b>3.525pt</b></td><td class=v>+0.235pt（<b>+7.1%</b>）</td><td class=v2>α 0 → 0.46</td></tr>
+<tr><td>空闲呼吸点 <code>ng-breath</code></td><td class=v2>1.330 → 2.860 pt · 振幅 <b>1.529pt</b></td><td class=v>1.430 → 3.070 pt · 振幅 <b>1.638pt</b></td><td class=v>+0.109pt（<b>+7.1%</b>）</td><td class=v2>α 0.32 → 1</td></tr>
+<tr><td>工作中光轨 <code>ng-spin</code></td><td class=v2 colspan=2>30pt live 全周期包围盒振幅 <b>Δ = 10.957pt</b>（旋转组，5 种状态里最大）</td><td class=v>—</td><td class=v2>α 不变（靠旋转与弧长分层）</td></tr>
+<tr><td>空闲整体（live 全周期扫）</td><td class=v2 colspan=2>30pt live 全周期最大直径振幅 <b>Δ = 3.523pt</b></td><td class=v>—</td><td class=v2>—</td></tr>
+</tbody></table>
+<p class=cap style="max-width:1020px"><b>结论</b> 两档共用同一份关键帧，振幅差的来源只有画布边长 <code>30/28 = 1.0714</code>；实测 <b>+7.1%</b> 与理论值吻合到小数点后一位 → <b>确认没有为 30pt 重新调过任何参数</b>。<br>层级关系仍成立：空闲 <b>3.523pt</b> &lt; 工作中 <b>10.957pt</b>，空闲依旧是「最安静」的一档。</p>
+
+<h3>6.6 绿底控件前景色（<code>getComputedStyle</code>）</h3>
+<table class=dt>
+<thead><tr><th>控件</th><th>computed background-color</th><th>computed color</th><th>判据</th><th>结论</th></tr></thead>
+<tbody>
+<tr><td>周期胶囊选中段「日」（<code>[data-accent-bg]</code>，位于 §5.1 展开面板页脚）</td><td class=v>rgb(0, 212, 170) = <b>#00D4AA</b></td><td class=v>rgb(15, 15, 17) = <b>#0F0F11</b></td><td class=v2>绿底必须配深墨字</td><td>✅ 对比度 ≈ <b>9.8:1</b></td></tr>
+</tbody></table>
+<p class=cap style="max-width:1020px">本页只在<b>这一处</b>使用绿实底（品牌绿 = 交互主色）：周期胶囊选中段、进度条填充。若按常规配白字，白压 <code>#00D4AA</code> 只有 ≈<b>1.9:1</b>，不可读。<b>五态状态灯与 chip 四态都不使用品牌绿</b>——状态色（灰/黄/双红/绿）只做状态语义，chip 只用中性白，两者不互相染色，符合 P1/P3。</p>
+
+<h3>6.7 无横向溢出</h3>
+<table class=dt>
+<thead><tr><th>指标</th><th>实测</th><th>判据</th><th>结论</th></tr></thead>
+<tbody>
+<tr><td><code>document.documentElement.scrollWidth</code></td><td class=v>1280</td><td class=v2 rowspan=3>scrollWidth == clientWidth</td><td class=v2 rowspan=3>✅ 无横向滚动条</td></tr>
+<tr><td><code>document.documentElement.clientWidth</code></td><td class=v>1280</td></tr>
+<tr><td><code>document.body.scrollWidth</code></td><td class=v>1280</td></tr>
+</tbody></table>
+
+<h3>6.8 复核清单</h3>
+<table class=dt>
+<thead><tr><th>#</th><th>要求</th><th>实测结论</th></tr></thead>
+<tbody>
+<tr><td class=v2>1</td><td class=v2>chip 36×36 / 命中盒 44pt / 图形 30pt 尺寸关系（<code>getBoundingClientRect</code>）</td><td class=v>✅ 60 / 44 / 36 / 30.000pt，四态零变化，第 6.1 节</td></tr>
+<tr><td class=v2>2</td><td class=v2><code>getAnimations()</code> 总数、目标 rect 0×0 个数<b>必须为 0</b></td><td class=v>✅ 总数 59，<b>0×0 = 0</b>，第 6.2 节</td></tr>
+<tr><td class=v2>3</td><td class=v2>空闲涟漪 t=0/400/800 直径与 opacity <b>三值互不相同</b></td><td class=v>✅ 直径 2.604/3.145/3.644pt、α 0.460/0.390/0.324，第 6.3 节</td></tr>
+<tr><td class=v2>4</td><td class=v2><code>getComputedStyle</code> 证明绿底控件文字为 <code>#0F0F11</code>；<code>scrollWidth == clientWidth</code></td><td class=v>✅ rgb(15,15,17)；1280 == 1280，第 6.6 / 6.7 节</td></tr>
+<tr><td class=v2>5</td><td class=v2>（附加）相位帧真冻结、reduced-motion 退化、零外链</td><td class=v>✅ 500ms 逐帧不变；reduce → 0 条动画；无 <code>http(s)</code> / <code>@import</code> / <code>url()</code> / <code>&lt;use&gt;</code> / <code>&lt;defs&gt;</code></td></tr>
+</tbody></table>
+
+<footer>§6 数据取得方式：Playwright + chromium headless shell 的 <b>DOM 量测</b>（<code>getBoundingClientRect</code> / <code>getComputedStyle</code> / <code>document.getAnimations()</code>），<b>全程未截图</b>；动效用冻结时刻法（<code>pause()</code> + <code>currentTime = t</code>）与相位帧读回两种手段交叉验证，另用 fresh load 复测相位帧稳定性与 live 在动性。本页为纯本地 HTML：无外链字体 / 图片 / 埋点，图形只用内联 SVG + CSS 关键帧；<b>五态的动画图元（<code>path/circle/rect/g</code>）逐个内联进可见的 <code>&lt;svg&gt;</code>，动画写在图元自身的 class 上</b>，不使用 <code>&lt;defs&gt;</code> 模板 + <code>&lt;use&gt;</code> 克隆承载动画；相位帧用 <code>animation-play-state:paused</code> + 负 <code>animation-delay</code> 真冻结。token 见 <code>DESIGN.md</code> §2，几何见 <code>FloatingPanel.swift</code> / <code>FloatingMetrics</code>、<code>layoutGeometry</code>，动效见 <code>LogoMotion.swift</code>。本页只读，不动 <code>manifest.json</code>。</footer>
+</div></body></html>

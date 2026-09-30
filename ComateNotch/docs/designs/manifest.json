@@ -1,8 +1,8 @@
 {
   "design": "Comate HUD · 深色 KDesign 设计规范",
-  "version": "1.0",
-  "stage": "surfaces",
-  "status": "wip",
+  "version": "2.1",
+  "stage": "review",
+  "status": "review",
   "platform": "macOS 14+ / Swift + AppKit",
   "basis": "kd-foundation@3.0.0 + kd-design-language@1.0.0",
   "spec": "DESIGN.md",
@@ -43,6 +43,11 @@
     "accent.line": "rgba(0,212,170,1)",
     "accent.on": "rgba(15,15,17,1)",
     "about-glow": "radial-gradient(circle, rgba(147,126,230,0.28) → rgba(69,38,191,0.14) → 透明)",
+    "surface.chip": "rgba(255,255,255,0.06)",
+    "line.chip": "rgba(255,255,255,0.08)",
+    "radius.chip": "10pt",
+    "metrics.footer-h": "34pt",
+    "radius.meter": "2pt",
 
     "status.idle": "rgba(156,160,170,1)",
     "status.working": "rgba(255,201,40,1)",
@@ -175,7 +180,7 @@
       "id": "footer-quota",
       "name": "页脚额度区",
       "file": "references/panel-main.html",
-      "notes": "已交付（含在面板/刘海两页的页脚区）。按 T1 方案 A：品牌绿退出，进度走 accent.normal + text.secondary 文案 + 阈值语义色。T10 待确认是否改为「已用/总量 + 进度条」。"
+      "notes": "已交付 v2（两行结构、总高 34pt）：第1行 日/月胶囊（日在前，间距 6pt）紧贴「已用 x / y 点」（10pt tabular-nums）+ 右侧铃铛·齿轮（32×22，x 恒定 185/219）；第2行 进度条独立成行（209×4，accent.normal 填充 / accent.track 底）+ 右端百分比（占位 36）。防跑版三档：1,240/2,000 · 缩写成「1,234.6 万/2,000.0 万」· 「10.0 亿/10.0 亿」；兜底三态：无数据 / 加载骨架 / 未登录（登录引导按钮，绿底深墨字）。"
     },
     {
       "id": "empty-state",
@@ -185,15 +190,33 @@
     },
     {
       "id": "about",
-      "name": "关于窗口",
+      "name": "关于内容（已并入设置窗口）",
       "file": "references/about.html",
-      "notes": "已交付。主 CTA 改品牌蓝、四态图例、更新红点、顶部品牌氛围光（紫色处置见 T11）；含更新三态小样。"
+      "notes": "原独立关于弹窗已退场，内容整体并入设置窗口「关于」页（见 settings）；about.html 仅作历史存档，已加横幅标注，不再作为交付面。"
     },
     {
       "id": "settings",
       "name": "设置面板",
       "file": "references/settings.html",
-      "notes": "已交付。左分类导航 surface.raised + line.divider 兜底；账号/显示/通用/关于 4 分类；含登录失效警示态与控件状态变体。"
+      "notes": "已交付。560×480 独立窗口；左分类导航 surface.raised + line.divider 兜底；账号/显示/通用/关于 4 分类；含登录失效警示态与控件状态变体；「关于」页承载原关于弹窗全部内容（紫色氛围光保留，T11）。"
+    },
+    {
+      "id": "login",
+      "name": "登录窗（新增）",
+      "file": "references/login.html",
+      "notes": "已交付。独立 NSWindow 460×820（最小 460×700）；固定头 78pt；WebView ≥620pt 硬约束（登录页 <600pt 塔陷）；状态行四态：默认 / 校验中（新增文案）/ 成功（绿 0.9s 后自动关窗）/ 失败（橙，T15 待拍板）。"
+    },
+    {
+      "id": "update-prompt",
+      "name": "更新提示（新增面）",
+      "file": "references/update.html",
+      "notes": "已交付。现状只有菜单项三态 + 红点 + 关于页三态，无独立窗；本稿新增 420×320 独立小窗，四态（有新版/检查中/已是最新/检查失败）；changelog 按 new/opt/fix 分组（靠文案不靠颜色）；主按钮绿底深墨字。"
+    },
+    {
+      "id": "floating-icon",
+      "name": "悬浮窗图标（新增面）",
+      "file": "references/floating.html",
+      "notes": "已交付。同一套五态图形 30pt + 半透明 chip 36×36/radius 10（底白 6%、描边白 8%）；chip 四态：常态 .06 / hover .10 / 按下 .14 / 展开中 .12；嵌套 窗口60 ⊃ 命中盒44 ⊃ chip36 ⊃ 图形30；含收起→展开形态与 28pt vs 30pt 对照。风险：浅壁纸可见度（T14）。"
     }
   ],
   "references": [
@@ -214,6 +237,8 @@
     { "id": "T10", "title": "页脚额度区改写：日/月胶囊（在最前）→ 已用/总量 + 进度条 → 铃铛 → 齿轮", "recommend": "已拍板并按此实现（数据源 UsageAPI.Limit）", "blocking": [], "status": "decided" },
     { "id": "T11", "title": "关于弹窗紫色品牌光晕处置", "recommend": "已拍板：保持不变（唯一例外，只作氛围）；关于内容整体并入设置窗口「关于」页，原独立弹窗退场", "blocking": [], "status": "decided" },
     { "id": "T13", "title": "设计稿动效伪实现（动画挂在 <defs> 模板上、<use> 克隆不动）已修；另修复未加引号属性紧邻 /> 导致 SVG 几何为 0", "recommend": "已独立验证：31 个动画实例中 26 个的几何/透明度随冻结时刻变化", "blocking": [], "status": "decided" },
-    { "id": "T12", "title": "设计稿示例数据（昵称/企业/版本 v1.4.2、v1.5.0）仅为占位，实现时取真实值（当前 1.4.5 / build 14）", "recommend": "接受", "blocking": [] }
+    { "id": "T12", "title": "设计稿示例数据（昵称/企业/版本 v1.4.2、v1.5.0）仅为占位，实现时取真实值（当前 1.4.5 / build 14）", "recommend": "接受", "blocking": [] },
+    { "id": "T14", "title": "悬浮图标 chip（白 6%）在浅色壁纸上可见度低", "recommend": "接受；实测看不清再加 1px 深色外描边或把描边提到白 14%", "blocking": [] },
+    { "id": "T15", "title": "登录窗失败态颜色：设计稿 #FFC928（对齐 NSColor.systemOrange）还是 status.waiting #FF6259", "recommend": "#FFC928（与现实现一致，改动最小）", "blocking": ["login"] }
   ]
 }

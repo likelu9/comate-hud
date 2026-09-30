@@ -315,9 +315,9 @@ table.rv-table code, table.rv-table .v { font-family: var(--hud-font-mono); font
 .logo[data-state="waiting"] { --logo-color: var(--hud-status-waiting); }
 .logo[data-state="done"]    { --logo-color: var(--hud-status-done); }
 
-/* 空闲：中心点呼吸 + 外圈涟漪 */
-.logo .anim-idle-dot { transform-box: fill-box; transform-origin: center; animation: hud-breath 2.5s var(--hud-ease-in-out) infinite alternate; }
-.logo .anim-idle-ring { transform-box: fill-box; transform-origin: center; animation: hud-ping 2.5s ease-out infinite; }
+/* 空闲：中心点呼吸 + 外圈涟漪（方案 A：为小尺寸可辨性加大振幅，28pt 下涟漪直径 Δ3.29pt） */
+.logo .anim-idle-dot { transform-box: fill-box; transform-origin: center; animation: hud-breath 1.9s var(--hud-ease-in-out) infinite alternate; }
+.logo .anim-idle-ring { transform-box: fill-box; transform-origin: center; animation: hud-ping 4.2s ease-out infinite; }
 
 /* 工作：三段光轨绕圈追逐 */
 .logo .anim-orbit { transform-box: fill-box; transform-origin: center; animation: hud-spin 1.15s linear infinite; }
@@ -338,8 +338,8 @@ table.rv-table code, table.rv-table .v { font-family: var(--hud-font-mono); font
 .logo .anim-check { stroke-dasharray: 200; animation: hud-draw 0.62s var(--hud-ease-out) 0.15s backwards; }
 .logo .anim-spark { transform-box: fill-box; transform-origin: center; animation: hud-spark 0.5s var(--hud-ease-out) backwards; }
 
-@keyframes hud-breath { from { transform: scale(0.78); opacity: 0.48; } to { transform: scale(1); opacity: 1; } }
-@keyframes hud-ping { 0% { transform: scale(0.72); opacity: 0.34; } 100% { transform: scale(1.35); opacity: 0; } }
+@keyframes hud-breath { from { transform: scale(0.55); opacity: 0.32; } to { transform: scale(1.18); opacity: 1; } }
+@keyframes hud-ping { 0% { transform: scale(0.62); opacity: 0.46; } 100% { transform: scale(1.46); opacity: 0; } }
 @keyframes hud-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes hud-wave { 0% { transform: scale(0.73); opacity: 0.38; } 100% { transform: scale(1.24); opacity: 0; } }
 @keyframes hud-wave-fault { 0% { transform: scale(0.73); opacity: 0.28; } 100% { transform: scale(1.24); opacity: 0; } }

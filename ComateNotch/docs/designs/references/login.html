@@ -1,0 +1,154 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Comate HUD · 登录窗 · login</title>
+<style>/* ===== 0. Token 层 · 别名对应 DESIGN.md §2（sp=surface.panel、s-*=surface.*、t1..t4=text.primary/secondary/tertiary/quaternary、l-*=line.*、ac*=accent.*、st-*=status.*、r*=radius.*、d-*=dur.*、e-*=ease.*、sh-*=shadow.*）。主色全部品牌绿（#00D4AA / #22E0BB / #00A98A），绿底一律配深墨 accent.on #0F0F11。状态色只表语义（idle #9CA0AA / working #FFC928 / waiting #FF6259 / done #31D158）。pt=px，零外链，图标内联 SVG。--lh=13.67 = 代码 11.5pt 系统字体的实测行高（3 行 ≈ 41pt，是 78pt 固定头的来源）。--sys-* 为 macOS 交通灯示意色（系统绘制，非设计 token，豁免登记）。*/:root{--sp:rgba(15,15,17,1);--s-raised:rgba(255,255,255,.06);--s-card:rgba(255,255,255,.045);--s-hit:rgba(255,255,255,.12);--s-track:rgba(255,255,255,.10);--t1:rgba(245,245,245,1);--t2:rgba(245,245,245,.72);--t3:rgba(245,245,245,.55);--t4:rgba(245,245,245,.46);--l-panel:rgba(255,255,255,.12);--l-card:rgba(255,255,255,.07);--l-div:rgba(255,255,255,.08);--l-divs:rgba(255,255,255,.14);--l-focus:rgba(0,212,170,1);--ac:rgba(0,212,170,1);--ac-h:rgba(34,224,187,1);--ac-p:rgba(0,169,138,1);--ac-soft:rgba(0,212,170,.16);--ac-track:rgba(0,212,170,.22);--ac-dis:rgba(0,212,170,.40);--ac-on:rgba(15,15,17,1);--st-idle:rgba(156,160,170,1);--st-work:rgba(255,201,40,1);--st-wait:rgba(255,98,89,1);--st-done:rgba(49,209,88,1);--dot-up:rgba(255,77,79,1);--r4:4px;--r6:6px;--r8:8px;--r12:12px;--r14:14px;--rfull:999px;--ff:'SF Pro Rounded',ui-rounded,-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;--fm:ui-monospace,SFMono-Regular,Menlo,monospace;--d-fast:120ms;--e-std:cubic-bezier(.25,.10,.25,1);--sh-win:0 24px 48px rgba(0,0,0,.48);--lh:13.6667px;--sys-r:#FF5F57;--sys-y:#FEBC2E;--sys-g:#28C840}*,*::before,*::after{box-sizing:border-box}html,body{margin:0}body{background:#060608;color:var(--t1);font:400 12px/1.55 var(--ff);-webkit-font-smoothing:antialiased;padding:28px 24px 64px}.wr{max-width:1280px;margin:0 auto}h1{display:flex;align-items:center;gap:9px;margin:0;font-size:22px;font-weight:600;letter-spacing:-.2px}h2{margin:34px 0 4px;font-size:16px;font-weight:600;padding-left:8px;border-left:3px solid var(--ac)}h3{margin:0;font-size:13px;font-weight:600}p{margin:0}.lead{margin-top:8px;max-width:960px;font-size:13px;line-height:20px;color:var(--t2)}.lead mark{background:var(--ac-soft);color:var(--ac-h);border-radius:3px;padding:0 4px;font:400 11px/1.5 var(--fm)}.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.pill{font-size:10.5px;font-weight:500;padding:3px 10px;border-radius:var(--rfull);background:var(--s-raised);border:1px solid var(--l-card);color:var(--t3)}.pill.on{color:var(--ac-h);background:var(--ac-soft);border-color:rgba(0,212,170,.35)}.pill.warn{color:var(--st-work);background:rgba(255,201,40,.14);border-color:rgba(255,201,40,.32)}.sub{margin:6px 0 16px 12px;font-size:12px;line-height:18px;color:var(--t3);max-width:980px}code{font:400 10.5px/1.5 var(--fm);color:var(--t3)}code i{font-style:normal;color:var(--t4)}.cap{margin-top:9px;font-size:10.5px;line-height:16px;color:var(--t4)}.cap b{color:var(--t2);font-weight:600}.lab{font:500 8px/1 var(--ff);color:var(--t4);letter-spacing:.2px;margin-bottom:5px}/* 决策说明盒 */.note{display:flex;gap:10px;margin-top:12px;padding:12px 14px;border-radius:var(--r8);background:var(--s-card);border:1px solid var(--l-card);max-width:1080px}.note .ic{width:15px;height:15px;flex:none;margin-top:1px;color:var(--ac-h)}.note.warn{border-color:rgba(255,201,40,.32);background:rgba(255,201,40,.08)}.note.warn .ic{color:var(--st-work)}.note b{color:var(--t1);font-weight:600}.note .tx{font-size:11.5px;line-height:17px;color:var(--t2)}.note .tx+.tx{margin-top:5px}/* ===== 1. 模拟桌面 ===== */.stage{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}.desk{flex:none;padding:20px;border-radius:12px;border:1px solid var(--l-card);background:radial-gradient(120% 90% at 25% -10%,#181B22 0%,#0B0B0D 55%,#060608 100%)}.menubar{display:flex;align-items:center;gap:8px;height:22px;margin:-4px -4px 10px;padding:0 8px;border-radius:6px;background:rgba(0,0,0,.35)}.menubar .ap{width:11px;height:11px;border-radius:var(--rfull);background:var(--t4);flex:none}.menubar b{font-size:9px;font-weight:500;color:var(--t3);letter-spacing:.2px}.menubar em{margin-left:auto;font-style:normal;font-size:9px;color:var(--t4)}.frame{position:relative}.pin{position:absolute;left:-12px;width:15px;height:15px;border-radius:var(--rfull);border:1px solid rgba(0,212,170,.55);background:var(--ac-soft);color:var(--ac-h);font:600 8px/13px var(--fm);text-align:center;z-index:5}.pin.r{left:auto;right:-12px}.legend{flex:1;min-width:380px}.lg{margin:0;padding-left:20px;font-size:11.5px;line-height:17px;color:var(--t3)}.lg li{margin-bottom:8px}.lg b{color:var(--t1);font-weight:600}.lg span{display:block;margin-top:2px}.lg em{font-style:normal;color:var(--st-work)}/* ===== 2. 登录窗（1:1 产品组件）===== */.win{width:460px;background:var(--sp);border-radius:var(--r12);overflow:hidden;box-shadow:inset 0 0 0 1px var(--l-panel),var(--sh-win)}.tb{height:28px;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--l-div);background:var(--s-raised)}.tb .tbt{font-size:13px;font-weight:600;color:var(--t2)}.lights{position:absolute;left:12px;top:8px;display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:var(--rfull)}.lights .c1{background:var(--sys-r)}.lights .c2{background:var(--sys-y)}.lights .c3{background:var(--sys-g)}/* 内容区：代码 contentRect = 460 × 820 */.lgb{height:820px;display:flex;flex-direction:column;background:var(--sp)}.lgb.min{height:700px}.lg-head{padding:16px 20px 0;flex:none}.lg-tip{font-size:11.5px;font-weight:400;line-height:13.671875px;color:var(--t2);white-space:pre-line}.lg-status{margin-top:7px;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:400;line-height:13.65625px;color:var(--t2)}.lg-status.ok{color:var(--ac)}.lg-status.err{color:var(--st-work)}.lg-sep{margin-top:13px;height:1px;background:var(--l-div)}/* WebView 外壳：本设计稿只约束外壳与文案，不约束内部 */.lg-wv{position:relative;flex:1;background:rgba(255,255,255,.02);overflow:hidden}.lg-wv .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:0 40px}.lg-wv .ph .url{font:500 11.5px/1 var(--fm);color:var(--t3)}.lg-wv .ph .dsc{font-size:11.5px;line-height:17px;color:var(--t4);max-width:330px}.lg-wv .ph .chip{display:flex;gap:8px;margin-top:3px}.lg-wv .ph .chip span{font-size:10.5px;color:var(--t3);padding:4px 10px;border-radius:var(--rfull);background:var(--s-raised);border:1px solid var(--l-card)}.lg-wv .ruler{position:absolute;right:0;top:0;bottom:0;width:26px;border-left:1px dashed var(--l-divs)}.lg-wv .ruler em{position:absolute;top:50%;left:6px;transform:translateY(-50%);writing-mode:vertical-rl;font-style:normal;font:500 9px/1 var(--fm);color:var(--t4);letter-spacing:.5px}/* 硬约束标线：620（WebView 下限）/ 600（登录页塌陷线） */.wvline{position:absolute;left:0;right:26px;height:0;border-top:1px dashed rgba(0,212,170,.55)}.wvline b{position:absolute;left:10px;top:-8px;font:600 9px/1 var(--fm);color:var(--ac-h);background:var(--sp);padding:2px 6px;border-radius:var(--r4);border:1px solid rgba(0,212,170,.4)}.wvline.warn{border-top-color:rgba(255,98,89,.6)}.wvline.warn b{color:var(--st-wait);border-color:rgba(255,98,89,.45)}/* 4 态小样 */.strips{display:flex;flex-direction:column;gap:16px;margin-top:12px;max-width:560px}.strip{border-radius:var(--r8);overflow:hidden;box-shadow:inset 0 0 0 1px var(--l-card)}.strip .lgb{height:78px}.strip .lg-tip{color:var(--t4)}.st-lab{font:500 10.5px/1 var(--ff);color:var(--t3);margin-bottom:6px;display:flex;align-items:center;gap:7px}.st-lab .no{width:15px;height:15px;border-radius:var(--rfull);border:1px solid rgba(0,212,170,.55);background:var(--ac-soft);color:var(--ac-h);font:600 8px/13px var(--fm);text-align:center}.pdots{display:inline-flex;gap:3px;margin-left:6px}.pdot{width:3px;height:3px;border-radius:var(--rfull);background:var(--t2);animation:lgPulse 1.1s var(--e-std) infinite}.pdot:nth-child(2){animation-delay:.16s}.pdot:nth-child(3){animation-delay:.32s}@keyframes lgPulse{0%,100%{opacity:.28}50%{opacity:1}}/* 几何分解 */.geo{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap;margin-top:12px}.ruler2{width:420px;flex:none;border-radius:var(--r8);overflow:hidden;box-shadow:inset 0 0 0 1px var(--l-card)}.seg{display:flex;align-items:center;gap:10px;padding:0 12px;font-size:10.5px;color:var(--t3);border-bottom:1px solid var(--l-div)}.seg:last-child{border-bottom:0}.seg b{color:var(--t1);font-weight:600}.seg .val{margin-left:auto;font:500 10.5px/1 var(--fm);color:var(--t2)}.seg.h16{height:16px;color:var(--t4)}.seg.h27{height:27.34px}.seg.h7{height:7px}.seg.h13b{height:13.66px}.seg.h13g{height:13px;color:var(--t4)}.seg.h1{height:1px;padding:0;background:var(--l-div)}.seg.sum{height:26px;background:var(--ac-soft);color:var(--ac-h);font-weight:600}.seg.wv{height:120px;background:rgba(255,255,255,.02);align-items:flex-start;padding-top:12px;color:var(--t2)}.seg.wv .val{color:var(--ac-h)}@media(prefers-reduced-motion:reduce){.pdot{animation:none;opacity:.7}*{transition:none!important}}
+</style></head><body>
+<div class="wr">
+<header><h1><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="1.4" y="3.4" width="17.2" height="13.2" rx="3.2" stroke="#00D4AA" stroke-width="1.5"/><path d="M10 6.6v4.6" stroke="#00D4AA" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="1.05" fill="#00D4AA"/></svg>登录窗口 · login</h1>
+<p class="lead">HUD 自己完成一次 WPS 官方登录时的 <strong>独立 macOS 窗口</strong> 1:1 像素稿（pt = px，缩放 100%）。严格照 <code>ComateNotch/Sources/LoginWindow.swift</code> 的代码事实：窗口 <mark>460 × 820 pt</mark>（<code>contentRect</code>）、可缩放、最小 <mark>460 × 700</mark>；内容区自上而下 = <mark>说明区（2 行）→ 状态行 → 分隔线（固定 78pt）</mark> → <mark>WebView（742pt，硬约束 ≥620pt）</mark>。增补了代码里缺失的「校验中」态，并画全状态行 4 态。品牌绿 <code>#00D4AA</code> 用于成功态文字与交互主色；<strong>绿底一律配深墨 </strong><code>#0F0F11</code>。</p>
+<div class="meta"><span class="pill on">第二批 · 登录面</span><span class="pill">独立 NSWindow（非面板内 sheet）</span><span class="pill">窗口 460 × 820 pt · 最小 460 × 700</span><span class="pill">固定头 78 pt</span><span class="pill">WebView ≥ 620 pt</span><span class="pill">状态行 4 态</span><span class="pill warn">登录页 600pt 塌陷线</span><span class="pill">零外链 · 图标内联 SVG</span></div></header>
+
+<h2>0 · 形态决策（两条代码事实）</h2>
+<div class="note"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="6.3"/><path d="M8 7.2v4.2"/><circle cx="8" cy="4.9" r=".9" fill="currentColor" stroke="none"/></svg><div>
+<div class="tx"><b>① 为何是「独立窗口」而不是面板内的 sheet？</b> HUD 主面板是一直挂着的<strong>非激活 borderless <code>NSPanel</code></strong>，这类面板上<strong>弹不出 sheet</strong>（AppKit 会给不出有效的父窗口）。所以登录必须走<strong>独立 <code>NSWindow</code></strong>——「关于」窗口也是同一个原因。窗口带系统标题栏与交通灯（<code>styleMask: [.titled, .closable, .resizable]</code>），标题固定 <b>「登录 WPS 账号」</b>。</div>
+<div class="tx"><b>② 为何窗口不能更矮？（600pt 塌陷线）</b> 内嵌的 <code>comate.wps.cn/web</code> 登录页在<strong>视口高 &lt; 600pt 时自身布局会塌</strong>（绿色主登录按钮被压成一条），实测阈值 <b>600pt</b>。窗口正文顶部固定头占 <b>78pt</b>，故 <code>height 820 ⇒ WebView ≈ 742</code>；缩放下限 <code>contentMinSize.height = 700 ⇒ WebView = 622</code>，<strong>恰好不越 600pt 线</strong>。这条 WebView ≥ 620pt 是<strong>硬约束</strong>，已画进 §1 的图上。</div>
+</div></div>
+
+<h2>1 · 登录窗 1:1（460 × 820 · 深色桌面模拟）</h2>
+<p class="sub">窗口 = 系统标题栏（<b>28pt</b>，macOS 绘制、非自定义；标题「登录 WPS 账号」居中）+ 内容区（<b>460 × 820 = 代码 contentRect</b>）。内容区自上而下：<b>① 说明区（2 行）→ ② 状态行 → ③ 通栏分隔线</b>（三者合计 <b>固定 78pt</b>）→ <b>④ WebView 区</b>（占满剩余 = <b>742pt</b>）。本稿只约束外壳与文案，<strong>不约束 WebView 内部</strong>。</p>
+<div class="stage">
+<section class="desk">
+<div class="menubar"><span class="ap"></span><b>桌面（模拟，非产品 UI）</b><em>Comate HUD</em></div>
+<div class="frame">
+<span class="pin" style="top:-6px">1</span><span class="pin r" style="top:34px">2</span><span class="pin r" style="top:78px">3</span><span class="pin r" style="top:112px">4</span><span class="pin r" style="top:150px">5</span>
+<div class="win" id="lgWin">
+<div class="tb"><span class="lights"><i class="c1"></i><i class="c2"></i><i class="c3"></i></span><span class="tbt">登录 WPS 账号</span></div>
+<div class="lgb" id="lgContent">
+<div class="lg-head" id="lgHead">
+<div class="lg-tip" id="lgTip">登录后 HUD 才能显示未读消息与额度用量。
+HUD 只保存本次登录的凭证，不会读取你的文档内容。</div>
+<div class="lg-status" id="lgStatus">请在下方完成登录（扫码或账号密码）</div>
+<div class="lg-sep" id="lgSep"></div>
+</div>
+<div class="lg-wv" id="lgWv">
+<div class="ruler"><em>WEBVIEW 742pt</em></div>
+<div class="wvline" style="top:620px"><b>620pt 硬下限 · WebView 底边不得高于此线</b></div>
+<div class="ph">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(245,245,245,.35)" stroke-width="1.4" stroke-linecap="round"><rect x="3" y="4.6" width="18" height="14.4" rx="2.6"/><path d="M3 9.4h18M6.2 6.9h.01M8.8 6.9h.01"/></svg>
+<div class="url">https://comate.wps.cn/web/</div>
+<div class="dsc">内嵌真实登录页：二维码 / 账号密码两种方式。<br><b>本设计稿不约束其内部</b>（此处为中性占位）。</div>
+<div class="chip"><span>二维码</span><span>账号密码</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="legend">
+<h3>逐块标注 · 块名 / 关键 token 与数值 / 尺寸</h3>
+<ol class="lg" style="margin-top:8px">
+<li><b>① 系统标题栏 + 交通灯</b><span>高 <b>28pt</b>，系统 <code>NSWindow</code> 绘制（<b>非自定义</b>）；标题「登录 WPS 账号」<code>13pt/600</code> + <code>text.secondary</code>；底分隔 <code>line.divider</code>。交通灯系统绘制，本稿仅示意位置（<code>--sys-*</code> 豁免）。<code>styleMask [.titled,.closable,.resizable]</code> ⇒ 三灯全亮可用。</span></li>
+<li><b>② 说明区（2 行 · 固定）</b><span>原文照抄：<b>「登录后 HUD 才能显示未读消息与额度用量。</b> ↵ <b>HUD 只保存本次登录的凭证，不会读取你的文档内容。」</b>（字符串内含硬换行 <code>\n</code>，本稿用 <code>white-space:pre-line</code> 还原）。<code>11.5pt/400</code> · 行高 <b>13.67</b>（2 行 = 27.34）· <code>text.secondary</code>（代码 <code>.secondaryLabelColor</code> 的 HUD 映射）· 顶部内边距 <b>16</b> · 左右 <b>20</b>（可读宽 420）。</span></li>
+<li><b>③ 状态行（1 行 · 固定）</b><span>上距说明区 <b>7</b>；<code>11.5pt/400</code> · 行高 <b>13.67</b>（1 行）· 常态 <code>text.secondary</code>。默认文案 <b>「请在下方完成登录（扫码或账号密码）」</b>（原文字符串照抄）。<b>4 态见 §2</b>。</span></li>
+<li><b>④ 分隔线（通栏 · 固定）</b><span>上距状态行 <b>13</b> · 高 <b>1pt</b> · <b>通栏</b>（左右不留 20 内边距，从内容区最左到最右）· 色 <code>line.divider</code> 白 8%。<b>合计：16 + 27.34 + 7 + 13.66 + 13 + 1 = 78.00</b>（代码注释的「78pt 固定头」）。</span></li>
+<li><b>⑤ WebView 区（占满剩余）</b><span>顶接分隔线、左右贴边、底接内容底 ⇒ 高 = <b>820 − 78 = 742pt</b>。底 <code>rgba(255,255,255,.02)</code> 中性占位（说明「此处不是产品 UI」）。右缘虚线标尺示 742；<b>内部一条 <code>620pt</code> 硬下限标线</b>——WebView 底边（= 窗口底）任何时候都不得高于它。上方图标/URL/说明均为占位，<b>不约束真实登录页内部</b>。</span></li>
+</ol>
+<div class="cap"><b>行为标注（见 §4）：</b>关窗 = 放弃本次登录（凭据只在内存、不落盘）；登录成功后窗口<b>自动关窗</b>，不需要用户手动关。</div>
+</section>
+</div>
+
+<h2>2 · 状态行 4 态（并列小样 · 均含完整 78pt 固定头）</h2>
+<p class="sub">四块共用同一骨架（说明区 + 状态行 + 分隔线 = 78pt），<b>差异只在状态行的文案与颜色</b>；说明区在此处降到 <code>text.quaternary</code> 仅为弱化背景，实件在窗口里是 <code>text.secondary</code>。<b>每块内饱和色 ≤ 2。</b>② 态为<strong>本稿新增</strong>（代码目前缺此文案）。</p>
+<div class="strips">
+<div>
+<div class="st-lab"><span class="no">1</span>默认 / 空闲 · <code>text.secondary</code></div>
+<div class="strip"><div class="lgb"><div class="lg-head"><div class="lg-tip">登录后 HUD 才能显示未读消息与额度用量。
+HUD 只保存本次登录的凭证，不会读取你的文档内容。</div><div class="lg-status">请在下方完成登录（扫码或账号密码）</div><div class="lg-sep"></div></div></div></div>
+<div class="cap"><b>① 默认（空闲）</b> — 打开窗口即此态；轮询每 2 秒查一次登录页 store，<b>没发现 <code>wps_sid</code> 就回落到本态</b>（<code>attempt</code> 归零）。色 <code>text.secondary</code>，无任何动效。</div>
+</div>
+<div>
+<div class="st-lab"><span class="no">2</span>校验中 · <code>text.secondary</code> + 3 点脉冲 · <b>本稿新增</b></div>
+<div class="strip"><div class="lgb"><div class="lg-head"><div class="lg-tip">登录后 HUD 才能显示未读消息与额度用量。
+HUD 只保存本次登录的凭证，不会读取你的文档内容。</div><div class="lg-status">正在校验登录状态…<span class="pdots"><i class="pdot"></i><i class="pdot"></i><i class="pdot"></i></span></div><div class="lg-sep"></div></div></div></div>
+<div class="cap"><b>② 校验中（新增）</b> — 代码目前<strong>没有</strong>这条文案（拿到 sid 后只见成功或失败）。建议新增：<b>「正在校验登录状态…」</b> + <b>3 点脉冲</b>（<code>3×3pt</code>、<code>1.1s</code> 错相、<code>ease.standard</code>，<code>opacity .28→1</code>）——<b>刻意不用转圈 spinner</b>，避免与「正在恢复数据」抢注意力。触发点：<code>scheduleVerify</code> 里 <code>verifying = true</code> 且已拿到 sid，双接口探测在飞期间。写法：<code>setStatus("正在校验登录状态…", .secondaryLabelColor)</code>。</div>
+</div>
+<div>
+<div class="st-lab"><span class="no">3</span>成功 · <code>accent.normal #00D4AA</code> · 0.9s 后自动关窗</div>
+<div class="strip"><div class="lgb"><div class="lg-head"><div class="lg-tip">登录后 HUD 才能显示未读消息与额度用量。
+HUD 只保存本次登录的凭证，不会读取你的文档内容。</div><div class="lg-status ok">登录成功，正在恢复数据…</div><div class="lg-sep"></div></div></div></div>
+<div class="cap"><b>③ 成功</b> — 原文 <b>「登录成功，正在恢复数据…」</b>，文字色<b>品牌绿 <code>#00D4AA</code></b>（代码用 <code>.systemGreen</code>；本稿按 §3.0 统一为品牌绿——注意此为<strong>绿字压深底</strong>，非绿底，对比度足够）。触发：双接口探测（<code>o.wpsgo.com</code> 身份 + <code>comate.wps.cn</code> 额度）<b>均通</b> → <code>AuthSession.adopt(sid)</code>。持续 <b>0.9s 后自动关窗</b>并回调 <code>refreshAfterLogin()</code>。</div>
+</div>
+<div>
+<div class="st-lab"><span class="no">4</span>失败 · <code>#FFC928</code>（第 3 次探测失败才出现）</div>
+<div class="strip"><div class="lgb"><div class="lg-head"><div class="lg-tip">登录后 HUD 才能显示未读消息与额度用量。
+HUD 只保存本次登录的凭证，不会读取你的文档内容。</div><div class="lg-status err">已取得登录凭证但服务端仍拒绝，请关闭窗口后重试</div><div class="lg-sep"></div></div></div></div>
+<div class="cap"><b>④ 失败</b> — 原文 <b>「已取得登录凭证但服务端仍拒绝，请关闭窗口后重试」</b>，色 <b><code>#FFC928</code></b>（代码用 <code>.systemOrange</code> ≈ <code>#FF9500</code>，本稿取最近的 HUD 状态色 <code>status.working</code>；<b>备选</b>：按「失败 = 橙红」语义改用 <code>status.waiting #FF6259</code>，<em>待拍板</em>）。<b>触发条件：拿到 <code>wps_sid</code> 但 <code>probe</code> 失败，且已重试到第 <code>maxAttempts = 3</code> 次</b>（前 2 次间隔 1.5s 静默重试，期间不切文案）。</div>
+</div>
+</div>
+
+<h2>3 · 硬约束几何（78pt 分解 / WebView ≥620 / 最小 460×700）</h2>
+<p class="sub">左侧为固定头的逐段分解，右侧为<strong>最小窗口 460 × 700pt</strong> 的 1:1 实件——此时 WebView = <b>700 − 78 = 622pt</b>，仍高于 <b>620pt</b> 硬下限与 <b>600pt</b> 塌陷线，两条标线都画在图上。</p>
+<div class="geo">
+<div>
+<div class="lab">固定头 78pt 逐段分解（真实比例）</div>
+<div class="ruler2">
+<div class="seg h16">内容顶 → 说明区 <span class="val">16</span></div>
+<div class="seg h27">说明区（2 行 × 13.67）<span class="val">27.34</span></div>
+<div class="seg h7">说明区 → 状态行<span class="val">7</span></div>
+<div class="seg h13b">状态行（1 行 × 13.66）<span class="val">13.66</span></div>
+<div class="seg h13g">状态行 → 分隔线<span class="val">13</span></div>
+<div class="seg h1"></div>
+<div class="seg sum">合计固定 = 说明区 + 状态行 + 分隔线 <span class="val">78 pt</span></div>
+<div class="seg wv">WebView（占满剩余 820 − 78）<span class="val">742 pt</span></div>
+</div>
+<div class="cap">分解值取自 <code>LoginWindow.swift</code> 的 <code>NSLayoutConstraint</code>：<code>tip.top = +16</code> · <code>status.top = tip.bottom + 7</code> · <code>separator.top = status.bottom + 13</code> · <code>webView.top = separator.bottom</code>。<b>改动说明区或状态行的行数都会破坏 78pt。</b></div>
+</div>
+<div>
+<div class="lab">最小窗口 460 × 700（缩放下限）</div>
+<div class="desk" style="padding:14px">
+<div class="win">
+<div class="tb"><span class="lights"><i class="c1"></i><i class="c2"></i><i class="c3"></i></span><span class="tbt">登录 WPS 账号</span></div>
+<div class="lgb min" id="lgContentMin">
+<div class="lg-head" id="lgHeadMin">
+<div class="lg-tip" id="lgTipMin">登录后 HUD 才能显示未读消息与额度用量。
+HUD 只保存本次登录的凭证，不会读取你的文档内容。</div>
+<div class="lg-status" id="lgStatusMin">请在下方完成登录（扫码或账号密码）</div>
+<div class="lg-sep" id="lgSepMin"></div>
+</div>
+<div class="lg-wv" id="lgWvMin">
+<div class="wvline warn" style="top:600px"><b>600pt 登录页塌陷线（不得触碰）</b></div>
+<div class="wvline" style="top:620px"><b>620pt WebView 硬下限 · 下限处余量 2pt</b></div>
+<div class="ph"><div class="url">https://comate.wps.cn/web/</div><div class="dsc">内容区 460 × 700 → WebView <b>622pt</b> ✓</div></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cap"><b><code>contentMinSize = 460 × 700</code></b>（宽不可缩、高下限 700）。700 − 78 = <b>622pt ≥ 620pt 硬下限</b>，且 622 &gt; 600 → 登录页不会被触发塌陷。<b>再矮 2pt 就越过 620 硬下限，再矮 22pt 就压到 600 塌陷线</b>，因此 700 是代码给定的安全下限。</div>
+</div>
+</div>
+
+<h2>4 · 行为标注（关窗 / 自动关窗）</h2>
+<div class="note"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 13.4H3.6a1 1 0 0 1-1-1V3.6a1 1 0 0 1 1-1h2.8"/><path d="M10.2 10.6 13.4 8l-3.2-2.6M13 8H6.6"/></svg><div>
+<div class="tx"><b>A · 关窗 = 放弃本次登录。</b> 凭据只在内存（<code>AuthSession</code>，不落盘、不镜像、不写钥匙串）；没成功就关窗 ⇒ 什么都不会被记下。<code>windowWillClose</code> 会停轮询、卸掉登录页 WebView 并释放内存 store，实例不复用。</div>
+<div class="tx"><b>B · 登录成功后自动关窗。</b> 成功态文案展示 <b>0.9s</b> 后由代码 <code>close()</code> 关窗并立刻回调刷新云端数据——<b>不出现「完成」按钮</b>，用户无需手动关。</div>
+<div class="tx"><b>C · 轮询兜底。</b> 内存态 store 的 <code>cookiesDidChange</code> 通知不可靠，窗口活着时每 <b>2s</b> 自查一次；这是「成功 → 自动关窗」的保障，也是「必须给状态行留位」的原因——用户需要看到「正在校验」而非疑似卡死。</div>
+</div></div>
+</div>
+<script>
+window.addEventListener('load',function(){
+  function q(s){return document.querySelector(s)}
+  function r(el){var b=el.getBoundingClientRect();return {x:+b.left.toFixed(2),y:+b.top.toFixed(2),w:+b.width.toFixed(2),h:+b.height.toFixed(2)}}
+  var out={};
+  var c=r(q('#lgContent')),win=r(q('#lgWin')),tip=r(q('#lgTip')),st=r(q('#lgStatus')),sep=r(q('#lgSep')),wv=r(q('#lgWv'));
+  out.windowFrame=[win.w,win.h];
+  out.content=[c.w,c.h];
+  out.headerUnion=+(((sep.y+sep.h)-c.y)).toFixed(2);
+  out.elementsUnion=+(((sep.y+sep.h)-tip.y)).toFixed(2);
+  out.breakdown={gapTop:+(tip.y-c.y).toFixed(2),tip:tip.h,gapTipStatus:+(st.y-(tip.y+tip.h)).toFixed(2),status:st.h,gapStatusSep:+(sep.y-(st.y+st.h)).toFixed(2),sep:sep.h};
+  out.webview=wv.h;
+  out.contentSum=+((tip.y-c.y)+tip.h+(st.y-(tip.y+tip.h))+st.h+(sep.y-(st.y+st.h))+sep.h+wv.h).toFixed(2);
+  var cm=r(q('#lgContentMin')),wm=r(q('#lgWvMin'));
+  out.min={content:[cm.w,cm.h],webview:wm.h};
+  out.targets={content:[460,820],minContent:[460,700],headerUnion:78,webviewMin:620};
+  var pre=document.createElement('pre');pre.id='__metrics';pre.style.cssText='position:fixed;left:-99999px;top:0;margin:0';pre.textContent='METRICS='+JSON.stringify(out);document.body.appendChild(pre);
+});
+</script>
+</body></html>

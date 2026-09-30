@@ -1,0 +1,191 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Comate HUD · 更新提示 · update</title>
+<style>/* ===== 0. Token 层 · 别名对应 DESIGN.md §2（sp=surface.panel、s-*=surface.*、t1..t4=text.primary/secondary/tertiary/quaternary、l-*=line.*、ac*=accent.*、st-*=status.*、dot-*=dot.*、r*=radius.*、d-*=dur.*、e-*=ease.*、sh-*=shadow.*）。主色全部品牌绿 #00D4AA（hover #22E0BB / pressed #00A98A / disabled rgba(0,212,170,.40)），**绿底一律配深墨 accent.on #0F0F11**；禁用绿底不用深墨，降到 55% 白。状态色只表语义。pt=px，零外链（GitHub 源地址仅作文字出现，不做外链），图标内联 SVG。--sys-* 为 macOS 交通灯示意色（系统绘制，豁免登记）。*/:root{--sp:rgba(15,15,17,1);--s-raised:rgba(255,255,255,.06);--s-card:rgba(255,255,255,.045);--s-hit:rgba(255,255,255,.12);--s-track:rgba(255,255,255,.10);--t1:rgba(245,245,245,1);--t2:rgba(245,245,245,.72);--t3:rgba(245,245,245,.55);--t4:rgba(245,245,245,.46);--l-panel:rgba(255,255,255,.12);--l-card:rgba(255,255,255,.07);--l-div:rgba(255,255,255,.08);--l-divs:rgba(255,255,255,.14);--l-focus:rgba(0,212,170,1);--ac:rgba(0,212,170,1);--ac-h:rgba(34,224,187,1);--ac-p:rgba(0,169,138,1);--ac-soft:rgba(0,212,170,.16);--ac-track:rgba(0,212,170,.22);--ac-dis:rgba(0,212,170,.40);--ac-on:rgba(15,15,17,1);--st-idle:rgba(156,160,170,1);--st-work:rgba(255,201,40,1);--st-wait:rgba(255,98,89,1);--st-done:rgba(49,209,88,1);--dot-up:rgba(255,77,79,1);--dot-ring:rgba(0,0,0,.40);--r4:4px;--r6:6px;--r8:8px;--r10:10px;--r12:12px;--r14:14px;--rfull:999px;--ff:'SF Pro Rounded',ui-rounded,-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;--fm:ui-monospace,SFMono-Regular,Menlo,monospace;--d-fast:120ms;--e-std:cubic-bezier(.25,.10,.25,1);--sh-win:0 24px 48px rgba(0,0,0,.48);--sh-cta:0 5px 9px rgba(0,212,170,.22);--sys-r:#FF5F57;--sys-y:#FEBC2E;--sys-g:#28C840}*,*::before,*::after{box-sizing:border-box}html,body{margin:0}body{background:#060608;color:var(--t1);font:400 12px/1.55 var(--ff);-webkit-font-smoothing:antialiased;padding:28px 24px 64px}.wr{max-width:1280px;margin:0 auto}h1{display:flex;align-items:center;gap:9px;margin:0;font-size:22px;font-weight:600;letter-spacing:-.2px}h2{margin:34px 0 4px;font-size:16px;font-weight:600;padding-left:8px;border-left:3px solid var(--ac)}h3{margin:0;font-size:13px;font-weight:600}h4{margin:0 0 8px;font-size:11.5px;font-weight:600;color:var(--t2)}p{margin:0}.lead{margin-top:8px;max-width:980px;font-size:13px;line-height:20px;color:var(--t2)}.lead mark{background:var(--ac-soft);color:var(--ac-h);border-radius:3px;padding:0 4px;font:400 11px/1.5 var(--fm)}.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.pill{font-size:10.5px;font-weight:500;padding:3px 10px;border-radius:var(--rfull);background:var(--s-raised);border:1px solid var(--l-card);color:var(--t3)}.pill.on{color:var(--ac-h);background:var(--ac-soft);border-color:rgba(0,212,170,.35)}.pill.warn{color:var(--st-work);background:rgba(255,201,40,.14);border-color:rgba(255,201,40,.32)}.sub{margin:6px 0 16px 12px;font-size:12px;line-height:18px;color:var(--t3);max-width:1000px}code{font:400 10.5px/1.5 var(--fm);color:var(--t3)}code i{font-style:normal;color:var(--t4)}.cap{margin-top:9px;font-size:10.5px;line-height:16px;color:var(--t4);max-width:430px}.cap b{color:var(--t2);font-weight:600}.lab{font:500 8px/1 var(--ff);color:var(--t4);letter-spacing:.2px;margin-bottom:6px}.note{display:flex;gap:10px;margin-top:12px;padding:12px 14px;border-radius:var(--r8);background:var(--s-card);border:1px solid var(--l-card);max-width:1080px}.note.warn{border-color:rgba(255,201,40,.32);background:rgba(255,201,40,.08)}.note .ic{width:15px;height:15px;flex:none;margin-top:1px;color:var(--ac-h)}.note.warn .ic{color:var(--st-work)}.note b{color:var(--t1);font-weight:600}.note .tx{font-size:11.5px;line-height:17px;color:var(--t2)}.note .tx+.tx{margin-top:5px}/* ===== 1. 窗口（1:1 产品组件）===== */.win{width:420px;background:var(--sp);border-radius:var(--r12);overflow:hidden;box-shadow:inset 0 0 0 1px var(--l-panel),var(--sh-win)}.tb{height:28px;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--l-div);background:var(--s-raised)}.tb .tbt{font-size:13px;font-weight:600;color:var(--t2)}.lights{position:absolute;left:12px;top:8px;display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:var(--rfull)}.lights .c1{background:var(--sys-r)}.lights .c2{background:var(--sys-y)}.lights .c3{background:var(--sys-g)}.lights .c3.off{background:#8a8a8a;opacity:.45}.upd{height:320px;display:flex;flex-direction:column;padding:14px 20px;background:var(--sp)}.appic{width:56px;height:56px;flex:none;align-self:center;border-radius:12px;box-shadow:0 6px 10px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.09)}.vrow{margin-top:8px;display:flex;align-items:center;justify-content:center;gap:9px;height:18px;font-variant-numeric:tabular-nums}.vrow .loc,.vrow .rem{font:600 13px/1 var(--fm);letter-spacing:.2px}.vrow .loc{color:var(--t2)}.vrow .rem{color:var(--ac-h)}.vrow .ar{width:14px;height:14px;flex:none;color:var(--t4)}.cgl{margin-top:10px;flex:none;height:100px;overflow:hidden;border-radius:var(--r8);background:var(--s-card);border:1px solid var(--l-card);padding:7px 12px}.cgl .gl{display:flex;align-items:center;gap:6px;font:600 10.5px/12px var(--ff);color:var(--t2)}.cgl .gl+.gi{margin-top:1px}.cgl .gl:not(:first-child){margin-top:5px}.cgl .gi{display:flex;align-items:flex-start;gap:6px;font-size:10.5px;line-height:13px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cgl .gi i{width:3px;height:3px;flex:none;margin-top:5px;border-radius:var(--rfull);background:var(--t4)}.btns{margin-top:auto;display:flex;flex-direction:column;gap:8px;align-items:stretch}.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:var(--r14);font:600 12.5px/1 var(--ff);cursor:pointer;transition:background var(--d-fast) var(--e-std),opacity var(--d-fast) var(--e-std)}.btn.pri{height:34px;background:var(--ac);color:var(--ac-on);box-shadow:var(--sh-cta)}.btn.pri:hover{background:var(--ac-h)}.btn.pri:active{background:var(--ac-p)}.btn.pri:disabled{background:var(--ac-dis);color:rgba(255,255,255,.55);box-shadow:none;cursor:not-allowed}.btn.sec{height:30px;background:var(--s-raised);border:1px solid var(--l-divs);color:var(--t1)}.btn.sec:hover{background:var(--s-hit)}.lnk{text-align:center;font-size:10.5px;line-height:13px;color:var(--t3);text-decoration:underline;text-underline-offset:2px;text-decoration-color:var(--l-divs);cursor:pointer}.lnk:hover{color:var(--t2)}/* 检查中 */.spin{width:15px;height:15px;flex:none;border-radius:var(--rfull);border:1.6px solid var(--s-track);border-top-color:var(--ac);animation:updSpin .8s linear infinite}.busy{display:flex;align-items:center;justify-content:center;gap:8px;height:18px;font-size:12px;color:var(--t2)}.busybox{margin-top:10px;flex:none;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:var(--r8);background:var(--s-card);border:1px solid var(--l-card);font-size:11px;line-height:15px;color:var(--t4)}.sk{width:230px;height:7px;border-radius:var(--rfull);background:var(--s-raised)}.sk+.sk{width:170px}@keyframes updSpin{to{transform:rotate(360deg)}}/* 已是最新 */.okline{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:var(--t2)}.okline .ic{width:15px;height:15px;flex:none;color:var(--st-done)}.okbox{margin-top:10px;flex:none;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:var(--r8);background:var(--s-card);border:1px solid var(--l-card)}.okbox .b{font-size:12px;color:var(--t2)}.okbox .s{font-size:10.5px;color:var(--t4)}/* 检查失败 */.errline{display:flex;align-items:flex-start;justify-content:center;gap:7px;font-size:11.5px;line-height:16px;color:var(--st-wait);text-align:left}.errbox{margin-top:10px;flex:none;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:var(--r8);background:var(--st-wait-soft,rgba(255,98,89,.14));border:1px solid rgba(255,98,89,.32);padding:0 20px}.errbox .s{font-size:10.5px;color:var(--t4);text-align:center}/* ===== 2. 既有入口小样 ===== */.samples{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}.menu{width:250px;background:var(--sp);border:1px solid var(--l-panel);border-radius:var(--r6);box-shadow:0 18px 40px rgba(0,0,0,.5);padding:4px}.mi{height:22px;display:flex;align-items:center;gap:8px;padding:0 8px 0 6px;border-radius:var(--r4);font-size:12.5px;color:var(--t2)}.mi .chk{width:16px;height:16px;flex:none;display:grid;place-items:center}.mi .chk .dot{width:5px;height:5px;border-radius:var(--rfull);background:var(--dot-up);box-shadow:0 0 0 1px var(--dot-ring)}.mi .chk .tick{font:700 11px/1 var(--ff);color:var(--t2)}.mi.hot{background:var(--s-hit);color:var(--t1)}.mi .sub2{margin-left:auto;font-size:10.5px;color:var(--t4)}.msep{height:1px;margin:4px 6px;background:var(--l-div)}.mi.new{color:var(--ac-h);font-weight:500}.row-card{background:var(--s-card);border:1px solid var(--l-card);border-radius:var(--r8);overflow:hidden}.row{min-height:34px;display:flex;align-items:center;gap:10px;padding:6px 12px;font-size:12.5px;color:var(--t2)}.row+.row{border-top:1px solid var(--l-div)}.row .ic{width:14px;height:14px;flex:none;color:var(--t3)}.row.ok .ic{color:var(--st-done)}.row .badge{width:5px;height:5px;flex:none;border-radius:var(--rfull);background:var(--dot-up);box-shadow:0 0 0 1px var(--dot-ring)}.row.new{color:var(--ac-h);font-weight:500}.row .t{margin-left:auto;display:flex;align-items:center;gap:8px}.row .chev{width:12px;height:12px;color:var(--t4)}.btn.mini{height:24px;border-radius:var(--r6);padding:0 12px;font-size:12.5px}.btn.gho{background:var(--s-raised);border:1px solid var(--l-divs);color:var(--t1)}.btn.gho:hover{background:var(--s-hit)}.dotbar{display:inline-flex;align-items:center;gap:8px}.dotbig{position:relative;width:26px;height:26px;border-radius:var(--r6);background:var(--s-raised);border:1px solid var(--l-card);display:grid;place-items:center;color:var(--t3)}.dotbig .dot{position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:var(--rfull);background:var(--dot-up);box-shadow:0 0 0 1px var(--dot-ring)}/* 关系图 */.flow{display:flex;gap:16px;align-items:stretch;flex-wrap:wrap;margin-top:12px}.fbox{width:266px;border-radius:var(--r10);background:var(--s-card);border:1px solid var(--l-card);padding:12px}.fbox .fh{font:600 11px/1 var(--ff);color:var(--ac-h);letter-spacing:.2px}.fbox .ft{margin-top:7px;font-size:11.5px;line-height:17px;color:var(--t2)}.fbox .ft+.ft{margin-top:5px}.fbox.mid{border-color:rgba(0,212,170,.38);background:var(--ac-soft)}.arrow{align-self:center;width:26px;height:14px;flex:none;color:var(--t4)}table.rel{width:100%;border-collapse:collapse;margin-top:12px;font-size:11.5px}.rel th,.rel td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--l-div);vertical-align:top;line-height:16px}.rel th{font-weight:600;color:var(--t2);font-size:10.5px;text-transform:none}.rel td{color:var(--t3)}.rel td b{color:var(--t1);font-weight:600}.rel tr:last-child td{border-bottom:0}.rel .k{color:var(--t2);font-weight:600}.tag{display:inline-block;font-size:9.5px;padding:2px 7px;border-radius:var(--rfull);background:var(--s-raised);border:1px solid var(--l-div);color:var(--t4)}.tag.new{color:var(--ac-h);background:var(--ac-soft);border-color:rgba(0,212,170,.35)}.stage{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap;margin-top:12px}@media(prefers-reduced-motion:reduce){.spin{animation:none}*{transition:none!important}}
+</style></head><body>
+<div class="wr">
+<header><h1><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.6a5.2 5.2 0 0 1 5.2 5.2v3l1.4 2.4H3.4L4.8 10.8v-3A5.2 5.2 0 0 1 10 2.6Z" stroke="#00D4AA" stroke-width="1.4" stroke-linejoin="round"/><path d="M8.2 15.9a1.9 1.9 0 0 0 3.6 0" stroke="#00D4AA" stroke-width="1.4" stroke-linecap="round"/><circle cx="15.6" cy="5" r="2.1" fill="#FF4D4F"/></svg>更新提示 · update</h1>
+<p class="lead">目前<strong>没有独立的更新提示窗</strong>（代码事实），只有三处入口各自就地表达状态。本稿<strong>新增一个独立小窗</strong>用于「有新版」时的完整信息呈现，并画清它与三个既有入口的关系。窗口 <mark>420 × 320 pt（内容区）</mark>、<mark>不可缩放</mark>、标题「Comate HUD 有可用更新」。数据源：GitHub Releases（<code>releases.atom</code>）+ <code>versions.json</code> 的 changelog（按 <code>type</code> 分 新增/优化/修复）。<strong>绿底主按钮配深墨 </strong><code>#0F0F11</code>；禁用绿底改 55% 白。</p>
+<div class="meta"><span class="pill on">第二批 · 更新面</span><span class="pill">窗口 420 × 320 pt · 不可缩放</span><span class="pill">主按钮 34 / 次按钮 30 / 圆角 14</span><span class="pill">主按钮底 #00D4AA · 字 #0F0F11</span><span class="pill">四态全画</span><span class="pill warn">与三入口关系对照</span><span class="pill">零外链 · 图标内联 SVG</span></div></header>
+
+<h2>0 · 形态与数据源（三条代码事实）</h2>
+<div class="note"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="6.3"/><path d="M8 7.2v4.2"/><circle cx="8" cy="4.9" r=".9" fill="currentColor" stroke="none"/></svg><div>
+<div class="tx"><b>① 现状：无独立更新窗。</b> <code>ComateNotch/Sources/UpdateChecker.swift</code> 只负责「取最新 tag 并比版本」，没有窗口；状态分散在 <b>菜单项三态</b>、<b>菜单栏图标右上角红点</b>、<b>设置窗口「关于」页三态</b> 三处。</div>
+<div class="tx"><b>② 为何也要独立窗口？</b> 与登录窗同因：HUD 面板是非激活 borderless <code>NSPanel</code>，<b>挂不了 sheet</b>。当前三入口都只能「就地变文案」，装不下 changelog 这种多行内容——故新增本小窗承载「有新版」的完整信息；其余状态仍可只在入口就地表达。</div>
+<div class="tx"><b>③ 数据源：</b> 版本来自 GitHub Releases 的 atom feed（<code>https://github.com/likelu9/comate-hud/releases.atom</code>，用 atom 而非 REST，避开共享出口 IP 的 60 次/时限额）；changelog 来自 <code>versions.json</code> 对应条目，<code>type</code> 三值映射：<code>new → 新增</code> · <code>opt → 优化</code> · <code>fix → 修复</code>。检测失败一律静默（增值信息不干扰主功能）。</div>
+</div></div>
+
+<h2>1 · 更新提示小窗 · 四态 1:1（420 × 320）</h2>
+<p class="sub">四扇窗<strong>内容区同高 320pt</strong>（<code>#updContent</code>），自上而下：<b>应用图标 56×56 → 版本行（本地 → 新，<code>tabular-nums</code>）→ 更新说明区块（3 组圆点列表）→ 按钮区（沉底对齐）</b>。按钮区用 <code>margin-top:auto</code> 沉底，保证四态按钮基线一致。<span class="tag new">本稿新增</span> 独立窗；<code>styleMask</code> 不含 <code>.resizable</code>。</p>
+<div class="stage">
+
+<!-- ① 有新版 -->
+<figure style="margin:0">
+<div class="win" id="u1">
+<div class="tb"><span class="lights"><i class="c1"></i><i class="c2"></i><i class="c3 off"></i></span><span class="tbt">Comate HUD 有可用更新</span></div>
+<div class="upd" id="u1c">
+<svg class="appic" viewBox="0 0 88 88" aria-hidden="true"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20242E"/><stop offset="1" stop-color="#0A0C11"/></linearGradient></defs><rect width="88" height="88" rx="20" fill="url(#ag)"/><rect x="30" y="12" width="28" height="9" rx="4.5" fill="#000" stroke="rgba(255,255,255,.10)"/><circle cx="24" cy="40" r="4" fill="#9CA0AA"/><circle cx="37" cy="40" r="4" fill="#31D158"/><circle cx="50" cy="40" r="4" fill="#FFC928"/><circle cx="63" cy="40" r="4" fill="#FF6259"/><rect x="24" y="54" width="40" height="6" rx="3" fill="rgba(255,255,255,.14)"/><rect x="24" y="64" width="24" height="6" rx="3" fill="rgba(255,255,255,.08)"/></svg>
+<div class="vrow"><span class="loc">v1.4.5</span><svg class="ar" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 7h8.2M8.2 4.4 10.8 7l-2.6 2.6"/></svg><span class="rem">v1.4.6</span></div>
+<div class="cgl">
+<div class="gl">新增</div>
+<div class="gi"><i></i>示例：新增「面板置顶屏幕」选项</div>
+<div class="gi"><i></i>示例：新增未读角标一键清除</div>
+<div class="gl">优化</div>
+<div class="gi"><i></i>示例：优化任务列表滚动流畅度</div>
+<div class="gl">修复</div>
+<div class="gi"><i></i>示例：修复深色下分隔线偏亮</div>
+</div>
+<div class="btns">
+<button class="btn pri" id="u1Primary" type="button">前往下载</button>
+<button class="btn sec" type="button">稍后</button>
+<div class="lnk">跳过此版本（不再提示）</div>
+</div>
+</div>
+</div>
+<figcaption class="cap"><b>① 有新版（默认展示态）</b> — 图标 <b>56×56</b>（88 图标的等比小号，圆角 20/88×56 ≈ <b>12</b>）· 版本行 <code>13pt/600 mono</code>，本地 <code>text.secondary</code> → 箭头 <code>text.quaternary</code> → 新 <code>accent.hover</code>，<code>tabular-nums</code> · 说明区块高 <b>100</b>、<code>radius.8</code> + <code>surface.card</code>，三组标签 <code>10.5/600 text.secondary</code> + 3pt 中性圆点列表（<b>分组靠文案不靠颜色，遵守 P3</b>）· 主按钮 <b>「前往下载」</b> 高 <b>34</b> · <b>底 <code>#00D4AA</code> · 字 <code>#0F0F11</code></b> · <code>radius.card 14</code> · 投影 <code>shadow.cta</code> · 次按钮 <b>「稍后」</b> 高 <b>30</b> · 文字链接 <b>「跳过此版本（不再提示）」</b> <code>10.5pt text.tertiary</code> 下划线。</figcaption>
+</figure>
+
+<!-- ② 检查中 -->
+<figure style="margin:0">
+<div class="win" id="u2">
+<div class="tb"><span class="lights"><i class="c1"></i><i class="c2"></i><i class="c3 off"></i></span><span class="tbt">Comate HUD 有可用更新</span></div>
+<div class="upd" id="u2c">
+<svg class="appic" viewBox="0 0 88 88" aria-hidden="true"><rect width="88" height="88" rx="20" fill="#171A20"/><rect x="30" y="12" width="28" height="9" rx="4.5" fill="#000" stroke="rgba(255,255,255,.10)"/><circle cx="24" cy="40" r="4" fill="#9CA0AA" opacity=".5"/><circle cx="37" cy="40" r="4" fill="#31D158" opacity=".5"/><circle cx="50" cy="40" r="4" fill="#FFC928" opacity=".5"/><circle cx="63" cy="40" r="4" fill="#FF6259" opacity=".5"/><rect x="24" y="54" width="40" height="6" rx="3" fill="rgba(255,255,255,.14)"/><rect x="24" y="64" width="24" height="6" rx="3" fill="rgba(255,255,255,.08)"/></svg>
+<div class="busy"><span class="spin"></span>正在检查更新…</div>
+<div class="busybox"><div>正在从 GitHub Releases 获取最新版本…</div><div class="sk"></div><div class="sk"></div></div>
+<div class="btns">
+<button class="btn pri" id="u2Primary" type="button" disabled>前往下载</button>
+<button class="btn sec" type="button">稍后</button>
+<div class="lnk">跳过此版本（不再提示）</div>
+</div>
+</div>
+</div>
+<figcaption class="cap"><b>② 检查中</b> — 小号内联加载：<code>15pt</code> 环，轨道 <code>surface.track</code>、进度弧 <code>accent.normal</code>、<code>0.8s linear</code> 无限旋转（可降级）。文案 <b>「正在检查更新…」</b> <code>text.secondary</code>。按钮<b>禁用</b>：底 <code>accent.disabled rgba(0,212,170,.40)</code>、<b>文字不再用深墨，降到 <code>rgba(255,255,255,.55)</code></b>、去掉投影。<code>UpdateChecker.inFlight</code> 防重入，故禁用是真实约束而非装饰。</figcaption>
+</figure>
+
+<!-- ③ 已是最新 -->
+<figure style="margin:0">
+<div class="win" id="u3">
+<div class="tb"><span class="lights"><i class="c1"></i><i class="c2"></i><i class="c3 off"></i></span><span class="tbt">Comate HUD 已是最新</span></div>
+<div class="upd" id="u3c">
+<svg class="appic" viewBox="0 0 88 88" aria-hidden="true"><defs><linearGradient id="ag3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20242E"/><stop offset="1" stop-color="#0A0C11"/></linearGradient></defs><rect width="88" height="88" rx="20" fill="url(#ag3)"/><rect x="30" y="12" width="28" height="9" rx="4.5" fill="#000" stroke="rgba(255,255,255,.10)"/><circle cx="24" cy="40" r="4" fill="#9CA0AA"/><circle cx="37" cy="40" r="4" fill="#31D158"/><circle cx="50" cy="40" r="4" fill="#FFC928"/><circle cx="63" cy="40" r="4" fill="#FF6259"/><rect x="24" y="54" width="40" height="6" rx="3" fill="rgba(255,255,255,.14)"/><rect x="24" y="64" width="24" height="6" rx="3" fill="rgba(255,255,255,.08)"/></svg>
+<div class="vrow"><span class="rem">v1.4.5</span></div>
+<div class="okbox"><div class="b">当前已是最新版本 v1.4.5</div><div class="s">下次自动检查将在 6 小时内进行</div></div>
+<div class="btns">
+<button class="btn sec" id="u3Good" type="button">好</button>
+</div>
+</div>
+</div>
+<figcaption class="cap"><b>③ 已是最新</b> — <b>无主按钮</b>：没有可执行动作，只留一个中性次按钮 <b>「好」（高 30）</b>居中；<b>无「稍后 / 跳过」</b>（没有新版，跳过无意义）。版本行降级为单个 <code>v1.4.5 text.secondary</code>（无 <code>vX → vY</code> 对比），说明区块换成一行状态：<b>「当前已是最新版本 v1.4.5」</b> + 一行 <code>text.quaternary</code> 副信息。触发条件：feed 解析成功但 <code>isNewer(remote, local) == false</code>。</figcaption>
+</figure>
+
+<!-- ④ 检查失败 -->
+<figure style="margin:0">
+<div class="win" id="u4">
+<div class="tb"><span class="lights"><i class="c1"></i><i class="c2"></i><i class="c3 off"></i></span><span class="tbt">Comate HUD · 检查更新失败</span></div>
+<div class="upd" id="u4c">
+<svg class="appic" viewBox="0 0 88 88" aria-hidden="true"><rect width="88" height="88" rx="20" fill="#171A20"/><rect x="30" y="12" width="28" height="9" rx="4.5" fill="#000" stroke="rgba(255,255,255,.10)"/><circle cx="24" cy="40" r="4" fill="#9CA0AA" opacity=".5"/><circle cx="37" cy="40" r="4" fill="#31D158" opacity=".5"/><circle cx="50" cy="40" r="4" fill="#FFC928" opacity=".5"/><circle cx="63" cy="40" r="4" fill="#FF6259" opacity=".5"/><rect x="24" y="54" width="40" height="6" rx="3" fill="rgba(255,255,255,.14)"/><rect x="24" y="64" width="24" height="6" rx="3" fill="rgba(255,255,255,.08)"/></svg>
+<div class="errline"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" style="flex:none;margin-top:1px"><path d="M8 2.8 14 12.8H2L8 2.8Z"/><path d="M8 6.6v3M8 11.4h.01"/></svg><span>检查更新失败：无法连接 GitHub Releases</span></div>
+<div class="errbox"><div class="s">可能是网络不通或被限流；更新提醒是增值信息，失败时不打扰主功能，下次仍会自动重试。</div></div>
+<div class="btns">
+<button class="btn pri" id="u4Primary" type="button">重试</button>
+<button class="btn sec" type="button">关闭</button>
+</div>
+</div>
+</div>
+<figcaption class="cap"><b>④ 检查失败</b> — 一行错误说明，色 <code>status.waiting #FF6259</code>（按「失败 = 橙红」的状态语义；<b>代码侧本就静默</b>，本稿只在用户<strong>主动</strong>点了检查时给出可见反馈）。主按钮改 <b>「重试」</b>（仍为品牌绿底 + 深墨字，高 34），次按钮 <b>「关闭」</b>（高 30）。<b>无「跳过此版本」</b>——失败不等于有新版本。</figcaption>
+</figure>
+
+</div>
+
+<h2>2 · 与既有三入口的关系（对照区）</h2>
+<p class="sub">三个既有入口各自能表达的状态不同：<b>菜单项</b>只有三态文案（＋红点在勾选列）· <b>菜单栏图标红点</b>只有一个布尔 · <b>关于页</b>有三态行。本稿新增的独立小窗承接「有新版」的完整内容；其余状态（检查中 / 已是最新 / 失败）仍由入口就地表达。</p>
+<div class="samples">
+<div>
+<div class="lab">入口 A · 菜单项三态（NSMenuItem）</div>
+<div class="menu">
+<div class="mi"><span class="chk"><i class="dot"></i></span><span class="new">检测到新版 v1.4.6</span></div>
+<div class="mi"><span class="chk"></span><span>已是最新版本 v1.4.5</span></div>
+<div class="mi"><span class="chk"></span><span>检查更新</span></div>
+<div class="msep"></div>
+<div class="mi"><span class="chk"><i class="tick">✓</i></span><span>开机自启动</span></div>
+<div class="msep"></div>
+<div class="mi"><span class="chk"></span><span>关于 Comate HUD</span></div>
+<div class="mi"><span class="chk"></span><span>退出 Comate HUD</span></div>
+</div>
+<div class="cap"><b>三种文案互斥（代码事实）：</b>有新版 → <b>「检测到新版 v1.4.6」</b>（<code>accent.hover</code>，红点画在<strong>勾选列</strong>，不另占一列以免标题右移）；已查过且无新版 → <b>「已是最新版本 v1.4.5」</b>；未查过 → <b>「检查更新」</b>。<span class="tag">现状</span></div>
+</div>
+<div>
+<div class="lab">入口 B · 菜单栏图标右上角红点</div>
+<div class="note" style="margin-top:0;display:block;padding:14px">
+<div class="dotbar"><span class="dotbig"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.6" y="3" width="12.8" height="10" rx="2.2"/><path d="M6.2 3v2.4a1 1 0 0 0 1 1h1.6a1 1 0 0 0 1-1V3" fill="currentColor" stroke="none"/></svg><i class="dot"></i></span><span class="cap" style="margin:0">面板页脚齿轮 / 菜单栏图标右上角 <b>7pt</b> 红点</span></div>
+<div class="tx" style="margin-top:10px">红点 <code>dot.update #FF4D4F</code> <b>5pt（徽标）/ 7pt（灯）</b> + 1pt 分离环 <code>rgba(0,0,0,.40)</code>。亮灭判据（纯函数）：<code>shouldShowDot(available, acknowledged, local)</code> —— <b>仅当「可更新版本 &gt; 已读版本（或本地版本）」</b>才亮；<b>更新提醒与状态灯不并排</b>（T6）。</div>
+</div>
+</div>
+<div>
+<div class="lab">入口 C · 设置窗口「关于」页 · 更新三态</div>
+<div class="row-card">
+<div class="row"><svg class="ic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11.2 4.6A4.6 4.6 0 1 0 11.7 6.6"/><path d="M11.5 1.9v3.4H8.1"/></svg>检查更新<span class="t"><button class="btn gho mini" type="button">检查更新</button></span></div>
+<div class="row ok"><svg class="ic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5.7"/><path d="M4.8 7.2 6.5 8.9l3-3.8"/></svg>已是最新版本 v1.4.5</div>
+<div class="row new"><i class="badge"></i><svg class="ic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5.7"/><path d="M7 4v6M4.7 6.3 7 4l2.3 2.3"/></svg>检测到新版 v1.4.6<svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 2.4 8 6l-3.6 3.6"/></svg></div>
+</div>
+<div class="cap">三态与菜单项同源（<code>ComateStore.updateChecked / availableUpdate</code>）：<b>检查更新</b>（中性按钮）→ <b>已是最新版本 vX</b>（✓ <code>status.done</code>，不可点）→ <b>检测到新版 vX</b>（红点 + <code>accent.hover</code> + chevron，整行可点）。<span class="tag">现状</span></div>
+</div>
+<div>
+<div class="lab">红点标注（三处出现位）</div>
+<div class="note" style="margin-top:0;display:block;padding:14px">
+<div class="tx"><b>① 菜单项勾选列</b>（<code>onStateImage</code>，不新增图标列）</div>
+<div class="tx"><b>② 菜单栏图标右上角</b>（偏移 <code>+3, −3</code>）</div>
+<div class="tx"><b>③ 面板页脚齿轮右上角</b>（偏移 <code>+3, −3</code>）</div>
+<div class="tx" style="margin-top:9px">规格：<code>5×5pt</code>（徽标）/ <code>7×7pt</code>（灯）· <code>radius.full</code> · 底 <code>#FF4D4F</code> · 环 <code>1pt rgba(0,0,0,.40)</code>。<b>不得与状态灯相邻</b>（T6）。</div>
+</div>
+</div>
+</div>
+
+<h3 style="margin:26px 0 0;color:var(--t2)">触发关系图 · 三个入口 → 本窗口 / 就地三态</h3>
+<div class="flow">
+<div class="fbox"><div class="fh">A · 点红点</div><div class="ft">点菜单栏图标 / 页脚齿轮上的<b>更新红点</b></div><div class="ft">→ 直接打开<b>本小窗（有新版态）</b>（等价于点「检测到新版」）</div></div>
+<svg class="arrow" viewBox="0 0 26 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h20M16.5 3 21 7l-4.5 4"/></svg>
+<div class="fbox mid"><div class="fh">独立更新小窗（本稿新增）</div><div class="ft">承接<b>有新版</b>的完整内容：图标 + <code>vA → vB</code> + changelog 三组 + 前往下载 / 稍后 / 跳过</div></div>
+<svg class="arrow" viewBox="0 0 26 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h20M16.5 3 21 7l-4.5 4"/></svg>
+<div class="fbox"><div class="fh">就地三态（不弹窗）</div><div class="ft"><b>检查中 → 已是最新 / 有新版 / 失败</b>；只有「有新版」才升级为本小窗</div></div>
+</div>
+<table class="rel">
+<thead><tr><th style="width:26%">入口</th><th style="width:22%">动作</th><th>触发结果</th></tr></thead>
+<tbody>
+<tr><td class="k">A · 更新红点<br><span class="tag">菜单栏图标 / 页脚齿轮</span></td><td>单击</td><td>直接<b>打开本小窗（有新版态）</b>——红点本身就是「有新版本」的信号，无需再等一次网络检查。</td></tr>
+<tr><td class="k">B · 菜单项<br><span class="tag">「检查更新」/「检测到新版 vX」</span></td><td>单击</td><td>已有新版（标题为「检测到新版 vX」）→ <b>打开本小窗</b>；标题为「<b>检查更新</b>」→ <b>就地</b>置「检查中」（红点/按钮禁用）→ 结果：有新版则<b>打开本小窗</b>并变「检测到新版 vX」，否则就地变「<b>已是最新版本 vX</b>」，失败则保持「检查更新」静默。</td></tr>
+<tr><td class="k">C · 设置「关于」/「通用」页<br><span class="tag">「检查更新」行</span></td><td>单击</td><td><b>就地三态</b>：检查中 → 已是最新 / 检测到新版（整行可点）；点「检测到新版」这一行 → <b>打开本小窗</b>。<b>不在设置窗口内挂 sheet</b>（同因：面板/窗口架构）。</td></tr>
+<tr><td class="k">D · 小窗内的动作</td><td>前往下载</td><td>跳 GitHub Release 发布页（<code>Release.url</code>）；成功后按用户确认关闭小窗。</td></tr>
+<tr><td class="k"></td><td>稍后</td><td>关窗，保留红点与「检测到新版 vX」——下次仍提示。</td></tr>
+<tr><td class="k"></td><td>跳过此版本</td><td><b>记下该版本为已读（ack）</b> → 红点灭、菜单项回「已是最新版本 vX」；只对该版本生效，更高版本会重新提示（<code>shouldShowDot</code> 的 <code>acknowledged</code> 语义）。</td></tr>
+</tbody>
+</table>
+
+<h2>3 · 版式与色彩规则（与 KD / DESIGN.md 对齐）</h2>
+<div class="note"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="6.3"/><path d="M8 7.2v4.2"/><circle cx="8" cy="4.9" r=".9" fill="currentColor" stroke="none"/></svg><div>
+<div class="tx"><b>按钮：</b>主按钮高 <b>34</b>、次按钮高 <b>30</b>、圆角统一 <code>radius.card 14</code>、字 <code>12.5pt/600</code>；间距 <b>8</b>。主按钮 hover <code>#22E0BB</code> / pressed <code>#00A98A</code>。</div>
+<div class="tx"><b>绿底文字硬规则：</b>品牌绿是亮色，白字压绿仅 ≈1.9:1 不可用 → 主按钮字一律 <code>#0F0F11</code>（≈9.8:1）；<b>唯一例外是禁用态</b>（底 <code>rgba(0,212,170,.40)</code> 已变暗，字改用 <code>rgba(255,255,255,.55)</code>，实测 computed 不为 <code>#FFF</code>）。</div>
+<div class="tx"><b>同屏饱和色 ≤ 2：</b>本窗常态只有「品牌绿（按钮/新版本号）」+「一个状态色（失败态的 <code>#FF6259</code>）」；changelog 的分组标签与圆点<b>刻意用中性灰</b>，不让语义色溢出到装饰（P3）。</div>
+</div></div>
+</div>
+<script>
+window.addEventListener('load',function(){
+  function q(s){return document.querySelector(s)}
+  function r(el){return {x:+el.getBoundingClientRect().left.toFixed(2),y:+el.getBoundingClientRect().top.toFixed(2),w:+el.getBoundingClientRect().width.toFixed(2),h:+el.getBoundingClientRect().height.toFixed(2)}}
+  function ov(el){return {scrollW:el.scrollWidth,clientW:el.clientWidth,overflowX:el.scrollWidth>el.clientWidth}}
+  var out={};
+  out.win1=r(q('#u1')); out.content1=r(q('#u1c'));
+  var p=q('#u1Primary'), pc=getComputedStyle(p);
+  out.primary={rect:r(p),color:pc.color,bg:pc.backgroundColor,radius:pc.borderRadius,isInk:(pc.color==='rgb(15, 15, 17)')};
+  var d=q('#u2Primary'), dc=getComputedStyle(d);
+  out.disabledBtn={color:dc.color,bg:dc.backgroundColor,isPureWhite:(dc.color==='rgb(255, 255, 255)')};
+  out.greenBgControls=[];
+  [].forEach.call(document.querySelectorAll('.btn.pri'),function(b){
+    var c=getComputedStyle(b);out.greenBgControls.push({id:b.id||'(none)',disabled:b.disabled,color:c.color,bg:c.backgroundColor,isWhite:(c.color==='rgb(255, 255, 255)')});
+  });
+  out.overflow={content1:ov(q('#u1c')),content2:ov(q('#u2c')),content3:ov(q('#u3c')),content4:ov(q('#u4c')),content1b:ov(q('#u1'))};
+  out.heights={c1:r(q('#u1c')).h,c2:r(q('#u2c')).h,c3:r(q('#u3c')).h,c4:r(q('#u4c')).h};
+  out.rowColors={};(function(){var b=q('.row.new'),c=getComputedStyle(b);out.rowColors.aboutNew=c.color;})();
+  var pre=document.createElement('pre');pre.id='__metrics';pre.style.cssText='position:fixed;left:-99999px;top:0;margin:0';pre.textContent='METRICS='+JSON.stringify(out);document.body.appendChild(pre);
+});
+</script>
+</body></html>

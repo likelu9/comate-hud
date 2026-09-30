@@ -35,7 +35,7 @@
 /* shadow */
 --hud-shadow-tip:0 8px 24px rgba(0,0,0,.48);--hud-shadow-cta:0 5px 9px rgba(0,212,170,.22);--hud-glow-focus:0 0 4px rgba(0,212,170,1);
 /* 几何常量 */
---hud-row-h:34px;--hud-header-h:20px;--hud-empty-h:24px;--hud-foot-h:22px;--hud-seg-h:17px;--hud-icon-btn:20px;--hud-icon-hit-w:32px;--hud-handle-hit:10px;
+--hud-row-h:34px;--hud-header-h:20px;--hud-empty-h:24px;--hud-foot-h:34px;--hud-foot-row1:14px;--hud-foot-bar:4px;--hud-row1-hit:22px;--hud-pct-w:36px;--hud-seg-h:17px;--hud-icon-btn:20px;--hud-icon-hit-w:32px;--hud-handle-hit:10px;
 }
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0}
@@ -87,18 +87,25 @@ border-radius:var(--hud-radius-8);background:var(--hud-surface-row);cursor:point
 .h-note{font-size:10px;line-height:var(--hud-line-row2);color:var(--hud-text-quaternary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .h-time{flex:none;font-size:10px;line-height:var(--hud-line-row2);color:var(--hud-text-quaternary)}
 .h-empty{flex:1;display:flex;align-items:center;justify-content:center;height:var(--hud-empty-h);font-size:11px;line-height:16px;color:var(--hud-text-quaternary)}
-.h-foot{height:var(--hud-foot-h);margin-top:var(--hud-space-8);display:flex;align-items:center;gap:var(--hud-space-7)}
-.h-quota{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--hud-space-2)}
-.h-qtext{font-size:10px;font-weight:500;line-height:var(--hud-line-micro);color:var(--hud-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 页脚 = 两行：第 1 行（周期胶囊紧贴额度读数 + 右侧铃铛/齿轮）+ 第 2 行（进度条占满 + 右端百分比）。
+   固定总高 34 = padding 6 + 第 1 行 14 + 行距 4 + 进度条 4 + padding 6；两行都不随内容长高（防跑版）。 */
+.h-foot{height:var(--hud-foot-h);margin-top:var(--hud-space-8);padding:var(--hud-space-6) 0;display:flex;flex-direction:column;justify-content:center;gap:var(--hud-space-4)}
+.h-f1{height:var(--hud-foot-row1);display:flex;align-items:center;gap:var(--hud-space-6)}
+.h-fic{margin-left:auto;flex:none;display:flex;align-items:center;gap:var(--hud-space-2)}
+.h-f2{height:var(--hud-foot-bar);display:flex;align-items:center;gap:var(--hud-space-6)}
+.h-qtext{flex:0 1 auto;min-width:0;font-size:10px;font-weight:500;line-height:var(--hud-foot-row1);color:var(--hud-text-secondary);white-space:nowrap;font-variant-numeric:tabular-nums}
 .h-qtext b{font-weight:600;color:var(--hud-text-strong)}
 .h-qtext.is-warn{color:var(--hud-status-waiting)}
-.h-bar{height:3px;border-radius:var(--hud-radius-full);background:var(--hud-surface-track);overflow:hidden}
-.h-bar i{display:block;height:100%;border-radius:var(--hud-radius-full);background:var(--hud-accent)}
+.h-bar{flex:1;min-width:0;height:var(--hud-foot-bar);border-radius:2px;background:var(--hud-accent-track);overflow:hidden}
+.h-bar i{display:block;height:100%;border-radius:2px;background:var(--hud-accent)}
+/* 额度未知（无数据 / 未登录）：轨道退回中性白 10%，不用品牌绿，避免误读为「额度存在」 */
+.h-bar--unknown{background:var(--hud-surface-track)}
+.h-pct{flex:none;width:var(--hud-pct-w);font-size:10px;font-weight:500;line-height:12px;color:var(--hud-text-secondary);text-align:right;font-variant-numeric:tabular-nums}
 .h-seg{height:var(--hud-seg-h);flex:none;position:relative;display:flex;align-items:center;padding:1px;border-radius:var(--hud-radius-3);background:var(--hud-surface-track)}
 .h-seg::before{content:'';position:absolute;left:0;right:0;top:-2.5px;bottom:-2.5px}
 .h-seg span{width:17px;height:14px;display:flex;align-items:center;justify-content:center;border-radius:2px;font-size:9.5px;font-weight:600;color:var(--hud-text-tertiary)}
 .h-seg .on{background:var(--hud-accent);color:var(--hud-accent-on)}
-.h-ib{width:var(--hud-icon-hit-w);height:var(--hud-foot-h);flex:none;display:grid;place-items:center;position:relative;border:0;padding:0;
+.h-ib{width:var(--hud-icon-hit-w);height:var(--hud-row1-hit);flex:none;display:grid;place-items:center;position:relative;border:0;padding:0;
 background:none;border-radius:var(--hud-radius-4);color:var(--hud-text-tertiary);cursor:pointer;transition:background var(--hud-dur-fast) var(--hud-ease-standard)}
 .h-ib svg{width:10.5px;height:10.5px}
 .h-ib:hover{background:var(--hud-surface-hit);color:var(--hud-text-primary)}
@@ -114,7 +121,7 @@ font:600 10px/13px var(--hud-font-family);text-align:center}
 background:var(--hud-accent);color:var(--hud-accent-on);font:600 10.5px/1 var(--hud-font-family);box-shadow:var(--hud-shadow-cta);cursor:pointer}
 .h-btn:hover{background:var(--hud-accent-hover)}
 .h-btn--plain{background:var(--hud-accent-soft);color:var(--hud-accent-hover);box-shadow:none}
-.h-btn--foot{flex:1;min-width:0;height:var(--hud-foot-h)}
+.h-btn--foot{flex:1;min-width:0;height:var(--hud-row1-hit)}
 .h-udot{position:absolute;top:4px;right:6px;width:5px;height:5px;border-radius:var(--hud-radius-full);background:var(--hud-dot-update);box-shadow:0 0 0 .5px var(--hud-dot-update-ring)}
 .h-state{padding:var(--hud-space-12) 0;display:flex;flex-direction:column;align-items:center;gap:var(--hud-space-6);text-align:center}
 .h-state .ic{color:var(--hud-text-tertiary)}
@@ -130,7 +137,9 @@ border:1px solid var(--hud-line-divider);font-size:8px;font-weight:500;line-heig
 .sk{height:7px;border-radius:var(--hud-radius-full);background:var(--hud-surface-skeleton);animation:sk-pulse var(--hud-dur-skeleton) ease-in-out infinite}
 .sk--dot{width:8px;height:8px;flex:none}
 .sk--src{width:14px;height:14px;flex:none;border-radius:var(--hud-radius-full)}
-.sk--ib{width:var(--hud-icon-hit-w);height:var(--hud-foot-h);flex:none;border-radius:var(--hud-radius-4)}
+.sk--ib{width:var(--hud-icon-hit-w);height:var(--hud-row1-hit);flex:none;border-radius:var(--hud-radius-4)}
+.sk--bar{flex:1;min-width:0}
+.sk--pct{flex:none;width:var(--hud-pct-w)}
 @keyframes sk-pulse{0%,100%{opacity:.55}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* ===== 3. 标注层（非产品样式）===== */
@@ -162,11 +171,11 @@ code i{font-style:normal;color:var(--hud-text-quaternary)}
 footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divider);font-size:10.5px;line-height:18px;color:var(--hud-text-quaternary)}
 </style></head><body><svg width=0 height=0 style="position:absolute" aria-hidden=true><symbol id="ic-plus" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M6 2.2v7.6M2.2 6h7.6"/></symbol><symbol id="ic-cloud" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.2 12.5h6.1a2.7 2.7 0 0 0 .3-5.4 3.6 3.6 0 0 0-6.9-.6A2.7 2.7 0 0 0 5.2 12.5Z"/></symbol><symbol id="ic-folder" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M2.2 12.4V3.9c0-.5.4-.9.9-.9h2.6l1.3 1.6h5.9c.5 0 .9.4.9.9v6.9c0 .5-.4.9-.9.9H3.1a.9.9 0 0 1-.9-.9Z"/></symbol><symbol id="ic-bell" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 6.8a3.8 3.8 0 0 1 7.6 0v2.4l1 1.5H3.2l1-1.5V6.8Z"/><path d="M6.4 10.7a1.6 1.6 0 0 0 3.2 0"/></symbol><symbol id="ic-gear" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="8" r="2.1"/><path d="M8 1.9v1.6M8 12.5v1.6M2.9 4.9l1.4.8M11.7 10.3l1.4.8M2.9 11.1l1.4-.8M11.7 5.7l1.4-.8"/></symbol><symbol id="ic-user" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="5.6" r="2.6"/><path d="M3.2 13.4c.6-2.3 2.5-3.6 4.8-3.6s4.2 1.3 4.8 3.6"/></symbol><symbol id="ic-warn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M8 2.6 14 13H2L8 2.6Z"/><path d="M8 6.6v3.1M8 11.4h.01"/></symbol></svg><div class="wr">
 <header><h1><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="3.5" width="18" height="13" rx="4" fill="none" stroke="#00D4AA" stroke-width="1.5"/><path d="M1 7h18" stroke="#00D4AA" stroke-width="1.5"/><circle cx="10" cy="12.5" r="2.5" fill="#00D4AA"/></svg>悬浮窗展开内容 · panel-main</h1>
-<p class=lead>Comate HUD 主面板 <strong>1:1 像素稿</strong>（pt = px，缩放 100%）。下方为面板在模拟桌面左上处的真实落位，右侧为逐块标注。主色由 KD 蓝改为<strong>品牌绿</strong> <code>accent.normal #00D4AA</code>：<strong>品牌绿只用于交互与额度</strong>（按钮 / 进度 / 选中 / 焦点），<strong>实底上的文字 / 图标一律深墨 <code>#0F0F11</code></strong>（品牌绿为亮色，白字仅 ≈1.9:1 不可读，深墨 ≈9.8:1），<strong>状态绿 <code>#31D158</code> 只用于状态</strong>（状态灯 / 状态文案），<strong>两者不得同屏紧邻</strong>。页脚额度区改为固定顺序 <mark>周期（日｜月）→ 已用 / 总量 + 进度条 → 铃铛 + 未读数 → 齿轮</mark>，数据源 <code>UsageAPI.Limit</code>（<code>used / total / remain / percent</code>）。字号与间距按新刻度上调（标题 12.5 · 行高 34 · 页脚 22），KD 紧凑刻度例外见 <code>T4</code>。状态变体见第二、三节。</p>
+<p class=lead>Comate HUD 主面板 <strong>1:1 像素稿</strong>（pt = px，缩放 100%）。下方为面板在模拟桌面左上处的真实落位，右侧为逐块标注。主色由 KD 蓝改为<strong>品牌绿</strong> <code>accent.normal #00D4AA</code>：<strong>品牌绿只用于交互与额度</strong>（按钮 / 进度 / 选中 / 焦点），<strong>实底上的文字 / 图标一律深墨 <code>#0F0F11</code></strong>（品牌绿为亮色，白字仅 ≈1.9:1 不可读，深墨 ≈9.8:1），<strong>状态绿 <code>#31D158</code> 只用于状态</strong>（状态灯 / 状态文案），<strong>两者不得同屏紧邻</strong>。页脚额度区改为<b>两行结构</b>：第 1 行 <mark>周期（日｜月）→ 紧贴 已用 / 总量 → 铃铛 + 未读数 → 齿轮</mark>，第 2 行 <mark>进度条占满 + 右端百分比</mark>，数据源 <code>UsageAPI.Limit</code>（<code>used / total / remain / percent</code>）。字号与间距按新刻度上调（标题 12.5 · 行高 34 · <b>页脚 34（两行）</b>），KD 紧凑刻度例外见 <code>T4</code>。状态变体见第二、三、四节。</p>
 <div class=meta><span class="pill on">第二阶段 · surfaces-wip</span><span class=pill>面板 281 × ≈288 pt（含 1pt 描边）</span><span class=pill>圆角 16 · 描边白 12% 1pt</span><span class=pill>内边距 14 / 10 / 14 · 区块 8 · 行距 4</span><span class=pill>主色 accent.normal #00D4AA（品牌绿）</span><span class=pill>字号 / 间距上调 · KD 例外见 T4</span><span class=pill>字体 rounded</span><span class=pill>零外链 · 图标内联 SVG</span></div></header>
 
 <h2>一 · 主面板（默认态）</h2>
-<p class=sub>宽取 <code>metrics.bar-w 281pt</code>（与刘海条同宽，保证收起/展开不跳宽）；高度按内容 ≈288pt，夹取区间 <b>132–460pt</b>（兜底 <b>340</b>）。区块竖向顺序：标题行 → 任务列表 → 页脚额度区 → 拖拽手柄。<b>页脚内部从左到右固定顺序</b>：① 周期胶囊「日｜月」（选中段 <code>accent.normal</code> 实底）→ ② 额度「已用 / 总量」+ 细进度条（<code>accent.normal</code> 填充、<code>accent.track</code> 作底）→ ③ 铃铛 + 未读数 → ④ 齿轮（含 5pt 更新红点）。</p>
+<p class=sub>宽取 <code>metrics.bar-w 281pt</code>（与刘海条同宽，保证收起/展开不跳宽）；高度按内容 ≈288pt，夹取区间 <b>132–460pt</b>（兜底 <b>340</b>）。区块竖向顺序：标题行 → 任务列表 → 页脚额度区 → 拖拽手柄。<b>页脚为两行</b>（高 <b>34pt</b>，详见第三节）：<b>第 1 行</b> = ① 周期胶囊「日｜月」（选中段 <code>accent.normal</code> 实底）→ ② 额度「已用 / 总量」读数（<b>紧贴胶囊，间距 6pt</b>）→ ③ 铃铛 + 未读数 → ④ 齿轮（含 5pt 更新红点）；<b>第 2 行</b> = ⑤ 进度条（<code>accent.normal</code> 填充、<code>accent.track</code> 作底，4pt / radius 2，<b>独占一行、左对齐占满可用宽度</b>）+ 右端百分比（10pt 等宽数字，间距 6pt）。</p>
 <div class=stage>
 
 <section class=desk>
@@ -216,13 +225,18 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 </div>
 <span class=pin style="top:236px">6</span>
 <div class=h-foot>
-<span class=h-seg><span>日</span><span class=on>月</span></span>
-<span class=h-quota>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
 <span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span>
-<span class=h-bar><i style="width:62%"></i></span>
-</span>
+<span class=h-fic>
 <button class=h-ib type=button aria-label="消息，3 条未读"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button>
 <button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar"><i style="width:62%"></i></span>
+<span class=h-pct>62%</span>
+</div>
 </div>
 <div class=h-handle><i></i></div>
 <span class=pin style="top:266px">7</span>
@@ -238,7 +252,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <li><b>任务行 + 四态状态灯</b><span>行底 <code>surface.row <i>白4%</i></code> · <code>radius.8</code> · 行高 <b>34pt</b>（= <code>line.label 18 + space.2 2 + line.row2 14</code>）· 行内 padding <b>0 8</b> · 行内元素间距 <code>space.7 <i>7pt</i></code> · 行间距 <code>metrics.row-gap <i>4pt</i></code>（行内边距 <b>3 / 6 → 4 / 7</b>）· 行高 <b>34pt 高于 KD 刻度 32</b>，<b>例外汇总见 T4</b> · 无描边（P2）；灯 <code>metrics.dot <i>8pt</i></code>，空闲 <code>status.idle #9CA0AA</code> / 工作中 <code>#FFC928</code> / 等待确认 <code>#FF6259</code> / 已完成 <code>status.done #31D158</code>，微发光 <code>glow.status 0 0 3px {status.*-soft}</code>；左侧交互区 <code>metrics.hit-left <i>44pt</i></code> · <b>语义分工（硬规则）</b>：<code>status.done #31D158</code> 只用于状态（状态灯 / 状态文案），<b>不得与品牌绿 <code>accent.normal #00D4AA</code> 同屏紧邻</b>；任务行内不出现任何品牌绿</span></li>
 <li><b>来源图标 + 任务标题</b><span>云端 <b>icloud</b> / 本机 <b>folder</b>，<b>14×14</b>、<code>text.tertiary</code>；标题 <code>font.label <i>12.5pt / 500</i></code> + <code>text.primary</code>（行高 18 = <code>line.label</code>），单行末尾省略，与图标间距 <code>space.7 <i>7pt</i></code></span></li>
 <li><b>副信息 + 相对时间</b><span>均 <code>font.meta <i>10pt</i></code> + <code>text.quaternary</code>（行高 14 = <code>line.row2</code>）；副信息在标题下方 <code>space.2 2pt</code>，有额度写 <b>「30天 N 点」</b>、无则 <b>「—」</b>；时间右对齐，档位 <b>N秒前 / N分钟前 / N小时前 / N天前</b></span></li>
-<li><b>页脚额度区（周期 → 额度 → 铃铛 → 齿轮，从左到右顺序固定）</b><span>行高 <code>metrics.foot-h <i>22pt</i></code>（= 侧热区高）· 区块上距 <code>space.8 <i>8pt</i></code> · 内部间距 <code>space.7 <i>7pt</i></code>；<b>① 周期胶囊「日｜月」</b>（<b>标签只允许「日 / 月」</b>，不得写成「7天 / 30天」）：每段 <b>17 × 14</b>、段内字号 <b>9.5pt / 600</b>、整体 <b>36 × 17</b>、<code>radius.3</code>、底 <code>surface.track</code>、<b>选中段 <code>accent.normal</code> 实底 + <code>accent.on #0F0F11</code></b>（品牌绿为亮色，白字仅 ≈1.9:1 不可读；深墨 <code>#0F0F11</code> ≈9.8:1，故一律深墨）、未选中 <code>text.tertiary</code>，热区 <b>36 × 22</b>（<code>::before</code> 撑高，不改变视觉高度）；<b>② 额度「已用 / 总量」</b>：文案 <code>font.meta <i>10pt / 500</i></code> + <code>text.secondary</code>，格式 <b>「已用 1,240 / 2,000 点」</b>、关键值 <code>text.strong</code>（<b>≤20% 时文案转 <code>status.waiting</code></b>）+ 细进度条 <b>3pt</b> <code>radius.full</code>：填充 <code>accent.normal #00D4AA</code>、底 <code>accent.track rgba(0,212,170,.22)</code>，宽度直接取 <code>percent</code>；<b>数据源 <code>UsageAPI.Limit</code></b>：<code>used</code> / <code>total</code> 组成读数、<code>remain</code> 用于耗尽提示、<code>percent</code> 驱动进度条；<b>③ 铃铛</b> + 未读数 <b>10pt / 600</b>（角标 <b>15 × 13</b>、<code>dot.update + 1pt dot.update-ring</code>）；<b>④ 齿轮</b> + <b>5pt</b> 更新红点（<code>dot.update</code>、<code>0 0 0 .5px dot.update-ring</code>）；铃铛 / 齿轮图标 <b>10.5pt</b>、热区 <b>32 × 22</b> <code>radius.4</code>（侧宽 32 / 高 22）· 未登录 / 登录失效时 <b>② 额度位替换为登录引导按钮</b>（见第三节 ③）· 额度只用品牌绿、铃铛角标用 <code>dot.update</code>，与状态灯不相邻（T6）</span></li>
+<li><b>页脚额度区（两行 · 第 1 行 周期→额度→铃铛→齿轮，第 2 行 进度条 + 百分比）</b><span>页脚高 <code>metrics.foot-h <i>34pt</i></code> = 上下 padding <code>space.6 <i>6pt</i></code> + 第 1 行内容 <b>14pt</b> + 行距 <code>space.4 <i>4pt</i></code> + 进度条 <b>4pt</b>（旧值 22 → 34，面板内容高 +12）· 区块上距 <code>space.8 <i>8pt</i></code> · 第 1 行内间距 <code>space.6 <i>6pt</i></code>（<b>胶囊与额度文字紧贴</b>）；<b>① 周期胶囊「日｜月」（日在前）</b>（<b>标签只允许「日 / 月」</b>，不得写成「7天 / 30天」）：每段 <b>17 × 14</b>、段内字号 <b>9.5pt / 600</b>、整体 <b>36 × 17</b>、<code>radius.3</code>、底 <code>surface.track</code>、<b>选中段 <code>accent.normal</code> 实底 + <code>accent.on #0F0F11</code></b>（品牌绿为亮色，白字仅 ≈1.9:1 不可读；深墨 <code>#0F0F11</code> ≈9.8:1，故一律深墨）、未选中 <code>text.tertiary</code>，热区 <b>36 × 22</b>（<code>::before</code> 撑高，不改变视觉高度）；<b>② 额度「已用 / 总量」读数</b>：文案 <code>font.meta <i>10pt / 500</i></code> + <code>text.secondary</code>、<code>font-variant-numeric: tabular-nums</code>，格式 <b>「已用 1,240 / 2,000 点」</b>、关键值 <code>text.strong</code>（<b>≤20% 时文案转 <code>status.waiting</code></b>），<b>超长缩写与「已用」降级阶梯见 §3.1–3.3</b>（<b>禁止省略号</b>）；<b>③ 铃铛</b> + 未读数 <b>10pt / 600</b>（角标 <b>15 × 13</b>、<code>dot.update + 1pt dot.update-ring</code>）；<b>④ 齿轮</b> + <b>5pt</b> 更新红点（<code>dot.update</code>、<code>0 0 0 .5px dot.update-ring</code>）；铃铛 / 齿轮图标 <b>10.5pt</b>、热区 <b>32 × 22</b> <code>radius.4</code>，右对齐图标簇（间距 2pt、<code>margin-left:auto</code>）；<b>⑤ 进度条（第 2 行）</b>：<b>4pt</b> / <code>radius 2</code>、<code>flex:1</code> 占满可用宽、填充 <code>accent.normal #00D4AA</code>、底 <code>accent.track rgba(0,212,170,.22)</code>，宽度取 <code>percent</code>；右端百分比 <b>10pt</b> 等宽数字、<b>固定 36pt 宽右对齐</b>（<code>--hud-pct-w</code>）→ 百分比位数变化不推挤进度条；<b>数据源 <code>UsageAPI.Limit</code></b>：<code>used</code> / <code>total</code> 组成读数、<code>remain</code> 用于耗尽提示、<code>percent</code> 驱动进度条；未登录 / 登录失效时 <b>② 额度位替换为登录引导按钮</b>（高 20pt，第 2 行保留中性轨道 + <code>—</code>，见第四节 ③ 与本页 §3.4）· 额度只用品牌绿、铃铛角标用 <code>dot.update</code>，与状态灯不相邻（T6）</span></li>
 <li><b>底部拖拽手柄</b><span>胶囊 <b>44 × 3 pt</b>（<code>metrics.handle-w / -h</code>）· <code>radius.full</code> · 常态 <code>--hud-handle-idle <i>白22%</i></code> · hover / 拖拽中 <code>--hud-handle-active <i>白50%</i></code> · 命中区仅最底 <code>space.10 <i>10pt</i></code> · 光标 <code>row-resize</code> / 拖拽 <code>grabbing</code></span></li>
 </ol>
 <h3 style="margin-top:16px">区块顺序与职责</h3>
@@ -246,7 +260,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <tr><td>1</td><td><b>标题行</b></td><td>标识产品身份 + 唯一主动作（新建任务）；不承载状态</td><td>20pt · 上距 8pt</td></tr>
 <tr><td>2</td><td><b>任务列表</b></td><td>面板唯一信息主体；每行一眼读完「灯 + 来源 + 标题 + 消耗 + 时间」</td><td>行高 34pt · 行距 4pt</td></tr>
 <tr><td>2a</td><td><em>空态占位</em></td><td>无任务时顶替列表，不额外加卡片或插图</td><td>24pt</td></tr>
-<tr><td>3</td><td><b>页脚额度区</b></td><td><b>固定顺序</b>：① 周期切换「日｜月」→ ② 额度读数（已用 / 总量 + 进度条）→ ③ 消息入口（铃铛 + 未读数）→ ④ 设置入口（齿轮）</td><td>22pt · 上距 8pt</td></tr>
+<tr><td>3</td><td><b>页脚额度区</b></td><td><b>两行、位置固定</b>：第 1 行 ① 周期切换「日｜月」→ ② 额度读数（已用 / 总量，紧贴胶囊）→ ③ 消息入口（铃铛 + 未读数）→ ④ 设置入口（齿轮）；第 2 行 ⑤ 进度条占满 + 右端百分比</td><td><b>34pt</b>（两行）· 上距 8pt</td></tr>
 <tr><td>4</td><td><b>拖拽手柄</b></td><td>调节面板可见条数（1–10）；命中区独占最底 10pt</td><td>3pt 胶囊 / 10pt 命中</td></tr>
 </tbody></table>
 </section>
@@ -256,7 +270,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 /* 变体区辅助样式（仅标注/示意用，非产品 token） */
 .rel{position:relative;padding-top:34px}
 .tip-above{position:absolute;left:14px;top:4px}
-.panel--132{height:132px;display:flex;flex-direction:column}
+.panel--min{height:144px;display:flex;flex-direction:column}
 .h-rows--empty{flex:1;justify-content:center}
 .sk{display:block}
 .tline{display:flex;flex-direction:column;gap:4px}
@@ -279,7 +293,20 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <div class="h-row is-hover"><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
 <div class=h-row><span class="h-dot h-dot--waiting"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>确认删除旧状态灯映射</span><span class=h-note>30天 860 点</span></span><span class=h-time>5分钟前</span></div>
 </div>
-<div class=h-foot><span class=h-seg><span>日</span><span class=on>月</span></span><span class=h-quota><span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span><span class=h-bar><i style="width:62%"></i></span></span><button class=h-ib type=button><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button><button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button></div>
+<div class=h-foot>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
+<span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span>
+<span class=h-fic>
+<button class=h-ib type=button><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar"><i style="width:62%"></i></span>
+<span class=h-pct>62%</span>
+</div>
+</div>
 <div class=h-handle><i></i></div>
 </div>
 </div>
@@ -295,7 +322,20 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <div class="h-row is-press"><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
 <div class=h-row><span class="h-dot h-dot--waiting"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>确认删除旧状态灯映射</span><span class=h-note>30天 860 点</span></span><span class=h-time>5分钟前</span></div>
 </div>
-<div class=h-foot><span class=h-seg><span>日</span><span class=on>月</span></span><span class=h-quota><span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span><span class=h-bar><i style="width:62%"></i></span></span><button class=h-ib type=button><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button><button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button></div>
+<div class=h-foot>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
+<span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span>
+<span class=h-fic>
+<button class=h-ib type=button><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar"><i style="width:62%"></i></span>
+<span class=h-pct>62%</span>
+</div>
+</div>
 <div class=h-handle><i></i></div>
 </div>
 <p class=cap><b>行 pressed（第 2 行）</b>行底 <code>surface.row-pressed <i>白14%</i></code> · 反馈时长 <code>dur.instant 80ms</code> · 按下期间 tooltip 隐藏（避免与按下态叠加，避免遮挡点击目标）· 松手即跳转「在 Comate 中打开该任务」· 禁用/无权限行不进入 pressed，只保留 hover（P4 + 验收 4）</p>
@@ -314,7 +354,209 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 </div>
 </div>
 
-<h2>三 · 手柄 / 加载 / 空 / 错误</h2>
+<h2>三 · 页脚额度区 · 两行结构与防跑版</h2>
+<p class=sub>用户两条反馈：<b>① 周期胶囊与额度文字的间距过大</b>、<b>② 已用 / 总量数字过长时会跑版</b>。拍板方案：页脚由单行 22pt 改为<b>两行 34pt</b> —— 第 1 行 = 周期胶囊（日｜月，日在前）<b>紧贴</b>额度读数（间距压到 <code>space.6 <i>6pt</i></code>）+ 右端铃铛 / 齿轮；第 2 行 = <b>进度条独占一行、左对齐占满可用宽度</b> + 右端百分比（10pt、等宽数字、间距 6pt）。<b>页脚精确高度 = 34pt = 上下 padding 6 + 第 1 行内容 14 + 行距 4 + 进度条 4 + padding 6</b>（旧值 22 → 34：面板内容高同步 +12；代码里最小 / 兜底高由实测 <code>footerHeight</code> 推出，会自动跟随）。三档原始数字 → 缩写 → 降级见下方实测，<b>三档下进度条与铃铛 / 齿轮的位置完全不动</b>。</p>
+<style>
+/* 本节辅助样式（标注层，非产品 token） */
+.ovf{position:relative;margin-bottom:22px;outline:1px dashed rgba(0,212,170,.55);outline-offset:2px}
+.ovf .h-qtext b{color:var(--hud-status-waiting)}
+.ovf::after{content:'未降级 → 超宽 13pt，数字压到铃铛（不允许出现）';position:absolute;left:14px;bottom:-17px;font-size:8px;line-height:12px;color:var(--hud-accent-hover);white-space:nowrap}
+</style>
+<h3>3.1 防跑版 · 三档数据对照（并列 1:1）</h3>
+<p class=sub>三档用同一个页脚组件、同一套宽度约束（面板 281 → 页脚内宽 <b>251pt</b>；扣掉右侧图标簇 66pt 与簇前 6pt 间距 → 第 1 行左侧可用 <b>179pt</b>（= 胶囊 36 + 间距 6 + 文字位 <b>137pt</b>）），差别只在「文案怎么缩」：<b>数字一律等宽数字 <code>tabular-nums</code>，字号三档恒为 10pt —— 永不靠缩小字号换宽度</b>。</p>
+<div class=grid>
+
+<div class=card>
+<header><h3>① 常规 · 1,240 / 2,000</h3><span class="tag on">62%</span></header>
+<div class=panel>
+<div class=h-rows style="margin-top:0">
+<div class=h-row><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
+<div class=h-row><span class="h-dot h-dot--done"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-folder /></svg></span><span class=h-stack><span class=h-name>收敛四态色板到 Logo</span><span class=h-note>—</span></span><span class=h-time>2小时前</span></div>
+</div>
+<div class=h-foot data-case=t1>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
+<span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span>
+<span class=h-fic>
+<button class=h-ib type=button aria-label="消息"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar"><i style="width:62%"></i></span>
+<span class=h-pct>62%</span>
+</div>
+</div>
+<div class=h-handle><i></i></div>
+</div>
+<p class=cap><b>档 ① 常规（原样）</b>文案 <code>已用 1,240 / 2,000 点</code> · 文字实测 <b>104.4pt</b> / 文字位 <b>137pt</b>（0.76）· 首行左侧内容宽 <b>146.4pt</b> / 可用 <b>179pt</b> = <b>0.82</b> · 数字字号 <b>10pt（不缩写、不降级）</b> · 胶囊↔文字间距 <b>6pt</b> · 铃铛 x=<b>185</b> / 齿轮 x=<b>219</b>（命中区 32×22）· 进度条 x=0、宽 <b>209pt</b>（= 251 − 6 − 36，三档恒定）· 百分比位 <b>36pt</b> 固定 · 铃铛 / 齿轮 x 与其余两档完全一致</p>
+</div>
+
+<div class=card>
+<header><h3>② 长 · 12,345,678 / 20,000,000</h3><span class="tag on">61.7%</span></header>
+<div class=panel>
+<div class=h-rows style="margin-top:0">
+<div class=h-row><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
+<div class=h-row><span class="h-dot h-dot--done"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-folder /></svg></span><span class=h-stack><span class=h-name>收敛四态色板到 Logo</span><span class=h-note>—</span></span><span class=h-time>2小时前</span></div>
+</div>
+<div class=h-foot data-case=t2>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
+<span class=h-qtext><b>1,234.6 万</b> / 2,000.0 万 点</span>
+<span class=h-fic>
+<button class=h-ib type=button aria-label="消息"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar"><i style="width:61.7%"></i></span>
+<span class=h-pct>61.7%</span>
+</div>
+</div>
+<div class=h-handle><i></i></div>
+</div>
+<p class=cap><b>档 ② 长（缩写 + 去「已用」）</b>原始 <code>12,345,678 / 20,000,000</code> 直接排上要 <b>164.0pt</b>（&gt; 137pt）→ 缩写 <code>1,234.6 万 / 2,000.0 万</code>（≥1 万进「万」，保留 1 位小数）→ 仍带「已用」时文字 <b>149.9pt</b>，仍超文字位 137pt 达 <b>12.9pt</b> → 按阶梯去掉「已用」二字 → <code>1,234.6 万 / 2,000.0 万 点</code> · 落地文字 <b>127.1pt</b> / 137pt = <b>0.93</b> · 首行左侧内容宽 <b>169.1pt</b> / 179pt = <b>0.94</b> · 字号仍 <b>10pt</b> · 铃铛 x=185 / 齿轮 x=219（与档 ① 完全一致）</p>
+<div class=vlab style="margin-top:12px">未降级对照 · 只缩写、保留「已用」（不允许出现，仅用于比对）</div>
+<div class=panel ovf>
+<div class=h-rows style="margin-top:0">
+<div class=h-row><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
+<div class=h-row><span class="h-dot h-dot--done"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-folder /></svg></span><span class=h-stack><span class=h-name>收敛四态色板到 Logo</span><span class=h-note>—</span></span><span class=h-time>2小时前</span></div>
+</div>
+<div class=h-foot data-case=t2-overflow>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
+<span class=h-qtext>已用 <b>1,234.6 万</b> / 2,000.0 万 点</span>
+<span class=h-fic>
+<button class=h-ib type=button aria-label="消息"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar"><i style="width:61.7%"></i></span>
+<span class=h-pct>61.7%</span>
+</div>
+</div>
+<div class=h-handle><i></i></div>
+</div>
+<p class=cap><b>为什么这一档必须去「已用」</b>只缩写、不降级时文字实测 <b>149.9pt &gt; 137pt</b>（超 <b>12.9pt</b>，数字会压到铃铛上）→ 首行左侧 <b>192.0pt &gt; 179pt</b>；而只去掉「已用」后 <b>127.1pt</b> 即落地（余量 9.9pt）—— <b>缩写换来 14.1pt、「已用」再换 22.9pt，两者缺一不可</b>。</p>
+</div>
+
+<div class=card>
+<header><h3>③ 极限 · 999,999,999 / 1,000,000,000</h3><span class="tag on">100%</span></header>
+<div class=panel>
+<div class=h-rows style="margin-top:0">
+<div class=h-row><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
+<div class=h-row><span class="h-dot h-dot--done"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-folder /></svg></span><span class=h-stack><span class=h-name>收敛四态色板到 Logo</span><span class=h-note>—</span></span><span class=h-time>2小时前</span></div>
+</div>
+<div class=h-foot data-case=t3>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
+<span class=h-qtext>已用 <b>10.0 亿</b> / 10.0 亿 点</span>
+<span class=h-fic>
+<button class=h-ib type=button aria-label="消息"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg><span class=h-badge>3</span></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar"><i style="width:100%"></i></span>
+<span class=h-pct>100%</span>
+</div>
+</div>
+<div class=h-handle><i></i></div>
+</div>
+<p class=cap><b>档 ③ 极限（只缩写，不降级）</b>原始 <code>999,999,999 / 1,000,000,000</code> 直接排上要 <b>187.1pt</b>（&gt; 137pt）→ 缩写 <code>10.0 亿 / 10.0 亿</code>（≥1 亿进「亿」）= <b>116.7pt</b> / 137pt = <b>0.85</b> · 首行左侧内容宽 <b>158.7pt</b> / 179pt = <b>0.89</b> · 字号仍 <b>10pt</b>，<b>「已用」二字保留</b>（缩写后已放得下，无须再降级）· 铃铛 x=185 / 齿轮 x=219</p>
+</div>
+</div>
+
+<h3 style="margin-top:18px">3.2 防跑版规则（硬规则 · 按优先级）</h3>
+<table class=tbl><thead><tr><th>#</th><th>阶梯</th><th>做法</th><th>本页实测</th></tr></thead><tbody>
+<tr><td>0</td><td><b>数字等宽</b></td><td>数字一律 <code>font-variant-numeric: tabular-nums</code>；三档字号恒 <b>10pt</b>，任何情况都不得缩小字号换宽度</td><td>三档 computed <code>font-size</code> = <b>10px / 10px / 10px</b></td></tr>
+<tr><td>1</td><td><b>中文习惯缩写</b></td><td><b>≥1 万进「万」、≥1 亿进「亿」，保留一位小数</b>（四舍五入）；仍保留千分位与单位「点」</td><td>未缩写 ② <b>164.0pt</b> · ③ <b>187.1pt</b>（均 &gt; 文字位 137pt）→ ② <code>1,234.6 万 / 2,000.0 万</code>（149.9pt）· ③ <code>10.0 亿 / 10.0 亿</code>（116.7pt ✓）</td></tr>
+<tr><td>2</td><td><b>去掉「已用」标签</b></td><td>空间仍不足时<b>先降级标签</b>：去掉「已用」只留数字与单位；周期语义由左侧胶囊承担，不丢信息</td><td>② 触发（149.9 → <b>127.1pt</b> ≤ 137pt，落地 <b>0.93</b>）· ③ 未触发（缩写后 116.7pt ≤ 137pt）</td></tr>
+<tr><td>3</td><td><b>去千分位 / 去单位</b></td><td>终端兜底（本页三档未用到）：去掉千分位与「点」，如 <code>1234.6万 / 2000.0万</code>；行内间距 <b>6 → 4</b></td><td>预留（本页三档未触发）；对 ② 再走一步 → <b>114.8pt</b>（去千分位、保留「点」）</td></tr>
+<tr><td>4</td><td><b>禁止项</b></td><td><b>禁止省略号截断数字</b>（<code>text-overflow: ellipsis</code> 一律不用于数字）、<b>禁止撑破页脚</b>、<b>禁止换到第三行</b>；页脚高恒 <b>34pt</b>，不随文案长短变</td><td>三档 <code>.h-foot</code> 高均 <b>34pt</b>；文档 <code>scrollWidth == clientWidth</code></td></tr>
+</tbody></table>
+
+<h3 style="margin-top:18px">3.3 三档位置稳定性（DOM 实测）</h3>
+<table class=tbl><thead><tr><th>档</th><th>原始数字</th><th>落地文案</th><th>左侧内容宽 / 可用 179</th><th>文字宽 / 文字位 137</th><th>铃铛 x</th><th>齿轮 x</th><th>进度条宽</th><th>数字字号</th></tr></thead><tbody>
+<tr><td>①</td><td>1,240 / 2,000</td><td>已用 1,240 / 2,000 点</td><td><b>146.4</b>（0.82）</td><td><b>104.4</b>（0.76）</td><td>185</td><td>219</td><td>209</td><td>10pt</td></tr>
+<tr><td>②</td><td>12,345,678 / 20,000,000</td><td>1,234.6 万 / 2,000.0 万 点</td><td><b>169.1</b>（0.94）</td><td><b>127.1</b>（0.93）</td><td>185</td><td>219</td><td>209</td><td>10pt</td></tr>
+<tr><td>②&#39;</td><td><em>未缩写的原始串</em></td><td>已用 12,345,678 / 20,000,000 点</td><td><em>206.0</em>（1.15）✗</td><td><em>164.0</em>（1.20）✗</td><td>185</td><td>219</td><td>209</td><td>10pt</td></tr>
+<tr><td>②&#39;&#39;</td><td><em>只缩写、不去「已用」（本页比对帧）</em></td><td>已用 1,234.6 万 / 2,000.0 万 点</td><td><em>192.0</em>（1.07）✗</td><td><em>149.9</em>（1.09）✗</td><td>185</td><td>219</td><td>209</td><td>10pt</td></tr>
+<tr><td>③</td><td>999,999,999 / 1,000,000,000</td><td>已用 10.0 亿 / 10.0 亿 点</td><td><b>158.7</b>（0.89）</td><td><b>116.7</b>（0.85）</td><td>185</td><td>219</td><td>209</td><td>10pt</td></tr>
+<tr><td>③&#39;</td><td><em>未缩写的原始串</em></td><td>已用 999,999,999 / 1,000,000,000 点</td><td><em>229.1</em>（1.28）✗</td><td><em>187.1</em>（1.37）✗</td><td>185</td><td>219</td><td>209</td><td>10pt</td></tr>
+</tbody></table>
+<p class=cap style="max-width:960px"><b>位置稳定性</b>：铃铛 / 齿轮挂在 <b>右对齐</b>的图标簇里（<code>.h-fic{margin-left:auto}</code>），左端胶囊贴左，中间文字只吃「剩余空间」—— 所以三档下铃铛 x 恒 <b>185</b>、齿轮 x 恒 <b>219</b>（Δ = 0，不跳动）；百分比数字用<b>固定 36pt 宽 + 右对齐</b>（<code>--hud-pct-w</code>），<code>62% / 61.7% / 100%</code> 三种宽度都不会推挤进度条 —— 三档进度条宽恒 <b>209pt</b>。<br><b>胶囊与文字的间距</b>：由旧的 <code>space.7 7pt</code>（单行）压到 <code>space.6 <i>6pt</i></code> 并<b>直接相邻、不参与弹性</b>（弹性全给到图标簇左侧），这正是反馈 ① 要的「紧贴」。</p>
+
+<h3 style="margin-top:20px">3.4 页脚兜底形态（无数据 / 加载中 / 未登录 · 各 1 帧）</h3>
+<p class=sub>三种「没有数」的情况也走同一套两行骨架，<b>不留空、不缩高、不换布局</b>：数字位统一用长破折号 <code>—</code>（不用 0 —— 0 会被读成「真的用了 0 点」），此时<b>进度条轨道退回中性 <code>surface.track</code> 白 10%</b>（品牌绿轨道只在「额度存在」时出现），百分比位同显 <code>—</code>。</p>
+<div class=grid>
+
+<div class=card>
+<header><h3>① 无数据 · 额度接口暂无返回</h3><span class="tag">empty-data</span></header>
+<div class=panel>
+<div class=h-rows style="margin-top:0">
+<div class=h-row><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
+<div class=h-row><span class="h-dot h-dot--done"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-folder /></svg></span><span class=h-stack><span class=h-name>收敛四态色板到 Logo</span><span class=h-note>—</span></span><span class=h-time>2小时前</span></div>
+</div>
+<div class=h-foot data-case=f-nodata>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
+<span class=h-qtext>已用 <b>—</b> / — 点</span>
+<span class=h-fic>
+<button class=h-ib type=button aria-label="消息"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar h-bar--unknown"><i style="width:0"></i></span>
+<span class=h-pct>—</span>
+</div>
+</div>
+<div class=h-handle><i></i></div>
+</div>
+<p class=cap><b>无数据（已登录 · 未取到额度）</b>文案 <code>已用 — / — 点</code>、百分比 <code>—</code>、轨道 <code>surface.track</code> 白 10% 且填充 0；数字位一律 <code>—</code>，<b>不写 0</b>、不留空；页脚高仍 <b>34pt</b> · 文字 <b>62.7pt</b> / 137pt = 0.46（首行左侧 <b>104.7pt</b> / 179pt = 0.58）· 铃铛 x=185 / 齿轮 x=219（不动）· 铃铛不显示未读角标</p>
+</div>
+
+<div class=card>
+<header><h3>② 加载中 · 骨架屏</h3><span class="tag">loading</span></header>
+<div class=panel>
+<div class=h-rows style="margin-top:0">
+<div class=h-row><span class="h-dot h-dot--working"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>30天 1,240 点</span></span><span class=h-time>12秒前</span></div>
+<div class=h-row><span class="h-dot h-dot--idle"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-folder /></svg></span><span class=h-stack><span class=h-name>整理 window 布局常量</span><span class=h-note>—</span></span><span class=h-time>3天前</span></div>
+</div>
+<div class=h-foot data-case=loading>
+<div class=h-f1><span class="sk" style="width:36px;height:17px"></span><span class="sk" style="width:104px;height:10px"></span><span class=h-fic><span class="sk sk--ib"></span><span class="sk sk--ib"></span></span></div>
+<div class=h-f2><span class="sk sk--bar" style="height:4px"></span><span class="sk sk--pct" style="height:10px"></span></div>
+</div>
+<div class=h-handle><i></i></div>
+</div>
+<p class=cap><b>加载中</b>骨架位与真身一一对应、同宽同高：胶囊 <b>36×17</b>、额度文字 <b>104×10</b>、两个图标位 <b>32×22</b>、进度条 <b>209×4</b>（<code>sk--bar{flex:1}</code>）、百分比 <b>36×10</b>（<code>sk--pct</code> 固定宽）· 页脚高 <b>34pt</b>、骨架条宽 209pt 与真身逐位对齐 → 数据到达时<b>不跳高</b> · 呼吸 <code>1200ms</code> 仅改透明度</p>
+</div>
+
+<div class=card>
+<header><h3>③ 未登录 · 登录后才有额度</h3><span class="tag">auth</span></header>
+<div class=panel>
+<div class=h-rows style="margin-top:0">
+<div class=h-row><span class="h-dot h-dot--idle"></span><span class=h-src><svg width=12 height=12 aria-hidden=true><use href=#ic-cloud /></svg></span><span class=h-stack><span class=h-name>补全 infer 接口单测</span><span class=h-note>—</span></span><span class=h-time>12秒前</span></div>
+</div>
+<div class=h-foot data-case=login>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
+<button class="h-btn h-btn--foot" type=button>登录 Comate</button>
+<span class=h-fic>
+<button class=h-ib type=button aria-label="消息"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg><span class=h-udot></span></button>
+</span>
+</div>
+<div class=h-f2><span class="h-bar h-bar--unknown"><i style="width:0"></i></span><span class=h-pct>—</span></div>
+</div>
+<div class=h-handle><i></i></div>
+</div>
+<p class=cap><b>未登录 / 登录失效</b>第 1 行的额度位整体换成<b>登录引导按钮</b>（<code>accent.normal</code> 实底 + <code>accent.on #0F0F11</code> 深墨字、<code>radius.6</code>、<b>高 20pt</b>、<code>font.mini 10.5pt / 600</code>、投影 <code>shadow.cta</code>、<code>flex:1</code> 占满额度位）；周期胶囊 / 铃铛 / 齿轮位置不变；第 2 行保留中性轨道 + <code>—</code>，<b>不写 0%</b>（0% 会被读成「额度已用完」）· 登录成功即回填 <code>UsageAPI.Limit</code>（<code>used / total / remain / percent</code>）· 按钮 <code>flex:1</code> 自适应、文字不换行；按钮 <code>min-content</code> 实测 <b>60.6pt</b>、落地 <code>flex:1</code> 实宽 <b>137pt</b>（= 251 − 36 − 6 − 6 − 66）→ 首行最小需宽 = 36 + 6 + 60.6 + 6 + 66 = <b>174.6pt</b> &lt; 251 ✓ · 铃铛 x=185 / 齿轮 x=219 与默认态一致</p>
+</div>
+</div>
+<h2>四 · 手柄 / 加载 / 空 / 错误</h2>
 <div class=grid>
 
 <div class=card>
@@ -356,7 +598,10 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 <div class=h-row><span class="sk sk--dot"></span><span class="sk sk--src"></span><span class=h-stack><span class=sk style="width:88px"></span><span class=sk style="width:60px;height:6px"></span></span><span class=sk style="width:34px"></span></div>
 <div class=h-row><span class="sk sk--dot"></span><span class="sk sk--src"></span><span class=h-stack><span class=sk style="width:112px"></span><span class=sk style="width:20px;height:6px"></span></span><span class=sk style="width:28px"></span></div>
 </div>
-<div class=h-foot><span class="sk" style="width:36px;height:17px"></span><span class=h-quota><span class=sk style="width:104px;height:10px"></span><span class="sk" style="width:100%;height:3px"></span></span><span class="sk sk--ib"></span><span class="sk sk--ib"></span></div>
+<div class=h-foot data-case=loading>
+<div class=h-f1><span class="sk" style="width:36px;height:17px"></span><span class="sk" style="width:104px;height:10px"></span><span class=h-fic><span class="sk sk--ib"></span><span class="sk sk--ib"></span></span></div>
+<div class=h-f2><span class="sk sk--bar" style="height:4px"></span><span class="sk sk--pct" style="height:10px"></span></div>
+</div>
 <div class=h-handle><i></i></div>
 </div>
 <p class=cap><b>加载骨架</b>骨架色 <code>surface.skeleton <i>白6%</i></code>，圆角 <code>radius.full</code>；<b>行位保留</b>（4 行 × 34pt，与真实列表同高，避免加载完成时面板跳动）· 呼吸 <code>--hud-dur-skeleton 1200ms</code> ease-in-out，仅透明度 0.55 ↔ 1（P5 只允许透明度/位移）· <code>prefers-reduced-motion</code> 下停在终态（不闪）</p>
@@ -364,13 +609,26 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 
 <div class=card>
 <header><h3>空态 · 暂无任务</h3><span class="tag on">empty</span></header>
-<div class="panel panel--132">
+<div class="panel panel--min">
 <div class=h-head><span class=h-title>Comate HUD</span><button class=h-add type=button><svg width=11 height=11 aria-hidden=true><use href=#ic-plus /></svg></button></div>
 <div class="h-rows h-rows--empty"><div class=h-empty>暂无任务</div></div>
-<div class=h-foot><span class=h-seg><span>日</span><span class=on>月</span></span><span class=h-quota><span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span><span class=h-bar><i style="width:62%"></i></span></span><button class=h-ib type=button><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg></button><button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg></button></div>
+<div class=h-foot>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
+<span class=h-qtext>已用 <b>1,240</b> / 2,000 点</span>
+<span class=h-fic>
+<button class=h-ib type=button><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg></button>
+<button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar"><i style="width:62%"></i></span>
+<span class=h-pct>62%</span>
+</div>
+</div>
 <div class=h-handle><i></i></div>
 </div>
-<p class=cap><b>空态（面板高 132 = 最小夹取下限）</b>文案「暂无任务」<code>font.meta <i>11pt</i></code> + <code>text.quaternary</code>（行高 16），占位 <code>metrics.empty-h <i>24pt</i></code> 由 <code>flex:1</code> 吸满剩余高度（实测撑到 30pt），文案垂直居中 · 面板取最小高夹取下限 <b>132pt</b>（内容不足则补齐，占位吸收全部余量）（<b>不加插图、不加卡片、不加引导按钮</b>，唯一下一步是标题行「+」）· 页脚按新顺序保留（① 周期 → ② 额度 → ③ 铃铛 → ④ 齿轮；登录态下额度仍有效）· 无未读时铃铛不显示角标</p>
+<p class=cap><b>空态（面板高 144 = 最小夹取下限；页脚由 22 → 34 后 +12）</b>文案「暂无任务」<code>font.meta <i>11pt</i></code> + <code>text.quaternary</code>（行高 16），占位 <code>metrics.empty-h <i>24pt</i></code> 由 <code>flex:1</code> 吸满剩余高度（实测撑到 <b>30pt</b>；页脚若仍按旧的 22pt 只给到 18pt &lt; 24 下限，故最小高必须同步 +12），文案垂直居中 · 面板取最小高夹取下限 <b>144pt</b>（= 132 + 页脚 +12；内容不足则补齐，占位吸收全部余量）（<b>不加插图、不加卡片、不加引导按钮</b>，唯一下一步是标题行「+」）· 页脚按新顺序保留（① 周期 → ② 额度 → ③ 铃铛 → ④ 齿轮；登录态下额度仍有效）· 无未读时铃铛不显示角标</p>
 </div>
 
 <div class=card>
@@ -413,20 +671,28 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--hud-line-divi
 </div>
 </div>
 <div class=h-foot>
-<span class=h-seg><span>日</span><span class=on>月</span></span>
+<div class=h-f1>
+<span class=h-seg role=group aria-label="额度统计周期：日 / 月"><span class=on>日</span><span>月</span></span>
 <button class="h-btn h-btn--foot" type=button>登录 Comate</button>
+<span class=h-fic>
 <button class=h-ib type=button aria-label="消息"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-bell /></svg></button>
 <button class=h-ib type=button aria-label="设置"><svg width=10.5 height=10.5 aria-hidden=true><use href=#ic-gear /></svg></button>
+</span>
+</div>
+<div class=h-f2>
+<span class="h-bar h-bar--unknown"><i style="width:0"></i></span>
+<span class=h-pct>—</span>
+</div>
 </div>
 <div class=h-handle><i></i></div>
 </div>
 </div>
 </div>
-<p class=cap><b>未登录 / 错误态</b><b>①②</b> 结构同为「标题行 + 状态块 + 手柄」：状态块内边距 <b>12 / 0</b>、图标 → 文案 → 按钮间距 <code>space.6 6pt</code>；文案 <code>font.meta 9pt</code> + <code>text.quaternary</code>；主按钮 <code>accent.normal #00D4AA</code> + <code>accent.on #0F0F11</code> + <code>radius.6</code>，高 <b>20pt</b>、<code>font.mini 10.5pt / 600</code>、投影 <code>shadow.cta</code>；错误态按钮为软底 <code>accent.soft</code> + <code>accent.hover</code>（次级动作）· 图标 14×14，错误态用 <code>status.waiting</code> 表异常（唯一允许的越线用色）· <b>①② 隐藏页脚额度区与铃铛 / 设置</b>（无数据可比，避免误读）· 面板高按内容 ≈ 154pt，未触发夹取。<br><b>③ 登录失效 / 会话过期（有缓存任务）</b>：页脚保留且顺序不变，<b>② 额度位整体替换为登录引导按钮</b>——<code>accent.normal</code> 实底 + <code>accent.on #0F0F11</code>、<code>radius.6</code>、<b>高 22pt</b>（= <code>metrics.foot-h</code>，与页脚热区等高）、<code>font.mini 10.5pt / 600</code>、投影 <code>shadow.cta</code>、<code>flex:1</code> 占满额度位；周期胶囊 / 铃铛 / 齿轮位置不变，行内额度副信息统一显示 <code>—</code>，登录成功后自动回填 <code>UsageAPI.Limit</code>（<code>used / total / remain / percent</code>）· 面板高按内容 ≈ 136pt，未触发夹取</p>
+<p class=cap><b>未登录 / 错误态</b><b>①②</b> 结构同为「标题行 + 状态块 + 手柄」：状态块内边距 <b>12 / 0</b>、图标 → 文案 → 按钮间距 <code>space.6 6pt</code>；文案 <code>font.meta 9pt</code> + <code>text.quaternary</code>；主按钮 <code>accent.normal #00D4AA</code> + <code>accent.on #0F0F11</code> + <code>radius.6</code>，高 <b>20pt</b>、<code>font.mini 10.5pt / 600</code>、投影 <code>shadow.cta</code>；错误态按钮为软底 <code>accent.soft</code> + <code>accent.hover</code>（次级动作）· 图标 14×14，错误态用 <code>status.waiting</code> 表异常（唯一允许的越线用色）· <b>①② 隐藏页脚额度区与铃铛 / 设置</b>（无数据可比，避免误读）· 面板高按内容 ≈ 154pt，未触发夹取。<br><b>③ 登录失效 / 会话过期（有缓存任务）</b>：页脚保留且顺序不变，<b>② 额度位整体替换为登录引导按钮</b>——<code>accent.normal</code> 实底 + <code>accent.on #0F0F11</code>、<code>radius.6</code>、<b>高 20pt</b>（= 第 1 行热区高 <code>row1-hit</code>，与铃铛 / 齿轮齐平）、<code>font.mini 10.5pt / 600</code>、投影 <code>shadow.cta</code>、<code>flex:1</code> 占满额度位；周期胶囊 / 铃铛 / 齿轮位置不变，<b>第 2 行保留中性轨道 + <code>—</code>（不写 0%）</b>，行内额度副信息统一显示 <code>—</code>，登录成功后自动回填 <code>UsageAPI.Limit</code>（<code>used / total / remain / percent</code>）· 面板高按内容 ≈ 148pt，未触发夹取</p>
 </div>
 </div>
 
-<h2>四 · 状态规则速查</h2>
-<p class=sub>完整规则见 <code>DESIGN.md</code> §7.3。<b>hover</b>：行白 4%→10%、手柄 22%→50%、图标按钮加 12% 命中底并提亮字色（<code>dur.fast 120ms</code>）· <b>pressed</b>：行 10%→14%、tooltip 隐藏、松手打开任务（<code>dur.instant 80ms</code>）· <b>loading</b>：保留 4 行骨位（同高 34pt）、透明度 0.55↔1 呼吸 1200ms、不显示空态 · <b>empty</b>：24pt 占位、面板夹到最小高 132、页脚保留 · <b>error</b>：<code>status.waiting</code> 图标 + 次级软底按钮，①② 隐藏页脚与铃铛；<b>登录失效</b>保留页脚、额度位换登录引导按钮 · <b>drag</b>：手柄 50% + <code>grabbing</code> + 行数读数，高度 1–10 行夹取 · <b>focus</b>：2pt <code>line.focus #00D4AA</code> 环 + 1pt 偏移 + <code>glow.focus 0 0 4px #00D4AA</code> · <b>disabled</b>：整控件 <code>opacity .4</code>，不用灰色替代色。<br><b>用色分工（硬规则）</b>：<b>品牌绿 <code>accent.normal #00D4AA</code>（hover <code>#22E0BB</code> / pressed <code>#00A98A</code>）只用于交互与额度</b>——只出现在按钮实底、进度填充、周期选中段、焦点环；<b>状态绿 <code>status.done #31D158</code> 只用于状态</b>——只出现在状态灯与状态文案；<b>两者不得同屏紧邻</b>（同一行 / 同一区块内不同时出现）。</p>
-<footer>纯本地 HTML：零外链（字体/图片/CDN/埋点），图标为内联 SVG sprite。依据 <code>DESIGN.md</code> §2 + §7。1:1 校验：281 宽 · 圆角 16 · 描边 1pt 白12% · 内边距 <b>14/10/14</b> · 区块 <b>8</b> · 行距 <b>4</b> · 行高 <b>34</b> · 标题行 <b>20</b> · 标题 <b>12.5 / 500–600</b> · 副信息 <b>10</b> · 灯 <b>8</b> · 手柄 44×3 · 空态 24 / 文案 <b>11</b> · 页脚 <b>22</b> · 周期段 <b>17×14（段内 9.5）</b> · 额度 <b>10</b> · 未读数 <b>10</b> · tooltip 文案 <b>10 / 13</b> · 图标 <b>10.5</b> · 侧热区 <b>32×22</b> · 面板高 <b>132 / 340 / 460</b> · 主色 <b>accent.normal #00D4AA</b>。字号 <b>10 / 11 / 12.5</b>、间距 <b>4 / 7 / 14</b>、行高 <b>34（高于 KD 刻度 32）</b>、圆角 16 均不在 KD 刻度上，作为 HUD 紧凑刻度的例外登记（旧值 30 / 3 / 6 已被替换） —— <b>例外汇总见 T4</b>。</footer>
+<h2>五 · 状态规则速查</h2>
+<p class=sub>完整规则见 <code>DESIGN.md</code> §7.3。<b>hover</b>：行白 4%→10%、手柄 22%→50%、图标按钮加 12% 命中底并提亮字色（<code>dur.fast 120ms</code>）· <b>pressed</b>：行 10%→14%、tooltip 隐藏、松手打开任务（<code>dur.instant 80ms</code>）· <b>loading</b>：保留 4 行骨位（同高 34pt）、透明度 0.55↔1 呼吸 1200ms、不显示空态 · <b>empty</b>：24pt 占位、面板夹到最小高 144（页脚 22→34 后 +12）、页脚保留 · <b>error</b>：<code>status.waiting</code> 图标 + 次级软底按钮，①② 隐藏页脚与铃铛；<b>登录失效</b>保留页脚、额度位换登录引导按钮 · <b>drag</b>：手柄 50% + <code>grabbing</code> + 行数读数，高度 1–10 行夹取 · <b>focus</b>：2pt <code>line.focus #00D4AA</code> 环 + 1pt 偏移 + <code>glow.focus 0 0 4px #00D4AA</code> · <b>disabled</b>：整控件 <code>opacity .4</code>，不用灰色替代色。<br><b>用色分工（硬规则）</b>：<b>品牌绿 <code>accent.normal #00D4AA</code>（hover <code>#22E0BB</code> / pressed <code>#00A98A</code>）只用于交互与额度</b>——只出现在按钮实底、进度填充、周期选中段、焦点环；<b>状态绿 <code>status.done #31D158</code> 只用于状态</b>——只出现在状态灯与状态文案；<b>两者不得同屏紧邻</b>（同一行 / 同一区块内不同时出现）。</p>
+<footer>纯本地 HTML：零外链（字体/图片/CDN/埋点），图标为内联 SVG sprite。依据 <code>DESIGN.md</code> §2 + §7。1:1 校验：281 宽 · 圆角 16 · 描边 1pt 白12% · 内边距 <b>14/10/14</b> · 区块 <b>8</b> · 行距 <b>4</b> · 行高 <b>34</b> · 标题行 <b>20</b> · 标题 <b>12.5 / 500–600</b> · 副信息 <b>10</b> · 灯 <b>8</b> · 手柄 44×3 · 空态 24 / 文案 <b>11</b> · 页脚 <b>34（两行：6+14+4+4+6）</b> · 周期段 <b>17×14（段内 9.5）</b> · 额度 <b>10</b> · 百分比 <b>10 / 宽 36</b> · 未读数 <b>10</b> · tooltip 文案 <b>10 / 13</b> · 图标 <b>10.5</b> · 侧热区 <b>32×22</b> · 面板高 <b>132 / 340 / 460</b> · 主色 <b>accent.normal #00D4AA</b>。字号 <b>10 / 11 / 12.5</b>、间距 <b>4 / 6 / 14</b>、行高 <b>34（高于 KD 刻度 32）</b>、圆角 16 均不在 KD 刻度上，作为 HUD 紧凑刻度的例外登记（旧值 30 / 3 / 6 已被替换） —— <b>例外汇总见 T4</b>。</footer>
 </div></body></html>

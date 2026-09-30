@@ -40,8 +40,8 @@ code{font:400 9px/1.5 var(--m);color:var(--ach)}mark{background:var(--acs);color
 .c-id{color:var(--idle)}.c-wk{color:var(--work)}.c-wt,.c-er{color:var(--wait)}.c-dn{color:var(--done)}
 .t-id{color:var(--idle)}.t-wk{color:var(--work)}.t-wt{color:var(--wait)}.t-dn{color:var(--done)}
 @keyframes ng-spin{to{transform:rotate(360deg)}}
-@keyframes ng-ripple{0%{transform:scale(.72);opacity:.34}100%{transform:scale(1.35);opacity:0}}
-@keyframes ng-breath{0%{transform:scale(.78);opacity:.48}100%{transform:scale(1);opacity:1}}
+@keyframes ng-ripple{0%{transform:scale(.62);opacity:.46}100%{transform:scale(1.46);opacity:0}}
+@keyframes ng-breath{0%{transform:scale(.55);opacity:.32}100%{transform:scale(1.18);opacity:1}}
 @keyframes ng-wave{0%{transform:scale(.73);opacity:.38}100%{transform:scale(1.24);opacity:0}}
 @keyframes ng-slow{0%{transform:scale(.73);opacity:.28}100%{transform:scale(1.2);opacity:0}}
 @keyframes ng-bob{0%{transform:translateY(0);opacity:.72}100%{transform:translateY(-5px);opacity:1}}
@@ -56,8 +56,8 @@ code{font:400 9px/1.5 var(--m);color:var(--ach)}mark{background:var(--acs);color
 .sg-o1{stroke-width:38;stroke-dasharray:111.5 1572.5}
 .sg-o2{stroke-width:26;opacity:.7;stroke-dasharray:62.2 1621.8;stroke-dashoffset:-92.2}
 .sg-o3{stroke-width:16;opacity:.34;stroke-dasharray:30 1654;stroke-dashoffset:-165.1}
-.sg-rip{fill:none;stroke:currentColor;stroke-width:8;animation:ng-ripple 5s ease-out infinite var(--d,0s)}
-.sg-core{fill:currentColor;animation:ng-breath 2.5s ease-in-out infinite alternate var(--d,0s)}
+.sg-rip{fill:none;stroke:currentColor;stroke-width:8;animation:ng-ripple 4.2s ease-out infinite var(--d,0s)}
+.sg-core{fill:currentColor;animation:ng-breath 1.9s ease-in-out infinite alternate var(--d,0s)}
 .sg-wv{fill:none;stroke:currentColor;stroke-width:8;animation:ng-wave 1.6s ease-out infinite var(--d,0s)}
 .sg-wv2{animation-delay:calc(var(--d,0s) - .72s)}
 .sg-wvs{fill:none;stroke:currentColor;stroke-width:8;animation:ng-slow 2.4s ease-out infinite var(--d,0s)}
@@ -166,9 +166,9 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 <div class=sname><i class=t-id></i>空闲<span>idle · #9CA0AA</span></div>
 <div class=frames>
 <div class=fr><div class=bx><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div><span>相位 0</span></div>
-<div class=fr><div class=bx><svg class="ng c-id" viewBox="0 0 600 600" style="--d:-1.25s"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div><span>−1.25s</span></div>
+<div class=fr><div class=bx><svg class="ng c-id" viewBox="0 0 600 600" style="--d:-2.1s"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></div><span>−2.10s</span></div>
 </div>
-<p class=snote><b>灰 #9CA0AA · 真动画：呼吸 2.5s + 外扩涟漪 5s（每 2 次呼吸外扩一波）</b><br>中心柔光点 <code>ng-breath 2.5s ease-in-out infinite alternate</code>：<code>scale .78→1</code>、<code>α .48→1</code>；同色涟漪环 <code>r42 / 描边 8</code> <code>ng-ripple 5s ease-out infinite</code>：<code>scale .72→1.35</code>、<code>α .34→0</code>。呼吸两次（5s）恰好外扩一波。</p>
+<p class=snote><b>灰 #9CA0AA · 真动画：呼吸 1.9s + 外扩涟漪 4.2s（方案 A：为小尺寸可辨性加大振幅）</b><br>旧参数在 <b>28pt</b> 下落到亚像素级：冻结时刻实测直径振幅只有 <b>2.47pt</b>（涟漪）/ <b>0.53pt</b>（点），反馈是「看不出在动」。现按方案 A 加大振幅——中心柔光点 <code>ng-breath 1.9s ease-in-out infinite alternate</code>：<code>scale .55→1.18</code>、<code>α .32→1</code>（28pt 下直径 <b>1.33↔2.86pt</b>、Δ1.53pt，透明度 .32↔1）；同色涟漪环 <code>r42 / 描边 8</code> <code>ng-ripple 4.2s ease-out infinite</code>：<code>scale .62→1.46</code>、<code>α .46→0</code>（28pt 下直径 <b>2.43↔5.72pt</b>、<b>Δ3.29pt ≥ 3pt</b>；30pt 下 Δ3.53pt）。上端取 <b>1.46 而非 1.55</b>：1.55 的单圈振幅 3.65pt 会反超异常态单圈 <code>ng-slow</code> 的 3.60pt，「空闲最弱」就不成立；1.46 达标且比异常小 0.31pt。时长 5s→4.2s 让外扩更快被看清，又与呼吸往返（1.9×2＝3.8s）近似锁相、每轮漂移 0.4s，避免机械同步；空闲仍是五态最慢的一档（实测图元移动速率 <b>0.39pt/s</b>：工作中 68.3 / 已完成 13.2 / 等待确认 1.22 / 异常 0.75）。两帧错相取 <code>−2.10s</code>（涟漪半周期）：点 1.33↔2.83pt、<code>α .32↔.985</code>，环 2.43↔4.68pt，帧间相位一眼可见。</p>
 </div>
 <div class=srow>
 <div class=sname><i class=t-wk></i>工作中<span>working · #FFC928</span></div>
