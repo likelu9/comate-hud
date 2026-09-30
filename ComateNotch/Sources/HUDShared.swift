@@ -32,7 +32,11 @@ enum HUDUsageFooterStyle {
 }
 
 /// 页脚两种形态的尺寸表。集中一份，避免「改了大面板漏了小面板」。
-private struct FooterMetrics {
+///
+/// 故意不设 `private`：这张表是设计稿 §7.1 / §7.4 落地值的唯一来源，
+/// 需要能被 `test.sh` 直接断言，否则「改了一处漏了另一处」只能靠肉眼发现
+/// （与 `NotchLayout` / `FloatingMetrics` 同一处理方式）。
+struct FooterMetrics {
     let style: HUDUsageFooterStyle
 
     /// 组件总高（regular 实测 6 + 14 + 4 + 4 + 6 = 34）

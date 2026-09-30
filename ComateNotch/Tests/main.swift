@@ -428,6 +428,66 @@ check(UsageAPI.footerReadoutNeedsTrim(
 check(UsageAPI.footerReadoutNeedsTrim("999,999,999 / 1,000,000,000"),
       "未缩写的最长原值也必须触发降级")
 
+// MARK: - v2 刻度锁定（DESIGN.md §7.1 / §7.4）
+
+section("v2 刻度锁定（页脚 / 面板 / chip）")
+
+// 页脚是全局最易「改了大面板漏了小面板」的地方：两种形态共用同一张刻度表，
+// 这里把设计稿的落地值逐项钉住，任何静默漂移都会在这段失败。
+let footerRegular = FooterMetrics(style: .regular)
+let footerCompact = FooterMetrics(style: .compact)
+
+// 悬浮面板（§7.1）：两行结构
+eq(footerRegular.height, 34, "悬浮页脚总高 34")
+eq(footerRegular.rowHeight, 14, "第 1 行行高 14")
+eq(footerRegular.rowSpacing, 4, "两行行距 4")
+eq(footerRegular.barHeight, 4, "进度条高 4")
+eq(6 + footerRegular.rowHeight + footerRegular.rowSpacing + footerRegular.barHeight + 6,
+   footerRegular.height, "总高 = padding 6 + 第 1 行 14 + 行距 4 + 进度条 4 + padding 6 = 34")
+eq(footerRegular.quotaFont, 10, "额度读数 10pt")
+eq(footerRegular.iconFont, 10.5, "图标 10.5pt")
+eq(footerRegular.countFont, 10, "未读数 10pt")
+eq(footerRegular.segWidth, 17, "周期胶囊段宽 17")
+eq(footerRegular.segHeight, 14, "周期胶囊段高 14")
+eq(footerRegular.segFont, 9.5, "周期胶囊段内文字 9.5pt")
+eq(footerRegular.hitWidth, 32, "图标热区宽 32")
+eq(footerRegular.hitHeight, 22, "图标热区高 22")
+eq(footerRegular.dividerHeight, 16, "分区竖线高 16")
+eq(footerRegular.percentWidth, 36, "百分比占位固定 36（62% / 61.7% / 100% 不推挤进度条）")
+check(footerRegular.inlineBarWidth == nil, "悬浮页脚的进度条独占一行，不是内联细线")
+check(footerRegular.quotaPadding == 0, "悬浮页脚额度组不吃额外水平内边距")
+
+// 刘海展开面板（§7.4）：单行 20pt，进度条内联在读数里
+eq(footerCompact.height, 20, "刘海页脚总高 20")
+eq(footerCompact.rowHeight, 20, "单行行高 20")
+eq(footerCompact.inlineBarWidth, 30, "刘海页脚的内联进度条宽 30")
+eq(footerCompact.barHeight, 3, "内联进度条高 3")
+eq(footerCompact.quotaPadding, 4, "额度组水平内边距压到 4，给分区竖线腾呼吸位")
+eq(footerCompact.dividerHeight, 12, "分区竖线高 12")
+eq(footerCompact.hitWidth, 30, "图标热区宽 30")
+eq(footerCompact.hitHeight, 20, "图标热区高 20")
+eq(footerCompact.segWidth, 13, "周期胶囊段宽 13")
+eq(footerCompact.segHeight, 11, "周期胶囊段高 11")
+eq(footerCompact.iconFont, 9, "图标 9pt")
+eq(footerCompact.countFont, 9, "未读数 9pt")
+
+// 「额度区 │ 消息·设置区」的分区约定两种形态一致（用户反馈 ①）
+eq(footerRegular.dividerWidth, 1, "分区竖线 1pt")
+eq(footerCompact.dividerWidth, footerRegular.dividerWidth, "两种形态的竖线同宽")
+eq(footerCompact.gap, footerRegular.gap, "两种形态的行内间距一致")
+
+// 面板 / 刘海刻度（§7.1 v2 表）
+eq(NotchLayout.horizontalPadding, 14, "面板内边距左右 14")
+eq(NotchLayout.listSpacing, 4, "行距 4")
+eq(NotchLayout.blockSpacing, 8, "区块间距 8")
+eq(NotchLayout.bottomPadding, 14, "底部留白 14（> 手柄命中区，不盖页脚热区）")
+eq(FloatingMetrics.panelHPadding, 14, "悬浮面板内边距左右 14")
+eq(FloatingMetrics.panelBottomPadding, 14, "悬浮面板底部留白 14")
+eq(FloatingMetrics.chipSize, 36, "图标 chip 36×36")
+eq(FloatingMetrics.chipCorner, 10, "chip 圆角 10")
+check(FloatingMetrics.chipSize < FloatingMetrics.iconBox,
+      "chip 不得改变 44pt 命中盒")
+
 // MARK: - 汇总
 
 print("\n———————————————")

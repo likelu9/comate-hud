@@ -123,7 +123,7 @@
 </div>
 
 <h2>三 · 通用页 / 关于页（完整窗口 · 关于内容已整体并入）</h2>
-<p class=sub>原「关于 Comate HUD」<b>独立弹窗退场</b>：其全部内容<b>整体并入本窗口的「关于」页</b>（图标 → 产品名 → 版本胶囊 → 主张 → 描述 → 四态图例卡 → 特性列表 → 署名 → 访问官网 → 文字链接 → 更新三态），不再开新窗。窗口统一 <b>560 × 480 pt</b>。通用页保留启动开关，并把「检查更新」收进「更新」组（推荐归属）；关于页保留<b>版本号</b>与<b>官网入口</b>。关于内容的品牌氛围光<b>保留原紫</b>（<code>#937EE6 28% → #4526BF 14% → 透明</code>），是本稿<b>唯一</b>允许的紫色；交互控件一律品牌绿。</p>
+<p class=sub>原「关于 Comate HUD」<b>独立弹窗退场</b>：其全部内容<b>整体并入本窗口的「关于」页</b>（图标 → 产品名 → 版本胶囊 → 主张 → 描述 → 四态图例卡 → 特性列表 → 署名 → 访问官网 → 文字链接），不再开新窗；<b>更新三态归通用页的「更新」组，关于页不渲染</b>（同一动作不留两个入口）。窗口统一 <b>560 × 480 pt</b>。通用页保留启动开关，并把「检查更新」收进「更新」组（推荐归属）；关于页保留<b>版本号</b>与<b>官网入口</b>。关于内容的品牌氛围光<b>保留原紫</b>（<code>#937EE6 28% → #4526BF 14% → 透明</code>），是本稿<b>唯一</b>允许的紫色；交互控件一律品牌绿。</p>
 <style>
 .pane.scroll{overflow-y:auto;overflow-x:hidden}
 .glow{position:absolute;top:-120px;left:0;width:100%;height:320px;z-index:0;pointer-events:none;background:radial-gradient(circle 190px at 50% 50%,var(--glow-p1) 0%,var(--glow-p2) 50%,rgba(69,38,191,0) 100%)}
@@ -224,7 +224,7 @@
 </section>
 </div>
 <p class=cap style="margin-left:12px"><b>通用页：</b>开机自启动沿用 <code>NSSwitch</code>（轨道 <b>34 × 20pt</b>、钮 16、on <code>accent.normal</code> 品牌绿）；新增「更新」组承载「检查更新」——<b>推荐长期归属通用页</b>（关于页只留版本号 + 官网入口，避免同一动作两处入口）。<br><b>关于页 · 品牌区（原弹窗并入）：</b>氛围光晕 <code>radial-gradient(circle 190px, #937EE6 28% → #4526BF 14% → 透明)</code>，元素 <b>560 × 320</b> / <code>offset y −120</code>，<b>紫色仅此一处</b>（唯一例外，不参与交互与状态）；图标 <b>88 × 88</b> · <code>radius.20</code> · 投影 <code>0 10 14 rgba(0,0,0,.55)</code>；产品名 <code>22pt/700 rounded</code> 纯白 <code>#FFFFFF</code>；版本胶囊「版本 1.4.5」<code>10.5pt/500</code> 白 58%；主张「让 AI 干活，你只管看灯」<code>13pt/600</code> <code>text.primary</code>（<b>不着紫</b>，避免紫色外溢）；描述 <code>12pt/19.4</code> 白 60% · <code>max-width 300</code>。<br><b>四态图例 / 特性 / 署名 / CTA / 链接：</b>图例卡 <code>radius.14</code> + <code>surface.card</code>，色点 <b>8pt</b> <code>radius.full</code> + 同色 <code>glow 3.5pt</code>：空闲 <code>#9CA0AA</code> / 已完成 <code>#31D158</code> / 工作中 <code>#FFC928</code> / 等待确认 <code>#FF6259</code>（语义色登记豁免「≤2 饱和色」）；特性 3 行、行距 8，勾选 <b>14pt</b> <code>accent.soft</code> 圆底 + <code>accent.hover</code> ✓（品牌绿）；署名 <code>10.5pt</code> 白 36%，强调段白 88% + <code>accent</code> 1.5pt 下划线；主按钮「访问官网」<b>150 × 30</b> <code>radius.8</code> 品牌绿 + <code>shadow.cta</code> + <code>text.on-accent</code>（深色字）；文字链接「检查更新 · 意见反馈 · comate.wpsgo.com」<code>10.5pt</code> <code>accent.hover</code> + 品牌绿下划线（链接语义 = 交互，故用绿）。<br><b>滚动：</b>并入内容自然高 ≈ <b>500pt</b> &gt; 内容区可视 <b>452pt</b>（480 − 28 标题栏），故关于页 <code>overflow-y:auto</code> <b>页内纵向滚动</b>，内容<b>不裁剪、不压缩尺寸</b>；若要一屏零滚动需窗口 ≥ 560 × 560，超出 480 上限，故不采用。<br><b>菜单入口行为变更：</b>原「页脚齿轮 → 关于 Comate HUD」<b>打开独立关于窗</b>；现改为<b>聚焦本设置窗口并切到「关于」分类</b>（<code>selectCategory(.about)</code> / 等价 <code>NSWindow</code> + 侧栏选中态），<b>不再创建独立关于窗</b>（原关于窗实现退场）；<code>⌘,</code> 仍打开设置窗口并默认落在「账号」页。</p>
-<h3 style="margin:20px 0 0 12px">关于页 · 更新三态（并入内容之末 · 局部小样）</h3>
+<h3 style="margin:20px 0 0 12px">通用页 · 检查更新三态（局部小样；关于页不渲染，仅底部文字链接触达）</h3>
 <p class=sub>三态共用同一行骨架（行高 <b>38pt</b>）：<code>[状态图标 14] + [文案 13pt] + [右侧按钮区]</code>；差异只在图标语义、文案与按钮层级。该行是通用页「更新」组里的「检查更新」行，也由关于页底部文字链接「检查更新」触达，<b>三态同一处渲染</b>。按钮层级：无新版用中性按钮（不与主 CTA「访问官网」抢焦点），检测到新版才升级为主按钮。</p>
 <div class=samples>
 <figure style=margin:0>
@@ -316,7 +316,7 @@
 </div>
 <p class=cap>三型统一 高 <b>24pt</b> · <code>radius.6</code> · 内边距 <code>space.12</code> · 字 <code>font.btn <i>12.5pt/600</i></code> · 图标 12。<b>品牌绿亮度高：主按钮字取 <code>text.on-accent</code> 深色（≈9:1），白字压 #00D4AA 仅 ≈1.9:1 不可用。</b><b>主</b> <code>accent.normal</code>→<code>accent.hover</code>→<code>accent.pressed</code> + <code>shadow.cta</code>；<b>次</b> <code>accent.soft</code>→<code>accent.track</code>；<b>中性</b> <code>surface.raised</code>+<code>line.divider-strong</code>→<code>surface.hit</code>。focus <code>line.focus 2pt/offset 1</code>；禁用 <code>opacity .4</code>。</p></div>
 
-<div class=card><header><h3>G · 检查更新三态（+ 检查中）</h3><span class=tag>通用页 · 关于页</span></header>
+<div class=card><header><h3>G · 检查更新三态（+ 检查中）</h3><span class=tag>通用页</span></header>
 <div class=crop>
 <div class=cb>
 <div class="row act"><span class=rm><span class=rl>检查更新</span><span class=rds>手动触发一次版本检查</span></span><span class=ctl><button class="btn gho" type=button>检查更新</button></span></div>
