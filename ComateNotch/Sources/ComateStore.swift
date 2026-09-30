@@ -324,12 +324,35 @@ final class ComateStore: ObservableObject {
         usageState == .authExpired ? "登录已失效，重新登录" : "未登录，点此登录"
     }
 
-    /// 页脚额度文案：只展示当前高亮周期那一个（日/月由左侧胶囊指示，文案不再重复周期名）。
+    /// 页脚额度读数：只展示当前高亮周期那一个（日/月由左侧胶囊指示，文案不再重复周期名）。
     /// 取不到数据时用占位符，不隐藏整段。
-    var activeUsageLabel: String {
-        guard usageState == .ok, let limits = usageLimits else { return "—" }
-        let limit = usagePeriod == .daily ? limits.daily : limits.monthly
-        return limit.map { UsageAPI.percentLabel($0.percent) } ?? "—"
+    var usageFooterReadout: UsageAPI.FooterReadout {
+        guard let limit = activeUsageLimit else { return UsageAPI.footerReadoutPlaceholder }
+        return UsageAPI.footerReadout(used: limit.used, total: limit.total)
+    }
+
+    /// 读数过长时页脚先降级去掉「已用」二字（防跑版第二档）
+    var usageReadoutNeedsTrim: Bool {
+        UsageAPI.footerReadoutNeedsTrim(usageFooterReadout.combined)
+    }
+
+    /// 当前高亮周期的已用百分比（0–100）：进度条宽度与右侧百分比读数共用
+    var usagePercent: Double { activeUsageLimit?.percent ?? 0 }
+
+    /// 百分比读数：取不到数据时写占位符，不写 0 —— 否则「还没取到数」会被读成「一点没用」
+    var usagePercentLabel: String {
+        guard activeUsageLimit != nil else { return "—" }
+        return UsageAPI.percentLabel(usagePercent)
+    }
+
+    /// 额度临近耗尽：已用 ≥ 80% 时读数转 status.waiting 表语义。
+    /// 额度本身是「数量」不是状态，所以平时走中性档，只在越线时才用状态色（DESIGN.md §3.2）。
+    var isUsageLow: Bool { activeUsageLimit.map { $0.percent >= 80 } ?? false }
+
+    /// 当前高亮周期那一条限额（未登录 / 未取到数据时为 nil）
+    var activeUsageLimit: UsageAPI.Limit? {
+        guard usageState == .ok, let limits = usageLimits else { return nil }
+        return limits.limit(usagePeriod)
     }
 
     /// 悬停详情：说清「用掉多少 / 还剩多少」，以及为什么没数字

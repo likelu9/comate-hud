@@ -87,7 +87,13 @@ let layout = NotchLayout(notchHeight: 32)
 let rowUnit: CGFloat = 40
 let footer: CGFloat = 20
 
-eq(layout.topInset, 40, "topInset = 刘海高/2 + 24")
+// v2：写成「刘海高 + 固定净留白」，不再是 `notchHeight / 2 + 24` ——
+// 后者在不同机型的刘海高度下净留白不一致（34pt 刘海只剩 7pt），而设计要的是与硬件无关的固定值
+eq(layout.topInset, 32 + NotchLayout.notchClearance, "topInset = 刘海高 + 净留白")
+eq(NotchLayout(notchHeight: 34).topInset - 34, NotchLayout.notchClearance,
+   "换到 34pt 刘海机型净留白不变")
+eq(NotchLayout(notchHeight: 24).topInset - 24, NotchLayout.notchClearance,
+   "换到 24pt 刘海机型净留白不变")
 let oneRow = layout.contentHeight(forRows: 1, rowUnit: rowUnit, footerHeight: footer)
 let threeRows = layout.contentHeight(forRows: 3, rowUnit: rowUnit, footerHeight: footer)
 eq(threeRows - oneRow, 2 * rowUnit, "每多一条多一个 rowUnit")
@@ -355,11 +361,72 @@ check(lead.from == 0 && mid.from < lead.to && mid.from < tail.from && tail.to < 
 check(LogoMotionMetrics.leadTrim.to > LogoMotionMetrics.midTrim.to - LogoMotionMetrics.midTrim.from,
       "头段比中段长（长拖尾锥形）")
 
-let palette = [LogoMotionState.idle, .done, .working, .waiting].map { $0.color }
-eq(Set(palette).count, 4, "四态颜色互不相同")
-check(palette.allSatisfy { $0.hasPrefix("#") && $0.count == 7 }, "四态颜色都是 #RRGGBB")
+let palette = [LogoMotionState.idle, .done, .working, .waiting, .error].map { $0.color }
+eq(Set(palette).count, 4, "五态共用四支颜色（两种红同一支）")
+check(palette.allSatisfy { $0.hasPrefix("#") && $0.count == 7 }, "五态颜色都是 #RRGGBB")
 check(LogoMotionMetrics.enterDuration > 0 && LogoMotionMetrics.colorDuration > 0,
       "进出场与换色时长都是正数")
+
+// MARK: - LogoMotion：红灯两态（等你确认 / 异常）与动效启停
+
+// 回归点 1：早前把「异常」挤进 `.waiting`，`animated` 又直接返回 `redBlinking`，
+// 于是 redBlinking=false 的异常红**完全不播动画**——与设计稿「异常＝单圈 2.4s 慢脉冲」相反。
+eq(LogoMotionState(light: .red, redBlinking: true), .waiting, "红灯 + 要打断你 → 等你确认")
+eq(LogoMotionState(light: .red, redBlinking: false), .error, "红灯 + 轮次异常 → 异常（异常也必须播动效）")
+eq(LogoMotionState(light: .gray, redBlinking: false), .idle, "红灯标志不影响非红状态的映射")
+eq(LogoMotionState.idle.pulse, .none, "空闲不脉冲（它有自己的呼吸 / 涟漪）")
+eq(LogoMotionState.working.pulse, .none, "工作中不脉冲（它有自己的光轨）")
+eq(LogoMotionState.waiting.pulse, .double, "等你确认 = 双圈错相脉冲")
+eq(LogoMotionState.error.pulse, .single, "异常 = 单圈慢脉冲")
+eq(Set([LogoMotionState.waiting.color, LogoMotionState.error.color]).count, 1,
+   "两种红共用同一支颜色，只靠脉冲圈数与频率区分")
+check(LogoMotionMetrics.errorWaveDuration > LogoMotionMetrics.waitingWaveDuration,
+      "异常（\(LogoMotionMetrics.errorWaveDuration)s）比等你确认（\(LogoMotionMetrics.waitingWaveDuration)s）慢：提示但不催")
+check(LogoMotionMetrics.errorWavePeakOpacity < LogoMotionMetrics.alertWaveStartOpacity,
+      "异常脉冲峰值透明度更低（\(LogoMotionMetrics.errorWavePeakOpacity) < \(LogoMotionMetrics.alertWaveStartOpacity)）")
+check(LogoMotionMetrics.errorBarBright < LogoMotionMetrics.alertBarBright,
+      "异常竖条不改位置，只做透明度呼吸（\(LogoMotionMetrics.alertBarDim)↔\(LogoMotionMetrics.errorBarBright)）")
+
+// 回归点 2：循环动画只在视图首次出现（onAppear）时启动，而视图重建靠 `.id` 触发。
+// 早前只写 `.id(state)`：任务从「等你确认」变成「异常」时 state 仍是 `.waiting`、`.id` 没变 →
+// 视图不重建 → onAppear 不再跑 → 动画既不会启动也不会停止。
+let keyWaitingAnimated = LogoMotionBadge.motionKey(state: .waiting, animated: true)
+let keyWaitingStatic = LogoMotionBadge.motionKey(state: .waiting, animated: false)
+check(keyWaitingAnimated != keyWaitingStatic,
+      "同一状态下「播动效 / 不动效」是两个不同的 id，否则标志翻转不重建视图")
+eq(LogoMotionBadge.motionKey(state: .waiting, animated: true), keyWaitingAnimated,
+   "同一个 (state, animated) 得到同一个 id——数据刷新不会把动画重头播")
+check(LogoMotionBadge.motionKey(state: .error, animated: true) != keyWaitingAnimated,
+      "两种红各有各的 id")
+
+// 空闲振幅（DESIGN.md §8 方案 A）：28pt 下描边会落到亚像素，振幅不够就等于「看起来静止」
+let idleRingTravelRadius = (LogoMotionMetrics.idleRingEndScale - LogoMotionMetrics.idleRingStartScale)
+    * LogoMotionMetrics.idleRingRadius * 28 / LogoMotionMetrics.design
+check(idleRingTravelRadius * 2 >= 3,
+      "28pt 下空闲涟漪直径变化 \(String(format: "%.2f", idleRingTravelRadius * 2))pt ≥ 3pt，肉体可辨")
+
+// MARK: - 页脚额度读数（已用 / 总量）
+
+// 页脚只有一行，读数必须先压长度，否则会把右侧的铃铛 / 齿轮挤跑（用户反馈 ③）
+eq(UsageAPI.footerCredits(1240), "1,240", "四位数加千分位")
+eq(UsageAPI.footerCredits(2000), "2,000", "四位数加千分位")
+eq(UsageAPI.footerCredits(12345678), "1,234.6 万", "≥1 万缩写到万、保留 1 位小数")
+eq(UsageAPI.footerCredits(999999999), "10.0 亿", "≥1 亿缩写到亿（四舍五入到 10.0）")
+eq(UsageAPI.footerReadout(used: 1240, total: 2000).combined, "1,240 / 2,000", "读数格式为「已用 / 总量」")
+eq(UsageAPI.footerReadoutPlaceholder.combined, "— / —", "取不到数据时用占位符，不写 0")
+
+// 防跑版阶梯（DESIGN.md §3.1–3.3）：三档实测的「放得下 / 放不下」分界在 15 与 21 字符之间
+check(!UsageAPI.footerReadoutNeedsTrim(
+        UsageAPI.footerReadout(used: 1240, total: 2000).combined),
+      "常规读数（1,240 / 2,000）带「已用」也放得下")
+check(!UsageAPI.footerReadoutNeedsTrim(
+        UsageAPI.footerReadout(used: 1_000_000_000, total: 1_000_000_000).combined),
+      "十亿级读数（10.0 亿 / 10.0 亿）带「已用」仍放得下")
+check(UsageAPI.footerReadoutNeedsTrim(
+        UsageAPI.footerReadout(used: 12_345_678, total: 20_000_000).combined),
+      "千万级读数（1,234.6 万 / 2,000.0 万）放不下 → 降级去掉「已用」")
+check(UsageAPI.footerReadoutNeedsTrim("999,999,999 / 1,000,000,000"),
+      "未缩写的最长原值也必须触发降级")
 
 // MARK: - 汇总
 

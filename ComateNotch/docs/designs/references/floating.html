@@ -262,7 +262,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line-div);fon
 <li><b>四态阶梯</b><span><code>.06 → .10（hover）→ .14（按下）</code>；展开中取 <b>.12</b>——比 hover 略亮半档、比按下略收敛，读作「已激活但未被按下」。展开中<b>不换色相、不加高亮描边、不用品牌绿</b>（品牌绿是交互主色，在别处承担按钮/进度/焦点，不抢状态灯）</span></li>
 <li><b>命中盒不变</b><span>chip 只是 <code>LogoMotionBadge</code> 外面的一层修饰；<code>iconHitRect</code> 仍取 <code>iconBox 44×44</code>，<code>evaluateHoverFromScreen</code> 的 <code>insetBy(-4)</code> 容差也不变。chip 36 &lt; 44，四周 4pt 仍属命中区</span></li>
 <li><b>不越界</b><span>chip 距窗口四边各 <b>12pt</b>（<code>pad 8 + 4</code>），永远落在 <code>windowSize</code> 内；<code>pad 8</code> 本是为图形外发光留的余量，chip 恰好复用这段余量而不侵占</span></li>
-<li><b>浅色壁纸风险（登记待确认）</b><span>悬浮窗口是全透明的，chip 会压在真实壁纸上：壁纸接近纯白时 <code>白 6%</code> 与 <code>白 8%</code> 描边<b>几乎不可见</b>。本次按需求只画 <code>白 6%</code> 规格，但建议实现时对极浅壁纸加一层 <code>rgba(15,15,17,.35)</code> 深色兜底衬（登记为 <b>T14</b>，未拍板前不落地）</span></li>
+<li><b>浅色壁纸风险（T14 已拍板：先接受）</b><span>悬浮窗口是全透明的，chip 会压在真实壁纸上：壁纸接近纯白时 <code>白 6%</code> 与 <code>白 8%</code> 描边<b>几乎不可见</b>。本次按需求只画 <code>白 6%</code> 规格，<b>已拍板：先接受白 6%，不预设深色兜底衬</b>（chip 只作弱承托，不追求在浅壁纸上也醒目；预设深色描边反而会在深色壁纸上变脏）。<b>带回退条件</b>：真机实测若仍看不清，再加 <code>1px</code> 深色外描边 <code>rgba(15,15,17,.35)</code>，或把描边提到 <code>白 14%</code></span></li>
 </ol>
 
 <h2>三 · 五态 × chip（真动画 + 相位帧）</h2>

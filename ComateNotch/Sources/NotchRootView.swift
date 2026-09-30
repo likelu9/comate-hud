@@ -467,7 +467,7 @@ struct NotchRootView: View {
             // Spacer 各插一条间距，导致列表被裁短时内容比面板高 6pt，
             // 页脚被挤到面板下沿外（底部留白失效），热区又被拖拽手柄压掉大半。
             .overlay(alignment: .bottom) {
-                HUDUsageFooter(store: store, onSettings: { onShowMenu?() },
+                HUDUsageFooter(store: store, style: .compact, onSettings: { onShowMenu?() },
                                 onLogin: { LoginWindowController.shared.present(refreshing: store) })
                     // 实测页脚高度（用于反推内容高度）
                     .background(
@@ -523,7 +523,8 @@ struct ComateTaskRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            StatusLight(color: task.light.color, size: 7,
+            // 状态灯 8pt（v2 由 7 上调）；等确认时闪、异常时单圈慢脉冲（见 LogoMotion）
+            StatusLight(color: task.light.color, size: 8,
                         blinking: task.redKind == .waitingConfirmation)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
@@ -532,29 +533,31 @@ struct ComateTaskRow: View {
                         .foregroundStyle(.white.opacity(task.isCloud ? 0.55 : 0.4))
                         .help(task.isCloud ? "云端托管" : "workspace")
                     Text(task.title.isEmpty ? "（无标题）" : task.title)
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .font(.system(size: 12.5, weight: .medium, design: .rounded))
                         .foregroundStyle(.white.opacity(isHovered ? 1.0 : 0.92))
                         .lineLimit(1)
                 }
+                .frame(height: 18)
                 HStack(spacing: 6) {
                     Text(task.statusLabel)
-                        .font(.system(size: 9, weight: .semibold, design: .rounded))
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(Color(hex: task.light.color))
                     Text(task.metaLabel)
-                        .font(.system(size: 9, design: .rounded))
+                        .font(.system(size: 10, design: .rounded))
                         .foregroundStyle(.white.opacity(0.4))
                     Text(relTime(task.updatedAt))
-                        .font(.system(size: 9, design: .rounded))
+                        .font(.system(size: 10, design: .rounded))
                         .foregroundStyle(.white.opacity(0.4))
                 }
+                .frame(height: 14)
             }
             Spacer(minLength: 0)
             Image(systemName: "arrow.up.right")
                 .font(.system(size: 9))
                 .foregroundStyle(.white.opacity(isHovered ? 0.5 : 0.2))
         }
-        .padding(.vertical, 3)
-        .padding(.horizontal, 6)
+        // 行高 34 = 标题行 18 + 行内间距 2 + 第二行 14，垂直方向不再额外加 padding
+        .padding(.horizontal, 7)
         .background(Color.white.opacity(isHovered ? 0.1 : 0.04), in: RoundedRectangle(cornerRadius: 8))
         .onHover { h in
             isHovered = h

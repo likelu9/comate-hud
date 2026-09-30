@@ -13,19 +13,40 @@ import SwiftUI
 // 坐标一律用 demo 的 600 设计空间书写，落地时按 size/600 换算，不整体 scaleEffect：
 // 缩放一整个视图层会让 18pt 的小图标栅格化发虚。
 
-/// 四态动效的状态。映射：灰→空闲、绿→已完成、黄→工作中、红→等待确认。
+/// 弧内脉冲的形态（与状态一一对应，见 DESIGN.md §8）
+enum LogoPulse: Equatable {
+    /// 不脉冲：空闲 / 已完成 / 工作中各有自己的动效
+    case none
+    /// 双圈错相脉冲：等你确认 —— 要打断你，节奏快
+    case double
+    /// 单圈慢脉冲：异常 —— 提示但不催
+    case single
+}
+
+/// 五态动效的状态。映射：灰→空闲、绿→已完成、黄→工作中、
+/// 红（等你确认）→等待确认、红（异常）→异常。
 enum LogoMotionState: Equatable {
     case idle
     case done
     case working
     case waiting
+    case error
 
+    /// 不区分红灯成因时的默认映射（等你确认）。
     init(light: TaskLight) {
+        self.init(light: light, redBlinking: true)
+    }
+
+    /// 红灯的两种成因走两个状态：`waiting` 要脉冲打断你，`error` 只慢脉冲提示。
+    ///
+    /// 回归点：早前实现把两者挤在一个 `.waiting` 里，再用 `redBlinking` 布尔量兼作动画开关，
+    /// 结果 `error`（`redBlinking == false`）既不脉冲、也完全不播动画（红灯看起来是静止的）。
+    init(light: TaskLight, redBlinking: Bool) {
         switch light {
         case .gray:   self = .idle
         case .green:  self = .done
         case .yellow: self = .working
-        case .red:    self = .waiting
+        case .red:    self = redBlinking ? .waiting : .error
         }
     }
 
@@ -36,7 +57,16 @@ enum LogoMotionState: Equatable {
         case .idle:    return "#9CA0AA"
         case .done:    return "#31D158"
         case .working: return "#FFC928"
-        case .waiting: return "#FF6259"
+        case .waiting, .error: return "#FF6259"
+        }
+    }
+
+    /// 弧内脉冲形态。两种红共用同一支颜色，只靠脉冲形态与频率区分。
+    var pulse: LogoPulse {
+        switch self {
+        case .idle, .done, .working: return .none
+        case .waiting:               return .double
+        case .error:                 return .single
         }
     }
 }
@@ -87,8 +117,8 @@ enum LogoMotionMetrics {
     static let sparkRadius: CGFloat = 8
 
     // 时长（秒），与 demo 一一对应
-    static let idleBreathDuration: Double = 2.5
-    static let idleRingDuration: Double = 2.5
+    static let idleBreathDuration: Double = 1.9
+    static let idleRingDuration: Double = 4.2
     static let doneCheckDuration: Double = 0.62
     static let doneCheckDelay: Double = 0.15
     static let sparkDuration: Double = 0.5
@@ -98,6 +128,28 @@ enum LogoMotionMetrics {
     static let waitingWaveDelay: Double = 0.72
     static let enterDuration: Double = 0.52
     static let colorDuration: Double = 0.5
+
+    // 空闲振幅（DESIGN.md §8 方案 A：28pt 下描边会落到亚像素，必须加大）
+    static let idleDotMinScale: Double = 0.55
+    static let idleDotMaxScale: Double = 1.18
+    static let idleDotMinOpacity: Double = 0.32
+    static let idleRingStartScale: Double = 0.62
+    static let idleRingEndScale: Double = 1.46
+    static let idleRingStartOpacity: Double = 0.46
+
+    // 弧内脉冲：两种红共用尺寸，只有圈数与频率不同
+    static let alertWaveStartScale: Double = 0.73
+    static let alertWaveEndScale: Double = 1.24
+    static let alertWaveStartOpacity: Double = 0.38
+    /// 异常：单圈慢脉冲，透明度峰值比「等你确认」低一档（提示但不催）
+    static let errorWaveDuration: Double = 2.4
+    static let errorWavePeakOpacity: Double = 0.28
+    /// 竖条：等你确认上下轻浮（5pt / 1.15s）；异常不浮动，改为极缓透明度呼吸
+    static let alertBarLift: Double = 5
+    static let alertBarDim: Double = 0.72
+    static let alertBarBright: Double = 1.0
+    static let errorBreathDuration: Double = 1.6
+    static let errorBarBright: Double = 0.90
 
     /// 780° 多的弧长（用于断言圆弧确实是「长弧」而不是短弧）
     static var arcSweep: Double { arcEndAngle - arcStartAngle }
@@ -137,21 +189,35 @@ struct LogoCheckShape: Shape {
 /// 悬浮窗 / 刘海左侧图标：logo（C 形弧）与状态灯合一。
 struct LogoMotionBadge: View {
     var light: TaskLight
-    /// 红灯是否脉冲。等你回答（auq）要打断你 → 脉冲；轮次异常 → 常亮，不闪。
+    /// 红灯是不是「等你确认」。等你回答（auq）要打断你 → 双圈快脉冲；轮次异常 → 单圈慢脉冲。
     var redBlinking: Bool = true
     var size: CGFloat = 18
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var state: LogoMotionState { LogoMotionState(light: light) }
+    private var state: LogoMotionState { LogoMotionState(light: light, redBlinking: redBlinking) }
     private var color: Color { Color(hex: state.color) }
     private var scale: CGFloat { size / LogoMotionMetrics.design }
 
-    /// 是否播放动效：跟随系统「减弱动态效果」；红灯常亮时也不播放
-    private var animated: Bool {
-        if reduceMotion { return false }
-        if state == .waiting { return redBlinking }
-        return true
+    /// 是否播放动效：只跟随系统「减弱动态效果」。
+    ///
+    /// 回归点：早前这里对 `.waiting` 额外返回 `redBlinking`，于是「异常」红
+    /// （`redBlinking == false`）完全不播动画——现在两种红各自有动效，不再有这条例外。
+    private var animated: Bool { !reduceMotion }
+
+    /// 动效的启停 key：**必须同时含状态与是否动效**。
+    ///
+    /// 循环动画只在视图首次出现（`onAppear`）时启动，而视图重建是由 `.id` 触发的。
+    /// 回归点：早前只写 `.id(state)`，当任务从「等你确认」变成「异常」（或反过来）时
+    /// 状态仍是 `.waiting`、`.id` 不变 → 视图不重建 → 动画既不会启动也不会停止。
+    /// 把 `animated` 也写进 key，红闪标志翻转就会重建并重新起播。
+    struct MotionKey: Hashable {
+        let state: LogoMotionState
+        let animated: Bool
+    }
+
+    static func motionKey(state: LogoMotionState, animated: Bool) -> MotionKey {
+        MotionKey(state: state, animated: animated)
     }
 
     var body: some View {
@@ -161,7 +227,7 @@ struct LogoMotionBadge: View {
                         style: StrokeStyle(lineWidth: LogoMotionMetrics.arcStroke * scale,
                                            lineCap: .butt, lineJoin: .round))
             indicator
-                .id(state)
+                .id(Self.motionKey(state: state, animated: animated))
                 .transition(.asymmetric(
                     insertion: .opacity.combined(with: .scale(scale: 0.92)),
                     removal: .opacity.combined(with: .scale(scale: 0.92))))
@@ -177,17 +243,21 @@ struct LogoMotionBadge: View {
         case .idle:    IdleIndicator(scale: scale, color: color, animated: animated)
         case .done:    DoneIndicator(scale: scale, color: color, animated: animated)
         case .working: WorkingIndicator(scale: scale, color: color, animated: animated)
-        case .waiting: WaitingIndicator(scale: scale, color: color, animated: animated)
+        case .waiting, .error:
+            AlertIndicator(scale: scale, color: color, pulse: state.pulse, animated: animated)
         }
     }
 }
 
 // MARK: - 各状态弧内指示
 
-/// 空闲：中心柔光点呼吸 + 一圈外扩涟漪
+/// 空闲：中心柔光点呼吸 + 一圈外扩涟漪。
+/// 振幅按 DESIGN.md §8 方案 A 加大（28pt 下描边会落到亚像素，原参数几乎看不出动），
+/// 加大后仍为五态中最安静的一档。
 private struct IdleIndicator: View {
     let scale: CGFloat
     let color: Color
+    /// 注意：`animated` 是父视图 `.id` 的一部分——它一变，本视图会重建、`onAppear` 重跑。
     let animated: Bool
 
     @State private var breath = false
@@ -199,14 +269,16 @@ private struct IdleIndicator: View {
                 .stroke(color, lineWidth: 8 * scale)
                 .frame(width: LogoMotionMetrics.idleRingRadius * 2 * scale,
                        height: LogoMotionMetrics.idleRingRadius * 2 * scale)
-                .scaleEffect(ping ? 1.35 : 0.72)
-                .opacity(ping ? 0 : 0.34)
+                .scaleEffect(ping ? LogoMotionMetrics.idleRingEndScale
+                                  : LogoMotionMetrics.idleRingStartScale)
+                .opacity(ping ? 0 : LogoMotionMetrics.idleRingStartOpacity)
             Circle()
                 .fill(color)
                 .frame(width: LogoMotionMetrics.idleDotRadius * 2 * scale,
                        height: LogoMotionMetrics.idleDotRadius * 2 * scale)
-                .scaleEffect(breath ? 1 : 0.78)
-                .opacity(breath ? 1 : 0.48)
+                .scaleEffect(breath ? LogoMotionMetrics.idleDotMaxScale
+                                    : LogoMotionMetrics.idleDotMinScale)
+                .opacity(breath ? 1 : LogoMotionMetrics.idleDotMinOpacity)
         }
         .onAppear {
             guard animated else { return }
@@ -293,16 +365,44 @@ private struct WorkingIndicator: View {
     }
 }
 
-/// 等待确认：感叹号（竖条 + 圆点）上下轻浮 + 两圈外扩脉冲
-private struct WaitingIndicator: View {
+/// 两种红灯共用的弧内指示（感叹号 + 外扩脉冲）。
+///
+/// - `.double`（等你确认）：双圈错相脉冲 `1.6s`，竖条上下轻浮 `5pt / 1.15s`
+/// - `.single`（异常）：单圈慢脉冲 `2.4s`、峰值透明度降到 `.28`，竖条不浮动，改为极缓透明度呼吸
+///
+/// 两者形状、颜色完全一致，只靠脉冲圈数与频率区分——不需要靠转圈/额外图标。
+private struct AlertIndicator: View {
     let scale: CGFloat
     let color: Color
+    let pulse: LogoPulse
+    /// 注意：`animated` 是父视图 `.id` 的一部分——它一变，本视图会重建、`onAppear` 重跑。
     let animated: Bool
 
-    @State private var bob = false
-    @State private var ping = false
+    @State private var pulseOn = false
+    @State private var barOn = false
 
-    private var waves: [Double] { [0, LogoMotionMetrics.waitingWaveDelay] }
+    private var isDouble: Bool { pulse == .double }
+
+    /// 双圈错相 0.72s；单圈只有一个
+    private var waves: [Double] {
+        isDouble ? [0, LogoMotionMetrics.waitingWaveDelay] : [0]
+    }
+
+    private var waveDuration: Double {
+        isDouble ? LogoMotionMetrics.waitingWaveDuration : LogoMotionMetrics.errorWaveDuration
+    }
+
+    private var wavePeakOpacity: Double {
+        isDouble ? LogoMotionMetrics.alertWaveStartOpacity : LogoMotionMetrics.errorWavePeakOpacity
+    }
+
+    private var barDuration: Double {
+        isDouble ? LogoMotionMetrics.waitingBobDuration : LogoMotionMetrics.errorBreathDuration
+    }
+
+    private var barBright: Double {
+        isDouble ? LogoMotionMetrics.alertBarBright : LogoMotionMetrics.errorBarBright
+    }
 
     var body: some View {
         ZStack {
@@ -311,33 +411,35 @@ private struct WaitingIndicator: View {
                     .stroke(color, lineWidth: 8 * scale)
                     .frame(width: LogoMotionMetrics.waitingWaveRadius * 2 * scale,
                            height: LogoMotionMetrics.waitingWaveRadius * 2 * scale)
-                    .scaleEffect(ping ? 1.24 : 0.73)
-                    .opacity(ping ? 0 : 0.38)
-                    .animation(.easeOut(duration: LogoMotionMetrics.waitingWaveDuration)
+                    .scaleEffect(pulseOn ? LogoMotionMetrics.alertWaveEndScale
+                                         : LogoMotionMetrics.alertWaveStartScale)
+                    .opacity(pulseOn ? 0 : wavePeakOpacity)
+                    .animation(.easeOut(duration: waveDuration)
                         .delay(waves[i])
-                        .repeatForever(autoreverses: false), value: ping)
+                        .repeatForever(autoreverses: false), value: pulseOn)
             }
 
-            // 竖条：demo 的 M 300 248 → 300 320，中心 y=284
+            // 竖条：demo 的 M 300 248 → 300 320，中心 y=284。异常态不浮动，只呼吸透明度。
             Capsule()
                 .fill(color)
                 .frame(width: LogoMotionMetrics.waitingBarWidth * scale,
                        height: LogoMotionMetrics.waitingBarLength * scale)
-                .offset(y: -16 * scale + (bob ? -5 * scale : 0))
-                .opacity(bob ? 1 : 0.72)
-            // 圆点：(300,362)，demo 里圆点不浮动，只有竖条轻浮
+                .offset(y: -16 * scale + (isDouble && barOn
+                                          ? -LogoMotionMetrics.alertBarLift * scale : 0))
+                .opacity(barOn ? barBright : LogoMotionMetrics.alertBarDim)
+                .animation(.easeInOut(duration: barDuration)
+                    .repeatForever(autoreverses: true), value: barOn)
+            // 圆点：(300,362)，demo 里圆点不动，只有竖条动
             Circle()
                 .fill(color)
                 .frame(width: LogoMotionMetrics.waitingDotRadius * 2 * scale,
                        height: LogoMotionMetrics.waitingDotRadius * 2 * scale)
                 .offset(y: 62 * scale)
         }
-        .animation(.easeInOut(duration: LogoMotionMetrics.waitingBobDuration)
-            .repeatForever(autoreverses: true), value: bob)
         .onAppear {
             guard animated else { return }
-            bob = true
-            ping = true
+            pulseOn = true
+            barOn = true
         }
     }
 }

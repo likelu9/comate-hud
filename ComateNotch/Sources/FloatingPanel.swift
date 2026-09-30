@@ -19,19 +19,24 @@ enum FloatingMetrics {
     static let handleHeight: CGFloat = 14
     /// 面板与屏幕边缘的最小距离
     static let screenMargin: CGFloat = 4
-    /// 以下内边距 / 间距与刘海模式保持一致
-    static let panelHPadding: CGFloat = 12
-    static let panelTopPadding: CGFloat = 8
-    /// 面板底部留白：页脚下方必须留出比拖拽手柄命中区更高的空白（12 > handleHitHeight）
-    static let panelBottomPadding: CGFloat = 12
+    /// 以下内边距 / 间距与刘海模式保持一致（v2 刻度：14 / 10 / 14 · 8，行距 4）
+    static let panelHPadding: CGFloat = 14
+    /// 图标承托 chip：36×36、radius 10，只到 36（< 命中盒 44）——看着「托住图标」就够了，
+    /// 热区不变。浅色壁纸上 logo 的白描边会糊在背景里，给一层中间调承托才立得住（T14）。
+    static let chipSize: CGFloat = 36
+    static let chipCorner: CGFloat = 10
+    /// 面板顶部内边距
+    static let panelTopPadding: CGFloat = 10
+    /// 面板底部留白：页脚下方必须留出比拖拽手柄命中区更高的空白（14 > handleHitHeight）
+    static let panelBottomPadding: CGFloat = 14
     /// 拖拽手柄的命中区高度：只取面板最底部一条，避开页脚按钮
     static let handleHitHeight: CGFloat = 10
     /// 无任务时列表占位文案的高度
     static let emptyPlaceholderHeight: CGFloat = 24
-    static let listSpacing: CGFloat = 3
-    static let blockSpacing: CGFloat = 6
+    static let listSpacing: CGFloat = 4
+    static let blockSpacing: CGFloat = 8
     /// 标题行高度（悬浮模式特有：标题 + 新建任务按钮）
-    static let headerHeight: CGFloat = 18
+    static let headerHeight: CGFloat = 20
 }
 
 /// 悬浮面板布局（SwiftUI 坐标，原点左上，相对窗口）
@@ -529,6 +534,8 @@ struct FloatingPanelContent: View {
     /// 拖拽高度手柄状态
     @State private var isResizing = false
     @State private var resizeHovered = false
+    /// 图标是否被悬停（只影响承托 chip 的底色深浅）
+    @State private var iconHovered = false
     @State private var dragBaseHeight: CGFloat = 0
 
     private var layout: FloatingLayout { interaction.layout }
@@ -587,12 +594,26 @@ struct FloatingPanelContent: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // 图标：与刘海模式同一套视觉（logo 与状态灯合一的四态动效），
+            // 图标承托 chip：在 logo 之下、命中盒之内。
+            // 它只是背景层，不参与命中（allowsHitTesting(false)），热区始终是 44×44。
+            RoundedRectangle(cornerRadius: FloatingMetrics.chipCorner)
+                .fill(Color.white.opacity(iconChipFill))
+                .overlay(
+                    RoundedRectangle(cornerRadius: FloatingMetrics.chipCorner)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+                .frame(width: FloatingMetrics.chipSize, height: FloatingMetrics.chipSize)
+                .allowsHitTesting(false)
+                .animation(.easeInOut(duration: 0.12), value: iconChipFill)
+                .position(x: layout.iconRect.midX, y: layout.iconRect.midY)
+
+            // 图标：与刘海模式同一套视觉（logo 与状态灯合一的五态动效），
             // 由 layout 绝对定位 → 展开/收起全程不动
             LogoMotionBadge(light: store.primaryLight,
                             redBlinking: store.primaryRedBlinking,
                             size: FloatingMetrics.logoSize)
                 .frame(width: FloatingMetrics.iconBox, height: FloatingMetrics.iconBox)
+                .onHover { h in iconHovered = h }
                 .position(x: layout.iconRect.midX, y: layout.iconRect.midY)
 
             // 面板：始终参与布局，靠 scale + opacity 做展开/收起。
@@ -609,6 +630,12 @@ struct FloatingPanelContent: View {
                height: layout.windowSize.height,
                alignment: .topLeading)
         .animation(.easeInOut(duration: 0.2), value: interaction.isExpanded)
+    }
+
+    /// 图标承托的底色：常态 6% / hover 10% / 展开中 12%
+    private var iconChipFill: Double {
+        if interaction.isExpanded { return 0.12 }
+        return iconHovered ? 0.10 : 0.06
     }
 
     /// 列表区：有记录时是可滚动列表，无记录时是占位文案
@@ -643,8 +670,8 @@ struct FloatingPanelContent: View {
             // 标题行：标题 + 新建任务
             HStack(spacing: 6) {
                 Text("Comate HUD")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .font(.system(size: 12.5, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.75))
                 Spacer(minLength: 0)
                 ComatePlusButton { store.openNewTask() }
             }

@@ -224,6 +224,56 @@ enum UsageAPI {
 
     static func percentLabel(_ percent: Double) -> String { String(format: "%.0f%%", percent) }
 
+    // MARK: - 页脚读数（已用 / 总量）
+
+    /// 页脚额度位里的单个读数：按中文习惯取整并加千分位，大额缩写到万 / 亿。
+    ///
+    /// 与 `creditsLabel`（悬停详情用）分开：详情要保留小数精度（1.68 点也能看见），
+    /// 而页脚只有一行、必须先把长度压住，否则会把右侧的铃铛 / 齿轮挤跑。
+    /// 实测三档：`1,240` / `1,234.6 万` / `10.0 亿`。
+    static func footerCredits(_ value: Double) -> String {
+        if value >= 100_000_000 { return grouped(value / 100_000_000, decimals: 1) + " 亿" }
+        if value >= 10_000 { return grouped(value / 10_000, decimals: 1) + " 万" }
+        return grouped(value.rounded(), decimals: 0)
+    }
+
+    /// 页脚读数（不含前后缀）：「1,240 / 2,000」。值与分隔符分开给，
+    /// 页脚要把「值」渲染成强色、把「已用 / 点」渲染成弱色。
+    struct FooterReadout: Equatable {
+        let used: String
+        let total: String
+        /// 用于判长与占位符
+        var combined: String { "\(used) / \(total)" }
+    }
+
+    /// 取不到额度数据时的占位（不写 0）
+    static let footerReadoutPlaceholder = FooterReadout(used: "—", total: "—")
+
+    static func footerReadout(used: Double, total: Double) -> FooterReadout {
+        FooterReadout(used: footerCredits(used), total: footerCredits(total))
+    }
+
+    /// 读数在额度位放不下时，先降级去掉「已用」二字（DESIGN.md §7.1 防跑版第二档）。
+    ///
+    /// 为什么能用字符数判：`footerCredits` 已把数字压成定长形态（≥1 万 → 「1,234.6 万」、
+    /// ≥1 亿 → 「12.3 亿」），同级之间只差个位数；而三档实测的「放得下 / 放不下」分界
+    /// 正好落在 15 与 21 之间（见 test.sh 用例），不必为了一个字符数判据去引入
+    /// 文本度量（macOS 12 也没有 `ViewThatFits` 可用）。
+    static func footerReadoutNeedsTrim(_ readout: String) -> Bool {
+        readout.count > 16
+    }
+
+    private static func grouped(_ value: Double, decimals: Int) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.minimumFractionDigits = decimals
+        f.maximumFractionDigits = decimals
+        f.usesGroupingSeparator = true
+        return f.string(from: NSNumber(value: value))
+            ?? String(format: "%.\(decimals)f", value)
+    }
+
     // MARK: - 内部
 
     /// 同步 GET（调用方保证在后台队列）。

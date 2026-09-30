@@ -80,7 +80,7 @@ HUD 只保存本次登录的凭证，不会读取你的文档内容。</div><div
 <div class="st-lab"><span class="no">4</span>失败 · <code>#FFC928</code>（第 3 次探测失败才出现）</div>
 <div class="strip"><div class="lgb"><div class="lg-head"><div class="lg-tip">登录后 HUD 才能显示未读消息与额度用量。
 HUD 只保存本次登录的凭证，不会读取你的文档内容。</div><div class="lg-status err">已取得登录凭证但服务端仍拒绝，请关闭窗口后重试</div><div class="lg-sep"></div></div></div></div>
-<div class="cap"><b>④ 失败</b> — 原文 <b>「已取得登录凭证但服务端仍拒绝，请关闭窗口后重试」</b>，色 <b><code>#FFC928</code></b>（代码用 <code>.systemOrange</code> ≈ <code>#FF9500</code>，本稿取最近的 HUD 状态色 <code>status.working</code>；<b>备选</b>：按「失败 = 橙红」语义改用 <code>status.waiting #FF6259</code>，<em>待拍板</em>）。<b>触发条件：拿到 <code>wps_sid</code> 但 <code>probe</code> 失败，且已重试到第 <code>maxAttempts = 3</code> 次</b>（前 2 次间隔 1.5s 静默重试，期间不切文案）。</div>
+<div class="cap"><b>④ 失败</b> — 原文 <b>「已取得登录凭证但服务端仍拒绝，请关闭窗口后重试」</b>，色 <b><code>#FFC928</code></b>（代码用 <code>.systemOrange</code> ≈ <code>#FF9500</code>，本稿取最近的 HUD 状态色 <code>status.working</code>；<b>T15 已拍板：按「最小改动」取 <code>#FFC928</code></b>，与 <code>LoginWindow.setStatus(..., .systemOrange)</code> 完全一致、不新增 token；<b>不改用</b> <code>status.waiting #FF6259</code>）。<b>触发条件：拿到 <code>wps_sid</code> 但 <code>probe</code> 失败，且已重试到第 <code>maxAttempts = 3</code> 次</b>（前 2 次间隔 1.5s 静默重试，期间不切文案）。</div>
 </div>
 </div>
 

@@ -89,7 +89,11 @@ code{font:400 9px/1.5 var(--m);color:var(--ach)}mark{background:var(--acs);color
 .si{flex:none;color:rgba(255,255,255,.5)}.ar{flex:none;color:rgba(255,255,255,.2)}
 .emp{position:absolute;left:14px;right:14px;top:43px;bottom:34px;display:grid;place-items:center;font:400 11px/1 var(--f);color:rgba(255,255,255,.4)}
 .ft{position:absolute;left:14px;right:14px;bottom:14px;height:20px;display:flex;align-items:center;gap:6px}
-.ftg{display:flex;align-items:center;gap:6px;height:20px;padding:0 7px;border-radius:5px}
+.ftg{display:flex;align-items:center;gap:6px;height:20px;padding:0 4px;border-radius:5px}
+/* 第 1 行分区：额度区 │ 消息·设置区 —— 竖分隔线画在铃铛热区的左缘（不吃额外宽度），
+   让「额度」与「消息 / 设置」在视觉上分成两个区块，避免读数与按钮贴在一起造成误读 / 误点。 */
+.ib.sep{padding-left:4px}
+.ib.sep::before{content:'';position:absolute;left:0;top:50%;width:1px;height:12px;transform:translateY(-50%);background:rgba(255,255,255,.08)}
 .pg{flex:none;width:30px;height:3px;border-radius:999px;background:var(--act);overflow:hidden}
 .pg i{display:block;height:100%;border-radius:999px;background:var(--ac)}
 .seg{display:flex;padding:1px;border-radius:4px;background:var(--track)}
@@ -225,7 +229,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 <div class=ft>
 <span class=ftg style="padding:0"><span class=seg><span class=on>日</span><span>月</span></span></span>
 <span class=ftg><span class=ftx>已用 <b>1,240</b> / 2,000 点</span><span class=pg><i style="width:62%"></i></span></span>
-<span class=ib><svg width=9 height=9><use href="#ic-bell"/></svg>2</span>
+<span class="ib sep"><svg width=9 height=9><use href="#ic-bell"/></svg>2</span>
 <span class=ib><svg width=9 height=9><use href="#ic-gear"/></svg><i class=ud></i></span>
 </div>
 <i class=hnd></i>
@@ -246,7 +250,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 <div class=ft>
 <span class=ftg style="padding:0"><span class=seg><span class=on>日</span><span>月</span></span></span>
 <span class=ftg><span class=ftx>已用 <b>—</b> / 2,000 点</span><span class=pg><i style="width:0"></i></span></span>
-<span class=ib><svg width=9 height=9><use href="#ic-bell"/></svg></span>
+<span class="ib sep"><svg width=9 height=9><use href="#ic-bell"/></svg></span>
 <span class=ib><svg width=9 height=9><use href="#ic-gear"/></svg></span>
 </div>
 <i class=hnd></i>
@@ -261,7 +265,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 <li><b>任务行（与悬浮模式共用 <code>HUDTaskRows</code>）</b><span>行高 <b>34pt</b> · 行距 <code>4</code> · <code>radius.8</code> · 行底 <code>surface.row</code> 白 4% → hover 白 10% / pressed 白 14% · 行内 padding <b>0 7</b>（水平 6→7；垂直向刻度并入固定行高 34）· 灯到文字 <b>8</b> · 无描边（P2）</span></li>
 <li><b>状态灯 + 状态文案</b><span>灯 <code>metrics.dot 8pt</code> + 微发光 <code>0 0 3px {status.*-soft}</code>：<code>idle #9CA0AA</code> / <code>working #FFC928</code> / <code>waiting #FF6259</code> / <code>done #31D158</code>；文案 <b>10pt / 600</b> 与灯同色（待办 / 进行中 / 等你确认 / 异常 / 已完成），<b>两档红靠文案与动效区分</b>：等你确认＝灯 <code>0.55s</code> 闪烁，异常＝常亮</span></li>
 <li><b>标题 / 来源 / 额度 / 时间 / 尾部箭头</b><span>来源图标 <b>9pt</b>（cloud 白 55% / folder 白 40%）+ 标题 <b>12.5pt / 500</b> <code>text.primary</code> 单行省略，间距 <b>4</b>；meta 行 <b>10pt</b> 白 40%，间距 <b>6</b>：有额度写 <b>「30天 N 点」</b>、无则 <b>「—」</b>，相对时间档位 <b>N秒 / N分钟 / N小时 / N天前</b>；尾部 <code>arrow.up.right</code> <b>9pt</b> 常态白 20% → hover 白 50%</span></li>
-<li><b>页脚：周期切换 → 额度 → 铃铛 → 齿轮（与悬浮模式共用 <code>HUDUsageFooter</code>）</b><span>行高 <b>20pt</b>（<code>bottom:14</code>）· <b>结构顺序固定 ①→④</b>：① 周期切换双段胶囊（<b>日 | 月</b>，日在前）：每段 <b>13×11</b> <code>radius 3.5</code>、<code>padding 1</code>、底 <code>surface.track</code> 白 10%、选中 <code>accent.normal #00D4AA</code> + 深墨字 <code>#0F0F11</code>（品牌绿为亮色，白字仅 ≈1.9:1 不可读，深墨 ≈9.8:1） → ② 额度「<b>已用 1,240 / 2,000 点</b>」<b>9pt / 500</b> <code>text.secondary</code>、值 <code>text.strong</code>（≤20% 转 <code>status.waiting</code>）+ 细进度条 <b>30×3</b> <code>radius.full</code>（填充 <code>accent.normal #00D4AA</code> / 底 <code>accent.track rgba(0,212,170,.22)</code>）→ ③ 铃铛 + 未读数 <b>9pt / 600</b> → ④ 齿轮带 <b>5pt</b> 更新红点 <code>#FF4D4F</code>（<code>0 0 0 .5px rgba(0,0,0,.4)</code>）· 热区统一 <b>高 20 / 宽 30 / radius 5</b>，hover 白 12%</span></li>
+<li><b>页脚：周期切换 → 额度 │ 分隔线 │ 铃铛 → 齿轮（与悬浮模式共用 <code>HUDUsageFooter</code>）</b><span>行高 <b>20pt</b>（<code>bottom:14</code>）· <b>结构顺序固定 ①→④</b>：① 周期切换双段胶囊（<b>日 | 月</b>，日在前）：每段 <b>13×11</b> <code>radius 3.5</code>、<code>padding 1</code>、底 <code>surface.track</code> 白 10%、选中 <code>accent.normal #00D4AA</code> + 深墨字 <code>#0F0F11</code>（品牌绿为亮色，白字仅 ≈1.9:1 不可读，深墨 ≈9.8:1） → ② 额度「<b>已用 1,240 / 2,000 点</b>」<b>9pt / 500</b> <code>text.secondary</code>、值 <code>text.strong</code>（≤20% 转 <code>status.waiting</code>）+ 细进度条 <b>30×3</b> <code>radius.full</code>（填充 <code>accent.normal #00D4AA</code> / 底 <code>accent.track rgba(0,212,170,.22)</code>）→ <b>1pt 竖分隔线</b>（白 8%、高 12pt、画在铃铛热区左缘）→ ③ 铃铛 + 未读数 <b>9pt / 600</b> → ④ 齿轮带 <b>5pt</b> 更新红点 <code>#FF4D4F</code>（<code>0 0 0 .5px rgba(0,0,0,.4)</code>）· 热区统一 <b>高 20 / 宽 30 / radius 5</b>，hover 白 12% · 额度组水平内边距由 <b>7 → 4</b> 腾出分隔线所需的呼吸位（总宽 250.7 ≤ 253，仍不溢出）· <b>额度区与消息/设置区互不重叠</b>（读数过长时截在额度组内，不压到按钮上）</span></li>
 <li><b>底部拖拽手柄</b><span>胶囊 <b>44 × 4</b>（<code>metrics.handle-w 44</code> × <code>handle-h-notch 4</code>；悬浮形态走 <code>handle-h 3</code>）<code>radius.full</code> · 常态白 22% → hover 拖动中白 50% · 距底 4 · 命中区只占最底 <b>10pt</b>（<code>resizeHitHeight</code>）不压页脚；拖动改 <code>customExpandedHeight</code>，高度夹在 1–10 条之间</span></li>
 </ol>
 

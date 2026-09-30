@@ -12,12 +12,12 @@ struct NotchLayout {
     /// 刘海高度，决定顶部内缩量
     let notchHeight: CGFloat
 
-    static let horizontalPadding: CGFloat = 12
-    static let listSpacing: CGFloat = 3
-    static let blockSpacing: CGFloat = 6
+    static let horizontalPadding: CGFloat = 14
+    static let listSpacing: CGFloat = 4
+    static let blockSpacing: CGFloat = 8
     /// 面板底部留白：页脚下方必须留出比拖拽手柄命中区更高的空白，
-    /// 否则手柄会盖住页脚按钮的命中区（12 > resizeHitHeight）
-    static let bottomPadding: CGFloat = 12
+    /// 否则手柄会盖住页脚按钮的命中区（14 > resizeHitHeight）
+    static let bottomPadding: CGFloat = 14
     /// 拖拽手柄的可视条高度（含条下方留白）
     static let resizeHandleHeight: CGFloat = 14
     /// 拖拽手柄的命中区高度：只取面板最底部这一条，避开页脚
@@ -29,7 +29,13 @@ struct NotchLayout {
     /// 最大高度对应的记录条数（菜单可选条数的最大值）
     static var maxRowCount: Int { ComateStore.recentTaskLimitOptions.max() ?? 10 }
 
-    var topInset: CGFloat { notchHeight / 2 + 24 }
+    /// 刘海下沿到列表首行的留白。
+    ///
+    /// 写成「刘海高度 + 固定留白」而不是旧的 `notchHeight / 2 + 24`：后者在不同机型
+    /// （刘海 24 / 32 / 34pt）下得到的净留白不一致，v2 需要的是与硬件无关的固定值。
+    /// 旧的 `notchHeight/2 + 24` 在 34pt 刘海下净留白只有 7pt，v2 提到 10pt。
+    static let notchClearance: CGFloat = 10
+    var topInset: CGFloat { notchHeight + Self.notchClearance }
 
     /// 单行占高（行高 + 行间距）：由实测行高反推。
     /// 它只取决于行本身，与当前展示多少条无关，所以切换条数时依然有效。

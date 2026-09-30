@@ -1,6 +1,6 @@
 {
   "design": "Comate HUD · 深色 KDesign 设计规范",
-  "version": "2.1",
+  "version": "2.2",
   "stage": "review",
   "status": "review",
   "platform": "macOS 14+ / Swift + AppKit",
@@ -47,6 +47,7 @@
     "line.chip": "rgba(255,255,255,0.08)",
     "radius.chip": "10pt",
     "metrics.footer-h": "34pt",
+    "metrics.footer-divider": "1pt 宽 × 16pt 高（line.divider，额度区 │ 消息·设置区，x=179）",
     "radius.meter": "2pt",
 
     "status.idle": "rgba(156,160,170,1)",
@@ -126,9 +127,9 @@
     "shadow.window": "0 24px 48px rgba(0,0,0,0.48)",
     "shadow.tip": "0 8px 24px rgba(0,0,0,0.48)",
     "shadow.icon": "0 10px 14px rgba(0,0,0,0.55)",
-    "glow.focus": "0 0 4px rgba(10,108,255,1)",
+    "glow.focus": "0 0 4px rgba(0,212,170,1)",
     "glow.status": "0 0 3px {status.*-soft}",
-    "glow.brand-radial": "radial-gradient(circle, rgba(10,108,255,0.28), transparent)",
+    "glow.brand-radial": "radial-gradient(circle, rgba(0,212,170,0.28), transparent)",
 
     "metrics.panel-radius": "16pt",
     "metrics.panel-h-padding": "12pt",
@@ -180,7 +181,7 @@
       "id": "footer-quota",
       "name": "页脚额度区",
       "file": "references/panel-main.html",
-      "notes": "已交付 v2（两行结构、总高 34pt）：第1行 日/月胶囊（日在前，间距 6pt）紧贴「已用 x / y 点」（10pt tabular-nums）+ 右侧铃铛·齿轮（32×22，x 恒定 185/219）；第2行 进度条独立成行（209×4，accent.normal 填充 / accent.track 底）+ 右端百分比（占位 36）。防跑版三档：1,240/2,000 · 缩写成「1,234.6 万/2,000.0 万」· 「10.0 亿/10.0 亿」；兜底三态：无数据 / 加载骨架 / 未登录（登录引导按钮，绿底深墨字）。"
+      "notes": "已交付 v2（两行结构、总高 34pt）：第1行 日/月胶囊（日在前，间距 6pt）紧贴「已用 x / y 点」（10pt tabular-nums）│ 1pt 竖分隔线 │ 右侧铃铛·齿轮（32×22，x 恒定 185/219）；第2行 进度条独立成行（209×4，accent.normal 填充 / accent.track 底）+ 右端百分比（占位 36）。两区分离：额度区 flex:1 + overflow:hidden，与消息/设置按钮区不重叠（额度区可用 173pt / 文字位 131pt）。防跑版三档：1,240/2,000 · 缩写成「1,234.6 万/2,000.0 万」· 「10.0 亿/10.0 亿」；兜底三态：无数据 / 加载骨架 / 未登录（登录引导按钮，绿底深墨字，实宽 131）。"
     },
     {
       "id": "empty-state",
@@ -204,19 +205,19 @@
       "id": "login",
       "name": "登录窗（新增）",
       "file": "references/login.html",
-      "notes": "已交付。独立 NSWindow 460×820（最小 460×700）；固定头 78pt；WebView ≥620pt 硬约束（登录页 <600pt 塔陷）；状态行四态：默认 / 校验中（新增文案）/ 成功（绿 0.9s 后自动关窗）/ 失败（橙，T15 待拍板）。"
+      "notes": "已交付。独立 NSWindow 460×820（最小 460×700）；固定头 78pt；WebView ≥620pt 硬约束（登录页 <600pt 塔陷）；状态行四态：默认 / 校验中（新增文案）/ 成功（绿 0.9s 后自动关窗）/ 失败（橙 #FFC928，T15 已拍板按最小改动，与代码 .systemOrange 一致）。"
     },
     {
       "id": "update-prompt",
       "name": "更新提示（新增面）",
       "file": "references/update.html",
-      "notes": "已交付。现状只有菜单项三态 + 红点 + 关于页三态，无独立窗；本稿新增 420×320 独立小窗，四态（有新版/检查中/已是最新/检查失败）；changelog 按 new/opt/fix 分组（靠文案不靠颜色）；主按钮绿底深墨字。"
+      "notes": "已交付。现状只有菜单项三态 + 红点 + 关于页三态，无独立窗；本稿新增 420×320 独立小窗，四态（有新版/检查中/已是最新/检查失败）；changelog 按 new/opt/fix 分组（靠文案不靠颜色）；「有新版」下载入口成一排两个、官网优先：官网下载（主，绿底深墨字）+ GitHub 下载（描边次按钮），成对同高 34。"
     },
     {
       "id": "floating-icon",
       "name": "悬浮窗图标（新增面）",
       "file": "references/floating.html",
-      "notes": "已交付。同一套五态图形 30pt + 半透明 chip 36×36/radius 10（底白 6%、描边白 8%）；chip 四态：常态 .06 / hover .10 / 按下 .14 / 展开中 .12；嵌套 窗口60 ⊃ 命中盒44 ⊃ chip36 ⊃ 图形30；含收起→展开形态与 28pt vs 30pt 对照。风险：浅壁纸可见度（T14）。"
+      "notes": "已交付。同一套五态图形 30pt + 半透明 chip 36×36/radius 10（底白 6%、描边白 8%）；chip 四态：常态 .06 / hover .10 / 按下 .14 / 展开中 .12；嵌套 窗口60 ⊃ 命中盒44 ⊃ chip36 ⊃ 图形30；含收起→展开形态与 28pt vs 30pt 对照。T14 已拍板：先接受白 6%（带回退条件：实测看不清再加 1px 深色外描边或描边提到白 14%）。"
     }
   ],
   "references": [
@@ -238,7 +239,7 @@
     { "id": "T11", "title": "关于弹窗紫色品牌光晕处置", "recommend": "已拍板：保持不变（唯一例外，只作氛围）；关于内容整体并入设置窗口「关于」页，原独立弹窗退场", "blocking": [], "status": "decided" },
     { "id": "T13", "title": "设计稿动效伪实现（动画挂在 <defs> 模板上、<use> 克隆不动）已修；另修复未加引号属性紧邻 /> 导致 SVG 几何为 0", "recommend": "已独立验证：31 个动画实例中 26 个的几何/透明度随冻结时刻变化", "blocking": [], "status": "decided" },
     { "id": "T12", "title": "设计稿示例数据（昵称/企业/版本 v1.4.2、v1.5.0）仅为占位，实现时取真实值（当前 1.4.5 / build 14）", "recommend": "接受", "blocking": [] },
-    { "id": "T14", "title": "悬浮图标 chip（白 6%）在浅色壁纸上可见度低", "recommend": "接受；实测看不清再加 1px 深色外描边或把描边提到白 14%", "blocking": [] },
-    { "id": "T15", "title": "登录窗失败态颜色：设计稿 #FFC928（对齐 NSColor.systemOrange）还是 status.waiting #FF6259", "recommend": "#FFC928（与现实现一致，改动最小）", "blocking": ["login"] }
+    { "id": "T14", "title": "悬浮图标 chip（白 6%）在浅色壁纸上可见度低", "recommend": "已拍板（用户「按你说的来」）：先接受白 6%，不预设深色描边；实测看不清再加 1px 深色外描边 rgba(15,15,17,.35) 或把描边提到白 14%", "blocking": [], "status": "decided" },
+    { "id": "T15", "title": "登录窗失败态颜色：#FFC928（对齐 NSColor.systemOrange）还是 status.waiting #FF6259", "recommend": "已拍板（用户「按最小改动来做」）：#FFC928，与现有 LoginWindow.setStatus(..., .systemOrange) 一致，不新增 token", "blocking": [], "status": "decided" }
   ]
 }

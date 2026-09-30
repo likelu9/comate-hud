@@ -20,16 +20,61 @@ struct HUDTaskRows: View {
 
 // MARK: - 页脚：额度周期切换 + 消息铃铛 + 设置（刘海模式 / 悬浮模式共用）
 
-/// 页脚三个按钮的统一热区。原来只有图标本身那么大（约 13pt 高），难点中，
-/// 这里统一高度、并给右侧两个按钮一个统一的最小宽度。
-private enum FooterHit {
-    static let height: CGFloat = 20
-    static let sideWidth: CGFloat = 30
-    static let corner: CGFloat = 5
+/// 页脚形态。两种显示模式共用这一个组件，只是排布不同：
+/// - `regular`：悬浮面板。两行结构 —— 第 1 行 额度读数 │ 消息·设置；第 2 行 进度条 + 百分比（总高 34pt）
+/// - `compact`：刘海展开面板。单行 —— 额度读数里带一条 30×3 的内联进度条（总高 20pt）
+///
+/// 为什么要分两种：悬浮面板下方空间宽裕，进度条独占一行才看得清；
+/// 刘海展开面板的宽度被硬件开孔压到 281pt，只能把进度条压进读数行。
+enum HUDUsageFooterStyle {
+    case regular
+    case compact
+}
+
+/// 页脚两种形态的尺寸表。集中一份，避免「改了大面板漏了小面板」。
+private struct FooterMetrics {
+    let style: HUDUsageFooterStyle
+
+    /// 组件总高（regular 实测 6 + 14 + 4 + 4 + 6 = 34）
+    var height: CGFloat { style == .regular ? 34 : 20 }
+    /// 单行（compact）/ 第 1 行（regular）的行高
+    var rowHeight: CGFloat { style == .regular ? 14 : 20 }
+    /// 两行之间的行距（仅 regular 有意义）
+    var rowSpacing: CGFloat { 4 }
+    /// 行内元素之间的间距
+    var gap: CGFloat { 6 }
+    /// 额度组水平内边距：compact 留出竖线呼吸位后压到 4
+    var quotaPadding: CGFloat { style == .regular ? 0 : 4 }
+    /// 右侧图标热区
+    var hitWidth: CGFloat { style == .regular ? 32 : 30 }
+    var hitHeight: CGFloat { style == .regular ? 22 : 20 }
+    var corner: CGFloat { style == .regular ? 4 : 5 }
+    /// 额度区与消息·设置区之间的分区竖线
+    var dividerWidth: CGFloat { 1 }
+    var dividerHeight: CGFloat { style == .regular ? 16 : 12 }
+    /// 图标簇的左内边距：竖线画在这段留白里，不吃额外宽度
+    var clusterPadding: CGFloat { 6 }
+
+    var quotaFont: CGFloat { style == .regular ? 10 : 9 }
+    var iconFont: CGFloat { style == .regular ? 10.5 : 9 }
+    var countFont: CGFloat { style == .regular ? 10 : 9 }
+    var percentFont: CGFloat { 10 }
+    var segFont: CGFloat { style == .regular ? 9.5 : 8 }
+    var segWidth: CGFloat { style == .regular ? 17 : 13 }
+    var segHeight: CGFloat { style == .regular ? 14 : 11 }
+    var segCorner: CGFloat { style == .regular ? 4 : 3.5 }
+
+    /// 进度条：regular 独占一行、吃满剩余宽度；compact 是读数里的固定宽细线
+    var inlineBarWidth: CGFloat? { style == .regular ? nil : 30 }
+    var barHeight: CGFloat { style == .regular ? 4 : 3 }
+    /// 百分比读数占位：固定宽 + 右对齐，62% / 61.7% / 100% 都不会推挤进度条
+    var percentWidth: CGFloat { 36 }
 }
 
 struct HUDUsageFooter: View {
     @ObservedObject var store: ComateStore
+    /// 排布形态：悬浮面板两行（regular）/ 刘海展开面板单行（compact）
+    var style: HUDUsageFooterStyle = .regular
     /// 设置按钮动作。必填而非可选：设置是功能而不是装饰，
     /// 两种显示模式都必须提供，避免再出现「某个模式没有设置按钮」
     let onSettings: () -> Void
@@ -42,102 +87,208 @@ struct HUDUsageFooter: View {
     @State private var settingsHovered = false
     @State private var bellRotate = false
 
+    private var m: FooterMetrics { FooterMetrics(style: style) }
+
     var body: some View {
-        HStack(spacing: 6) {
-            // 未登录 / 登录失效时把额度位换成可点的登录引导，其余情况仍是日 / 月额度切换
-            if store.needsLogin {
-                loginPrompt
-            } else {
-                usageToggle
-            }
+        if style == .regular { regularBody } else { compactBody }
+    }
 
-            Spacer(minLength: 0)
+    /// 悬浮面板：两行结构
+    /// 第 1 行 = 周期胶囊 + 额度读数 │ 1pt 竖分隔线 │ 铃铛 + 齿轮
+    /// 第 2 行 = 进度条（吃满剩余宽）+ 固定宽百分比
+    ///
+    /// 两区互不重叠是硬规则：图标簇 `.fixedSize()` 且带 `layoutPriority`，
+    /// 左端读数再长也只会在自己的格子里被压缩，永远不会盖到按钮上（用户反馈 ③）。
+    private var regularBody: some View {
+        VStack(spacing: m.rowSpacing) {
+            HStack(spacing: m.gap) {
+                usageSlot
+                Spacer(minLength: m.gap)
+                iconCluster
+            }
+            .frame(height: m.rowHeight)
+            HStack(spacing: m.gap) {
+                progressBar
+                percentLabel
+            }
+            .frame(height: m.barHeight)
+        }
+        .padding(.vertical, 6)
+    }
 
-            // 消息数提示：铃铛图标 + 未读数（可点击打开消息中心）
-            if store.totalMessageCount > 0 {
-                Button(action: { store.openMessageCenter() }) {
-                    HStack(spacing: 3) {
-                        if store.isOpeningMessageCenter {
-                            Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
-                                .font(.system(size: 9))
-                                .rotationEffect(.degrees(bellRotate ? 360 : 0))
-                                .animation(.linear(duration: 0.8).repeatForever(autoreverses: false), value: bellRotate)
-                                .onAppear { bellRotate = true }
-                        } else {
-                            Image(systemName: "bell.fill")
-                                .font(.system(size: 9))
-                                .scaleEffect(bellHovered ? 1.2 : 1.0)
-                        }
-                        Text("\(store.totalMessageCount)")
-                            .font(.system(size: 9, weight: .semibold, design: .rounded))
-                    }
-                    .foregroundStyle(.white.opacity(bellHovered || store.isOpeningMessageCenter ? 0.9 : 0.55))
-                    .frame(minWidth: FooterHit.sideWidth, minHeight: FooterHit.height)
-                    .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
-                    .background(
-                        Color.white.opacity(bellHovered ? 0.12 : 0)
-                            .clipShape(RoundedRectangle(cornerRadius: FooterHit.corner))
-                    )
-                }
-                .buttonStyle(.plain)
-                .onHover { h in
-                    bellHovered = h
-                    if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-                }
-                .animation(.easeInOut(duration: 0.12), value: bellHovered)
-                .help(store.isOpeningMessageCenter ? "正在打开消息中心…" : "打开消息中心")
-            }
+    /// 刘海展开面板：单行（额度读数里带内联进度条）
+    private var compactBody: some View {
+        HStack(spacing: m.gap) {
+            usageSlot
+            Spacer(minLength: m.gap)
+            iconCluster
+        }
+        .frame(height: m.height)
+    }
 
-            // 设置：等同右键，弹出与右键一致的菜单（两种模式都有）
-            Button(action: onSettings) {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 9))
-                    .foregroundStyle(.white.opacity(settingsHovered ? 0.9 : 0.55))
-                    // 有新版可用：贴图标右上角亮红点（挂在图标上而非热区，避免小按钮里红点飘到远端）
-                    .overlay(alignment: .topTrailing) {
-                        if store.showsUpdateDot {
-                            Circle()
-                                .fill(UpdateDot.color)
-                                .frame(width: 5, height: 5)
-                                .overlay(Circle().stroke(Color.black.opacity(0.4), lineWidth: 0.5))
-                                .offset(x: 3, y: -3)
-                        }
-                    }
-                    .frame(width: FooterHit.sideWidth, height: FooterHit.height)
-                    .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
-                    .background(
-                        Color.white.opacity(settingsHovered ? 0.12 : 0)
-                            .clipShape(RoundedRectangle(cornerRadius: FooterHit.corner))
-                    )
-            }
-            .buttonStyle(.plain)
-            .onHover { h in
-                settingsHovered = h
-                if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-            }
-            .animation(.easeInOut(duration: 0.12), value: settingsHovered)
-            .help(store.showsUpdateDot
-                  ? "设置（检测到新版 \(store.availableUpdate ?? "")）"
-                  : "设置（等同右键菜单）")
+    /// 额度位：未登录 / 登录失效时整体换成登录引导，其余情况是「胶囊 + 读数（+ 内联进度条）」
+    @ViewBuilder
+    private var usageSlot: some View {
+        if store.needsLogin {
+            loginPrompt
+        } else {
+            usageToggle
         }
     }
 
-    /// 额度周期切换：胶囊 + 文案一起点，热区仅覆盖内容本身（不占满整行）
+    /// 右侧图标簇：铃铛 + 齿轮，左缘一条 1pt 竖线把「额度区」与「消息·设置区」分开。
+    /// 竖线画在簇的左内边距里（不吃额外宽度）；整簇固定尺寸，读数再长也不会挤动它。
+    private var iconCluster: some View {
+        HStack(spacing: 2) {
+            bellButton
+            settingsButton
+        }
+        .padding(.leading, m.clusterPadding)
+        .overlay(alignment: .leading) {
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(width: m.dividerWidth, height: m.dividerHeight)
+        }
+        .fixedSize()
+        .layoutPriority(1)
+    }
+
+    /// 消息中心入口。未读为 0 时仍然显示（页脚结构固定①→④），只是不带角标——
+    /// 否则齿轮会随着「有没有未读」左右横跳。
+    private var bellButton: some View {
+        Button(action: { store.openMessageCenter() }) {
+            HStack(spacing: 3) {
+                if store.isOpeningMessageCenter {
+                    Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
+                        .font(.system(size: m.iconFont))
+                        .rotationEffect(.degrees(bellRotate ? 360 : 0))
+                        .animation(.linear(duration: 0.8).repeatForever(autoreverses: false), value: bellRotate)
+                        .onAppear { bellRotate = true }
+                } else {
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: m.iconFont))
+                        .scaleEffect(bellHovered ? 1.15 : 1.0)
+                    if store.totalMessageCount > 0 {
+                        Text("\(store.totalMessageCount)")
+                            .font(.system(size: m.countFont, weight: .semibold, design: .rounded))
+                    }
+                }
+            }
+            .foregroundStyle(.white.opacity(bellHovered || store.isOpeningMessageCenter ? 0.9 : 0.55))
+            .frame(width: m.hitWidth, height: m.hitHeight)
+            .contentShape(RoundedRectangle(cornerRadius: m.corner))
+            .background(
+                Color.white.opacity(bellHovered ? 0.12 : 0)
+                    .clipShape(RoundedRectangle(cornerRadius: m.corner))
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { h in
+            bellHovered = h
+            if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+        .animation(.easeInOut(duration: 0.12), value: bellHovered)
+        .help(store.isOpeningMessageCenter ? "正在打开消息中心…" : "打开消息中心")
+    }
+
+    /// 设置：等同右键，弹出与右键一致的菜单（两种模式都有）
+    private var settingsButton: some View {
+        Button(action: onSettings) {
+            Image(systemName: "gearshape.fill")
+                .font(.system(size: m.iconFont))
+                .foregroundStyle(.white.opacity(settingsHovered ? 0.9 : 0.55))
+                // 有新版可用：贴图标右上角亮红点（挂在图标上而非热区，避免小按钮里红点飘到远端）
+                .overlay(alignment: .topTrailing) {
+                    if store.showsUpdateDot {
+                        Circle()
+                            .fill(UpdateDot.color)
+                            .frame(width: 5, height: 5)
+                            .overlay(Circle().stroke(Color.black.opacity(0.4), lineWidth: 0.5))
+                            .offset(x: 3, y: -3)
+                    }
+                }
+                .frame(width: m.hitWidth, height: m.hitHeight)
+                .contentShape(RoundedRectangle(cornerRadius: m.corner))
+                .background(
+                    Color.white.opacity(settingsHovered ? 0.12 : 0)
+                        .clipShape(RoundedRectangle(cornerRadius: m.corner))
+                )
+        }
+        .buttonStyle(.plain)
+        .onHover { h in
+            settingsHovered = h
+            if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+        .animation(.easeInOut(duration: 0.12), value: settingsHovered)
+        .help(store.showsUpdateDot
+              ? "设置（检测到新版 \(store.availableUpdate ?? "")）"
+              : "设置（等同右键菜单）")
+    }
+
+    /// 额度进度条。regular 吃满第 2 行剩余宽度；compact 是读数里的固定 30pt 细线。
+    /// 额度未知（无数据 / 未登录）时轨道退回中性白 10%，不用品牌绿——
+    /// 绿轨道会被读成「额度存在」，而此刻其实一个数也没读到。
+    private var progressBar: some View {
+        GeometryReader { g in
+            let known = store.activeUsageLimit != nil
+            let ratio = min(max(store.usagePercent, 0), 100) / 100
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.white.opacity(known ? 0 : 0.10))
+                if known {
+                    Capsule().fill(Color(hex: "#00D4AA").opacity(0.22))
+                    Capsule().fill(Color(hex: "#00D4AA"))
+                        .frame(width: g.size.width * ratio)
+                }
+            }
+        }
+        .frame(height: m.barHeight)
+    }
+
+    /// 百分比读数：固定 36pt 宽 + 右对齐
+    private var percentLabel: some View {
+        Text(store.usagePercentLabel)
+            .font(.system(size: m.percentFont, weight: .medium, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(store.isUsageLow
+                             ? Color(hex: TaskLight.red.color)
+                             : Color.white.opacity(0.72))
+            .frame(width: m.percentWidth, alignment: .trailing)
+    }
+
+    /// 额度读数「已用 x / y 点」。放不下时先降级去掉「已用」二字（防跑版第二档）。
+    private var quotaReadout: some View {
+        let readout = store.usageFooterReadout
+        let label = Color.white.opacity(0.72)
+        let value = store.isUsageLow ? Color(hex: TaskLight.red.color) : Color.white.opacity(0.92)
+        return (
+            Text(store.usageReadoutNeedsTrim ? "" : "已用 ").foregroundColor(label)
+            + Text(readout.used).foregroundColor(value)
+            + Text(" / ").foregroundColor(label)
+            + Text(readout.total).foregroundColor(value)
+            + Text(" 点").foregroundColor(label)
+        )
+        .font(.system(size: m.quotaFont, weight: .medium, design: .rounded))
+        .monospacedDigit()
+        .lineLimit(1)
+        // 兜底：真落到三档都放不下的极端值，宁可轻微缩字也不截断、不压到右边按钮上
+        .minimumScaleFactor(0.85)
+    }
+
+    /// 额度周期切换：胶囊 + 读数（+ 内联进度条）一起点，热区仅覆盖内容本身（不占满整行）
     private var usageToggle: some View {
         Button(action: { store.toggleUsagePeriod() }) {
-            HStack(spacing: 6) {
+            HStack(spacing: m.gap) {
                 usagePeriodIndicator
-                Text("额度已用 \(store.activeUsageLabel)")
-                    .font(.system(size: 8, weight: .medium, design: .rounded))
-                    // 与周期色块同色（品牌绿），hover 时提亮到全不透明
-                    .foregroundStyle(Color(hex: "#00D4AA")
-                        .opacity(usageToggleHovered ? 1.0 : 0.85))
+                quotaReadout
+                if let barWidth = m.inlineBarWidth {
+                    progressBar.frame(width: barWidth)
+                }
             }
-            .padding(.horizontal, 6)
-            .frame(height: FooterHit.height)
-            .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
+            .padding(.horizontal, m.quotaPadding)
+            .frame(height: m.rowHeight)
+            .contentShape(RoundedRectangle(cornerRadius: m.corner))
             .background(
-                RoundedRectangle(cornerRadius: FooterHit.corner)
+                RoundedRectangle(cornerRadius: m.corner)
                     .fill(Color.white.opacity(usageToggleHovered ? 0.1 : 0))
             )
         }
@@ -151,23 +302,24 @@ struct HUDUsageFooter: View {
     }
 
     /// 未登录 / 登录失效的登录引导。
-    /// 原来这里只有一个「—」，用户看不出来「得先去登录」——失效提示必须比状态数字显眼。
+    /// 换成品牌绿实底 + 深墨字（绿是交互色、这里是唯一的行动号召），
+    /// 用它整体替掉额度位——「得先去登录」必须比一个「—」显眼。
+    /// 失效与未登录靠文案区分，不靠颜色：额度位只允许出现品牌绿一支饱和色。
     private var loginPrompt: some View {
-        let tint = Color(hex: store.usageState == .authExpired ? TaskLight.red.color : TaskLight.yellow.color)
-        return Button(action: onLogin) {
+        Button(action: onLogin) {
             HStack(spacing: 5) {
                 Image(systemName: "person.crop.circle.badge.exclamationmark")
-                    .font(.system(size: 9))
+                    .font(.system(size: m.iconFont))
                 Text(store.loginPromptLabel)
-                    .font(.system(size: 8.5, weight: .semibold, design: .rounded))
+                    .font(.system(size: m.quotaFont + 0.5, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
             }
-            .foregroundStyle(tint)
-            .padding(.horizontal, 6)
-            .frame(height: FooterHit.height)
-            .contentShape(RoundedRectangle(cornerRadius: FooterHit.corner))
+            .foregroundStyle(Color(hex: "#0F0F11"))
+            .padding(.horizontal, 10)
+            .frame(maxWidth: .infinity, minHeight: 20, maxHeight: 20)
             .background(
-                RoundedRectangle(cornerRadius: FooterHit.corner)
-                    .fill(tint.opacity(loginHovered ? 0.24 : 0.14))
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(hex: "#00D4AA").opacity(loginHovered ? 0.88 : 1))
             )
         }
         .buttonStyle(.plain)
@@ -179,24 +331,26 @@ struct HUDUsageFooter: View {
         .help(store.usageLimitDetail)
     }
 
-    /// 额度周期指示：双段胶囊（日 | 月），高亮当前周期。纯视觉，点击由外层按钮接管
+    /// 额度周期指示：双段胶囊（日 | 月），高亮当前周期。纯视觉，点击由外层按钮接管。
+    /// 选中段是品牌绿实底，文字必须用深墨 #0F0F11：白字压在品牌绿上只有 ≈1.9:1，读不出来。
     private var usagePeriodIndicator: some View {
         HStack(spacing: 0) {
             ForEach(UsageAPI.Period.allCases, id: \.self) { period in
                 let isActive = store.usagePeriod == period
                 Text(period.shortLabel)
-                    .font(.system(size: 8, weight: .semibold, design: .rounded))
-                    // 选中段用纯白（绿底上对比度最高），未选中段弱化
-                    .foregroundStyle(isActive ? Color.white : Color.white.opacity(0.45))
-                    .frame(width: 13, height: 11)
+                    .font(.system(size: m.segFont, weight: .semibold, design: .rounded))
+                    .foregroundStyle(isActive
+                                     ? Color(hex: "#0F0F11")
+                                     : Color.white.opacity(0.55))
+                    .frame(width: m.segWidth, height: m.segHeight)
                     .background(
-                        RoundedRectangle(cornerRadius: 3.5)
-                            .fill(isActive ? Color(hex: "#00D4AA").opacity(0.85) : Color.clear)
+                        RoundedRectangle(cornerRadius: m.segCorner)
+                            .fill(isActive ? Color(hex: "#00D4AA") : Color.clear)
                     )
             }
         }
         .padding(1)
-        .background(RoundedRectangle(cornerRadius: 4.5).fill(Color.white.opacity(0.1)))
+        .background(RoundedRectangle(cornerRadius: m.segCorner + 1).fill(Color.white.opacity(0.10)))
     }
 }
 
@@ -210,13 +364,8 @@ private enum UpdateDot {
     static let nsColor = NSColor(color)
 }
 
-/// 「关于」弹窗的设计常量
-private enum AboutDesign {
-    static let width: CGFloat = 420
-    static let height: CGFloat = 556
-    static let brand = Color(hex: "#00D4AA")
-    static let cardFill = Color.white.opacity(0.045)
-    static let cardStroke = Color.white.opacity(0.07)
+/// 对外链接的唯一来源（菜单的更新回退与设置窗口的关于页共用）
+enum HUDLinks {
     static let website = "https://comate.wpsgo.com/s/HyDSehobOTHX/"
 }
 
@@ -225,7 +374,7 @@ private struct HUDPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12.5, weight: .semibold))
-            .foregroundStyle(Color(hex: "#06251F"))
+            .foregroundStyle(Color(hex: "#0F0F11"))
             .frame(width: 150, height: 34)
             .background(RoundedRectangle(cornerRadius: 10).fill(AboutDesign.brand))
             .shadow(color: AboutDesign.brand.opacity(configuration.isPressed ? 0.10 : 0.22),
