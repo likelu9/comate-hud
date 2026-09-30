@@ -3,14 +3,14 @@
 </style></head><body>
 <div class="wr">
 <header><h1><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.6a5.2 5.2 0 0 1 5.2 5.2v3l1.4 2.4H3.4L4.8 10.8v-3A5.2 5.2 0 0 1 10 2.6Z" stroke="#00D4AA" stroke-width="1.4" stroke-linejoin="round"/><path d="M8.2 15.9a1.9 1.9 0 0 0 3.6 0" stroke="#00D4AA" stroke-width="1.4" stroke-linecap="round"/><circle cx="15.6" cy="5" r="2.1" fill="#FF4D4F"/></svg>更新提示 · update</h1>
-<p class="lead">目前<strong>没有独立的更新提示窗</strong>（代码事实），只有三处入口各自就地表达状态。本稿<strong>新增一个独立小窗</strong>用于「有新版」时的完整信息呈现，并画清它与三个既有入口的关系。窗口 <mark>420 × 320 pt（内容区）</mark>、<mark>不可缩放</mark>、标题「Comate HUD 有可用更新」。<strong>下载入口为一排两个、官网优先</strong>：<mark>官网下载（主，品牌绿）</mark> + <mark>GitHub 下载（次选，描边）</mark>。数据源：GitHub Releases（<code>releases.atom</code>）+ <code>versions.json</code> 的 changelog（按 <code>type</code> 分 新增/优化/修复）。<strong>绿底主按钮配深墨 </strong><code>#0F0F11</code>；禁用绿底改 55% 白。</p>
+<p class="lead">本稿新增一个独立小窗（<strong>已落地于 <code>Sources/UpdateWindow.swift</code></strong>）用于「有新版」时的完整信息呈现，并画清它与三个既有入口的关系。窗口 <mark>420 × 320 pt（内容区）</mark>、<mark>不可缩放</mark>、标题「Comate HUD 有可用更新」。<strong>下载入口为一排两个、官网优先</strong>：<mark>官网下载（主，品牌绿）</mark> + <mark>GitHub 下载（次选，描边）</mark>。数据源：GitHub Releases（<code>releases.atom</code>，changelog 即取自其 Release 正文的 <code>&lt;ul&gt;&lt;li&gt;</code> 条目，按 新增/优化/修复 分组）。<strong>绿底主按钮配深墨 </strong><code>#0F0F11</code>；禁用绿底改 55% 白。</p>
 <div class="meta"><span class="pill on">第二批 · 更新面</span><span class="pill">窗口 420 × 320 pt · 不可缩放</span><span class="pill on">下载入口 ×2 · 官网优先</span><span class="pill">主按钮 34 / 次按钮 30 / 成对下载同高 34 / 圆角 14</span><span class="pill">主按钮底 #00D4AA · 字 #0F0F11</span><span class="pill">四态全画</span><span class="pill warn">与三入口关系对照</span><span class="pill">零外链 · 图标内联 SVG</span></div></header>
 
 <h2>0 · 形态与数据源（三条代码事实）</h2>
 <div class="note"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="6.3"/><path d="M8 7.2v4.2"/><circle cx="8" cy="4.9" r=".9" fill="currentColor" stroke="none"/></svg><div>
-<div class="tx"><b>① 现状：无独立更新窗。</b> <code>ComateNotch/Sources/UpdateChecker.swift</code> 只负责「取最新 tag 并比版本」，没有窗口；状态分散在 <b>菜单项三态</b>、<b>菜单栏图标右上角红点</b>、<b>设置窗口「关于」页三态</b> 三处。</div>
+<div class="tx"><b>① 现状：无独立更新窗。</b> <code>ComateNotch/Sources/UpdateChecker.swift</code> 只负责「取最新 tag 并比版本」，没有窗口；状态分散在 <b>菜单项三态</b>、<b>菜单栏图标右上角红点</b>、<b>设置窗口「通用」页三态</b> 三处。</div>
 <div class="tx"><b>② 为何也要独立窗口？</b> 与登录窗同因：HUD 面板是非激活 borderless <code>NSPanel</code>，<b>挂不了 sheet</b>。当前三入口都只能「就地变文案」，装不下 changelog 这种多行内容——故新增本小窗承载「有新版」的完整信息；其余状态仍可只在入口就地表达。</div>
-<div class="tx"><b>③ 数据源：</b> 版本来自 GitHub Releases 的 atom feed（<code>https://github.com/likelu9/comate-hud/releases.atom</code>，用 atom 而非 REST，避开共享出口 IP 的 60 次/时限额）；changelog 来自 <code>versions.json</code> 对应条目，<code>type</code> 三值映射：<code>new → 新增</code> · <code>opt → 优化</code> · <code>fix → 修复</code>。检测失败一律静默（增值信息不干扰主功能）。</div>
+<div class="tx"><b>③ 数据源：</b> 版本来自 GitHub Releases 的 atom feed（<code>https://github.com/likelu9/comate-hud/releases.atom</code>，用 atom 而非 REST，避开共享出口 IP 的 60 次/时限额）；changelog <b>同样取自这个 feed 的 Release 正文</b>——<code>release.sh</code> 发版时把 <code>versions.json</code> 的 changelog 逐条渲染成 <code>&lt;ul&gt;&lt;li&gt;🔧 修复 …&lt;/li&gt;&lt;/ul&gt;</code> 写进 Release 正文（<code>type</code> 三值映射：<code>new → 新增</code> · <code>opt → 优化</code> · <code>fix → 修复</code>），与官网同一来源。不在客户端拉 <code>versions.json</code>：官网那份在 <code>comate.wpsgo.com</code> 下、无会话返回 <b>403</b>。检测失败一律静默（增值信息不干扰主功能）。</div>
 </div></div>
 
 <h2>1 · 更新提示小窗 · 四态 1:1（420 × 320）</h2>
@@ -124,7 +124,7 @@
 </div>
 </div>
 <div>
-<div class="lab">入口 C · 设置窗口「关于」页 · 更新三态</div>
+<div class="lab">入口 C · 设置窗口「通用」页 · 更新三态</div>
 <div class="row-card">
 <div class="row"><svg class="ic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11.2 4.6A4.6 4.6 0 1 0 11.7 6.6"/><path d="M11.5 1.9v3.4H8.1"/></svg>检查更新<span class="t"><button class="btn gho mini" type="button">检查更新</button></span></div>
 <div class="row ok"><svg class="ic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5.7"/><path d="M4.8 7.2 6.5 8.9l3-3.8"/></svg>已是最新版本 v1.4.5</div>
@@ -157,7 +157,7 @@
 <tr><td class="k">A · 更新红点<br><span class="tag">菜单栏图标 / 页脚齿轮</span></td><td>单击</td><td>直接<b>打开本小窗（有新版态）</b>——红点本身就是「有新版本」的信号，无需再等一次网络检查。</td></tr>
 <tr><td class="k">B · 菜单项<br><span class="tag">「检查更新」/「检测到新版 vX」</span></td><td>单击</td><td>已有新版（标题为「检测到新版 vX」）→ <b>打开本小窗</b>；标题为「<b>检查更新</b>」→ <b>就地</b>置「检查中」（红点/按钮禁用）→ 结果：有新版则<b>打开本小窗</b>并变「检测到新版 vX」，否则就地变「<b>已是最新版本 vX</b>」，失败则保持「检查更新」静默。</td></tr>
 <tr><td class="k">C · 设置「关于」/「通用」页<br><span class="tag">「检查更新」行</span></td><td>单击</td><td><b>就地三态</b>：检查中 → 已是最新 / 检测到新版（整行可点）；点「检测到新版」这一行 → <b>打开本小窗</b>。<b>不在设置窗口内挂 sheet</b>（同因：面板/窗口架构）。</td></tr>
-<tr><td class="k">D · 小窗内的动作</td><td><b>官网下载</b><br><span class="tag">主按钮 · 优先引导</span></td><td>跳<b>官网下载页</b>（与首页下载按钮同一地址，<code>versions.json</code> 当前版本对应的 DMG）：普通用户无需看懂 Releases，是最短路径。</td></tr>
+<tr><td class="k">D · 小窗内的动作</td><td><b>官网下载</b><br><span class="tag">主按钮 · 优先引导</span></td><td>跳<b>官网下载页</b>（与首页下载按钮同一地址，当前版本对应的 DMG）：普通用户无需看懂 Releases，是最短路径。<b>不 ack</b> —— 只有「跳过此版本」才把该版本记为已读。</td></tr>
 <tr><td class="k"></td><td><b>GitHub 下载</b><br><span class="tag">描边次按钮</span></td><td>跳 <b>GitHub Release 发布页</b>（<code>Release.url</code>，即 <code>releases.atom</code> 里该条 entry 的链接，也是更新红点的版本来源）：兼顾开发者与内网用户习惯。两者同级同高（34）、官网占主位。</td></tr>
 <tr><td class="k"></td><td>稍后</td><td>关窗，保留红点与「检测到新版 vX」——下次仍提示。</td></tr>
 <tr><td class="k"></td><td>跳过此版本</td><td><b>记下该版本为已读（ack）</b> → 红点灭、菜单项回「已是最新版本 vX」；只对该版本生效，更高版本会重新提示（<code>shouldShowDot</code> 的 <code>acknowledged</code> 语义）。</td></tr>

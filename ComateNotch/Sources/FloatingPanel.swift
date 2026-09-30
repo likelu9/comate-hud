@@ -149,7 +149,14 @@ final class FloatingContentView: NSView {
                     store: store,
                     actions: SettingsActions(
                         switchMode: { [weak self] mode in self?.panel?.onSwitchMode?(mode) },
-                        selectScreen: { [weak self] id in self?.panel?.onSelectScreen?(id) }))
+                        selectScreen: { [weak self] id in self?.panel?.onSelectScreen?(id) },
+                        openUpdate: {
+                            UpdateWindowController.shared.present(store: store, actions: .standard(store: store))
+                        }))
+            },
+            onShowUpdate: { [weak self] in
+                guard let store = self?.panel?.store else { return }
+                UpdateWindowController.shared.present(store: store, actions: .standard(store: store))
             },
             onLogin: { [weak self] in
                 guard let store = self?.panel?.store else { return }

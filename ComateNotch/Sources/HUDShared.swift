@@ -373,6 +373,23 @@ enum HUDLinks {
     static let website = "https://comate.wpsgo.com/s/HyDSehobOTHX/"
 }
 
+/// 跨面共用的设计 token（DESIGN.md §2）。值只在这里写一次：
+/// 设置窗口与更新窗都从这里取，免得两个文件各写一遍 `#00D4AA` 之后改一处漏一处。
+/// 布局类常量（窗口尺寸 / 内边距）仍各自归各自的 Design。
+enum HUDDesign {
+    static let accent = Color(hex: "#00D4AA")
+    static let accentHover = Color(hex: "#22E0BB")
+    static let accentPressed = Color(hex: "#00A98A")
+    static let accentDisabled = Color(hex: "#00D4AA").opacity(0.40)
+    /// 绿底上的文字一律深墨（白字压绿的对比度只有 ≈1.9:1）
+    static let ink = Color(hex: "#0F0F11")
+    /// 面板底色（settings.html / update.html 的 `surface.panel`）
+    static let panel = Color(hex: "#0F0F11")
+    /// 状态语义色：已完成 / 失败
+    static let done = Color(hex: "#31D158")
+    static let waiting = Color(hex: "#FF6259")
+}
+
 // MARK: - 右键 / 设置按钮菜单（刘海 HUD 与任意悬浮共用同一份定义）
 
 /// 两种显示模式的右键菜单与设置按钮共用这一个构建器：菜单项、顺序、勾选态只有一份定义，
@@ -387,6 +404,8 @@ final class HUDContextMenu: NSObject {
     private let onShowMainWindow: () -> Void
     /// 设置窗口：两个入口（「设置…」「关于 Comate HUD」）共用，只是落点页不同
     private let onShowSettings: (SettingsPage) -> Void
+    /// 更新提示独立小窗（菜单里点「检测到新版」时开）
+    private let onShowUpdate: () -> Void
     private let onLogin: () -> Void
     private let onSignOut: () -> Void
     /// 可选的刘海屏幕（每次构建菜单时现取，屏幕热插拔后菜单自然是最新的）
@@ -398,6 +417,7 @@ final class HUDContextMenu: NSObject {
          onSwitchMode: @escaping (ComateStore.DisplayMode) -> Void,
          onShowMainWindow: @escaping () -> Void,
          onShowSettings: @escaping (SettingsPage) -> Void,
+         onShowUpdate: @escaping () -> Void,
          onLogin: @escaping () -> Void,
          onSignOut: @escaping () -> Void,
          screenOptions: @escaping () -> [NotchScreenTarget.Option],
@@ -406,6 +426,7 @@ final class HUDContextMenu: NSObject {
         self.onSwitchMode = onSwitchMode
         self.onShowMainWindow = onShowMainWindow
         self.onShowSettings = onShowSettings
+        self.onShowUpdate = onShowUpdate
         self.onLogin = onLogin
         self.onSignOut = onSignOut
         self.screenOptions = screenOptions
@@ -473,6 +494,8 @@ final class HUDContextMenu: NSObject {
         let updateTitle: String
         if let v = store.availableUpdate {
             updateTitle = "检测到新版 \(v)"
+        } else if store.isCheckingUpdate {
+            updateTitle = "正在检查更新…"
         } else if store.updateChecked {
             updateTitle = "已是最新版本 v\(UpdateChecker.localVersion)"
         } else {
@@ -608,16 +631,13 @@ final class HUDContextMenu: NSObject {
     /// （GitHub Release 公开可访问；拿不到链接时退回官网）；
     /// 否则立即重新检查一次（不受 6 小时节流限制）
     @objc private func menuCheckUpdate() {
+        // 有新版 → 开更新提示小窗（四态、下载/稍后/跳过都在那儿）；
+        // 没有新版 → 就地检查，标题跟着 store 变，不弹窗打扰
         guard store.hasUpdate else {
             store.checkForUpdate(force: true)
             return
         }
-        store.acknowledgeUpdate()
-        if let url = store.availableUpdateURL {
-            NSWorkspace.shared.open(url)
-        } else if let site = URL(string: HUDLinks.website) {
-            NSWorkspace.shared.open(site)
-        }
+        onShowUpdate()
     }
 
     /// 开机自启动开关。写盘前先确认路径稳定，否则重启后不会生效

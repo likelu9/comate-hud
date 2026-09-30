@@ -62,6 +62,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         LaunchAtLogin.applyDefaultOnFirstLaunch()
         // 应用上次保存的显示模式（否则启动后总是显示刘海面板）
         switchDisplayMode(store.displayMode)
+
+        // 本地预览：COMATE_HUD_PREVIEW_UPDATE_STATE 命中时直接把更新窗打开（见 ComateStore）
+        if store.previewWindowStateRequested { presentUpdateWindow() }
     }
 
     // MARK: - 刘海面板几何
@@ -122,6 +125,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 NSApp.activate(ignoringOtherApps: true)
             },
             onShowSettings: { [weak self] page in self?.presentSettings(page) },
+            onShowUpdate: { [weak self] in
+                guard let store = self?.store else { return }
+                UpdateWindowController.shared.present(store: store, actions: .standard(store: store))
+            },
             onLogin: { [weak self] in self?.presentLogin() },
             onSignOut: { AuthSession.shared.signOut() },
             screenOptions: { NotchPanel.screenOptions() },
@@ -184,7 +191,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             store: store,
             actions: SettingsActions(
                 switchMode: { [weak self] mode in self?.switchDisplayMode(mode) },
-                selectScreen: { [weak self] id in self?.selectNotchScreen(id) }))
+                selectScreen: { [weak self] id in self?.selectNotchScreen(id) },
+                openUpdate: { [weak self] in self?.presentUpdateWindow() }))
+    }
+
+    /// 更新提示独立小窗：与更新检查、红点共用同一个 store
+    private func presentUpdateWindow() {
+        UpdateWindowController.shared.present(store: store, actions: .standard(store: store))
     }
 
     /// 切换显示模式。幂等：重复切到同一模式不会重建窗口（启动时也会调用一次）

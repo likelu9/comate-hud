@@ -464,9 +464,17 @@ surfaces:
 
 ### 7.6 更新提示（本期新增面）— `references/update.html`
 
-现状（代码事实）：**没有独立更新窗**，只有三处入口——菜单项三态（「检测到新版 vX」/「已是最新版本 vX」/「检查更新」）、菜单栏图标右上角红点、设置窗口「通用」页的更新三态。数据来自 `versions.json` 与 GitHub Releases atom feed。
+现状（代码事实）：菜单项三态（「检测到新版 vX」/「已是最新版本 vX」/「检查更新」，检查中为「正在检查更新…」）、菜单栏图标右上角红点、设置窗口「通用」页的更新五态（尚未检查 / 检查中 / 已是最新 · 多久前 / 检测到新版 / 检查失败），以及**独立的更新提示小窗**（见下）。数据来自 GitHub Releases atom feed（changelog 亦从此处解析）。
 
-> **实现状态（2026-09-30）**：本面**尚未开工**，本轮只把「前往下载」落成设计稿要求的成对按钮（官网下载 / GitHub 下载）到设置窗口「通用」页的「更新」组（见 §7.3）。独立小窗需先拍板是否引入 `versions.json` 拉取与缓存（changelog 分组取自此文件）。
+> **实现状态（2026-09-30，已落地）**：本面已建成 —— `Sources/UpdateWindow.swift`（`UpdatePromptState` + `UpdateActions` + `UpdateWindowController` + 四态视图），420×320 不可缩放、标题随形态变；入口按稿中关系表接线：**菜单项**（有新版→开窗，否则就地检查，标题随 store 变「正在检查更新…」）、**设置通用页**（就地五态 idle/checking/latest/available/failed，「检测到新版 vX」**整行可点**开窗，右侧只剩 `chevron.right`）。
+>
+> **changelog 来源改了**：不拉 `versions.json` —— 官网那份在 `comate.wpsgo.com` 下、无会话会 **403**，客户端读不到。改用**已有的** `releases.atom`：`release.sh` 就是拿 `versions.json` 的 changelog 逐条渲染成 `<ul><li>🔧 修复 …</li></ul>` 写进 Release 正文的，所以 feed 里那几行与官网同源、同一套 type 映射 → `UpdateChecker.parseNotes` 就地解析，**不新增端点、不加缓存、不引入 403 / 陈旧风险**。旧 Release（v1.4.3 之前没有 li）落回「本次更新的详细说明请见发布页」。
+>
+> **ack 口径**：只有「跳过此版本（不再提示）」会 `acknowledgeUpdate()`；两个下载入口与「稍后」都不 ack —— 下载只是把用户送到发布页，那时他还没做任何「我处理完了」的声明。
+>
+> **与稿的两处偏差**：① 稿中入口 A（点齿轮右上角 5pt 红点开窗）未实现 —— 代码里红点是齿轮上的**绘制**叠层，没有 NSStatusItem 可挂热区，入口只留菜单项 B；② GitHub 按钮图标用 SF Symbols `arrow.up.right.square`（SF Symbols 无 GitHub 标志）。
+>
+> **验证**：`./test.sh` 235 项断言（含四态解析 9 项 + 相对时间 8 项）、`./build.sh` exit 0（universal + DMG）。**未做真机视觉验证**（本机无头 chromium 截屏不可用）。
 
 本稿新增一个**独立小窗**（同样因为面板挂不上 sheet）：
 

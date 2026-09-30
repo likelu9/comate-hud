@@ -35,9 +35,11 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 struct SettingsActions {
     var switchMode: (ComateStore.DisplayMode) -> Void
     var selectScreen: (UInt32?) -> Void
+    /// 打开更新提示小窗（通用页「检测到新版 vX」整行可点）
+    var openUpdate: () -> Void
 
     /// 兜底：只写 store、不动窗口。用于没有面板上下文时（理论上不会走到）
-    static let inert = SettingsActions(switchMode: { _ in }, selectScreen: { _ in })
+    static let inert = SettingsActions(switchMode: { _ in }, selectScreen: { _ in }, openUpdate: {})
 }
 
 /// 设置窗口的尺寸与取色（与设计稿 §7.2 同一套值）
@@ -56,10 +58,10 @@ private enum SettingsDesign {
     /// 左导航底：比内容区略亮一档，靠 1px 分隔线收边
     static let raised = Color.white.opacity(0.05)
     static let hit = Color.white.opacity(0.10)
-    static let brand = Color(hex: "#00D4AA")
+    static let brand = HUDDesign.accent
     /// 绿底上的文字一律深墨（白字压绿的对比度只有 ≈1.9:1）
-    static let brandInk = Color(hex: "#0F0F11")
-    static let warning = Color(hex: "#FF6259")
+    static let brandInk = HUDDesign.ink
+    static let warning = HUDDesign.waiting
 }
 
 /// 当前选中的分类。窗口复用时靠它从菜单跳到指定页。
@@ -168,7 +170,7 @@ private struct SettingsRootView: View {
         case .display:
             DisplaySettingsPage(store: store, actions: actions)
         case .general:
-            GeneralSettingsPage(store: store)
+            GeneralSettingsPage(store: store, actions: actions)
         case .about:
             AboutSettingsPage()
         }
@@ -333,6 +335,7 @@ private struct SettingsWarning: View {
 /// 避免同一动作在同一个窗口里出现两个入口（设计稿 §7.2 / settings.html）
 private struct SettingsUpdateRow: View {
     @ObservedObject var store: ComateStore
+    var actions: SettingsActions = .inert
 
     var body: some View {
         VStack(spacing: 0) {
@@ -342,14 +345,24 @@ private struct SettingsUpdateRow: View {
                 downloadActions
             }
         }
+        .contentShape(Rectangle())
+        // 有新版时整行可点 → 开更新提示小窗（设计稿 C：就地只显示「检测到新版 vX」，
+        // 详细说明 + 下载 / 稍后 / 跳过都在小窗里）；其余态不接手势，交给右侧按钮
+        .onTapGesture { if state == .available { actions.openUpdate() } }
     }
 
     @ViewBuilder
     private var stateAction: some View {
         switch state {
         case .available:
-            // 有新版时下载入口下沉到下一行的成对按钮，这里不再放动作：同一动作不留两个入口
-            EmptyView()
+            // 下载入口下沉到下一行的成对按钮；整行已可点开小窗，这里只放指向性图标
+            Image(systemName: "chevron.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.32))
+        case .checking:
+            SettingsActionButton(title: "检查中…", enabled: false, action: {})
+        case .failed:
+            SettingsActionButton(title: "重试", action: { store.checkForUpdate(force: true) })
         case .latest:
             SettingsActionButton(title: "重新检查", action: { store.checkForUpdate(force: true) })
         case .idle:
@@ -374,10 +387,13 @@ private struct SettingsUpdateRow: View {
         .padding(.vertical, 10)
     }
 
-    private enum State { case idle, latest, available }
+    /// 就地五态：与 DESIGN.md §7.6 的触发关系一致（检查中 → 已是最新 / 有新版 / 失败）
+    private enum State { case idle, checking, latest, available, failed }
 
     private var state: State {
         if store.hasUpdate { return .available }
+        if store.isCheckingUpdate { return .checking }
+        if store.updateCheckFailed { return .failed }
         return store.updateChecked ? .latest : .idle
     }
 
@@ -385,23 +401,29 @@ private struct SettingsUpdateRow: View {
         switch state {
         case .available:
             let v = store.availableUpdate ?? ""
-            return store.showsUpdateDot ? "检测到新版 \(v)" : "检测到新版 \(v)（已标记为已读）"
+            return store.showsUpdateDot ? "检测到新版 \(v) · 点击查看详情"
+                                       : "检测到新版 \(v)（已标记为已读）"
+        case .checking:
+            return "正在检查更新…"
         case .latest:
-            return "已是最新版本 v\(UpdateChecker.localVersion)"
+            let version = "已是最新版本 v\(UpdateChecker.localVersion)"
+            let ago = UpdateChecker.relativeDescription(since: store.lastUpdateCheckAt)
+            return ago.isEmpty ? version : "\(version) · \(ago)"
+        case .failed:
+            return "检查更新失败，可能是网络不通"
         case .idle:
             return "尚未检查过"
         }
     }
 
     /// 官网下载页：普通用户的最短路径（主按钮，官网优先引导）
+    /// 不 ack：只有「跳过此版本」才把该版本记为已读（见 UpdateActions.standard）
     private func openOfficialSite() {
-        store.acknowledgeUpdate()
         if let site = URL(string: HUDLinks.website) { NSWorkspace.shared.open(site) }
     }
 
     /// GitHub 发布页（也是更新红点版本号的来源）；拿不到具体链接时退回官网
     private func openRelease() {
-        store.acknowledgeUpdate()
         if let url = store.availableUpdateURL {
             NSWorkspace.shared.open(url)
         } else if let site = URL(string: HUDLinks.website) {
@@ -645,6 +667,7 @@ private struct DisplaySettingsPage: View {
 
 private struct GeneralSettingsPage: View {
     @ObservedObject var store: ComateStore
+    var actions: SettingsActions = .inert
 
     var body: some View {
         SettingsPageBody {
@@ -657,7 +680,7 @@ private struct GeneralSettingsPage: View {
                 }
             }
             SettingsSection(title: "更新") {
-                SettingsUpdateRow(store: store)
+                SettingsUpdateRow(store: store, actions: actions)
             }
         }
     }

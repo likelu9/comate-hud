@@ -17,8 +17,21 @@ final class ComateStore: ObservableObject {
     /// 本次会话是否成功查到过 feed：菜单据此区分「检查更新」与「已是最新版本」。
     /// 只在解析出 release 时置位 —— 失败（断网 / 限流）不置位，否则会把失败谎报成「已是最新版本」
     @Published private(set) var updateChecked: Bool = false
+    /// 正在检查中（供菜单「检查中…」与更新窗的检查中态）
+    @Published private(set) var isCheckingUpdate: Bool = false
+    /// 上一次检查失败。只在**用户主动**开的更新窗里展示；菜单保持静默（设计稿 §7.6）
+    @Published private(set) var updateCheckFailed: Bool = false
+    /// 可用新版本的更新说明（从 Release 正文解析，见 `UpdateNotes`）
+    @Published private(set) var availableUpdateNotes = UpdateNotes()
     /// 新版本发布页（GitHub Release，公开可访问）；没有时菜单退回官网
     private(set) var availableUpdateURL: URL?
+    /// 预览开关 `COMATE_HUD_PREVIEW_UPDATE_STATE` 是否命中（只读，AppDelegate 据此直接把更新窗打开）
+    private(set) var previewWindowStateRequested = false
+    /// 上次检查更新的时间（与 6 小时节流同一个戳）。设置行用它显示「已是最新版本 v1.4.5 · 2 分钟前」。
+    /// 现读 UserDefaults，不另存 @Published：检查结束会改 updateChecked，视图自然重算
+    var lastUpdateCheckAt: Date? {
+        UserDefaults.standard.object(forKey: ComateStore.lastUpdateCheckKey) as? Date
+    }
 
     /// 用户点开过的版本号（nil = 从未点开）。该版本不再亮红点，直到出现更新的版本
     @Published private(set) var acknowledgedUpdate: String? = ComateStore.loadAcknowledgedUpdate()
@@ -457,7 +470,11 @@ final class ComateStore: ObservableObject {
         refreshUsage(trigger: .launch)
         scheduleUsageTimer()
         // 启动即查一次（受 6 小时节流，重启后不会重复请求）
-        checkForUpdate()
+        // 预览开关命中时直接跳过真检查：否则一两秒后真实结果就会盖掉刚要看的形态
+        if !applyPreviewWindowStateIfRequested() {
+            applyPreviewUpdateIfRequested()
+            checkForUpdate()
+        }
     }
 
     func stop() {
@@ -513,15 +530,68 @@ final class ComateStore: ObservableObject {
             return
         }
         UserDefaults.standard.set(now, forKey: ComateStore.lastUpdateCheckKey)
+        isCheckingUpdate = true
         UpdateChecker.shared.fetchLatest { [weak self] release in
             guard let self = self else { return }
-            // 拿不到 feed 就什么都不改：菜单保持「检查更新」，下次可再查
-            guard let release else { return }
+            self.isCheckingUpdate = false
+            // 拿不到 feed：菜单保持「检查更新」（updateChecked 不置位），下次可再查；
+            // 已打开的更新窗则显示失败态
+            guard let release else {
+                self.updateCheckFailed = true
+                return
+            }
+            self.updateCheckFailed = false
             self.updateChecked = true
+            // 说明先记下：正常路径它就是新版本的说明；本地预览时 availableUpdate 是假版本，
+            // 说明仍取真实那条 Release 的正文（preview 版本本身没有发布记录）
+            self.availableUpdateNotes = release.notes
             guard HUDVersion.isNewer(release.version, than: UpdateChecker.localVersion) else { return }
             self.availableUpdate = release.version
             self.availableUpdateURL = release.url
         }
+    }
+
+    /// 本地预览用：`COMATE_HUD_PREVIEW_UPDATE_STATE=checking|latest|failed` 把更新窗定格在该形态。
+    ///
+    /// 必要性：按入口规则小窗只在「有新版」时打开（菜单项 / 设置行整行可点），
+    /// 另三态在真机上无从触发，而版式验收必须四态都能看到。
+    /// 与 `COMATE_HUD_PREVIEW_UPDATE` 同源：只读环境变量、不写用户数据，不设就完全不生效。
+    ///
+    /// 返回是否命中；窗口由 AppDelegate 开（store 不碰窗口）。
+    @discardableResult
+    func applyPreviewWindowStateIfRequested() -> Bool {
+        guard let raw = ProcessInfo.processInfo.environment["COMATE_HUD_PREVIEW_UPDATE_STATE"] else { return false }
+        switch raw.trimmingCharacters(in: .whitespaces).lowercased() {
+        case "checking":
+            availableUpdate = nil
+            isCheckingUpdate = true
+        case "latest":
+            availableUpdate = nil
+            isCheckingUpdate = false
+            updateCheckFailed = false
+            updateChecked = true
+        case "failed":
+            availableUpdate = nil
+            updateCheckFailed = true
+        default:
+            return false
+        }
+        previewWindowStateRequested = true
+        return true
+    }
+
+    /// 本地预览用：`COMATE_HUD_PREVIEW_UPDATE=1.4.6` 让 HUD 假装检测到该版本。
+    ///
+    /// 必要性：本地版本（= 当前最新发布版）永远不比远端旧，更新窗的「有新版」默认态
+    /// 在真机上根本无从触发；而那是唯一需要肉眼验收版式的态。
+    /// 只读一次环境变量，不写任何用户数据，正常启动（不设这个变量）完全不生效。
+    private func applyPreviewUpdateIfRequested() {
+        let env = ProcessInfo.processInfo.environment
+        guard let raw = env["COMATE_HUD_PREVIEW_UPDATE"] else { return }
+        let version = raw.trimmingCharacters(in: .whitespaces)
+        guard !version.isEmpty, HUDVersion.isNewer(version, than: UpdateChecker.localVersion) else { return }
+        availableUpdate = version
+        availableUpdateURL = URL(string: "https://github.com/likelu9/comate-hud/releases")
     }
 
     /// 用户点开「检测到新版」菜单项 → 记下该版本，红点消失；

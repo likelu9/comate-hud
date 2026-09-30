@@ -488,6 +488,92 @@ eq(FloatingMetrics.chipCorner, 10, "chip 圆角 10")
 check(FloatingMetrics.chipSize < FloatingMetrics.iconBox,
       "chip 不得改变 44pt 命中盒")
 
+// MARK: - 更新说明（Release 正文 → 新增 / 优化 / 修复）
+
+section("更新说明解析（Release 正文 → 三组）")
+
+// 夹具模仿 GitHub releases.atom：正文是「XML 里再套一层 HTML 实体」
+let notesEntry = #"""
+<entry><title>Comate HUD v1.4.6</title>
+<link href="https://github.com/likelu9/comate-hud/releases/tag/v1.4.6"/>
+<content type="html">&lt;ul&gt;
+&lt;li&gt;✨ 新增 新增「面板置顶屏幕」选项&lt;/li&gt;
+&lt;li&gt;✨ 新增 新增未读角标一键清除&lt;/li&gt;
+&lt;li&gt;⚡ 优化 优化任务列表滚动流畅度&lt;/li&gt;
+&lt;li&gt;🔧 修复 修复深色下分隔线偏亮&lt;/li&gt;
+&lt;li&gt;🔧 修复 修复 A &amp;amp; B 同时出现时的闪烁&lt;/li&gt;
+&lt;li&gt;🏗 架构 内部重构（不在三组内，应跳过）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;系统要求&lt;/strong&gt;：macOS 12.0+ · Apple Silicon &amp;amp; Intel&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;首次打开&lt;/strong&gt;：未签名，需手动放行&lt;/p&gt;
+</content></entry>
+"""#
+
+let notes = UpdateChecker.parseNotes(fromEntry: notesEntry)
+eq(notes.added, ["新增「面板置顶屏幕」选项", "新增未读角标一键清除"], "✨ 新增 → 「新增」组") 
+eq(notes.improved, ["优化任务列表滚动流畅度"], "⚡ 优化 → 「优化」组")
+eq(notes.fixed, ["修复深色下分隔线偏亮", "修复 A & B 同时出现时的闪烁"], "🔧 修复 → 「修复」组，且两层实体都解开")
+check(!notes.isEmpty, "三组都有内容")
+eq(notes.groups.map(\.title), ["新增", "优化", "修复"], "组序固定为 新增 → 优化 → 修复")
+eq(notes.groups.map(\.items.count), [2, 1, 2], "每组条目数")
+
+// 说明区只展示三组；正文里其余段落（系统要求 / 首次打开）不能被抓进来
+check(notes.added.allSatisfy { !$0.contains("系统要求") && !$0.contains("macOS") },
+      "正文本体（系统要求 / 首次打开）不混入说明条目")
+check(!notes.fixed.contains { $0.contains("架构") }, "「架构」不在设计稿三组内 → 跳过")
+
+// 标签只在行首生效：正文中间出现「修复」二字不能被误判
+let midLine = UpdateChecker.classifyNoteLine("新增 修复了上次遗留的问题")
+eq(midLine?.group, UpdateNoteGroup.added, "行首是「新增」时，正文里的「修复」不抢组")
+check(UpdateChecker.classifyNoteLine("这条没有标签前缀") == nil, "无标签前缀 → 不归组")
+check(UpdateChecker.classifyNoteLine("🔧 修复") == nil, "只有标签没有文案 → 不产出空条目")
+
+// 空组不占位：老 Release（v1.4.3 那种正文里没有 li）→ notes 为空，窗口走兜底文案
+let legacyEntry = #"<entry><content type="html">&lt;p&gt;本次无对外可见变化&lt;/p&gt;</content></entry>"#
+check(UpdateChecker.parseNotes(fromEntry: legacyEntry).isEmpty,
+      "无 li 的旧 Release → 空说明（窗口需有兜底，不能留白 100pt）")
+check(UpdateChecker.parseNotes(fromEntry: "<entry></entry>").isEmpty, "无 content → 空说明，不崩")
+
+// 顺带锁住 feed 主解析：版本号与说明一次性拿回来
+eq(UpdateChecker.parseLatest(feed: notesEntry)?.version, "1.4.6", "从 entry 取到版本号")
+eq(UpdateChecker.parseLatest(feed: notesEntry)?.notes.added.count, 2, "parseLatest 同时带回说明")
+
+// MARK: - 更新窗形态
+
+section("更新窗四态解析")
+
+// 顺序即语义：已知的新版本不被一次重新检查的中间态盖掉
+eq(UpdatePromptState.resolve(hasUpdate: true, isChecking: true, failed: true, checked: true), .available,
+   "有新版优先级最高")
+eq(UpdatePromptState.resolve(hasUpdate: false, isChecking: true, failed: true, checked: true), .checking,
+   "检查中优先于失败")
+eq(UpdatePromptState.resolve(hasUpdate: false, isChecking: false, failed: true, checked: true), .failed,
+   "查过且失败 → 失败态")
+eq(UpdatePromptState.resolve(hasUpdate: false, isChecking: false, failed: false, checked: true), .latest,
+   "查过且无更新 → 已是最新")
+eq(UpdatePromptState.resolve(hasUpdate: false, isChecking: false, failed: false, checked: false), .checking,
+   "从没查成功过 → 检查中，不能谎报「已是最新」")
+
+// 标题文案是设计稿三态三标题，钉住免得后续改文案漏一处
+eq(UpdatePromptState.available.windowTitle, "Comate HUD 有可用更新", "有新版标题")
+eq(UpdatePromptState.checking.windowTitle, "Comate HUD 有可用更新", "检查中沿用「有可用更新」标题（同一段动作）")
+eq(UpdatePromptState.latest.windowTitle, "Comate HUD 已是最新", "已是最新标题")
+eq(UpdatePromptState.failed.windowTitle, "Comate HUD · 检查更新失败", "失败标题")
+
+// MARK: - 「已是最新 · 多久前」
+
+section("更新检查相对时间")
+
+let checkBase = Date(timeIntervalSince1970: 1_700_000_000)
+eq(UpdateChecker.relativeDescription(since: nil, now: checkBase), "", "没查过不编时间")
+eq(UpdateChecker.relativeDescription(since: checkBase, now: checkBase.addingTimeInterval(30)), "刚刚", "一分钟内")
+eq(UpdateChecker.relativeDescription(since: checkBase, now: checkBase.addingTimeInterval(120)), "2 分钟前", "分钟级")
+eq(UpdateChecker.relativeDescription(since: checkBase, now: checkBase.addingTimeInterval(7200)), "2 小时前", "小时级")
+eq(UpdateChecker.relativeDescription(since: checkBase, now: checkBase.addingTimeInterval(3 * 86400)), "3 天前", "天级")
+eq(UpdateChecker.relativeDescription(since: checkBase, now: checkBase.addingTimeInterval(59)), "刚刚", "59 秒仍在刚刚")
+eq(UpdateChecker.relativeDescription(since: checkBase, now: checkBase.addingTimeInterval(3600)), "1 小时前", "整一小时")
+eq(UpdateChecker.relativeDescription(since: checkBase, now: checkBase.addingTimeInterval(-100)), "", "时间戳在未来（改过系统时间）不显示负数")
+
 // MARK: - 汇总
 
 print("\n———————————————")
