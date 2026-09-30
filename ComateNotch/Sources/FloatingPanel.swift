@@ -71,8 +71,8 @@ final class FloatingInteraction: ObservableObject {
     /// 拖拽底部手柄调整高度：开始 / 结束
     var onResizeBegin: (() -> Void)?
     var onResizeEnd: (() -> Void)?
-    /// 点击面板右下角设置按钮：弹出与右键一致的菜单
-    var onShowMenu: (() -> Void)?
+    /// 点击面板底部齿轮：直接打开设置窗口（页面由 AppDelegate 决定）
+    var onOpenSettings: (() -> Void)?
 }
 
 /// 自定义内容视图：负责 hover 展开/收起、拖拽移动，并把透明区域的事件透传给下层窗口。
@@ -106,67 +106,6 @@ final class FloatingContentView: NSView {
             return super.hitTest(point)
         }
         return nil
-    }
-
-    // MARK: - 右键菜单
-    // 非激活 borderless 面板里 SwiftUI 的 contextMenu 不可靠，故用 AppKit 原生 NSMenu。
-    // menu(for:) 覆盖整个窗口（AppKit 会沿 superview 向上找菜单）；
-    // rightMouseDown 兼顾 hitTest 直接命中本视图（图标区）的情况。
-    // 菜单定义来自 HUDContextMenu —— 与刘海模式共用同一份，保证两模式功能完全对齐。
-
-    override func menu(for event: NSEvent) -> NSMenu? {
-        menuBuilder()?.build()
-    }
-
-    override func rightMouseDown(with event: NSEvent) {
-        guard let menu = menuBuilder()?.build() else { return }
-        NSMenu.popUpContextMenu(menu, with: event, for: self)
-    }
-
-    /// 面板右下角设置按钮：等同右键，弹出与右键完全一致的菜单
-    func showContextMenu() {
-        guard let menu = menuBuilder()?.build() else { return }
-        popUpHUDMenu(menu)
-    }
-
-    /// 菜单构建器缓存：NSMenuItem.target 是 weak，构建器被释放后菜单项就点不动了
-    private var cachedMenuBuilder: HUDContextMenu?
-
-    private func menuBuilder() -> HUDContextMenu? {
-        if let cachedMenuBuilder = cachedMenuBuilder { return cachedMenuBuilder }
-        guard let store = panel?.store else { return nil }
-        let builder = HUDContextMenu(
-            store: store,
-            onSwitchMode: { [weak self] mode in self?.panel?.onSwitchMode?(mode) },
-            onShowMainWindow: { [weak self] in
-                self?.panel?.store.openComateApp()
-                NSApp.activate(ignoringOtherApps: true)
-            },
-            onShowSettings: { [weak self] page in
-                guard let store = self?.panel?.store else { return }
-                SettingsWindowController.shared.present(
-                    page: page,
-                    store: store,
-                    actions: SettingsActions(
-                        switchMode: { [weak self] mode in self?.panel?.onSwitchMode?(mode) },
-                        selectScreen: { [weak self] id in self?.panel?.onSelectScreen?(id) },
-                        openUpdate: {
-                            UpdateWindowController.shared.present(store: store, actions: .standard(store: store))
-                        }))
-            },
-            onShowUpdate: { [weak self] in
-                guard let store = self?.panel?.store else { return }
-                UpdateWindowController.shared.present(store: store, actions: .standard(store: store))
-            },
-            onLogin: { [weak self] in
-                guard let store = self?.panel?.store else { return }
-                LoginWindowController.shared.present(refreshing: store)
-            },
-            onSignOut: { AuthSession.shared.signOut() },
-            screenOptions: { NotchPanel.screenOptions() },
-            onSelectScreen: { [weak self] id in self?.panel?.onSelectScreen?(id) })
-        cachedMenuBuilder = builder
-        return builder
     }
 
     // MARK: - Hover（基于全局鼠标位置，不依赖 tracking area）
@@ -233,9 +172,8 @@ final class FloatingPanel: NSPanel {
     let store: ComateStore
     /// 切换显示模式（由 AppDelegate 注入）
     var onSwitchMode: ((ComateStore.DisplayMode) -> Void)?
-    /// 菜单里指定刘海屏幕（由 AppDelegate 注入）：换屏逻辑归它管，
-    /// 悬浮模式切回刘海模式时用同一个入口，否则菜单里的选项会点不动
-    var onSelectScreen: ((UInt32?) -> Void)?
+    /// 齿轮：直接打开设置窗口（由 AppDelegate 注入，与刘海模式同一个入口）
+    var onOpenSettings: (() -> Void)?
     /// 展开态宽度：与刘海模式保持一致
     let expandedWidth: CGFloat
 
@@ -262,11 +200,9 @@ final class FloatingPanel: NSPanel {
     private var collapseWorkItem: DispatchWorkItem?
 
     init(store: ComateStore,
-         expandedWidth: CGFloat,
-         onSwitchMode: ((ComateStore.DisplayMode) -> Void)? = nil) {
+         expandedWidth: CGFloat) {
         self.store = store
         self.expandedWidth = expandedWidth
-        self.onSwitchMode = onSwitchMode
 
         // 图标中心：优先还原持久化位置，否则默认屏幕中央
         let screen = NSScreen.main ?? NSScreen.screens.first ?? NSScreen.screens[0]
@@ -309,7 +245,7 @@ final class FloatingPanel: NSPanel {
                                           interaction: interaction)
         content.panel = self
         let host = NSHostingView(rootView: AnyView(
-            FloatingPanelContent(store: store, interaction: interaction)))
+            FloatingPanelContent(store: store, interaction: interaction, panelWidth: expandedWidth)))
         host.frame = content.bounds
         host.autoresizingMask = [.width, .height]
         content.addSubview(host)
@@ -334,7 +270,7 @@ final class FloatingPanel: NSPanel {
         }
         interaction.onResizeBegin = { [weak self] in self?.beginLiveResize() }
         interaction.onResizeEnd = { [weak self] in self?.endLiveResize() }
-        interaction.onShowMenu = { [weak self] in self?.floatContent?.showContextMenu() }
+        interaction.onOpenSettings = { [weak self] in self?.onOpenSettings?() }
 
         // 用户拖拽底部手柄 / 右键「恢复默认高度」→ 面板高度变化
         store.$customExpandedHeight
@@ -542,6 +478,10 @@ final class FloatingPanel: NSPanel {
 struct FloatingPanelContent: View {
     @ObservedObject var store: ComateStore
     @ObservedObject var interaction: FloatingInteraction
+    /// 面板宽（构造期烘入，与 `FloatingPanel.expandedWidth` 同源）。
+    /// 页脚第 2 行要用它算额度区宽 —— 不能用 `layout.panelRect.width`：
+    /// 首次布局完成前那个值还是 0，会算出 0 宽的进度条
+    var panelWidth: CGFloat
 
     /// 实测：列表行 VStack 自然高度 + 该测量对应的行数
     @State private var rowsHeight: CGFloat = 0
@@ -617,11 +557,12 @@ struct FloatingPanelContent: View {
                 .fill(Color.white.opacity(iconChipFill))
                 .overlay(
                     RoundedRectangle(cornerRadius: FloatingMetrics.chipCorner)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(Color.white.opacity(iconChipStroke), lineWidth: 1)
                 )
                 .frame(width: FloatingMetrics.chipSize, height: FloatingMetrics.chipSize)
                 .allowsHitTesting(false)
                 .animation(.easeInOut(duration: 0.12), value: iconChipFill)
+                .animation(.easeInOut(duration: 0.12), value: iconChipStroke)
                 .position(x: layout.iconRect.midX, y: layout.iconRect.midY)
 
             // 图标：与刘海模式同一套视觉（logo 与状态灯合一的五态动效），
@@ -653,6 +594,13 @@ struct FloatingPanelContent: View {
     private var iconChipFill: Double {
         if interaction.isExpanded { return 0.12 }
         return iconHovered ? 0.10 : 0.06
+    }
+
+    /// 图标承托的描边：常态 8% / hover 10% / 展开中 14%（稿 §7.7 的四档，
+    /// 与底色同步加深——固定 8% 时展开态会显得描边偏浅）
+    private var iconChipStroke: Double {
+        if interaction.isExpanded { return 0.14 }
+        return iconHovered ? 0.10 : 0.08
     }
 
     /// 列表区：有记录时是可滚动列表，无记录时是占位文案
@@ -705,7 +653,9 @@ struct FloatingPanelContent: View {
         // 与列表实际高度无关。用 Spacer 顶到尾部时，列表被裁短会把页脚
         // 挤出面板下沿，页脚热区再被底部拖拽手柄压掉大半。
         .overlay(alignment: .bottom) {
-            HUDUsageFooter(store: store, onSettings: { interaction.onShowMenu?() },
+            HUDUsageFooter(store: store,
+                            contentWidth: panelWidth - 2 * FloatingMetrics.panelHPadding,
+                            onSettings: { interaction.onOpenSettings?() },
                             onLogin: { LoginWindowController.shared.present(refreshing: store) })
                 .background(
                     GeometryReader { g in

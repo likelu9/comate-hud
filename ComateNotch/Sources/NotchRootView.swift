@@ -241,8 +241,9 @@ struct NotchRootView: View {
     var onResizeBegin: ((CGFloat) -> Void)?
     /// 拖拽结束：按最终高度收一次窗口
     var onResizeEnd: ((CGFloat) -> Void)?
-    /// 设置按钮：弹出与右键完全一致的菜单（菜单定义与悬浮模式共用同一份）
-    var onShowMenu: (() -> Void)?
+    /// 页脚齿轮：直接打开设置窗口。页面选哪一页由 AppDelegate 决定
+    /// （有更新红点时落「通用」页继续引导，否则落「账号」页）
+    var onOpenSettings: (() -> Void)?
 
     /// 收起态与展开态同宽：宽度全程不变，动画只改变 y 与高度，
     /// 左右边缘完全不动（否则两态差 1px 会看起来"右边没对齐"）。
@@ -467,7 +468,9 @@ struct NotchRootView: View {
             // Spacer 各插一条间距，导致列表被裁短时内容比面板高 6pt，
             // 页脚被挤到面板下沿外（底部留白失效），热区又被拖拽手柄压掉大半。
             .overlay(alignment: .bottom) {
-                HUDUsageFooter(store: store, style: .compact, onSettings: { onShowMenu?() },
+                HUDUsageFooter(store: store,
+                                contentWidth: expandedWidth - 2 * NotchLayout.horizontalPadding,
+                                onSettings: { onOpenSettings?() },
                                 onLogin: { LoginWindowController.shared.present(refreshing: store) })
                     // 实测页脚高度（用于反推内容高度）
                     .background(

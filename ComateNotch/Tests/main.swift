@@ -434,47 +434,37 @@ section("v2 刻度锁定（页脚 / 面板 / chip）")
 
 // 页脚是全局最易「改了大面板漏了小面板」的地方：两种形态共用同一张刻度表，
 // 这里把设计稿的落地值逐项钉住，任何静默漂移都会在这段失败。
-let footerRegular = FooterMetrics(style: .regular)
-let footerCompact = FooterMetrics(style: .compact)
+// 两种显示模式共用同一张刻度表（用户反馈 ①：原先刘海单行 20、悬浮两行 34，版式不统一）
+let footerM = FooterMetrics()
 
-// 悬浮面板（§7.1）：两行结构
-eq(footerRegular.height, 34, "悬浮页脚总高 34")
-eq(footerRegular.rowHeight, 14, "第 1 行行高 14")
-eq(footerRegular.rowSpacing, 4, "两行行距 4")
-eq(footerRegular.barHeight, 4, "进度条高 4")
-eq(6 + footerRegular.rowHeight + footerRegular.rowSpacing + footerRegular.barHeight + 6,
-   footerRegular.height, "总高 = padding 6 + 第 1 行 14 + 行距 4 + 进度条 4 + padding 6 = 34")
-eq(footerRegular.quotaFont, 10, "额度读数 10pt")
-eq(footerRegular.iconFont, 10.5, "图标 10.5pt")
-eq(footerRegular.countFont, 10, "未读数 10pt")
-eq(footerRegular.segWidth, 17, "周期胶囊段宽 17")
-eq(footerRegular.segHeight, 14, "周期胶囊段高 14")
-eq(footerRegular.segFont, 9.5, "周期胶囊段内文字 9.5pt")
-eq(footerRegular.hitWidth, 32, "图标热区宽 32")
-eq(footerRegular.hitHeight, 22, "图标热区高 22")
-eq(footerRegular.dividerHeight, 16, "分区竖线高 16")
-eq(footerRegular.percentWidth, 36, "百分比占位固定 36（62% / 61.7% / 100% 不推挤进度条）")
-check(footerRegular.inlineBarWidth == nil, "悬浮页脚的进度条独占一行，不是内联细线")
-check(footerRegular.quotaPadding == 0, "悬浮页脚额度组不吃额外水平内边距")
+eq(footerM.height, 34, "页脚总高 34")
+eq(footerM.padV, 6, "上下内边距 6")
+eq(footerM.rowHeight, 14, "第 1 行行高 14")
+eq(footerM.rowSpacing, 4, "两行行距 4")
+eq(footerM.barHeight, 4, "进度条高 4")
+eq(6 + footerM.rowHeight + footerM.rowSpacing + footerM.barHeight + 6,
+   footerM.height, "总高 = padding 6 + 第 1 行 14 + 行距 4 + 进度条 4 + padding 6 = 34")
+eq(footerM.quotaFont, 10, "额度读数 10pt")
+eq(footerM.iconFont, 10.5, "图标 10.5pt")
+eq(footerM.countFont, 10, "未读数 10pt")
+eq(footerM.segWidth, 17, "周期胶囊段宽 17")
+eq(footerM.segHeight, 14, "周期胶囊段高 14")
+eq(footerM.segFont, 9.5, "周期胶囊段内文字 9.5pt")
+eq(footerM.hitWidth, 32, "齿轮热区宽 32")
+eq(footerM.hitHeight, 22, "图标热区高 22")
+eq(footerM.bellHitWidth, 22, "铃铛热区宽 22（比齿轮窄，对应稿 x=185 / x=219）")
+eq(footerM.clusterSpacing, 2, "铃铛与齿轮间距 2")
+eq(footerM.dividerWidth, 1, "分区竖线 1pt")
+eq(footerM.dividerHeight, 16, "分区竖线高 16")
+eq(footerM.percentWidth, 36, "百分比占位固定 36（62% / 61.7% / 100% 不推挤进度条）")
 
-// 刘海展开面板（§7.4）：单行 20pt，进度条内联在读数里
-eq(footerCompact.height, 20, "刘海页脚总高 20")
-eq(footerCompact.rowHeight, 20, "单行行高 20")
-eq(footerCompact.inlineBarWidth, 30, "刘海页脚的内联进度条宽 30")
-eq(footerCompact.barHeight, 3, "内联进度条高 3")
-eq(footerCompact.quotaPadding, 4, "额度组水平内边距压到 4，给分区竖线腾呼吸位")
-eq(footerCompact.dividerHeight, 12, "分区竖线高 12")
-eq(footerCompact.hitWidth, 30, "图标热区宽 30")
-eq(footerCompact.hitHeight, 20, "图标热区高 20")
-eq(footerCompact.segWidth, 13, "周期胶囊段宽 13")
-eq(footerCompact.segHeight, 11, "周期胶囊段高 11")
-eq(footerCompact.iconFont, 9, "图标 9pt")
-eq(footerCompact.countFont, 9, "未读数 9pt")
-
-// 「额度区 │ 消息·设置区」的分区约定两种形态一致（用户反馈 ①）
-eq(footerRegular.dividerWidth, 1, "分区竖线 1pt")
-eq(footerCompact.dividerWidth, footerRegular.dividerWidth, "两种形态的竖线同宽")
-eq(footerCompact.gap, footerRegular.gap, "两种形态的行内间距一致")
+// 第 2 行收口：进度条 + 百分比必须在左侧额度区内结束，不得跨进图标簇那一列
+// （用户反馈 ①：「百分比跑到设置按钮下面」）
+eq(footerM.clusterWidth, 62, "图标簇总宽 62（竖线留白 6 + 铃铛 22 + 间距 2 + 齿轮 32）")
+eq(footerM.quotaWidth(contentWidth: 252), 182, "252 内容宽下额度区宽 182（稿分隔线 x=179 同量级）")
+check(footerM.quotaWidth(contentWidth: 252) + footerM.clusterWidth + footerM.quotaGap == 252,
+      "额度区 + 图标簇 + 最小间距 = 内容宽：百分比右边界不越过分区竖线")
+check(footerM.quotaWidth(contentWidth: 40) == 0, "窄面板下额度区宽夹到 0，不出现负宽")
 
 // 面板 / 刘海刻度（§7.1 v2 表）
 eq(NotchLayout.horizontalPadding, 14, "面板内边距左右 14")

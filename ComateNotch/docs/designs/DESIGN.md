@@ -395,7 +395,7 @@ surfaces:
 - 标题行：「Comate HUD」`font.label 11/600` `text.secondary`；右侧新建任务按钮 `18×18`、`radius.4`、图标 `11pt`、hover `surface.hit`
 - 任务行 `30pt`：状态灯 `7pt`（`status.*`）→ 来源图标 `8pt`（云端 icloud / 本机 folder，`text.tertiary` / `text.quaternary`）→ 标题 `font.label 11/500` `text.primary`（hover 至 `.92`→`1.0`）→ 第二行：状态文案 `9/600`（取状态色）+ 副信息 `9/400`（「30天 N 点」或「—」）+ 相对时间 `9/400`（`text.quaternary`）→ 尾部 `arrow.up.right 9pt`（hover `.2`→`.5`）；行底 `surface.row .04` / hover `.10` / pressed `.14`，`radius.8`，内边距 `3 / 6`；悬停提示取 `task.hoverHelp`（内含「正在等你回答：…」等）
 - 空态：「暂无任务」，占位高 `24pt`，`text.quaternary`
-- 页脚（v2 两行结构，高 **34pt** = `padding 6 + 第1行 14 + 行距 4 + 进度条 4 + padding 6`）：
+- 页脚（v2 两行结构，高 **34pt** = `padding 6 + 第1行 14 + 行距 4 + 进度条 4 + padding 6`）——**两种模式（刘海 / 悬浮）共用同一套 `FooterMetrics`**，v1 那版 20pt 单行分叉已删除（用户反馈：两模式额度区排版不统一）：
   - **第 1 行**：左 = 日/月 切换胶囊（双段、选中段 `accent.normal` 且文字 `accent.on #0F0F11`，标签只写「日 / 月」）→ **紧贴**（间距 `6pt`）「已用 1,240 / 2,000 点」（`font.micro` 10pt、`tabular-nums`）；**额度区与右侧图标区必须切成两个互不重叠的区块**：额度位 `flex:1` + `overflow:hidden`（读数再长也裁在自己格内），图标簇左侧留 `6pt` 并以 `1pt` 竖分隔线（`line.divider`、高 `16pt`、垂直居中）作边界，分隔线 x 恒为 `179`；右 = 铃铛（`bell.fill` + 未读数）+ 齿轮（`gearshape.fill` + 右上 `5pt` 更新红点 `dot.update`），两者命中区 `32×22`、`radius.5`，hover `surface.hit`，**x 坐标固定不随左侧数字伸缩**
   - **第 2 行**：进度条独占一行、左对齐、占满可用宽度（宽 209pt / 高 4pt / `radius.meter 2`），填充 `accent.normal`、底 `accent.track`；百分比数字（10pt `tabular-nums`）紧贴条右端、间距 `6pt`，占位固定 36pt
   - **防跑版规则（必须遵守）**：数字一律 `tabular-nums`；超长按中文习惯缩写（≥1 万 →「1,234.6 万」、≥1 亿 →「12.3 亿」，保留 1 位小数）；空间不足先降级去掉「已用」二字；**禁止**省略号截断、「…」占位、或撑出第三行。三档实测（额度区可用 **173pt**、文字位 **131pt**）：①`1,240 / 2,000` 左宽 146.4（0.85×173）②`12,345,678 / 20,000,000` → 缩写+去「已用」后 169.1（0.98）③`999,999,999 / 1,000,000,000` →「10.0 亿 / 10.0 亿」158.7（0.92）；三档铃铛 x=185 / 齿轮 x=219 / 分隔线 x=179 恒定
@@ -422,10 +422,16 @@ surfaces:
 
 ### 7.2 设置窗口（本期新增形态）— `references/settings.html`
 
+> **实现状态（2026-09-30，已按稿重写）**：`SettingsDesign` 已按 `settings.html` 内联样式（第二阶段·新形态）逐项对齐，下方刻度以**稿的内联 CSS 为准**（不是本节早期那版描述）：窗口 `560×480`（含自带 28pt 标题栏 `--w-tb`；本应用用系统标题栏，故内容区 `452 = 480 − 28`，与稿图注「内容区可视 452pt」一致）、侧栏 `148`、导航项 `32`、行高 `38`、控件高 `24`、开关 `34×20`、单选 `14`、圆角 `12 / 8 / 6`。
+>
+> **与稿的四处偏差（均为刻意，登记在此）**：① 稿入口 A（点齿轮右上角 5pt 红点开窗）未实现 —— 红点是齿轮上的**绘制**叠层，无 `NSStatusItem` 可挂热区。② 原右键菜单（两种模式）**整体下线**，菜单里的「退出 Comate HUD」「打开 WPS Comate」因此搬到设置窗：关于页底部静默文字链接「退出 Comate HUD」（`text.quaternary`，不跟主 CTA 抢焦点）、账号页操作组一行「打开 WPS Comate」。③ 「已是最新版本」行在稿的文案后加「 · N 分钟前」（`UpdateChecker.relativeDescription`），回答「上次何时查的」，不改行结构。④ 稿只画了检查中/已最新/有新版三态，失败态（图标 + 文案 + 「重试」）与「更新行五态」为兜底新增。
+>
+> **更新红点链路（本期接通）**：齿轮右上角 5pt 红点 → 点开设置窗**落「通用」页**（`AppDelegate` 依 `store.showsUpdateDot` 选页）→ 侧栏「通用」项右侧红点（稿 `.nav-dot`）→ 通用页「更新」行绿字「检测到新版 vX」+ `chevron.right`，**整行可点**开更新小窗（下载入口只在窗内，不再往设置行塞成对按钮）。三处红点共用 `UpdateDotBadge`（`dot.update` 5pt + 1pt `dot.update-ring`）。
+
 - 窗口 `560 × 480pt`，系统标题栏（标题「设置」），不做自定义交通灯；窗口投影 `shadow.window`
-- 左分类导航 `148pt`：`surface.raised` 底 + 右侧 `line.divider`；4 项：账号 / 显示 / 通用 / 关于；选中态 `surface.hit` + 文字 `text.primary`，未选中 `text.tertiary`；项宽 `title 12/600`
-- 右内容区：内边距 `18 / 20 / 20`；分区标题 `font.label 11/600` `text.secondary`；分区卡片 `surface.card` + `line.card` 描边 + `radius.8`；行高 `34pt`，行间 `line.divider`
-- 控件映射（原生可直接实现）：单选 `NSButton(radio)`（选项 `min 132`）、下拉 `NSPopUpButton`（高 `24pt`）、开关 `NSSwitch`（`34×20`）、动作按钮 `NSButton`（次按钮 `text.accent`、`24pt` 高）、文本域用 `NSTextField`
+- 左分类导航 `148pt`：`surface.raised` 底 + 右侧 `line.divider`；4 项：账号 / 显示 / 通用 / 关于；**选中态 `accent.soft` 底 + 文字 `text.primary`（500）+ 图标 `accent.hover`**，未选中 `text.secondary`（hover 提到 `text.primary`）；项高 `32`、项内 `8`、圆角 `6`、字 `13`、图标 `14`
+- 右内容区：内边距 `18 / 20 / 20`；**页标题 `14/600 text.primary`** + 页副标 `9pt text.quaternary`；**组标题 `12/600 text.secondary`（下距 6、组间距 16）**；分区卡片 `surface.card` + `line.card` 描边 + `radius.8`；**行高 `38pt`**、行内 `6 / 10`、行内块间距 `12`、行间 `line.divider`
+- 控件映射（原生可直接实现）：单选 `NSButton(radio)`（选项 `min 132`）、下拉 `NSPopUpButton`（高 `24pt`）、开关 `NSSwitch`（`34×20`、钮 16 纯白、on = 品牌绿）、动作按钮 `NSButton`（**主按钮 `accent` 底 + `accent.on` 深墨字 + `shadow.cta`；次按钮 `accent.soft` 底色字用 `accent.hover`；中性按钮 `surface.raised` + `line.divider-strong` 描边**，均 `24pt` 高 / 圆角 6 / `12.5` 600）、文本域用 `NSTextField`
 - 必须覆盖的项：账号（登录/登录失效重新登录/账号+企业/退出登录）、显示模式（刘海·悬浮）、刘海所在屏幕（含「跟随主屏」）、最近记录条数（1–10）、恢复默认高度（动作）、开机自启动（开关）、检查更新（三态 + 红点）、进关于
 - **「关于」页（新增，承载原关于弹窗的全部内容）**：应用图标 `88×88`（`radius.icon 20`）→ 产品名「Comate HUD」 → 版本胶囊 → 主张「让 AI 干活，你只管看灯」→ 描述 → 四态图例卡 → 特性列表（3 行）→ 署名「通过 WPS Comate 应用开发能力 Vibe Coding 实现」→「访问官网」主按钮 → 底部文字链接「检查更新 · 意见反馈 · comate.wpsgo.com」→ 更新三态。顶部保留紫色氛围光（T11，唯一例外）。**原独立关于弹窗退场**；菜单项「关于 Comate HUD」改为直接打开本窗口并定位到「关于」页
 - 条件出现：「刘海所在屏幕」仅刘海模式且多屏；「恢复默认高度」仅自定义过高度（详见设计和原）。隐藏时不留空位

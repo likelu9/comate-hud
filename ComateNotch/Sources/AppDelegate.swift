@@ -108,31 +108,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         old?.orderOut(nil)
     }
 
-    /// 刘海面板的内容层：菜单宿主 + SwiftUI 内容。启动与换屏共用，两处构造参数不会漂移
-    private func makeNotchChrome(for panel: NotchPanel, initialExpanded: Bool) -> HUDMenuHostView {
+    /// 刘海面板的内容层：容器 + SwiftUI 内容。启动与换屏共用，两处构造参数不会漂移
+    private func makeNotchChrome(for panel: NotchPanel, initialExpanded: Bool) -> NSView {
         let geo = panel.notch
-        // 菜单宿主：右键与设置按钮共用同一份菜单（HUDContextMenu），两种显示模式只换窗口
-        let container = HUDMenuHostView(frame: NSRect(x: 0, y: 0,
-                                                      width: panel.expandedWidth,
-                                                      height: panel.hostingHeight))
+        // 容器只负责承载 SwiftUI 内容：右键菜单与菜单宿主已随「齿轮直开设置窗」一并移除
+        let container = NSView(frame: NSRect(x: 0, y: 0,
+                                             width: panel.expandedWidth,
+                                             height: panel.hostingHeight))
         container.wantsLayer = true
         container.layer?.backgroundColor = NSColor.clear.cgColor
-        container.menuBuilder = HUDContextMenu(
-            store: store,
-            onSwitchMode: { [weak self] mode in self?.switchDisplayMode(mode) },
-            onShowMainWindow: { [weak self] in
-                self?.store.openComateApp()
-                NSApp.activate(ignoringOtherApps: true)
-            },
-            onShowSettings: { [weak self] page in self?.presentSettings(page) },
-            onShowUpdate: { [weak self] in
-                guard let store = self?.store else { return }
-                UpdateWindowController.shared.present(store: store, actions: .standard(store: store))
-            },
-            onLogin: { [weak self] in self?.presentLogin() },
-            onSignOut: { AuthSession.shared.signOut() },
-            screenOptions: { NotchPanel.screenOptions() },
-            onSelectScreen: { [weak self] id in self?.selectNotchScreen(id) })
 
         let view = NotchRootView(
             store: store,
@@ -155,9 +139,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onResizeEnd: { [weak panel] h in
                 panel?.setExpandedHeightImmediate(h)
             },
-            onShowMenu: { [weak container] in
+            onOpenSettings: { [weak self] in
                 ActivityReporter.shared.record(.click)
-                container?.showMenu()
+                self?.openSettingsFromPanel()
             }
         )
         // hostingView 固定为展开态尺寸并吸顶，不随窗口高度动画改变尺寸。
@@ -192,7 +176,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             actions: SettingsActions(
                 switchMode: { [weak self] mode in self?.switchDisplayMode(mode) },
                 selectScreen: { [weak self] id in self?.selectNotchScreen(id) },
-                openUpdate: { [weak self] in self?.presentUpdateWindow() }))
+                openUpdate: { [weak self] in self?.presentUpdateWindow() },
+                openComateApp: { [weak self] in
+                    self?.store.openComateApp()
+                    NSApp.activate(ignoringOtherApps: true)
+                },
+                quit: { [weak self] in
+                    self?.store.stop()
+                    NSApp.terminate(nil)
+                }))
+    }
+
+    /// 面板齿轮入口：直接打开设置窗口（用户反馈 ②：不再弹菜单）。
+    /// 有新版红点时落「通用」页，让用户顺着红点一路走到更新入口；否则落默认的「账号」页
+    private func openSettingsFromPanel() {
+        presentSettings(store.showsUpdateDot ? .general : .account)
     }
 
     /// 更新提示独立小窗：与更新检查、红点共用同一个 store
@@ -215,10 +213,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if floatingPanel == nil {
                 // 宽度对齐刘海模式，两种模式面板宽度一致
                 let fp = FloatingPanel(store: store,
-                                       expandedWidth: panel?.expandedWidth ?? 280) { [weak self] m in
-                    self?.switchDisplayMode(m)
-                }
-                fp.onSelectScreen = { [weak self] id in self?.selectNotchScreen(id) }
+                                       expandedWidth: panel?.expandedWidth ?? 280)
+                fp.onOpenSettings = { [weak self] in self?.openSettingsFromPanel() }
                 floatingPanel = fp
             }
             panel?.orderOut(nil)
