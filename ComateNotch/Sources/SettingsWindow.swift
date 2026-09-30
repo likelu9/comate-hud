@@ -60,7 +60,6 @@ private enum SettingsDesign {
     /// 绿底上的文字一律深墨（白字压绿的对比度只有 ≈1.9:1）
     static let brandInk = Color(hex: "#0F0F11")
     static let warning = Color(hex: "#FF6259")
-    static let website = "https://comate.wpsgo.com/s/HyDSehobOTHX/"
 }
 
 /// 当前选中的分类。窗口复用时靠它从菜单跳到指定页。
@@ -107,15 +106,6 @@ final class SettingsWindowController {
         window = w
         NSApp.activate(ignoringOtherApps: true)
         w.makeKeyAndOrderFront(nil)
-    }
-
-    /// 窗口已关但拉起来的那份 store 还在（isReleasedWhenClosed = false）：
-    /// 这里只做置前，不做重建，避免用户设置到一半被重建回默认页
-    func show(page: SettingsPage) {
-        guard let window = window else { return }
-        selection.page = page
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
     }
 }
 
@@ -380,7 +370,7 @@ private struct SettingsUpdateRow: View {
         store.acknowledgeUpdate()
         if let url = store.availableUpdateURL {
             NSWorkspace.shared.open(url)
-        } else if let site = URL(string: SettingsDesign.website) {
+        } else if let site = URL(string: HUDLinks.website) {
             NSWorkspace.shared.open(site)
         }
     }
@@ -783,7 +773,7 @@ private struct AboutSettingsPage: View {
     }
 
     private func openWebsite() {
-        guard let url = URL(string: SettingsDesign.website) else { return }
+        guard let url = URL(string: HUDLinks.website) else { return }
         NSWorkspace.shared.open(url)
     }
 

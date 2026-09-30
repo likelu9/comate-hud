@@ -354,7 +354,7 @@ struct HUDUsageFooter: View {
     }
 }
 
-// MARK: - 关于弹窗内容
+// MARK: - 跨面共用的小件
 
 /// 更新红点配色（#FF4D4F）。设置齿轮走 SwiftUI、菜单项勾选列走 AppKit，
 /// 两处共用同一色值 —— 分开写迟早改一处漏一处，而 5px 的红点色差肉眼几乎发现不了
@@ -369,234 +369,6 @@ enum HUDLinks {
     static let website = "https://comate.wpsgo.com/s/HyDSehobOTHX/"
 }
 
-/// 主按钮：品牌绿实底 + 深色文字
-private struct HUDPrimaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 12.5, weight: .semibold))
-            .foregroundStyle(Color(hex: "#0F0F11"))
-            .frame(width: 150, height: 34)
-            .background(RoundedRectangle(cornerRadius: 10).fill(AboutDesign.brand))
-            .shadow(color: AboutDesign.brand.opacity(configuration.isPressed ? 0.10 : 0.22),
-                    radius: 9, y: 5)
-            .opacity(configuration.isPressed ? 0.82 : 1)
-            .contentShape(RoundedRectangle(cornerRadius: 10))
-    }
-}
-
-/// 次要按钮：浅底 + 描边
-private struct HUDGhostButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 12.5, weight: .semibold))
-            .foregroundStyle(Color.white.opacity(0.85))
-            .frame(width: 96, height: 34)
-            .background(RoundedRectangle(cornerRadius: 10)
-                .fill(Color.white.opacity(configuration.isPressed ? 0.14 : 0.08)))
-            .overlay(RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
-            .contentShape(RoundedRectangle(cornerRadius: 10))
-    }
-}
-
-struct AboutHUDView: View {
-    var onClose: () -> Void
-
-    var body: some View {
-        ZStack(alignment: .top) {
-            brandGlow
-            VStack(spacing: 0) {
-                appIcon
-                Text("Comate HUD")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .padding(.top, 20)
-                versionChip.padding(.top, 9)
-                Text("让 AI 干活，你只管看灯")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(AboutDesign.brand)
-                    .padding(.top, 20)
-                Text("一款常驻 macOS 刘海区的轻量状态指示器，为 WPS Comate 而生。无需打开主窗口，任务状态一目了然。")
-                    .font(.system(size: 12))
-                    .lineSpacing(5)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(Color.white.opacity(0.6))
-                    .frame(maxWidth: 300)
-                    .padding(.top, 10)
-                statusLegend.padding(.top, 20)
-                featureList.padding(.top, 20)
-                Spacer(minLength: 10)
-                HStack(spacing: 0) {
-                    Text("通过 ")
-                    Text("WPS Comate 应用开发能力 Vibe Coding")
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.white.opacity(0.88))
-                        .overlay(alignment: .bottom) {
-                            Rectangle()
-                                .fill(AboutDesign.brand)
-                                .frame(height: 1.5)
-                                .offset(y: 2)
-                        }
-                    Text(" 实现")
-                }
-                .font(.system(size: 10.5))
-                .foregroundStyle(Color.white.opacity(0.36))
-                HStack(spacing: 10) {
-                    Button("访问官网", action: openWebsite)
-                        .buttonStyle(HUDPrimaryButtonStyle())
-                        .help("打开官网，检查更新或提交意见反馈")
-                    Button("关闭", action: onClose)
-                        .buttonStyle(HUDGhostButtonStyle())
-                        .keyboardShortcut(.cancelAction)
-                }
-                .padding(.top, 15)
-                Button(action: openWebsite) {
-                    Text("检查更新 · 意见反馈 · comate.wpsgo.com")
-                        .font(.system(size: 10.5))
-                        .foregroundStyle(Color.white.opacity(0.4))
-                        .padding(.bottom, 2)
-                        .overlay(alignment: .bottom) {
-                            Rectangle()
-                                .fill(Color.white.opacity(0.22))
-                                .frame(height: 1)
-                        }
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 13)
-            }
-            .padding(.horizontal, 30)
-            .padding(.top, 32)
-            .padding(.bottom, 22)
-        }
-        .frame(width: AboutDesign.width, height: AboutDesign.height)
-        .background(Color(hex: "#0F0F11"))
-    }
-
-    /// 顶部品牌光晕，让图标有发光感
-    private var brandGlow: some View {
-        RadialGradient(colors: [Color(hex: "#937EE6").opacity(0.28),
-                                Color(hex: "#4526BF").opacity(0.14),
-                                .clear],
-                       center: .center, startRadius: 0, endRadius: 190)
-            .frame(width: AboutDesign.width, height: 320)
-            .offset(y: -120)
-            .allowsHitTesting(false)
-    }
-
-    private var appIcon: some View {
-        Image(nsImage: NSApplication.shared.applicationIconImage)
-            .resizable()
-            .frame(width: 88, height: 88)
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .shadow(color: .black.opacity(0.55), radius: 14, y: 10)
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.09), lineWidth: 1))
-    }
-
-    private var versionChip: some View {
-        Text("版本 \(appVersion)")
-            .font(.system(size: 10.5, weight: .medium))
-            .foregroundStyle(Color.white.opacity(0.58))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 3)
-            .background(Capsule().fill(Color.white.opacity(0.07)))
-            .overlay(Capsule().strokeBorder(Color.white.opacity(0.07), lineWidth: 1))
-    }
-
-    /// 四色状态图例，颜色取自真实任务灯色（顺序与官网一致）
-    private var statusLegend: some View {
-        HStack(spacing: 0) {
-            legendItem(TaskLight.gray.color, "空闲")
-            legendItem(TaskLight.green.color, "已完成")
-            legendItem(TaskLight.yellow.color, "工作中")
-            legendItem(TaskLight.red.color, "等待确认")
-        }
-        .padding(.vertical, 13)
-        .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 14).fill(AboutDesign.cardFill))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(AboutDesign.cardStroke, lineWidth: 1))
-    }
-
-    private func legendItem(_ hex: String, _ label: String) -> some View {
-        HStack(spacing: 7) {
-            Circle()
-                .fill(Color(hex: hex))
-                .frame(width: 8, height: 8)
-                .shadow(color: Color(hex: hex).opacity(0.6), radius: 3.5)
-            Text(label)
-                .font(.system(size: 11))
-                .foregroundStyle(Color.white.opacity(0.72))
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var featureList: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            feature("悬停刘海，展开任务面板")
-            feature("最近会话 · 执行进度 · 额度用量，尽收眼底")
-            feature("点击任务，直达对应会话")
-        }
-        .frame(maxWidth: 312, alignment: .leading)
-    }
-
-    private func feature(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: 9) {
-            Text("✓")
-                .font(.system(size: 9, weight: .heavy))
-                .foregroundStyle(AboutDesign.brand)
-                .frame(width: 14, height: 14)
-                .background(Circle().fill(AboutDesign.brand.opacity(0.14)))
-            Text(text)
-                .font(.system(size: 11.5))
-                .foregroundStyle(Color.white.opacity(0.72))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func openWebsite() {
-        guard let url = URL(string: AboutDesign.website) else { return }
-        NSWorkspace.shared.open(url)
-    }
-
-    private var appVersion: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
-        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
-        return "\(v) (\(b))"
-    }
-}
-
-// MARK: - 独立「关于」窗口
-// 悬浮模式下的 NSPanel 是非激活面板，无法正常弹出 SwiftUI sheet，故用独立窗口承载。
-
-enum AboutHUDWindow {
-    private static var window: NSWindow?
-
-    static func show() {
-        if let w = window {
-            NSApp.activate(ignoringOtherApps: true)
-            w.makeKeyAndOrderFront(nil)
-            return
-        }
-        let hosting = NSHostingController(
-            rootView: AboutHUDView(onClose: { close() })
-                .environment(\.colorScheme, .dark))
-        let w = NSWindow(contentViewController: hosting)
-        w.title = "关于 Comate HUD"
-        w.styleMask = [.titled, .closable]
-        w.isReleasedWhenClosed = false
-        w.setContentSize(NSSize(width: AboutDesign.width, height: AboutDesign.height))
-        w.center()
-        window = w
-        NSApp.activate(ignoringOtherApps: true)
-        w.makeKeyAndOrderFront(nil)
-    }
-
-    static func close() {
-        window?.orderOut(nil)
-        window = nil
-    }
-}
-
 // MARK: - 右键 / 设置按钮菜单（刘海 HUD 与任意悬浮共用同一份定义）
 
 /// 两种显示模式的右键菜单与设置按钮共用这一个构建器：菜单项、顺序、勾选态只有一份定义，
@@ -609,7 +381,8 @@ final class HUDContextMenu: NSObject {
     private let store: ComateStore
     private let onSwitchMode: (ComateStore.DisplayMode) -> Void
     private let onShowMainWindow: () -> Void
-    private let onShowAbout: () -> Void
+    /// 设置窗口：两个入口（「设置…」「关于 Comate HUD」）共用，只是落点页不同
+    private let onShowSettings: (SettingsPage) -> Void
     private let onLogin: () -> Void
     private let onSignOut: () -> Void
     /// 可选的刘海屏幕（每次构建菜单时现取，屏幕热插拔后菜单自然是最新的）
@@ -620,7 +393,7 @@ final class HUDContextMenu: NSObject {
     init(store: ComateStore,
          onSwitchMode: @escaping (ComateStore.DisplayMode) -> Void,
          onShowMainWindow: @escaping () -> Void,
-         onShowAbout: @escaping () -> Void,
+         onShowSettings: @escaping (SettingsPage) -> Void,
          onLogin: @escaping () -> Void,
          onSignOut: @escaping () -> Void,
          screenOptions: @escaping () -> [NotchScreenTarget.Option],
@@ -628,7 +401,7 @@ final class HUDContextMenu: NSObject {
         self.store = store
         self.onSwitchMode = onSwitchMode
         self.onShowMainWindow = onShowMainWindow
-        self.onShowAbout = onShowAbout
+        self.onShowSettings = onShowSettings
         self.onLogin = onLogin
         self.onSignOut = onSignOut
         self.screenOptions = screenOptions
@@ -711,9 +484,13 @@ final class HUDContextMenu: NSObject {
         }
         menu.addItem(updateItem)
 
-        // 关于紧贴在退出上方
+        // 设置与关于紧贴在退出上方：两者都进同一个设置窗口，只是落点页不同
         menu.addItem(.separator())
-        let about = NSMenuItem(title: "关于 Comate HUD", action: #selector(menuAbout), keyEquivalent: "")
+        let settings = NSMenuItem(title: "设置…", action: #selector(menuShowSettings), keyEquivalent: "")
+        settings.target = self
+        menu.addItem(settings)
+
+        let about = NSMenuItem(title: "关于 Comate HUD", action: #selector(menuShowAbout), keyEquivalent: "")
         about.target = self
         menu.addItem(about)
 
@@ -834,7 +611,7 @@ final class HUDContextMenu: NSObject {
         store.acknowledgeUpdate()
         if let url = store.availableUpdateURL {
             NSWorkspace.shared.open(url)
-        } else if let site = URL(string: AboutDesign.website) {
+        } else if let site = URL(string: HUDLinks.website) {
             NSWorkspace.shared.open(site)
         }
     }
@@ -849,7 +626,10 @@ final class HUDContextMenu: NSObject {
         LaunchAtLogin.setEnabled(target)
     }
 
-    @objc private func menuAbout() { onShowAbout() }
+    @objc private func menuShowSettings() { onShowSettings(.account) }
+
+    /// 关于已并入设置窗口：菜单项直接把窗口拉到「关于」页
+    @objc private func menuShowAbout() { onShowSettings(.about) }
 
     @objc private func menuLogin() { onLogin() }
 

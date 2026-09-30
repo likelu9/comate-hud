@@ -422,7 +422,7 @@ surfaces:
 
 ### 7.2 设置窗口（本期新增形态）— `references/settings.html`
 
-- 窗口 `520 × 460pt`，系统标题栏（标题「设置」），不做自定义交通灯；窗口投影 `shadow.window`
+- 窗口 `560 × 480pt`，系统标题栏（标题「设置」），不做自定义交通灯；窗口投影 `shadow.window`
 - 左分类导航 `148pt`：`surface.raised` 底 + 右侧 `line.divider`；4 项：账号 / 显示 / 通用 / 关于；选中态 `surface.hit` + 文字 `text.primary`，未选中 `text.tertiary`；项宽 `title 12/600`
 - 右内容区：内边距 `18 / 20 / 20`；分区标题 `font.label 11/600` `text.secondary`；分区卡片 `surface.card` + `line.card` 描边 + `radius.8`；行高 `34pt`，行间 `line.divider`
 - 控件映射（原生可直接实现）：单选 `NSButton(radio)`（选项 `min 132`）、下拉 `NSPopUpButton`（高 `24pt`）、开关 `NSSwitch`（`34×20`）、动作按钮 `NSButton`（次按钮 `text.accent`、`24pt` 高）、文本域用 `NSTextField`

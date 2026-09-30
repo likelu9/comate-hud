@@ -121,7 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.store.openComateApp()
                 NSApp.activate(ignoringOtherApps: true)
             },
-            onShowAbout: { AboutHUDWindow.show() },
+            onShowSettings: { [weak self] page in self?.presentSettings(page) },
             onLogin: { [weak self] in self?.presentLogin() },
             onSignOut: { AuthSession.shared.signOut() },
             screenOptions: { NotchPanel.screenOptions() },
@@ -175,6 +175,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 桶已落盘，下次启动会补报。
         ActivityReporter.shared.flushSync()
         store.stop()
+    }
+
+    /// 打开设置窗口。显示模式 / 刘海屏幕这两项要动窗口，由本类执行（设置窗口只写 store）
+    private func presentSettings(_ page: SettingsPage) {
+        SettingsWindowController.shared.present(
+            page: page,
+            store: store,
+            actions: SettingsActions(
+                switchMode: { [weak self] mode in self?.switchDisplayMode(mode) },
+                selectScreen: { [weak self] id in self?.selectNotchScreen(id) }))
     }
 
     /// 切换显示模式。幂等：重复切到同一模式不会重建窗口（启动时也会调用一次）

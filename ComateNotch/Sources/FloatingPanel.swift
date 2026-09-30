@@ -142,7 +142,15 @@ final class FloatingContentView: NSView {
                 self?.panel?.store.openComateApp()
                 NSApp.activate(ignoringOtherApps: true)
             },
-            onShowAbout: { AboutHUDWindow.show() },
+            onShowSettings: { [weak self] page in
+                guard let store = self?.panel?.store else { return }
+                SettingsWindowController.shared.present(
+                    page: page,
+                    store: store,
+                    actions: SettingsActions(
+                        switchMode: { [weak self] mode in self?.panel?.onSwitchMode?(mode) },
+                        selectScreen: { [weak self] id in self?.panel?.onSelectScreen?(id) }))
+            },
             onLogin: { [weak self] in
                 guard let store = self?.panel?.store else { return }
                 LoginWindowController.shared.present(refreshing: store)

@@ -19,6 +19,8 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
     static let shared = LoginWindowController()
 
     private static let loginURL = URL(string: "https://comate.wps.cn/web/")!
+    /// 成功态用品牌绿（设计稿 §7.5；与 HUD 的品牌色同一支）
+    private static let brandGreen = NSColor(srgbRed: 0, green: 212 / 255, blue: 170 / 255, alpha: 1)
     private static let windowWidth: CGFloat = 460
     /// comate.wps.cn/web 的登录页在视口高 <600pt 时自身布局会塌（绿色主登录按钮被压成一条），
     /// 实测阈值 600pt。窗口正文顶部说明区占 78pt，故按 WebView ≈740pt 定窗口高度。
@@ -41,6 +43,9 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
     /// 轮询兜底：内存态 store 上的 cookiesDidChange 通知实测不可靠（登录完成后一次都没触发），
     /// 只靠它会出现「页面已登录、HUD 却永远不知道」。
     private var pollTimer: Timer?
+    /// 「校验中」的三点脉冲（设计稿：灰字 + 三点循环，不用转圈）
+    private var pulseTimer: Timer?
+    private var pulseStep = 0
     private var lastStallLogAt: Date?
     private var didLogSid = false
 
@@ -217,6 +222,32 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
         statusLabel?.stringValue = text
     }
 
+    // MARK: - 校验中态的三点脉冲
+
+    private static let verifyingText = "正在校验登录状态"
+
+    /// 进入「校验中」：0.45s 一跳，点数在 1…3 之间循环。已在脉冲中就不重开
+    /// （cookie 会连着变，重置步进会看着像卡住）
+    private func startPulse() {
+        guard pulseTimer == nil else { return }
+        pulseStep = 0
+        setStatus(Self.verifyingText + ".", color: .secondaryLabelColor)
+        let timer = Timer(timeInterval: 0.45, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            self.pulseStep = self.pulseStep % 3 + 1
+            self.setStatus(Self.verifyingText + String(repeating: ".", count: self.pulseStep),
+                           color: .secondaryLabelColor)
+        }
+        // .common：菜单/面板处于事件跟踪时也继续跑
+        RunLoop.main.add(timer, forMode: .common)
+        pulseTimer = timer
+    }
+
+    private func stopPulse() {
+        pulseTimer?.invalidate()
+        pulseTimer = nil
+    }
+
     // MARK: - 校验
 
     /// cookie store 变化很频繁（页面会不断写各种域的 cookie），只在「还没完成」时试一次，
@@ -236,6 +267,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
         loginStore.getAllCookies { [weak self] cookies in
             guard let self = self else { return }
             let sid = AuthSession.sid(in: cookies)
+            if sid != nil { self.startPulse() }
             if let sid = sid, !self.didLogSid {
                 self.didLogSid = true
                 NSLog("[ComateHUD] 已发现 wps_sid（长度 %d），开始双接口探测", sid.count)
@@ -251,6 +283,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
                     } else if sid == nil {
                         // 还没登录：不算失败，等页面下一次写 cookie 再试
                         self.attempt = 0
+                        self.stopPulse()
                         self.setStatus("请在下方完成登录（扫码或账号密码）", color: .secondaryLabelColor)
                         self.drainPending()
                     } else {
@@ -262,6 +295,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
                         } else {
                             NSLog("[ComateHUD] 双接口探测未通过（第 %d 次），凭据被服务端拒绝或权限尚未就绪",
                                   self.attempt)
+                            self.stopPulse()
                             self.setStatus("已取得登录凭证但服务端仍拒绝，请关闭窗口后重试",
                                            color: .systemOrange)
                             self.drainPending()
@@ -281,8 +315,9 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
     private func finishSuccess() {
         finished = true
         stopPolling()
+        stopPulse()
         AuthSession.shared.markOK()
-        setStatus("登录成功，正在恢复数据…", color: .systemGreen)
+        setStatus("登录成功，正在恢复数据…", color: Self.brandGreen)
         NSLog("[ComateHUD] WPS 登录成功，凭据已记入内存（不落盘）")
         let callback = onSuccess
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { [weak self] in
@@ -301,6 +336,7 @@ final class LoginWindowController: NSObject, NSWindowDelegate, WKHTTPCookieStore
         // 关窗 = 放弃这次登录（凭据只在内存，没成功就不会被记下）；
         // 登录成功能自动关窗，不需要用户手动关。
         stopPolling()
+        stopPulse()
         releaseWebView()
         window = nil
         onSuccess = nil
