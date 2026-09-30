@@ -170,7 +170,7 @@ private struct SettingsRootView: View {
         case .general:
             GeneralSettingsPage(store: store)
         case .about:
-            AboutSettingsPage(store: store)
+            AboutSettingsPage()
         }
     }
 }
@@ -329,21 +329,49 @@ private struct SettingsWarning: View {
     }
 }
 
-/// 更新行：三态文案 + 动作。设置窗口的通用页与关于页共用同一份判定
+/// 更新行：三态文案 + 动作。归属通用页的「更新」组；关于页只留版本号与官网入口，
+/// 避免同一动作在同一个窗口里出现两个入口（设计稿 §7.2 / settings.html）
 private struct SettingsUpdateRow: View {
     @ObservedObject var store: ComateStore
 
     var body: some View {
-        SettingsRow(title: "检查更新", subtitle: subtitle) {
-            switch state {
-            case .available:
-                SettingsActionButton(title: "前往下载", action: openRelease)
-            case .latest:
-                SettingsActionButton(title: "重新检查", action: { store.checkForUpdate(force: true) })
-            case .idle:
-                SettingsActionButton(title: "检查更新", action: { store.checkForUpdate(force: true) })
+        VStack(spacing: 0) {
+            SettingsRow(title: "检查更新", subtitle: subtitle) { stateAction }
+            if state == .available {
+                SettingsRowDivider()
+                downloadActions
             }
         }
+    }
+
+    @ViewBuilder
+    private var stateAction: some View {
+        switch state {
+        case .available:
+            // 有新版时下载入口下沉到下一行的成对按钮，这里不再放动作：同一动作不留两个入口
+            EmptyView()
+        case .latest:
+            SettingsActionButton(title: "重新检查", action: { store.checkForUpdate(force: true) })
+        case .idle:
+            SettingsActionButton(title: "检查更新", action: { store.checkForUpdate(force: true) })
+        }
+    }
+
+    /// 有新版时的下载入口：成对出现、官网优先（原来只有一个「前往下载」）
+    private var downloadActions: some View {
+        HStack(spacing: 8) {
+            Button { openOfficialSite() } label: {
+                Label("官网下载", systemImage: "arrow.down")
+            }
+            .buttonStyle(SettingsDownloadButtonStyle(primary: true))
+
+            Button { openRelease() } label: {
+                Label("GitHub 下载", systemImage: "arrow.up.right.square")
+            }
+            .buttonStyle(SettingsDownloadButtonStyle(primary: false))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
     }
 
     private enum State { case idle, latest, available }
@@ -365,7 +393,13 @@ private struct SettingsUpdateRow: View {
         }
     }
 
-    /// 与菜单同一条路径：先记为「已读」（红点消失），再打开发布页；拿不到链接退回官网
+    /// 官网下载页：普通用户的最短路径（主按钮，官网优先引导）
+    private func openOfficialSite() {
+        store.acknowledgeUpdate()
+        if let site = URL(string: HUDLinks.website) { NSWorkspace.shared.open(site) }
+    }
+
+    /// GitHub 发布页（也是更新红点版本号的来源）；拿不到具体链接时退回官网
     private func openRelease() {
         store.acknowledgeUpdate()
         if let url = store.availableUpdateURL {
@@ -373,6 +407,29 @@ private struct SettingsUpdateRow: View {
         } else if let site = URL(string: HUDLinks.website) {
             NSWorkspace.shared.open(site)
         }
+    }
+}
+
+/// 下载按钮（成对出现）：主 = 品牌绿实底 + 深墨字，次 = 浅底 + 描边。
+/// 两枚各占一半宽、同高 34 —— 与设计稿「成对同高 34、各 flex:1、间距 8」一致。
+/// 次按钮的 GitHub 只能借 SF Symbols 的「外链」语义表达，SF Symbols 没有 GitHub 标志
+private struct SettingsDownloadButtonStyle: ButtonStyle {
+    var primary: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(primary ? SettingsDesign.brandInk : Color.white.opacity(0.85))
+            .frame(maxWidth: .infinity)
+            .frame(height: 34)
+            .background(RoundedRectangle(cornerRadius: 8)
+                .fill(primary
+                      ? SettingsDesign.brand
+                      : Color.white.opacity(configuration.isPressed ? 0.14 : 0.08)))
+            .overlay(RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(Color.white.opacity(primary ? 0 : 0.08), lineWidth: 1))
+            .opacity(configuration.isPressed && primary ? 0.82 : 1)
+            .contentShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -625,8 +682,10 @@ private struct GeneralSettingsPage: View {
 
 /// 原「关于」独立弹窗的内容整体并入此处（弹窗已退场）。
 /// 文案与图形全部沿用原稿，只把尺寸压到设置窗口能放下的一档
+///
+/// 不渲染「检查更新」行：该动作只在通用页的「更新」组出现（避免同一窗口两个入口），
+/// 此处只留版本胶囊与官网入口。
 private struct AboutSettingsPage: View {
-    @ObservedObject var store: ComateStore
 
     var body: some View {
         SettingsPageBody {
@@ -673,10 +732,6 @@ private struct AboutSettingsPage: View {
             .frame(maxWidth: .infinity)
             .background(alignment: .top) { brandGlow }
             .padding(.top, 2)
-
-            SettingsSection(title: "更新") {
-                SettingsUpdateRow(store: store)
-            }
         }
     }
 

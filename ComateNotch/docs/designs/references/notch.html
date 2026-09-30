@@ -87,7 +87,7 @@ code{font:400 9px/1.5 var(--m);color:var(--ach)}mark{background:var(--acs);color
 .mt{display:flex;align-items:center;gap:6px;font:400 10px/13px var(--f);color:var(--td);white-space:nowrap}
 .mt b{font-weight:600}
 .si{flex:none;color:rgba(255,255,255,.5)}.ar{flex:none;color:rgba(255,255,255,.2)}
-.emp{position:absolute;left:14px;right:14px;top:43px;bottom:34px;display:grid;place-items:center;font:400 11px/1 var(--f);color:rgba(255,255,255,.4)}
+.emp{position:absolute;left:14px;right:14px;top:48px;bottom:34px;display:grid;place-items:center;font:400 11px/1 var(--f);color:rgba(255,255,255,.4)}
 .ft{position:absolute;left:14px;right:14px;bottom:14px;height:20px;display:flex;align-items:center;gap:6px}
 .ftg{display:flex;align-items:center;gap:6px;height:20px;padding:0 4px;border-radius:5px}
 /* 第 1 行分区：额度区 │ 消息·设置区 —— 竖分隔线画在铃铛热区的左缘（不吃额外宽度），
@@ -210,22 +210,22 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 <p class=cap style="max-width:960px;margin-top:10px"><b>五态共性</b> 底弧固定不随状态变；弧内指示 <code>opacity + scale .92</code> 交叉淡入 <code>0.52s ease-out</code>、颜色过渡 <code>0.5s ease-in-out</code>；色板与任务行状态灯<b>共用同一支</b>；五态在页面内均以 <b>真 CSS 关键帧</b>运行（非静态帧），系统「减弱动态效果」时 <code>prefers-reduced-motion: reduce</code> 令 <code>animation:none</code> 退化为静态终态。</p>
 
 <h2>三 · 展开面板 1:1 · 刘海形态</h2>
-<p class=sub>与收起条<b>同宽同形</b>——展开只改高度与 y，左右边缘全程不动。顶部 38pt 仍是<b>刘海条本体（标题行）</b>：左翼 Logo + 右翼「+」保留，中段 209pt 被硬件开孔遮挡（刘海形态没有文字标题，标题区＝刘海条）。其下 <code>topInset = notchHeight/2 + 24 = 43pt</code> 预留空白；再依次是任务列表（行高 34 / 行距 4）→ 区块 8 → 页脚 20 → 底部留白 14（<code>bottomPadding 14 &gt; resizeHitHeight 10</code>，手柄不吃页脚热区）。高度 = <code>81 + 38n</code>：5 条 <b>281 × 271</b>、空态 <b>281 × 119</b>。</p>
+<p class=sub>与收起条<b>同宽同形</b>——展开只改高度与 y，左右边缘全程不动。顶部 38pt 仍是<b>刘海条本体（标题行）</b>：左翼 Logo + 右翼「+」保留，中段 209pt 被硬件开孔遮挡（刘海形态没有文字标题，标题区＝刘海条）。其下 <code>topInset = notchHeight + 10 = 48pt</code> 预留空白（v2：净留白固定 10pt，与硬件刘海高度无关；旧式 <code>notchHeight/2 + 24</code> 在 34pt 刘海下只剩 7pt）；再依次是任务列表（行高 34 / 行距 4）→ 区块 8 → 页脚 20 → 底部留白 14（<code>bottomPadding 14 &gt; resizeHitHeight 10</code>，手柄不吃页脚热区）。高度 = <code>86 + 38n</code>：5 条 <b>281 × 276</b>、空态 <b>281 × 124</b>。</p>
 <div class=tw>
 <div class=barwrap>
-<h3>③ 有任务（5 条 · 四态灯齐）· 281 × 271</h3>
+<h3>③ 有任务（5 条 · 四态灯齐）· 281 × 276</h3>
 <div class=dh style="width:281px"><i></i>281 pt<i></i></div>
 <div class=hrow>
-<div class=board><div class=panel style="height:271px">
+<div class=board><div class=panel style="height:276px">
 <span class=lw style="top:5px"><svg class="ng c-wk" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><g class="sg-orb"><circle class="sg-o1" cx=300 cy=300 r="268"/><circle class="sg-o2" cx=300 cy=300 r="268"/><circle class="sg-o3" cx=300 cy=300 r="268"/></g></svg></span>
 <div class=hz style="width:209px;top:0;height:38px">硬件刘海 209 × 38</div>
 <button class=pb style="top:10px"><svg width=11 height=11><use href="#ic-plus"/></svg></button>
-<div class=gd style="top:43px"><span class=gdl>topInset 43</span></div>
-<div class=row style="top:43px"><i class="lt t-id"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-folder"/></svg>整理 window 布局常量</span><span class=mt><b class=t-id>待办</b>—<span>3天前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
-<div class=row style="top:81px"><i class="lt t-wk"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>补全 infer 接口单测</span><span class=mt><b class=t-wk>进行中</b>30天 1,240 点<span>12秒前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
-<div class=row style="top:119px"><i class="lt t-wt"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>确认删除旧状态灯映射</span><span class=mt><b class=t-wt>等你确认</b>30天 860 点<span>5分钟前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
-<div class=row style="top:157px"><i class="lt t-wt"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>拉取远端分支失败</span><span class=mt><b class=t-wt>异常</b>—<span>1小时前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
-<div class=row style="top:195px"><i class="lt t-dn"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-folder"/></svg>收敛四态色板到 Logo</span><span class=mt><b class=t-dn>已完成</b>—<span>2小时前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
+<div class=gd style="top:48px"><span class=gdl>topInset 48</span></div>
+<div class=row style="top:48px"><i class="lt t-id"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-folder"/></svg>整理 window 布局常量</span><span class=mt><b class=t-id>待办</b>—<span>3天前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
+<div class=row style="top:86px"><i class="lt t-wk"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>补全 infer 接口单测</span><span class=mt><b class=t-wk>进行中</b>30天 1,240 点<span>12秒前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
+<div class=row style="top:124px"><i class="lt t-wt"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>确认删除旧状态灯映射</span><span class=mt><b class=t-wt>等你确认</b>30天 860 点<span>5分钟前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
+<div class=row style="top:162px"><i class="lt t-wt"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-cloud"/></svg>拉取远端分支失败</span><span class=mt><b class=t-wt>异常</b>—<span>1小时前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
+<div class=row style="top:200px"><i class="lt t-dn"></i><span class=st><span class=tt><svg class=si width=9 height=9><use href="#ic-folder"/></svg>收敛四态色板到 Logo</span><span class=mt><b class=t-dn>已完成</b>—<span>2小时前</span></span></span><svg class=ar width=9 height=9><use href="#ic-arrow"/></svg></div>
 <div class=ft>
 <span class=ftg style="padding:0"><span class=seg><span class=on>日</span><span>月</span></span></span>
 <span class=ftg><span class=ftx>已用 <b>1,240</b> / 2,000 点</span><span class=pg><i style="width:62%"></i></span></span>
@@ -234,15 +234,15 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 </div>
 <i class=hnd></i>
 </div></div>
-<div class=dv style="height:271px"><i></i>271<i></i></div>
+<div class=dv style="height:276px"><i></i>276<i></i></div>
 </div>
-<p class=cap><b>块名</b> 展开面板（刘海态）· 已标 topInset<br>宽 <b>281</b>（与收起条同宽，展开不跳宽）· 高 <b>271</b>（= 81 + 38×5）· 底 <code>surface.bar #000</code> · 底圆角 <b>14</b>（顶部直角）· 行高 <b>34</b> / 行距 <b>4</b> · 内边距左右 <b>14</b> / 底 <b>14</b> · 区块 <b>8</b> · 页脚高 <b>20</b> · 手柄胶囊 <b>44×4</b></p>
+<p class=cap><b>块名</b> 展开面板（刘海态）· 已标 topInset<br>宽 <b>281</b>（与收起条同宽，展开不跳宽）· 高 <b>276</b>（= 86 + 38×5）· 底 <code>surface.bar #000</code> · 底圆角 <b>14</b>（顶部直角）· 行高 <b>34</b> / 行距 <b>4</b> · 内边距左右 <b>14</b> / 底 <b>14</b> · 区块 <b>8</b> · 页脚高 <b>20</b> · 手柄胶囊 <b>44×4</b></p>
 </div>
 <div class=barwrap>
-<h3>④ 空态 · 281 × 119</h3>
+<h3>④ 空态 · 281 × 124</h3>
 <div class=dh style="width:281px"><i></i>281 pt<i></i></div>
 <div class=hrow>
-<div class=board><div class=panel style="height:119px">
+<div class=board><div class=panel style="height:124px">
 <span class=lw style="top:5px"><svg class="ng c-id" viewBox="0 0 600 600"><path class="sg-arc" d="M181 442A185 185 0 1 1 419 442"/><circle class="sg-rip" cx=300 cy=300 r="42"/><circle class="sg-core" cx=300 cy=300 r="26"/></svg></span>
 <div class=hz style="width:209px;top:0;height:38px">硬件刘海 209 × 38</div>
 <button class=pb style="top:10px"><svg width=11 height=11><use href="#ic-plus"/></svg></button>
@@ -255,13 +255,13 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
 </div>
 <i class=hnd></i>
 </div></div>
-<div class=dv style="height:119px"><i></i>119<i></i></div>
+<div class=dv style="height:124px"><i></i>124<i></i></div>
 </div>
-<p class=cap><b>块名</b> 空态（无任务）<br>高 <b>119</b>（= 81 + 38×1，最小高度＝1 条：<code>contentHeight(forRows: 0)</code> 走 <code>max(rows,1)</code>，不会缩成一条缝）· 占位区撑满 <code>topInset 43</code>→页脚之间并居中（代码 <code>emptyPlaceholderHeight 24pt</code>）·「暂无任务」代码 <b>11pt / 白40%</b>（悬浮面板稿为 9pt <code>text.quaternary</code>）· 页脚与手柄位置同有任务态</p>
+<p class=cap><b>块名</b> 空态（无任务）<br>高 <b>124</b>（= 86 + 38×1，最小高度＝1 条：<code>contentHeight(forRows: 0)</code> 走 <code>max(rows,1)</code>，不会缩成一条缝）· 占位区撑满 <code>topInset 48</code>→页脚之间并居中（代码 <code>emptyPlaceholderHeight 24pt</code>）·「暂无任务」代码 <b>11pt / 白40%</b>（悬浮面板稿为 9pt <code>text.quaternary</code>）· 页脚与手柄位置同有任务态</p>
 </div>
 </div>
 <ol class=lg>
-<li><b>顶部标题行 = 刘海条本体</b><span>展开态<b>不遮挡、不重绘</b>刘海条：左翼 <code>LogoMotionBadge</code>（x=18 / y=19 / 28pt）+ 右翼「+」照旧，中段 <b>209pt</b> 被硬件开孔遮挡 → 刘海形态没有文字标题。其下 <code>topInset = 43pt</code> 空白（图中虚线标出 y=43）</span></li>
+<li><b>顶部标题行 = 刘海条本体</b><span>展开态<b>不遮挡、不重绘</b>刘海条：左翼 <code>LogoMotionBadge</code>（x=18 / y=19 / 28pt）+ 右翼「+」照旧，中段 <b>209pt</b> 被硬件开孔遮挡 → 刘海形态没有文字标题。其下 <code>topInset = 48pt</code> 空白（图中虚线标出 y=48）</span></li>
 <li><b>任务行（与悬浮模式共用 <code>HUDTaskRows</code>）</b><span>行高 <b>34pt</b> · 行距 <code>4</code> · <code>radius.8</code> · 行底 <code>surface.row</code> 白 4% → hover 白 10% / pressed 白 14% · 行内 padding <b>0 7</b>（水平 6→7；垂直向刻度并入固定行高 34）· 灯到文字 <b>8</b> · 无描边（P2）</span></li>
 <li><b>状态灯 + 状态文案</b><span>灯 <code>metrics.dot 8pt</code> + 微发光 <code>0 0 3px {status.*-soft}</code>：<code>idle #9CA0AA</code> / <code>working #FFC928</code> / <code>waiting #FF6259</code> / <code>done #31D158</code>；文案 <b>10pt / 600</b> 与灯同色（待办 / 进行中 / 等你确认 / 异常 / 已完成），<b>两档红靠文案与动效区分</b>：等你确认＝灯 <code>0.55s</code> 闪烁，异常＝常亮</span></li>
 <li><b>标题 / 来源 / 额度 / 时间 / 尾部箭头</b><span>来源图标 <b>9pt</b>（cloud 白 55% / folder 白 40%）+ 标题 <b>12.5pt / 500</b> <code>text.primary</code> 单行省略，间距 <b>4</b>；meta 行 <b>10pt</b> 白 40%，间距 <b>6</b>：有额度写 <b>「30天 N 点」</b>、无则 <b>「—」</b>，相对时间档位 <b>N秒 / N分钟 / N小时 / N天前</b>；尾部 <code>arrow.up.right</code> <b>9pt</b> 常态白 20% → hover 白 50%</span></li>

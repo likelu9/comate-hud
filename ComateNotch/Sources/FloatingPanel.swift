@@ -243,10 +243,12 @@ final class FloatingPanel: NSPanel {
     /// 最近一次算出的面板矩形（屏幕坐标），供 hover 判定使用
     private(set) var panelRectScreen: NSRect = .zero
 
-    /// 面板自然高度（实测）/ 最小（1 条）/ 最大（10 条）
-    private var contentHeight: CGFloat = 300
-    private var minContentHeight: CGFloat = 120
-    private var maxContentHeight: CGFloat = 420
+    /// 面板自然高度（实测）/ 最小（1 条）/ 最大（10 条）。
+    /// 首帧测量完成前的兜底值，取 v2 刻度的名义值（132 / 340 / 460）；
+    /// 一旦 onContentMetrics 报回实测值就被覆盖
+    private var contentHeight: CGFloat = 340
+    private var minContentHeight: CGFloat = 132
+    private var maxContentHeight: CGFloat = 460
     /// 拖拽高度期间窗口先撑到最大高度，之后只改 SwiftUI 内容高度
     private var isLiveResizing = false
     /// 收起动画期间延迟缩窗，避免动画被窗口裁断
@@ -558,7 +560,7 @@ struct FloatingPanelContent: View {
 
     /// 指定条数时面板应有的高度（与刘海模式同一套算法，多一个标题行）
     private func contentHeight(forRows rows: Int) -> CGFloat {
-        guard rowUnit > 0, footerHeight > 0 else { return 300 }
+        guard rowUnit > 0, footerHeight > 0 else { return 340 }
         let n = CGFloat(max(rows, 1))
         return FloatingMetrics.panelTopPadding
             + FloatingMetrics.headerHeight + FloatingMetrics.blockSpacing
