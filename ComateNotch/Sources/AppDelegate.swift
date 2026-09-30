@@ -63,8 +63,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 应用上次保存的显示模式（否则启动后总是显示刘海面板）
         switchDisplayMode(store.displayMode)
 
-        // 本地预览：COMATE_HUD_PREVIEW_UPDATE_STATE 命中时直接把更新窗打开（见 ComateStore）
-        if store.previewWindowStateRequested { presentUpdateWindow() }
+        // 本地预览：`COMATE_HUD_PREVIEW_UPDATE*` 命中时直接落到设置窗通用页 ——
+        // 更新提示小窗已下线（内容搬进通用页详情），预览要看的就是这一页
+        if store.previewWindowStateRequested { presentSettings(.general) }
     }
 
     // MARK: - 刘海面板几何
@@ -176,7 +177,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             actions: SettingsActions(
                 switchMode: { [weak self] mode in self?.switchDisplayMode(mode) },
                 selectScreen: { [weak self] id in self?.selectNotchScreen(id) },
-                openUpdate: { [weak self] in self?.presentUpdateWindow() },
                 openComateApp: { [weak self] in
                     self?.store.openComateApp()
                     NSApp.activate(ignoringOtherApps: true)
@@ -191,11 +191,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 有新版红点时落「通用」页，让用户顺着红点一路走到更新入口；否则落默认的「账号」页
     private func openSettingsFromPanel() {
         presentSettings(store.showsUpdateDot ? .general : .account)
-    }
-
-    /// 更新提示独立小窗：与更新检查、红点共用同一个 store
-    private func presentUpdateWindow() {
-        UpdateWindowController.shared.present(store: store, actions: .standard(store: store))
     }
 
     /// 切换显示模式。幂等：重复切到同一模式不会重建窗口（启动时也会调用一次）

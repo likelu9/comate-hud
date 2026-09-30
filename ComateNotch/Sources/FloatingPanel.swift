@@ -655,6 +655,8 @@ struct FloatingPanelContent: View {
         .overlay(alignment: .bottom) {
             HUDUsageFooter(store: store,
                             contentWidth: panelWidth - 2 * FloatingMetrics.panelHPadding,
+                            // 悬浮展开态：消息在上、设置在下（用户反馈 ⑤），额度块吃满左侧
+                            stackedIcons: true,
                             onSettings: { interaction.onOpenSettings?() },
                             onLogin: { LoginWindowController.shared.present(refreshing: store) })
                 .background(

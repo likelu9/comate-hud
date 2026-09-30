@@ -437,13 +437,13 @@ section("v2 刻度锁定（页脚 / 面板 / chip）")
 // 两种显示模式共用同一张刻度表（用户反馈 ①：原先刘海单行 20、悬浮两行 34，版式不统一）
 let footerM = FooterMetrics()
 
-eq(footerM.height, 34, "页脚总高 34")
+eq(footerM.rowsHeight, 32, "两行额度块高 32（14 + 4 + 14）")
+eq(footerM.height, 44, "横排页脚总高 44（padding 6 + 两行块 32 + padding 6）")
+eq(footerM.height(stackedIcons: true), 60, "上下结构页脚总高 60（6 + 图标簇 48 + 6）")
 eq(footerM.padV, 6, "上下内边距 6")
 eq(footerM.rowHeight, 14, "第 1 行行高 14")
 eq(footerM.rowSpacing, 4, "两行行距 4")
 eq(footerM.barHeight, 4, "进度条高 4")
-eq(6 + footerM.rowHeight + footerM.rowSpacing + footerM.barHeight + 6,
-   footerM.height, "总高 = padding 6 + 第 1 行 14 + 行距 4 + 进度条 4 + padding 6 = 34")
 eq(footerM.quotaFont, 10, "额度读数 10pt")
 eq(footerM.iconFont, 10.5, "图标 10.5pt")
 eq(footerM.countFont, 10, "未读数 10pt")
@@ -461,9 +461,16 @@ eq(footerM.percentWidth, 36, "百分比占位固定 36（62% / 61.7% / 100% 不�
 // 第 2 行收口：进度条 + 百分比必须在左侧额度区内结束，不得跨进图标簇那一列
 // （用户反馈 ①：「百分比跑到设置按钮下面」）
 eq(footerM.clusterWidth, 62, "图标簇总宽 62（竖线留白 6 + 铃铛 22 + 间距 2 + 齿轮 32）")
+eq(footerM.stackSpacing, 4, "上下结构图标间距 4")
+eq(footerM.stackHeight, 48, "上下结构图标簇高 48（22 + 4 + 22）")
+eq(footerM.clusterWidthStacked, 38, "上下结构图标簇宽 38（留白 6 + 较宽的齿轮 32）")
 eq(footerM.quotaWidth(contentWidth: 252), 182, "252 内容宽下额度区宽 182（稿分隔线 x=179 同量级）")
+eq(footerM.quotaWidth(contentWidth: 252, stackedIcons: true), 206,
+   "上下结构下额度区宽 206（图标簇从 62 窄到 38，用量区相应变宽）")
 check(footerM.quotaWidth(contentWidth: 252) + footerM.clusterWidth + footerM.quotaGap == 252,
       "额度区 + 图标簇 + 最小间距 = 内容宽：百分比右边界不越过分区竖线")
+check(footerM.quotaWidth(contentWidth: 252, stackedIcons: true) + footerM.clusterWidthStacked
+      + footerM.quotaGap == 252, "上下结构同样满足：额度区 + 图标簇 + 间距 = 内容宽")
 check(footerM.quotaWidth(contentWidth: 40) == 0, "窄面板下额度区宽夹到 0，不出现负宽")
 
 // 面板 / 刘海刻度（§7.1 v2 表）
@@ -528,9 +535,9 @@ check(UpdateChecker.parseNotes(fromEntry: "<entry></entry>").isEmpty, "无 conte
 eq(UpdateChecker.parseLatest(feed: notesEntry)?.version, "1.4.6", "从 entry 取到版本号")
 eq(UpdateChecker.parseLatest(feed: notesEntry)?.notes.added.count, 2, "parseLatest 同时带回说明")
 
-// MARK: - 更新窗形态
+// MARK: - 更新状态解析
 
-section("更新窗四态解析")
+section("更新四态解析（设置行五态 = 四态 + 尚未检查）")
 
 // 顺序即语义：已知的新版本不被一次重新检查的中间态盖掉
 eq(UpdatePromptState.resolve(hasUpdate: true, isChecking: true, failed: true, checked: true), .available,
@@ -544,11 +551,8 @@ eq(UpdatePromptState.resolve(hasUpdate: false, isChecking: false, failed: false,
 eq(UpdatePromptState.resolve(hasUpdate: false, isChecking: false, failed: false, checked: false), .checking,
    "从没查成功过 → 检查中，不能谎报「已是最新」")
 
-// 标题文案是设计稿三态三标题，钉住免得后续改文案漏一处
-eq(UpdatePromptState.available.windowTitle, "Comate HUD 有可用更新", "有新版标题")
-eq(UpdatePromptState.checking.windowTitle, "Comate HUD 有可用更新", "检查中沿用「有可用更新」标题（同一段动作）")
-eq(UpdatePromptState.latest.windowTitle, "Comate HUD 已是最新", "已是最新标题")
-eq(UpdatePromptState.failed.windowTitle, "Comate HUD · 检查更新失败", "失败标题")
+// 设置行在 .checking 上再分一步：`!checked && !isChecking` = 「尚未检查」
+// （小窗已下线，这里只钉 resolve 本身；行内 idle / checking 的区分在 UI 层）
 
 // MARK: - 「已是最新 · 多久前」
 

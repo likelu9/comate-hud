@@ -37,18 +37,16 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 struct SettingsActions {
     var switchMode: (ComateStore.DisplayMode) -> Void
     var selectScreen: (UInt32?) -> Void
-    /// 打开更新提示小窗（通用页「检测到新版 vX」整行可点）
-    var openUpdate: () -> Void
     /// 打开 WPS Comate 主程序。原右键菜单的「打开 Comate」入口，
     /// 菜单下线后改从账号页进入（用户反馈 ②）
     var openComateApp: () -> Void
     /// 退出 Comate HUD。原右键菜单的「退出」入口，
-    /// 菜单下线后改从关于页底部的静默文字链接进入
+    /// 菜单下线后先放关于页，用户反馈太隐蔽 → 现常驻左侧导航底部（项名「退出 HUD」）
     var quit: () -> Void
 
     /// 兜底：只写 store、不动窗口。用于没有面板上下文时（理论上不会走到）
     static let inert = SettingsActions(switchMode: { _ in }, selectScreen: { _ in },
-                                       openUpdate: {}, openComateApp: {}, quit: {})
+                                       openComateApp: {}, quit: {})
 }
 
 /// 设置窗口的全部几何与取色。取色一律从 `HUDDesign` 转（§2 单一来源），
@@ -57,9 +55,11 @@ private enum SettingsDesign {
     // 窗口（settings.html：--w-w 560 · --w-h 480（含自带 28pt 标题栏）· 圆角 radius.12）
     static let width: CGFloat = 560
     /// 窗口总高。稿里的 480 含它自带的 28pt 标题栏（--w-tb），而本应用用系统标题栏，
-    /// 所以内容区只占 452（= 480 − 28，与稿「内容区可视 452pt」一致）；
-    /// 若直接把内容区撑成 480，整窗会比稿高 28pt
-    static let height: CGFloat = 480
+    /// 所以内容区只占 452（= 480 − 28，与稿「内容区可视 452pt」一致）。
+    ///
+    /// 高度随后由 480 上调到 560（内容区 532）：用户反馈关于页要滚动才能看全。
+    /// 稿自己算过「一屏零滚动」的下限就是 560×560，这里是回到那个值，宽度不变
+    static let height: CGFloat = 560
     static let titlebarH: CGFloat = 28
     static let contentHeight: CGFloat = height - titlebarH
     static let windowRadius: CGFloat = HUDDesign.radiusWindow
@@ -189,7 +189,8 @@ private struct SettingsRootView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            SettingsNav(selection: selection, showsUpdateDot: store.showsUpdateDot)
+            SettingsNav(selection: selection, showsUpdateDot: store.showsUpdateDot,
+                        onQuit: actions.quit)
             content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -221,6 +222,41 @@ private struct SettingsNav: View {
     /// 检测到新版时在「通用」项右侧亮 5pt 红点（稿 .nav-dot）：
     /// 入口链的最后一段 —— 齿轮红点把用户带进设置窗，侧栏红点再把他指到更新行
     var showsUpdateDot: Bool = false
+    /// 退出 Comate HUD。原先挂在关于页底部，用户反馈太隐蔽 → 移到左侧导航底部
+    var onQuit: () -> Void = {}
+
+    @State private var quitHovered = false
+
+    /// 退出入口（nav 项同构：同高同图标位，只是色调更低不抢注意力）。
+    /// 原右键菜单的「退出」随菜单下线，用户又反馈关于页底部太隐蔽，故常驻左侧导航
+    private var quitItem: some View {
+        Button(action: onQuit) {
+            HStack(spacing: SettingsDesign.navIconGap) {
+                Image(systemName: "power")
+                    .font(.system(size: SettingsDesign.navIcon))
+                    .frame(width: SettingsDesign.navIcon)
+                Text("退出 HUD")
+                    .font(.system(size: SettingsDesign.navFont))
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(quitHovered ? HUDDesign.textPrimary : HUDDesign.textTertiary)
+            .padding(.horizontal, SettingsDesign.navItemPadH)
+            .frame(height: SettingsDesign.navItemH)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(RoundedRectangle(cornerRadius: SettingsDesign.navItemRadius))
+            .background(
+                RoundedRectangle(cornerRadius: SettingsDesign.navItemRadius)
+                    .fill(quitHovered ? HUDDesign.hit : Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { h in
+            quitHovered = h
+            if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+        }
+        .animation(.easeInOut(duration: 0.12), value: quitHovered)
+        .help("退出后管理面板与状态灯都会停止，重新打开应用即可恢复")
+    }
 
     private var versionLine: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -243,6 +279,7 @@ private struct SettingsNav: View {
                 }
             }
             Spacer(minLength: 0)
+            quitItem
             // 底部版本信息：font.meta 9pt + text.quaternary（settings.html .nav .foot）
             VStack(alignment: .leading, spacing: 0) {
                 Text(versionLine)
@@ -441,10 +478,14 @@ private struct SettingsValue: View {
 
 /// 行尾 chevron：12pt text.quaternary（settings.html .chev）
 private struct SettingsChevron: View {
+    /// 展开态把 chevron 转成向下（详情展开在行下方）
+    var expanded: Bool = false
+
     var body: some View {
         Image(systemName: "chevron.right")
             .font(.system(size: SettingsDesign.chevron))
             .foregroundStyle(HUDDesign.textQuaternary)
+            .rotationEffect(.degrees(expanded ? 90 : 0))
     }
 }
 
@@ -670,26 +711,43 @@ private struct SettingsWarning: View {
     }
 }
 
-// MARK: - 通用页 · 检查更新行（五态）
+// MARK: - 通用页 · 检查更新（行 + 内联详情）
 
-/// 「检查更新」行：归属通用页「更新」组；五态只改图标语义 / 文案 / 右侧控件层级，
-/// 渲染骨架不变（行高 38）。有新版时整行可点 → 更新小窗（右侧只有 chevron.right，无按钮）。
-/// **不画红点**（红点由下一步单独做）。
-private struct SettingsUpdateRow: View {
+/// 主页「更新」组的两行合一：**行**（五态，只改图标语义 / 文案 / 右侧控件层级，行高 38）
+/// + **详情**（有新版时整行可点展开/收起）。
+///
+/// 详情原先是独立的「更新提示小窗」（420×320），用户反馈 ⑥：不要弹窗，内容整合到设置窗详情里。
+/// 于是窗口与 `UpdateActions` 一并下线，版本迁移 / changelog 三组 / 两个下载入口 / 跳过此版本
+/// 全部就地渲染在这张卡里；`UpdatePromptState` 仍作为状态判定的单一来源。
+private struct SettingsUpdateSection: View {
     @ObservedObject var store: ComateStore
-    var actions: SettingsActions = .inert
 
     @State private var hovered = false
+    /// 有新版时详情默认展开：红点把人带进来，到了就该直接看到「什么变了 / 去哪下」
+    @State private var detailExpanded = true
 
-    private enum Phase { case idle, checking, latest, available, failed }
+    /// 行态：稿里的三态 + 「尚未检查」+ 失败兜底（= 更新小窗四态 + idle）
+    private enum RowState { case idle, checking, latest, available, failed }
 
-    /// 状态判定沿用原实现（DESIGN.md §7.6 的触发关系：检查中 → 已最新 / 有新版 / 失败）
-    private var state: Phase {
-        if store.hasUpdate { return .available }
-        if store.isCheckingUpdate { return .checking }
-        if store.updateCheckFailed { return .failed }
-        return store.updateChecked ? .latest : .idle
+    /// 状态判定沿用更新小窗的 `resolve`（纯函数，test.sh 直接钉住了优先级）：
+    /// 有新版 > 检查中 > 失败 > 已最新。这里只把「从没查过」再细分出 idle ——
+    /// 小窗里它与 checking 同一副文案，但设置行的骨架不同（未检查 = 两行 + 按钮）
+    private var state: RowState {
+        let s = UpdatePromptState.resolve(hasUpdate: store.hasUpdate,
+                                          isChecking: store.isCheckingUpdate,
+                                          failed: store.updateCheckFailed,
+                                          checked: store.updateChecked)
+        if s == .checking && !store.updateChecked && !store.isCheckingUpdate { return .idle }
+        switch s {
+        case .available: return .available
+        case .checking:  return .checking
+        case .latest:    return .latest
+        case .failed:    return .failed
+        }
     }
+
+    /// 详情只在「有新版」时存在；行右侧的 chevron 同时兼任展开指示
+    private var showsDetail: Bool { state == .available && detailExpanded }
 
     /// 各态文案（稿：通用页「检查更新」行 + 页末三态小样）
     private var statusText: String {
@@ -712,6 +770,14 @@ private struct SettingsUpdateRow: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            row
+            if showsDetail { detailBlock.padding(.top, 8) }
+        }
+    }
+
+    /// 行本体（稿的 38pt 骨架）
+    private var row: some View {
         HStack(spacing: 6) {
             // 有新版时文案前多一枚 5pt 红点（稿 .badge）：先红点、再图标、再文案
             if state == .available { UpdateDotBadge() }
@@ -725,13 +791,117 @@ private struct SettingsUpdateRow: View {
         .frame(minHeight: SettingsDesign.rowMinH)
         .background(state == .available && hovered ? HUDDesign.rowHover : Color.clear)
         .contentShape(Rectangle())
-        .onTapGesture { if state == .available { actions.openUpdate() } }
+        .onTapGesture { if state == .available { detailExpanded.toggle() } }
         .onHover { h in
             guard state == .available else { return }
             hovered = h
             if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
         }
         .animation(.easeInOut(duration: 0.12), value: hovered)
+    }
+
+    // MARK: 详情（原「更新提示小窗」的内容，现在就地渲染）
+
+    /// 更新详情卡：版本迁移行 → changelog 三组（新增/优化/修复，空组不占位）
+    /// → 两个下载入口 + 跳过此版本。版式沿用 update.html，只是从独立窗口换成行下内联
+    private var detailBlock: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            versionTransition
+            if !store.availableUpdateNotes.isEmpty {
+                let groups = store.availableUpdateNotes.groups
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(groups.indices, id: \.self) { i in
+                        noteGroup(title: groups[i].title, items: groups[i].items)
+                    }
+                }
+            } else {
+                Text("本次发布未附更新说明，可到发布页查看完整记录。")
+                    .font(.system(size: SettingsDesign.rowSubFont))
+                    .foregroundStyle(HUDDesign.textQuaternary)
+            }
+            HStack(spacing: 8) {
+                SettingsButton(title: "官网下载", icon: "arrow.down", kind: .primary,
+                               action: openWebsite)
+                // 用户反馈 ⑦：原来的 arrow.up.right.square 是通用「外链」图标，看不出是 GitHub。
+                // 换成 git 分支图标（系统里最接近 git 语义的一枚）
+                SettingsButton(title: "GitHub 下载", icon: "arrow.triangle.branch", kind: .secondary,
+                               action: openGitHub)
+                Spacer(minLength: 0)
+                skipLink
+            }
+            .padding(.top, 2)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: SettingsDesign.cardRadius).fill(HUDDesign.card)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: SettingsDesign.cardRadius)
+                .strokeBorder(HUDDesign.lineCard, lineWidth: 1)
+        )
+    }
+
+    /// 版本迁移行：当前 vX → vY（稿 update.html 的 .ver）
+    private var versionTransition: some View {
+        HStack(spacing: 6) {
+            Text("v\(UpdateChecker.localVersion)")
+                .foregroundStyle(HUDDesign.textTertiary)
+            Image(systemName: "arrow.right")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(HUDDesign.textQuaternary)
+            Text("v\(store.availableUpdate ?? "")")
+                .font(.system(size: SettingsDesign.rowValueFont, weight: .semibold,
+                              design: .rounded))
+                .foregroundStyle(HUDDesign.accentHover)
+        }
+        .font(.system(size: SettingsDesign.rowValueFont, weight: .medium, design: .rounded))
+    }
+
+    /// 一组 changelog：组名（品牌绿小字）+ 逐条圆点
+    private func noteGroup(title: String, items: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title)
+                .font(.system(size: SettingsDesign.rowSubFont, weight: .semibold))
+                .foregroundStyle(HUDDesign.accentHover)
+            ForEach(items, id: \.self) { item in
+                HStack(alignment: .top, spacing: 6) {
+                    Circle()
+                        .fill(HUDDesign.textQuaternary)
+                        .frame(width: 3, height: 3)
+                        .padding(.top, 6)
+                    Text(item)
+                        .font(.system(size: SettingsDesign.rowSubFont))
+                        .foregroundStyle(HUDDesign.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private var skipLink: some View {
+        Button(action: { store.acknowledgeUpdate() }) {
+            Text("跳过此版本")
+                .font(.system(size: SettingsDesign.rowSubFont))
+                .foregroundStyle(HUDDesign.textTertiary)
+                // 不用 .underline()：它要 macOS 13；手画一条（与关于页 footerLink 同做法）
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(HUDDesign.lineDividerStrong).frame(height: 1)
+                }
+        }
+        .buttonStyle(.plain)
+        .help("记下这个版本，不再提示；下次发新版本会重新提醒")
+    }
+
+    private func openWebsite() {
+        guard let url = URL(string: HUDLinks.website) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    /// 拿不到具体 Release 链接时退回官网（与旧更新窗同一套兵兵）
+    private func openGitHub() {
+        guard let url = store.availableUpdateURL ?? URL(string: HUDLinks.website) else { return }
+        NSWorkspace.shared.open(url)
     }
 
     private var leadingIcon: some View {
@@ -788,7 +958,8 @@ private struct SettingsUpdateRow: View {
     private var trailing: some View {
         switch state {
         case .available:
-            SettingsChevron()
+            // chevron 兼任展开指示：展开时向下（详情在行下方），收起时指右
+            SettingsChevron(expanded: detailExpanded)
         case .failed:
             // 稿没有失败态；保留一个重试入口（DESIGN.md §7.6 登记为题外兜底）
             SettingsButton(title: "重试", kind: .ghost) { store.checkForUpdate(force: true) }
@@ -1065,7 +1236,7 @@ private struct GeneralSettingsPage: View {
             }
 
             SettingsGroup(title: "更新") {
-                SettingsUpdateRow(store: store, actions: actions)
+                SettingsUpdateSection(store: store)
             }
         }
     }
@@ -1119,10 +1290,6 @@ private struct AboutSettingsPage: View {
                 signedBy.padding(.top, 14)
                 ctaButton.padding(.top, 12)
                 footerLink.padding(.top, 11)
-                // 刻意偏离设计稿：settings.html 的关于页没有这一枚链接。
-                // 原因：原右键菜单的「退出」入口已随菜单下线，这是退出 Comate HUD 的唯一入口。
-                // 做成静默文字链接（text.quaternary 级别），不跟主 CTA 抢注意力。
-                quitLink.padding(.top, 16)
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, SettingsDesign.padH)
@@ -1144,17 +1311,48 @@ private struct AboutSettingsPage: View {
             .allowsHitTesting(false)
     }
 
-    /// 应用图标 88×88 · radius.icon 20 · 投影 shadow.icon · 内描边白 7%
+    /// 应用图标 88×88 · radius.icon 20 · 投影 shadow.icon · 内描边白 9%
+    ///
+    /// 矢量绘制（同 settings.html 的 `<svg class=abicon>`：深色渐变底 + 刘海条 + 四态点 + 两根横条）。
+    /// 不用 `NSApplication.shared.applicationIconImage`：.icns 是带白底的方图，缩到 88 再圆角裁切后
+    /// 四角与边缘会露出一圈白色锯齿（用户反馈）。矢量版无缩放伪影，也不吃图标资产
     private var appIcon: some View {
-        Image(nsImage: NSApplication.shared.applicationIconImage)
-            .resizable()
-            .frame(width: SettingsDesign.aboutIcon, height: SettingsDesign.aboutIcon)
-            .clipShape(RoundedRectangle(cornerRadius: SettingsDesign.aboutIconRadius, style: .continuous))
-            .shadow(color: .black.opacity(0.55), radius: 14, y: 10)
-            .overlay(
-                RoundedRectangle(cornerRadius: SettingsDesign.aboutIconRadius, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.09), lineWidth: 1)
-            )
+        let s = SettingsDesign.aboutIcon / 88
+        let dots: [(CGFloat, Color)] = [(24, HUDDesign.idle), (37, HUDDesign.done),
+                                        (50, HUDDesign.working), (63, HUDDesign.waiting)]
+        return ZStack(alignment: .topLeading) {
+            LinearGradient(colors: [Color(hex: "#20242E"), Color(hex: "#0A0C11")],
+                           startPoint: .top, endPoint: .bottom)
+            // 刘海条 x=30 y=12 28×9 r4.5（纯黑 + 白 10% 描边）
+            RoundedRectangle(cornerRadius: 4.5 * s, style: .continuous)
+                .fill(Color.black)
+                .overlay(RoundedRectangle(cornerRadius: 4.5 * s, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+                .frame(width: 28 * s, height: 9 * s)
+                .offset(x: 30 * s, y: 12 * s)
+            // 四态点 cx 24/37/50/63 · cy 40 · r4
+            ForEach(dots.indices, id: \.self) { i in
+                Circle().fill(dots[i].1)
+                    .frame(width: 8 * s, height: 8 * s)
+                    .offset(x: (dots[i].0 - 4) * s, y: 36 * s)
+            }
+            // 两根横条 y=54 / y=64
+            RoundedRectangle(cornerRadius: 3 * s, style: .continuous)
+                .fill(Color.white.opacity(0.14))
+                .frame(width: 40 * s, height: 6 * s)
+                .offset(x: 24 * s, y: 54 * s)
+            RoundedRectangle(cornerRadius: 3 * s, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+                .frame(width: 24 * s, height: 6 * s)
+                .offset(x: 24 * s, y: 64 * s)
+        }
+        .frame(width: SettingsDesign.aboutIcon, height: SettingsDesign.aboutIcon)
+        .clipShape(RoundedRectangle(cornerRadius: SettingsDesign.aboutIconRadius, style: .continuous))
+        .shadow(color: .black.opacity(0.55), radius: 14, y: 10)
+        .overlay(
+            RoundedRectangle(cornerRadius: SettingsDesign.aboutIconRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.09), lineWidth: 1)
+        )
     }
 
     /// 版本胶囊「版本 X.Y.Z」10.5/500，底/描边白 7%、字白 58%（稿 .abv）
@@ -1259,17 +1457,6 @@ private struct AboutSettingsPage: View {
                 }
         }
         .buttonStyle(.plain)
-    }
-
-    /// 退出入口：原右键菜单下线后的唯一图形入口。静默文字链接（text.quaternary）
-    private var quitLink: some View {
-        Button(action: actions.quit) {
-            Text("退出 Comate HUD")
-                .font(.system(size: 10.5))
-                .foregroundStyle(HUDDesign.textQuaternary)
-        }
-        .buttonStyle(.plain)
-        .help("退出后管理面板与状态灯都会停止，重新打开应用即可恢复")
     }
 
     private func openWebsite() {

@@ -46,6 +46,29 @@ struct UpdateNotes: Equatable {
     }
 }
 
+/// 更新状态的四种形态。
+///
+/// 原先只服务于「更新提示小窗」的标题与版面；小窗下线（内容搬进设置窗通用页详情）后，
+/// 它仍然是状态判定的单一来源 —— 设置行的五态 = 这四态 + 「尚未检查」，
+/// 优先级也在这里一处定死。纯函数，便于 test.sh 直接断言。
+enum UpdatePromptState: Equatable {
+    case available
+    case checking
+    case latest
+    case failed
+
+    /// 顺序是有意的：「有新版」优先级最高 —— 已知的新版本不该被一次重新检查的
+    /// 中间态盖掉；`checked == false`（从没查成功过）落到「检查中」而不是「已是最新」，
+    /// 否则会把「不知道」显示成一个确定的结论。
+    static func resolve(hasUpdate: Bool, isChecking: Bool, failed: Bool,
+                        checked: Bool) -> UpdatePromptState {
+        if hasUpdate { return .available }
+        if isChecking { return .checking }
+        if failed { return .failed }
+        return checked ? .latest : .checking
+    }
+}
+
 /// 三组说明的语义标签。只认设计稿这三组。
 enum UpdateNoteGroup: String, CaseIterable {
     case added, improved, fixed

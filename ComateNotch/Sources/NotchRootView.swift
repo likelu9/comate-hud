@@ -559,8 +559,10 @@ struct ComateTaskRow: View {
                 .font(.system(size: 9))
                 .foregroundStyle(.white.opacity(isHovered ? 0.5 : 0.2))
         }
-        // 行高 34 = 标题行 18 + 行内间距 2 + 第二行 14，垂直方向不再额外加 padding
-        .padding(.horizontal, 7)
+        // 行 = 标题行 18 + 行内间距 2 + 第二行 14 + 上下各 12 内边距（用户反馈列表拥挤）。
+        // 行高由 NotchLayout.rowUnit 从实测行高反推，这里只负责留白，不再写死 34
+        .padding(.vertical, 12)
+        .padding(.horizontal, 12)
         .background(Color.white.opacity(isHovered ? 0.1 : 0.04), in: RoundedRectangle(cornerRadius: 8))
         .onHover { h in
             isHovered = h
