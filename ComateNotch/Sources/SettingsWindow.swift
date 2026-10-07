@@ -111,14 +111,11 @@ private enum SettingsDesign {
     static let chevron: CGFloat = 12
 
     // 关于页（settings.html 三 · 关于）
-    static let aboutIcon: CGFloat = 88
-    static let aboutIconRadius: CGFloat = 20
     static let aboutNameFont: CGFloat = 22
     static let aboutChipFont: CGFloat = 10.5
     static let aboutTaglineFont: CGFloat = 13
     static let aboutDescFont: CGFloat = 12
     static let aboutDescWidth: CGFloat = 300
-    static let aboutFeatureWidth: CGFloat = 336
     static let aboutCTAWidth: CGFloat = 150
     static let aboutCTAHeight: CGFloat = 30
     static let legendRadius: CGFloat = HUDDesign.radiusCard
@@ -543,6 +540,9 @@ private struct SettingsButton: View {
 
     var title: String
     var icon: String? = nil
+    /// 用官方 GitHub 徽标（官网下载页同一份 SVG path）代替 `icon`。
+    /// SF Symbols 没有 GitHub 字形，只能自绘（见 `GitHubMark`）
+    var gitHubMark: Bool = false
     var kind: Kind = .ghost
     var enabled: Bool = true
     var action: () -> Void
@@ -552,7 +552,9 @@ private struct SettingsButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                if let icon {
+                if gitHubMark {
+                    GitHubMark().frame(width: 12, height: 12)
+                } else if let icon {
                     Image(systemName: icon).font(.system(size: 12))
                 }
                 Text(title)
@@ -822,9 +824,9 @@ private struct SettingsUpdateSection: View {
             HStack(spacing: 8) {
                 SettingsButton(title: "官网下载", icon: "arrow.down", kind: .primary,
                                action: openWebsite)
-                // 用户反馈 ⑦：原来的 arrow.up.right.square 是通用「外链」图标，看不出是 GitHub。
-                // 换成 git 分支图标（系统里最接近 git 语义的一枚）
-                SettingsButton(title: "GitHub 下载", icon: "arrow.triangle.branch", kind: .secondary,
+                // 用户反馈 ②：参考官网下载页的 GitHub 按钮，直接用官方 octocat 徽标
+                // （同一份 SVG path，见 `GitHubMark`；之前那枚 arrow.triangle.branch 只是替代字形）
+                SettingsButton(title: "GitHub 下载", gitHubMark: true, kind: .secondary,
                                action: openGitHub)
                 Spacer(minLength: 0)
                 skipLink
@@ -1268,25 +1270,32 @@ private struct AboutSettingsPage: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             VStack(spacing: 0) {
-                appIcon
+                // 图标已下线（用户反馈 ③：关于页不要图标），首元素直接是产品名
                 Text("Comate HUD")
                     .font(.system(size: SettingsDesign.aboutNameFont, weight: .bold, design: .rounded))
                     .foregroundStyle(HUDDesign.textPrimary)
-                    .padding(.top, 16)
+                    .padding(.top, 10)
                 versionChip.padding(.top, 8)
                 Text("让 AI 干活，你只管看灯")
                     .font(.system(size: SettingsDesign.aboutTaglineFont, weight: .semibold))
                     .foregroundStyle(HUDDesign.textPrimary)
                     .padding(.top, 14)
-                Text("一款常驻 macOS 刘海区的轻量状态指示器，为 WPS Comate 而生。无需打开主窗口，任务状态一目了然。")
+                Text("常驻 macOS 刘海区的 Comate 状态指示器。")
                     .font(.system(size: SettingsDesign.aboutDescFont))
                     .lineSpacing(5)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Color.white.opacity(0.6))
                     .frame(maxWidth: SettingsDesign.aboutDescWidth)
                     .padding(.top, 8)
-                statusLegend.padding(.top, 14)
-                featureList.padding(.top, 14)
+                statusLegend.padding(.top, 16)
+                // 三行特性整并成一行居中（用户反馈 ③：文案简化 + 全部居中对齐）。
+                // 原带 ✓ 的三行列表只能左对齐，且与上面的描述重复
+                Text("悬停展开面板 · 进度与额度一体 · 点击直达会话")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(HUDDesign.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 14)
                 signedBy.padding(.top, 14)
                 ctaButton.padding(.top, 12)
                 footerLink.padding(.top, 11)
@@ -1295,6 +1304,8 @@ private struct AboutSettingsPage: View {
             .padding(.horizontal, SettingsDesign.padH)
             .padding(.top, SettingsDesign.padTop)
             .padding(.bottom, SettingsDesign.padBottom)
+            // 图标下线后内容变短，内容区矮于窗口：整块竖向居中，不要让正文都吸在顶部
+            .frame(maxWidth: .infinity, minHeight: SettingsDesign.contentHeight, alignment: .center)
             .background(alignment: .top) { brandGlow }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -1309,50 +1320,6 @@ private struct AboutSettingsPage: View {
             .frame(height: 320)
             .offset(y: -120)
             .allowsHitTesting(false)
-    }
-
-    /// 应用图标 88×88 · radius.icon 20 · 投影 shadow.icon · 内描边白 9%
-    ///
-    /// 矢量绘制（同 settings.html 的 `<svg class=abicon>`：深色渐变底 + 刘海条 + 四态点 + 两根横条）。
-    /// 不用 `NSApplication.shared.applicationIconImage`：.icns 是带白底的方图，缩到 88 再圆角裁切后
-    /// 四角与边缘会露出一圈白色锯齿（用户反馈）。矢量版无缩放伪影，也不吃图标资产
-    private var appIcon: some View {
-        let s = SettingsDesign.aboutIcon / 88
-        let dots: [(CGFloat, Color)] = [(24, HUDDesign.idle), (37, HUDDesign.done),
-                                        (50, HUDDesign.working), (63, HUDDesign.waiting)]
-        return ZStack(alignment: .topLeading) {
-            LinearGradient(colors: [Color(hex: "#20242E"), Color(hex: "#0A0C11")],
-                           startPoint: .top, endPoint: .bottom)
-            // 刘海条 x=30 y=12 28×9 r4.5（纯黑 + 白 10% 描边）
-            RoundedRectangle(cornerRadius: 4.5 * s, style: .continuous)
-                .fill(Color.black)
-                .overlay(RoundedRectangle(cornerRadius: 4.5 * s, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
-                .frame(width: 28 * s, height: 9 * s)
-                .offset(x: 30 * s, y: 12 * s)
-            // 四态点 cx 24/37/50/63 · cy 40 · r4
-            ForEach(dots.indices, id: \.self) { i in
-                Circle().fill(dots[i].1)
-                    .frame(width: 8 * s, height: 8 * s)
-                    .offset(x: (dots[i].0 - 4) * s, y: 36 * s)
-            }
-            // 两根横条 y=54 / y=64
-            RoundedRectangle(cornerRadius: 3 * s, style: .continuous)
-                .fill(Color.white.opacity(0.14))
-                .frame(width: 40 * s, height: 6 * s)
-                .offset(x: 24 * s, y: 54 * s)
-            RoundedRectangle(cornerRadius: 3 * s, style: .continuous)
-                .fill(Color.white.opacity(0.08))
-                .frame(width: 24 * s, height: 6 * s)
-                .offset(x: 24 * s, y: 64 * s)
-        }
-        .frame(width: SettingsDesign.aboutIcon, height: SettingsDesign.aboutIcon)
-        .clipShape(RoundedRectangle(cornerRadius: SettingsDesign.aboutIconRadius, style: .continuous))
-        .shadow(color: .black.opacity(0.55), radius: 14, y: 10)
-        .overlay(
-            RoundedRectangle(cornerRadius: SettingsDesign.aboutIconRadius, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.09), lineWidth: 1)
-        )
     }
 
     /// 版本胶囊「版本 X.Y.Z」10.5/500，底/描边白 7%、字白 58%（稿 .abv）
@@ -1396,31 +1363,6 @@ private struct AboutSettingsPage: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// 特性列表 3 行、行距 8，勾选 14pt accent.soft 圆底 + accent.hover ✓
-    private var featureList: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            feature("悬停刘海，展开任务面板")
-            feature("最近会话 · 执行进度 · 额度用量，尽收眼底")
-            feature("点击任务，直达对应会话")
-        }
-        .frame(maxWidth: SettingsDesign.aboutFeatureWidth, alignment: .leading)
-        .frame(maxWidth: .infinity, alignment: .center)
-    }
-
-    private func feature(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: 9) {
-            Text("✓")
-                .font(.system(size: 9, weight: .heavy))
-                .foregroundStyle(HUDDesign.accentHover)
-                .frame(width: 14, height: 14)
-                .background(Circle().fill(HUDDesign.accentSoft))
-            Text(text)
-                .font(.system(size: 11.5))
-                .foregroundStyle(HUDDesign.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
     /// 署名：10.5pt text.quaternary，强调段 text.strong + accent 下划线
     private var signedBy: Text {
         (Text("通过 ").foregroundColor(HUDDesign.textQuaternary)
@@ -1428,7 +1370,7 @@ private struct AboutSettingsPage: View {
             .fontWeight(.bold)
             .foregroundColor(HUDDesign.textStrong)
             .underline(true, color: HUDDesign.accent)
-         + Text(" 实现").foregroundColor(HUDDesign.textQuaternary))
+         + Text(" 打造").foregroundColor(HUDDesign.textQuaternary))
             .font(.system(size: 10.5))
     }
 

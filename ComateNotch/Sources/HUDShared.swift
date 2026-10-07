@@ -7,6 +7,11 @@ struct HUDTaskRows: View {
     @ObservedObject var store: ComateStore
     var spacing: CGFloat = 3
 
+    /// 任务行内边距。12 太松散（行间视觉间隙 28pt），收敛到 8：
+    /// 行高 50 = 内容 34 + 上下各 8，卡与卡之间留 8 + 2(行距) + 8 = 18pt
+    static let rowPadV: CGFloat = 8
+    static let rowPadH: CGFloat = 10
+
     var body: some View {
         VStack(spacing: spacing) {
             ForEach(store.recentTasks.prefix(store.recentTaskLimit)) { task in
@@ -43,12 +48,8 @@ struct HUDTaskRows: View {
 struct FooterMetrics {
     /// 两行额度块的高（第 1 行 14 + 行距 4 + 第 2 行 14）
     var rowsHeight: CGFloat { rowHeight * 2 + rowSpacing }
-    /// 页脚总高（横排 = 6 + 32 + 6 = 44）。上下结构用 `height(stackedIcons:)`
-    var height: CGFloat { height(stackedIcons: false) }
-    /// 页脚总高。上下结构的图标簇（消息 + 4 + 设置 = 48）比两行额度块高，页脚跟着长高
-    func height(stackedIcons: Bool) -> CGFloat {
-        padV * 2 + max(rowsHeight, stackedIcons ? stackHeight : hitHeight)
-    }
+    /// 页脚总高（6 + max(两行额度块 32, 图标簇 22) + 6 = 44）
+    var height: CGFloat { padV * 2 + max(rowsHeight, hitHeight) }
     var padV: CGFloat { 6 }
     /// 第 1 行行高
     var rowHeight: CGFloat { 14 }
@@ -63,17 +64,11 @@ struct FooterMetrics {
     /// 铃铛热区比齿轮窄（设计稿铃铛 x=185、齿轮 x=219，两者间距 2）
     var bellHitWidth: CGFloat { 22 }
     var clusterSpacing: CGFloat { 2 }
-    /// 上下结构的图标间距（用户反馈 ⑤：消息在上、设置在下）
-    var stackSpacing: CGFloat { 4 }
-    /// 上下结构时图标簇的高（22 + 4 + 22）
-    var stackHeight: CGFloat { hitHeight * 2 + stackSpacing }
     var corner: CGFloat { 4 }
     /// 额度区与消息·设置区之间的分区竖线
     var dividerWidth: CGFloat { 1 }
-    /// 横排时的竖线高（设计稿）
+    /// 竖线高（设计稿）
     var dividerHeight: CGFloat { 16 }
-    /// 上下结构时竖线跟着图标簇长高，两枚按钮都在它右侧
-    var dividerHeightStacked: CGFloat { 32 }
     /// 图标簇的左内边距：竖线画在这段留白里，不吃额外宽度
     var clusterPadding: CGFloat { 6 }
     /// 额度区与图标簇之间至少留的间距
@@ -96,24 +91,19 @@ struct FooterMetrics {
     /// 右侧图标簇总宽（竖线留白 + 铃铛 + 间距 + 齿轮）
     var clusterWidth: CGFloat { clusterPadding + bellHitWidth + clusterSpacing + hitWidth }
 
-    /// 上下结构时的图标簇宽 = 竖线留白 + 较宽的那枚按钮（齿轮 32）
-    var clusterWidthStacked: CGFloat { clusterPadding + max(bellHitWidth, hitWidth) }
-
     /// 左侧额度区宽 = 内容宽 − 图标簇 − 最小间距（内容宽 252 时 = 182，
-    /// 与设计稿的分隔线 x=179 同量级）。上下结构时图标簇窄了 30pt，额度区相应变宽。
+    /// 与设计稿的分隔线 x=179 同量级）。
     /// 仅作几何契约（视图内由 HStack 均分屏幕实现），用于断言与调试
-    func quotaWidth(contentWidth: CGFloat, stackedIcons: Bool = false) -> CGFloat {
-        max(0, contentWidth - (stackedIcons ? clusterWidthStacked : clusterWidth) - quotaGap)
+    func quotaWidth(contentWidth: CGFloat) -> CGFloat {
+        max(0, contentWidth - clusterWidth - quotaGap)
     }
 }
 
 struct HUDUsageFooter: View {
     @ObservedObject var store: ComateStore
-    /// 面板内容宽（面板宽 − 左右内边距）。两侧布局现在由 HStack 自己均分（额度块吃满剩余宽），
+    /// 面板内容宽（面板宽 − 左右内边距）。两侧布局由 HStack 自己均分（额度块吃满剩余宽），
     /// 这里仅作为几何契约保留给断言与调试
     var contentWidth: CGFloat
-    /// 图标簇排布。false = 横排（刘海模式，稿）；true = 上下（悬浮模式，上消息下设置）
-    var stackedIcons: Bool = false
     /// 设置按钮动作。必填而非可选：设置是功能而不是装饰，
     /// 两种显示模式都必须提供，避免再出现「某个模式没有设置按钮」
     let onSettings: () -> Void
@@ -164,27 +154,17 @@ struct HUDUsageFooter: View {
 
     /// 右侧图标簇：铃铛 + 齿轮，左缘一条 1pt 竖线把「额度区」与「消息·设置区」分开。
     /// 竖线画在簇的左内边距里（不吃额外宽度）；整簇固定尺寸，读数再长也不会挤动它。
-    /// 两种排布：横排（刘海模式，稿）+ 上下（悬浮模式，用户反馈 ⑤ 上消息下设置）
+    /// 排布统一取刘海模式（用户反馈：两种显示模式共用同一版式）
     private var iconCluster: some View {
-        Group {
-            if stackedIcons {
-                VStack(spacing: m.stackSpacing) {
-                    bellButton
-                    settingsButton
-                }
-            } else {
-                HStack(spacing: m.clusterSpacing) {
-                    bellButton
-                    settingsButton
-                }
-            }
+        HStack(spacing: m.clusterSpacing) {
+            bellButton
+            settingsButton
         }
         .padding(.leading, m.clusterPadding)
         .overlay(alignment: .leading) {
             Rectangle()
                 .fill(HUDDesign.lineDivider)
-                .frame(width: m.dividerWidth,
-                       height: stackedIcons ? m.dividerHeightStacked : m.dividerHeight)
+                .frame(width: m.dividerWidth, height: m.dividerHeight)
         }
         .fixedSize()
         .layoutPriority(1)

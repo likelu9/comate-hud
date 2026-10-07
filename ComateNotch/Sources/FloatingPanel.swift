@@ -33,7 +33,8 @@ enum FloatingMetrics {
     static let handleHitHeight: CGFloat = 10
     /// 无任务时列表占位文案的高度
     static let emptyPlaceholderHeight: CGFloat = 24
-    static let listSpacing: CGFloat = 4
+    /// 任务行之间的行距。v3.1 由 4 收到 2（与刘海模式同名值一致，两模式行距／内边距完全统一）
+    static let listSpacing: CGFloat = 2
     static let blockSpacing: CGFloat = 8
     /// 标题行高度（悬浮模式特有：标题 + 新建任务按钮）
     static let headerHeight: CGFloat = 20
@@ -655,8 +656,6 @@ struct FloatingPanelContent: View {
         .overlay(alignment: .bottom) {
             HUDUsageFooter(store: store,
                             contentWidth: panelWidth - 2 * FloatingMetrics.panelHPadding,
-                            // 悬浮展开态：消息在上、设置在下（用户反馈 ⑤），额度块吃满左侧
-                            stackedIcons: true,
                             onSettings: { interaction.onOpenSettings?() },
                             onLogin: { LoginWindowController.shared.present(refreshing: store) })
                 .background(

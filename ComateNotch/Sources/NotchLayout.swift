@@ -13,7 +13,9 @@ struct NotchLayout {
     let notchHeight: CGFloat
 
     static let horizontalPadding: CGFloat = 14
-    static let listSpacing: CGFloat = 4
+    /// 任务行之间的行距。v3.1 由 4 收到 2（行内边距也同时从 12 收到 8，
+    /// 卡与卡之间的视觉间隙 18pt）
+    static let listSpacing: CGFloat = 2
     static let blockSpacing: CGFloat = 8
     /// 面板底部留白：页脚下方必须留出比拖拽手柄命中区更高的空白，
     /// 否则手柄会盖住页脚按钮的命中区（14 > resizeHitHeight）

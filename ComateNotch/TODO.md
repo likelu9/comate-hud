@@ -71,14 +71,22 @@
 - `test.sh` 228 项断言全绿（页脚几何 20 项：两行块 32 / 横排总高 44 / 上下结构总高 60 / 图标簇 62 与 38 / 额度区 182 与 206 / 窄面板夹到 0 等）；`build.sh` exit 0（universal + DMG 2.4M）；`check-docs.sh` exit 0；官网自检 16/16
 
 ### Phase10 - 1.4.6 UI 二次整改（七项，验收反馈）
-- **任务列表不再拥挤**：任务行内边距改为上下左右各 `12`（原 `3/6`），行高仍由实测反推（`NotchLayout.rowUnit`）
+- **任务列表不再拥挤**：任务行内边距改为上下左右各 `12`（原 `3/6`），行高仍由实测反推（`NotchLayout.rowUnit`）→ v3.1 收到 `8`（见 Phase11）
 - **设置窗加高**：用户反馈关于页要滚动 → 窗口由 `560×480` 提到 **`560×560`**（内容区 `532 = 560 − 28`）
 - **退出入口提到侧栏**：原先埋在关于页底部静默文字链接（用户：太隐蔽）→ 改为**左侧导航底部常驻项「退出 HUD」**（与导航项同构，`text.tertiary` + hover 提亮）
-- **关于页图标改矢量绘制**：原来贴 `applicationIconImage`，`.icns` 白底方图缩到 88 加圆角后会露一圈**白色锯齿** → 按稿的 `<svg class=abicon>` 就地矢量重画（渐变底 + 刘海条 + 四态点 + 两根横条）
+- **关于页图标改矢量绘制**：原来贴 `applicationIconImage`，`.icns` 白底方图缩到 88 加圆角后会露一圈**白色锯齿** → 按稿的 `<svg class=abicon>` 就地矢量重画（渐变底 + 刘海条 + 四态点 + 两根横条）→ v3.1 整块下线（用户：不要图标了）
 - **页脚左侧两端对齐 + 用量填充**：额度块 `maxWidth: .infinity` 吃满（不再靠左缩成一小截），第 1 行胶囊贴左 / 读数贴右、第 2 行进度条 `flex` 填充 + 百分比贴右 → 两行左右缘对齐；**悬浮模式图标簇改上下结构**（上铃铛下齿轮，簇宽 62 → 38，页脚 44 → 60），刘海模式保留稿里的横排
 - **检查更新弹窗下线**：`UpdateWindow.swift`（483 行）整体删除，「更新详情卡」就地渲染在通用页更新行下方（版本迁移 + 三组 changelog + 官网/GitHub 下载 + 跳过此版本）；`UpdatePromptState` 移到 `UpdateChecker.swift`，`windowTitle` 随窗删；预览变量改为启动后直接落设置窗通用页
-- **GitHub 按钮图标**：`arrow.up.right.square`（通用外链）→ `arrow.triangle.branch`（git 分支语义）
+- **GitHub 按钮图标**：`arrow.up.right.square`（通用外链）→ `arrow.triangle.branch`（git 分支语义）→ v3.1 换成真 octocat（见 Phase11）
 - `test.sh` 228 项断言全绿（页脚几何断言随 v3 刻度重写、删掉窗口标题 4 项）；`build.sh` exit 0（universal + DMG 2.4M、源文件 21 → 20）；`check-docs.sh` exit 0；官网自检 16/16
+
+### Phase11 - v3.1 验收反馈再收口（四项）
+- **任务行再收紧**：内边距 `12` → **`8`**（上下左右），行距 `4` → **`2`**（`NotchLayout.listSpacing` 与 `FloatingMetrics.listSpacing` 同步），卡与卡的视觉间隙 28 → 18pt；两种模式的行距 / 内边距自此完全同源
+- **GitHub 按钮换真 octocat**：新增 `Sources/SVGPath.swift`（`d` 串解析：M/L/H/V/C/S/Q/T/A/Z + 相对指令 + 奇偶填充），把官网同一枚 `github` mark 的 path 逐字搬进代码按 12pt 视口缩放 —— 系统无该字形，`arrow.triangle.branch` 只是语义近似，用户要求「官网上的真图标」
+- **关于页去图标 + 文案精简 + 整页居中**：矢量图标整块下线，首元素直接是产品名；三行带 ✓ 的特性列表整并成一行「悬停展开面板 · 进度与额度一体 · 点击直达会话」；正文容器由 `maxHeight` 改 `minHeight` + `alignment: .center`（原写法只能顶部对齐，`maxHeight` 撑满后居中失效）
+- **消息 / 设置按钮统一**：撤销 Phase10 的「悬浮模式上下结构」（`HUDUsageFooter.stackedIcons` 参数删除），两种模式统一用刘海版式（额度块吃满 + 分区分隔线 + 横排图标簇）
+- `test.sh` 236 项断言全绿（+8：SVG path 解析 / 行距刻度）；`build.sh` exit 0（源文件 20 → 21）；`check-docs.sh` exit 0；官网自检 16/16
+- **本轮首次完成真机视觉核对**：紧凑列表（两模式）/「通用」页内联更新详情卡（红点 + 绿字 + octocat 按钮）/ 关于页居中无图标 / 悬浮模式页脚横排 —— 用 `CGWarpMouseCursorPosition` 驱动鼠标（合成事件不进 `NSEvent` 流，`CGEvent.post` 才生效）
 
 ## 待优化 📋
 
@@ -111,7 +119,7 @@
 
 - `ComateStore.swift` 957 行：任务模型（`TaskLight` / `RedKind` / `ComateTask`）已拆到 `TaskModel.swift`。再拆「模型用量」「云端任务」两段需要把一批 `private` 状态放宽为 internal —— Swift 扩展不能新增存储属性，状态只能留在原文件，收益与风险需要单独评估
 - `NotchRootView.swift` 624 行：布局公式与常量已拆到 `NotchLayout.swift`；`ComateLogo` / `ComateOfficialPath1,2` / `StatusLight` / `NotchShape` / `ComateTaskRow` / `ComatePlusButton` 等独立视图仍混在同一文件，可再拆
-- `test.sh` 已覆盖版本比较 / 布局公式 / 状态灯判定 / 凭据校验 / 上报退避阶梯 / v2 刻度 / 页脚几何 / 更新说明解析 / 更新四态解析（228 项断言）；仍缺 UI 层与数据读取层（SQLite 查询、会话日志解析）的自动化覆盖
+- `test.sh` 已覆盖版本比较 / 布局公式 / 状态灯判定 / 凭据校验 / 上报退避阶梯 / v2 刻度 / 页脚几何 / 更新说明解析 / 更新四态解析 / SVG path 解析（236 项断言）；仍缺 UI 层与数据读取层（SQLite 查询、会话日志解析）的自动化覆盖
 
 ---
 

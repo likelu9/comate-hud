@@ -438,8 +438,9 @@ section("v2 刻度锁定（页脚 / 面板 / chip）")
 let footerM = FooterMetrics()
 
 eq(footerM.rowsHeight, 32, "两行额度块高 32（14 + 4 + 14）")
-eq(footerM.height, 44, "横排页脚总高 44（padding 6 + 两行块 32 + padding 6）")
-eq(footerM.height(stackedIcons: true), 60, "上下结构页脚总高 60（6 + 图标簇 48 + 6）")
+// 两种显示模式共用同一版式（用户反馈 ④：消息/设置按钮以刘海中的效果为准）——
+// 页脚只有一个高度，不再有上下结构那种分叉
+eq(footerM.height, 44, "页脚总高 44（padding 6 + 两行块 32 + padding 6）")
 eq(footerM.padV, 6, "上下内边距 6")
 eq(footerM.rowHeight, 14, "第 1 行行高 14")
 eq(footerM.rowSpacing, 4, "两行行距 4")
@@ -461,21 +462,20 @@ eq(footerM.percentWidth, 36, "百分比占位固定 36（62% / 61.7% / 100% 不�
 // 第 2 行收口：进度条 + 百分比必须在左侧额度区内结束，不得跨进图标簇那一列
 // （用户反馈 ①：「百分比跑到设置按钮下面」）
 eq(footerM.clusterWidth, 62, "图标簇总宽 62（竖线留白 6 + 铃铛 22 + 间距 2 + 齿轮 32）")
-eq(footerM.stackSpacing, 4, "上下结构图标间距 4")
-eq(footerM.stackHeight, 48, "上下结构图标簇高 48（22 + 4 + 22）")
-eq(footerM.clusterWidthStacked, 38, "上下结构图标簇宽 38（留白 6 + 较宽的齿轮 32）")
 eq(footerM.quotaWidth(contentWidth: 252), 182, "252 内容宽下额度区宽 182（稿分隔线 x=179 同量级）")
-eq(footerM.quotaWidth(contentWidth: 252, stackedIcons: true), 206,
-   "上下结构下额度区宽 206（图标簇从 62 窄到 38，用量区相应变宽）")
 check(footerM.quotaWidth(contentWidth: 252) + footerM.clusterWidth + footerM.quotaGap == 252,
       "额度区 + 图标簇 + 最小间距 = 内容宽：百分比右边界不越过分区竖线")
-check(footerM.quotaWidth(contentWidth: 252, stackedIcons: true) + footerM.clusterWidthStacked
-      + footerM.quotaGap == 252, "上下结构同样满足：额度区 + 图标簇 + 间距 = 内容宽")
 check(footerM.quotaWidth(contentWidth: 40) == 0, "窄面板下额度区宽夹到 0，不出现负宽")
 
 // 面板 / 刘海刻度（§7.1 v2 表）
 eq(NotchLayout.horizontalPadding, 14, "面板内边距左右 14")
-eq(NotchLayout.listSpacing, 4, "行距 4")
+eq(NotchLayout.listSpacing, 2, "行距 2")
+// 任务行内边距（v3.1 由 12 收紧到 8/10：12 时卡与卡之间的视觉间隙 28pt 显得松散）
+eq(HUDTaskRows.rowPadV, 8, "任务行上下内边距 8")
+eq(HUDTaskRows.rowPadH, 10, "任务行左右内边距 10")
+eq(FloatingMetrics.listSpacing, 2, "悬浮模式行距 2（与刘海模式同值，两模式版式统一）")
+check(HUDTaskRows.rowPadV * 2 + 18 + 2 + 14 == 50, "行高 50 = 上下 8 + 标题行 18 + 行内间距 2 + 第二行 14")
+check(HUDTaskRows.rowPadV * 2 + NotchLayout.listSpacing == 18, "卡与卡之间的视觉间隙 18pt")
 eq(NotchLayout.blockSpacing, 8, "区块间距 8")
 eq(NotchLayout.bottomPadding, 14, "底部留白 14（> 手柄命中区，不盖页脚热区）")
 eq(FloatingMetrics.panelHPadding, 14, "悬浮面板内边距左右 14")
@@ -484,6 +484,36 @@ eq(FloatingMetrics.chipSize, 36, "图标 chip 36×36")
 eq(FloatingMetrics.chipCorner, 10, "chip 圆角 10")
 check(FloatingMetrics.chipSize < FloatingMetrics.iconBox,
       "chip 不得改变 44pt 命中盒")
+
+// MARK: - GitHub 徽标（官网同一份 SVG path → 矢量）
+
+section("GitHub 徽标（SVG path → CGPath）")
+
+// 官网下载页把官方 octocat 的 path 内联在按钮里，客户端自己解析着画，
+// 就必须守住「解析器没吞掉任何一段」——bbox 是最便宜的守门员：漏掉半条弧就会缩进来
+check(!GitHubMark.pathData.contains("\n"),
+      "path 数据无换行（多行字面量的 \\ 续行必须真吃掉换行，否则会把换行塞进数字之间）")
+check(GitHubMark.pathData.contains("A8.01 8.01 0 0 0 16 8"), "保留收尾的绝对弧")
+let ghPath = SVGPath.cgPath(GitHubMark.pathData, viewBox: GitHubMark.viewBox)
+let ghBox = ghPath.boundingBoxOfPath
+check(abs(ghBox.minX) < 0.01 && abs(ghBox.minY) < 0.01, "徽标 path 从原点起")
+check(abs(ghBox.width - 16) < 0.01, "徽标宽 = viewBox 宽 16")
+// 官方 path 的竖向只铺到 15.605（收尾的 8.01 弧不压在底边上），这是 chromium
+// 渲染官网同一份 path 的实测值：若解析器漏吞尾部命令，这个数会明显缩水
+check(abs(ghBox.height - 15.605) < 0.01, "徽标高 15.605（与 chromium 渲染官网 path 一致）")
+var ghMoves = 0, ghCurves = 0, ghCloses = 0
+ghPath.applyWithBlock { el in
+    switch el.pointee.type {
+    case .moveToPoint: ghMoves += 1
+    case .addCurveToPoint: ghCurves += 1
+    case .closeSubpath: ghCloses += 1
+    default: break
+    }
+}
+eq(ghMoves, 1, "单子路径：move 1 次")
+eq(ghCurves, 25, "25 段三次贝塞尔（含圆弧转换出来的分段）")
+eq(ghCloses, 1, "收口一次（z）")
+check(GitHubMark.viewBox == CGSize(width: 16, height: 16), "viewBox 锁定 16×16（与官网 <svg> 一致）")
 
 // MARK: - 更新说明（Release 正文 → 新增 / 优化 / 修复）
 
