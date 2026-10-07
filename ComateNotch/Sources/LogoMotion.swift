@@ -50,14 +50,20 @@ enum LogoMotionState: Equatable {
         }
     }
 
-    /// demo 调色板。客户端原有四色（#8E8E93 / #34C759 / #FFB800 / #FF3B30）暂时让位：
-    /// 本次先按 demo 配色看效果，确认后再决定是否统一到既有视觉基线。
+    /// 四态色 = `TaskLight`（`#8E8E93 / #34C759 / #FFB800 / #FF3B30`）。
+    ///
+    /// v3.4（T5 收敛试版）：徽标此前走 demo 调色板
+    /// （`#9CA0AA / #31D158 / #FFC928 / #FF6259`），与同一面板里任务行圆点
+    /// `StatusLight` 的 `TaskLight` 并存 —— 同屏两组近义色是最容易看出「不精致」的地方。
+    /// 现在徽标与任务行圆点取同一支颜色，T5 在「面板内部」这一层先收敛。
+    /// 注意：DESIGN.md §2.5 登记的四态 token（`status.*`）仍是 demo 值，用它的是
+    /// 关于窗图例卡等界面元素——本次没动，若要连 token 一并改需另开一轮。
     var color: String {
         switch self {
-        case .idle:    return "#9CA0AA"
-        case .done:    return "#31D158"
-        case .working: return "#FFC928"
-        case .waiting, .error: return "#FF6259"
+        case .idle:    return TaskLight.gray.color
+        case .done:    return TaskLight.green.color
+        case .working: return TaskLight.yellow.color
+        case .waiting, .error: return TaskLight.red.color
         }
     }
 
@@ -112,7 +118,14 @@ enum LogoMotionMetrics {
     static let waitingBarWidth: CGFloat = 30
     static let waitingBarLength: CGFloat = 72
     static let waitingDotRadius: CGFloat = 16
-    static let waitingWaveRadius: CGFloat = 82
+    /// 外扩脉冲半径。v3.4：82 → 100。82 时 28pt 下脉冲直径只有 5.6→9.5pt，
+    /// 配合 8×scale = 0.37pt 的亚像素线宽，肉眼判定为「静止」；
+    /// 100 + 线宽半径 10 = 110，仍完全落在底弧内缘 119 之内，不会压到底弧。
+    static let waitingWaveRadius: CGFloat = 100
+    /// 脉冲圈线宽（独立常量，不再沿用弧内元素的通用 8）。
+    /// 这是「等待确认看不见在闪」的真正主因：8 × (28/600) = 0.37pt，栅格化后淡到不可辨。
+    /// 20 → 28pt 下 0.93pt、18pt（面板徽标）下 0.60pt。
+    static let alertWaveStroke: CGFloat = 20
     static let doneCheckStroke: CGFloat = 30
     static let sparkRadius: CGFloat = 8
 
@@ -140,12 +153,16 @@ enum LogoMotionMetrics {
     // 弧内脉冲：两种红共用尺寸，只有圈数与频率不同
     static let alertWaveStartScale: Double = 0.73
     static let alertWaveEndScale: Double = 1.24
-    static let alertWaveStartOpacity: Double = 0.38
+    /// v3.4：峰值透明度 .38 → .50。.38 且在 ease-out 里立刻衰减到 0，
+    /// 叠上 0.37pt 线宽后整圈几乎不可见；「等你确认」本就该是五态里最刺眼的一档，
+    /// 抬到 .50（高于空闲涟漪的 .46）符合它的打断语义。
+    static let alertWaveStartOpacity: Double = 0.50
     /// 异常：单圈慢脉冲，透明度峰值比「等你确认」低一档（提示但不催）
     static let errorWaveDuration: Double = 2.4
     static let errorWavePeakOpacity: Double = 0.28
-    /// 竖条：等你确认上下轻浮（5pt / 1.15s）；异常不浮动，改为极缓透明度呼吸
-    static let alertBarLift: Double = 5
+    /// 竖条：等你确认上下轻浮（v3.4：5 → 18 设计单位；5 在 28pt 下只有 0.23pt，
+    /// 与脉冲一同构成「完全静止」的观感）；异常不浮动，改为极缓透明度呼吸
+    static let alertBarLift: CGFloat = 18
     static let alertBarDim: Double = 0.72
     static let alertBarBright: Double = 1.0
     static let errorBreathDuration: Double = 1.6
@@ -367,7 +384,8 @@ private struct WorkingIndicator: View {
 
 /// 两种红灯共用的弧内指示（感叹号 + 外扩脉冲）。
 ///
-/// - `.double`（等你确认）：双圈错相脉冲 `1.6s`，竖条上下轻浮 `5pt / 1.15s`
+/// - `.double`（等你确认）：双圈错相脉冲 `1.6s`（半径 `100`、线宽 `20`、峰值透明度 `.50`），
+///   竖条上下轻浮 `18 / 1.15s`
 /// - `.single`（异常）：单圈慢脉冲 `2.4s`、峰值透明度降到 `.28`，竖条不浮动，改为极缓透明度呼吸
 ///
 /// 两者形状、颜色完全一致，只靠脉冲圈数与频率区分——不需要靠转圈/额外图标。
@@ -408,7 +426,7 @@ private struct AlertIndicator: View {
         ZStack {
             ForEach(Array(waves.indices), id: \.self) { i in
                 Circle()
-                    .stroke(color, lineWidth: 8 * scale)
+                    .stroke(color, lineWidth: LogoMotionMetrics.alertWaveStroke * scale)
                     .frame(width: LogoMotionMetrics.waitingWaveRadius * 2 * scale,
                            height: LogoMotionMetrics.waitingWaveRadius * 2 * scale)
                     .scaleEffect(pulseOn ? LogoMotionMetrics.alertWaveEndScale

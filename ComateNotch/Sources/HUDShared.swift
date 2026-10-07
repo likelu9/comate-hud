@@ -7,9 +7,10 @@ struct HUDTaskRows: View {
     @ObservedObject var store: ComateStore
     var spacing: CGFloat = 3
 
-    /// 任务行内边距。12 太松散（行间视觉间隙 28pt）→ 8（18pt）→ v3.2 收到 6：
-    /// 行高 46 = 内容 34 + 上下各 6，卡与卡之间留 6 + 2(行距) + 6 = 14pt
-    static let rowPadV: CGFloat = 6
+    /// 任务行内边距。12 太松散（行间视觉间隙 28pt）→ 8（18pt）→ v3.2 收到 6
+    /// → v3.4 收到 4：行高 42 = 内容 34 + 上下各 4，卡与卡之间留 4 + 2(行距) + 4 = 10pt。
+    /// 再往下就会顶到内容（标题行 18 + 行内间距 2 + 第二行 14 = 34 是内容的下限）。
+    static let rowPadV: CGFloat = 4
     static let rowPadH: CGFloat = 10
 
     var body: some View {
