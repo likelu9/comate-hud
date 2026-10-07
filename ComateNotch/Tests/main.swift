@@ -470,12 +470,12 @@ check(footerM.quotaWidth(contentWidth: 40) == 0, "窄面板下额度区宽夹到
 // 面板 / 刘海刻度（§7.1 v2 表）
 eq(NotchLayout.horizontalPadding, 14, "面板内边距左右 14")
 eq(NotchLayout.listSpacing, 2, "行距 2")
-// 任务行内边距（v3.1 由 12 收紧到 8/10：12 时卡与卡之间的视觉间隙 28pt 显得松散）
-eq(HUDTaskRows.rowPadV, 8, "任务行上下内边距 8")
+// 任务行内边距（v3.1 由 12 → 8，v3.2 再收一档到 6/10：卡与卡之间的视觉间隙 14pt）
+eq(HUDTaskRows.rowPadV, 6, "任务行上下内边距 6")
 eq(HUDTaskRows.rowPadH, 10, "任务行左右内边距 10")
 eq(FloatingMetrics.listSpacing, 2, "悬浮模式行距 2（与刘海模式同值，两模式版式统一）")
-check(HUDTaskRows.rowPadV * 2 + 18 + 2 + 14 == 50, "行高 50 = 上下 8 + 标题行 18 + 行内间距 2 + 第二行 14")
-check(HUDTaskRows.rowPadV * 2 + NotchLayout.listSpacing == 18, "卡与卡之间的视觉间隙 18pt")
+check(HUDTaskRows.rowPadV * 2 + 18 + 2 + 14 == 46, "行高 46 = 上下 6 + 标题行 18 + 行内间距 2 + 第二行 14")
+check(HUDTaskRows.rowPadV * 2 + NotchLayout.listSpacing == 14, "卡与卡之间的视觉间隙 14pt")
 eq(NotchLayout.blockSpacing, 8, "区块间距 8")
 eq(NotchLayout.bottomPadding, 14, "底部留白 14（> 手柄命中区，不盖页脚热区）")
 eq(FloatingMetrics.panelHPadding, 14, "悬浮面板内边距左右 14")

@@ -1270,16 +1270,17 @@ private struct AboutSettingsPage: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             VStack(spacing: 0) {
+                // 分组节奏：品牌（紧凑）→ 图例（换气）→ 行动（紧凑）→ 署名（收尾）
                 // 图标已下线（用户反馈 ③：关于页不要图标），首元素直接是产品名
                 Text("Comate HUD")
                     .font(.system(size: SettingsDesign.aboutNameFont, weight: .bold, design: .rounded))
                     .foregroundStyle(HUDDesign.textPrimary)
                     .padding(.top, 10)
-                versionChip.padding(.top, 8)
+                versionChip.padding(.top, 7)
                 Text("让 AI 干活，你只管看灯")
                     .font(.system(size: SettingsDesign.aboutTaglineFont, weight: .semibold))
                     .foregroundStyle(HUDDesign.textPrimary)
-                    .padding(.top, 14)
+                    .padding(.top, 16)
                 Text("常驻 macOS 刘海区的 Comate 状态指示器。")
                     .font(.system(size: SettingsDesign.aboutDescFont))
                     .lineSpacing(5)
@@ -1287,18 +1288,15 @@ private struct AboutSettingsPage: View {
                     .foregroundStyle(Color.white.opacity(0.6))
                     .frame(maxWidth: SettingsDesign.aboutDescWidth)
                     .padding(.top, 8)
-                statusLegend.padding(.top, 16)
+                statusLegend.padding(.top, 20)
                 // 三行特性整并成一行居中（用户反馈 ③：文案简化 + 全部居中对齐）。
                 // 原带 ✓ 的三行列表只能左对齐，且与上面的描述重复
-                Text("悬停展开面板 · 进度与额度一体 · 点击直达会话")
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(HUDDesign.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 14)
-                signedBy.padding(.top, 14)
-                ctaButton.padding(.top, 12)
-                footerLink.padding(.top, 11)
+                featureLine.padding(.top, 16)
+                ctaButton.padding(.top, 16)
+                footerLink.padding(.top, 12)
+                // 署名移到最底：它是对全页的落款，夹在特性行与主按钮之间会把
+                // 「说明 → 行动」这条链路截断
+                signedBy.padding(.top, 18)
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, SettingsDesign.padH)
@@ -1309,6 +1307,15 @@ private struct AboutSettingsPage: View {
             .background(alignment: .top) { brandGlow }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    /// 特性一行：11.5pt text.secondary、居中、可换行
+    private var featureLine: some View {
+        Text("悬停展开面板 · 进度与额度一体 · 点击直达会话")
+            .font(.system(size: 11.5))
+            .foregroundStyle(HUDDesign.textSecondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     /// 顶部品牌氛围光：整套视觉里唯一保留紫色的地方（T11，唯一例外），只作氛围
@@ -1334,12 +1341,16 @@ private struct AboutSettingsPage: View {
     }
 
     /// 四态图例卡：radius.14 + surface.card，色点 8pt + 同色 glow 3.5
+    /// 四态图例：直接用面板里的真身 `StatusLight`（同一枚点 + 同色光晕 + 等待确认会闪），
+    /// 不再自己画 `Circle` —— 之前图例用的是设置页 token 色（`#9CA0AA/#FFC928/#FF6259/#31D158`），
+    /// 与面板实际渲染的 `TaskLight`（`#8E8E93/#FFB800/#FF3B30/#34C759`）压根不是一个色，
+    /// 用户反馈「按真实状态重画」。共用同一枚视图后，图例与面板不可能再跑偏。
     private var statusLegend: some View {
         HStack(spacing: 0) {
-            legendItem(HUDDesign.idle, "空闲")
-            legendItem(HUDDesign.done, "已完成")
-            legendItem(HUDDesign.working, "工作中")
-            legendItem(HUDDesign.waiting, "等待确认")
+            legendItem(.gray, "空闲")
+            legendItem(.green, "已完成")
+            legendItem(.yellow, "工作中")
+            legendItem(.red, "等待确认", blinking: true)
         }
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
@@ -1350,12 +1361,10 @@ private struct AboutSettingsPage: View {
         )
     }
 
-    private func legendItem(_ color: Color, _ label: String) -> some View {
+    /// 图例项。`blinking` 只有「等待确认」为真 —— 与列表行里 `redKind == .waitingConfirmation` 的闪烁一致
+    private func legendItem(_ light: TaskLight, _ label: String, blinking: Bool = false) -> some View {
         HStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: SettingsDesign.legendDot, height: SettingsDesign.legendDot)
-                .shadow(color: color.opacity(0.6), radius: 3.5)
+            StatusLight(color: light.color, size: SettingsDesign.legendDot, blinking: blinking)
             Text(label)
                 .font(.system(size: 11))
                 .foregroundStyle(HUDDesign.textSecondary)

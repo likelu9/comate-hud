@@ -559,8 +559,9 @@ struct ComateTaskRow: View {
                 .font(.system(size: 9))
                 .foregroundStyle(.white.opacity(isHovered ? 0.5 : 0.2))
         }
-        // 行 = 标题行 18 + 行内间距 2 + 第二行 14 + 上下各 8 内边距（v3.1：从 12 收紧，
-        // 12 时卡与卡之间视觉间隙 28pt 显得松散）。行高由 NotchLayout.rowUnit 从实测行高反推
+        // 行 = 标题行 18 + 行内间距 2 + 第二行 14 + 上下各 6 内边距（v3.1：从 12 收紧，
+        // 12 时卡与卡之间视觉间隙 28pt 显得松散；v3.2 再收一档到 6 → 14pt）。
+        // 行高由 NotchLayout.rowUnit 从实测行高反推
         .padding(.vertical, HUDTaskRows.rowPadV)
         .padding(.horizontal, HUDTaskRows.rowPadH)
         .background(Color.white.opacity(isHovered ? 0.1 : 0.04), in: RoundedRectangle(cornerRadius: 8))

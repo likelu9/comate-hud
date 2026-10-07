@@ -7,9 +7,9 @@ struct HUDTaskRows: View {
     @ObservedObject var store: ComateStore
     var spacing: CGFloat = 3
 
-    /// 任务行内边距。12 太松散（行间视觉间隙 28pt），收敛到 8：
-    /// 行高 50 = 内容 34 + 上下各 8，卡与卡之间留 8 + 2(行距) + 8 = 18pt
-    static let rowPadV: CGFloat = 8
+    /// 任务行内边距。12 太松散（行间视觉间隙 28pt）→ 8（18pt）→ v3.2 收到 6：
+    /// 行高 46 = 内容 34 + 上下各 6，卡与卡之间留 6 + 2(行距) + 6 = 14pt
+    static let rowPadV: CGFloat = 6
     static let rowPadH: CGFloat = 10
 
     var body: some View {
@@ -128,27 +128,28 @@ struct HUDUsageFooter: View {
 
     /// 左侧额度块：两行等宽、左缘同起右缘同止（用户反馈 ⑤「两端对齐」）。
     /// 上=周期胶囊 + 额度读数（两端推开），下=进度条 + 百分比（条填充剩余空白）。
-    /// 整块 `.frame(maxWidth: .infinity)` 吃满图标簇之外的宽度 —— 用量不再靠左缩成一小截
-    private var quotaBlock: some View {
-        VStack(spacing: m.rowSpacing) {
-            usageSlot
-                .frame(height: m.rowHeight)
-            HStack(spacing: m.gap) {
-                progressBar
-                percentLabel
-            }
-            .frame(height: m.rowHeight)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    /// 额度位：未登录 / 登录失效时整体换成登录引导，其余情况是「胶囊 + 读数（+ 内联进度条）」
+    /// 整块 `.frame(maxWidth: .infinity)` 吃满图标簇之外的宽度 —— 用量不再靠左缩成一小截。
+    ///
+    /// 未登录 / 登录失效时没有第二个数可读，第二行（进度条 + 百分比）整行不渲染，
+    /// 只留登录按钮；但块高仍按两行占位（`rowsHeight`），让按钮在页脚里竖向居中、
+    /// 与右侧铃铛/齿轮同一水平线（用户反馈：原先按钮顶着上缘、下面空一截）。
     @ViewBuilder
-    private var usageSlot: some View {
+    private var quotaBlock: some View {
         if store.needsLogin {
             loginPrompt
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: m.rowsHeight)
         } else {
-            usageToggle
+            VStack(spacing: m.rowSpacing) {
+                usageToggle
+                    .frame(height: m.rowHeight)
+                HStack(spacing: m.gap) {
+                    progressBar
+                    percentLabel
+                }
+                .frame(height: m.rowHeight)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
