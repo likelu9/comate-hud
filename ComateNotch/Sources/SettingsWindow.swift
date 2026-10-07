@@ -119,7 +119,9 @@ private enum SettingsDesign {
     static let aboutCTAWidth: CGFloat = 150
     static let aboutCTAHeight: CGFloat = 30
     static let legendRadius: CGFloat = HUDDesign.radiusCard
-    static let legendDot: CGFloat = 8
+    /// 图例里的状态徽标尺寸：与面板左上那枚 `LogoMotionBadge` 同尺寸（刘海/悬浮均 28pt），
+    /// 1:1 复现面板真身；18pt 以下光轨会细到看不出在转，故不取更小值。
+    static let legendBadge: CGFloat = 28
 
     /// 登录失效警示：底 status.waiting-soft，描边 rgba(255,98,89,.32)（HUDDesign 无 line.warn，由此派生）
     static let warnLine = HUDDesign.waiting.opacity(0.32)
@@ -1340,17 +1342,18 @@ private struct AboutSettingsPage: View {
             .overlay(Capsule().strokeBorder(HUDDesign.lineCard, lineWidth: 1))
     }
 
-    /// 四态图例卡：radius.14 + surface.card，色点 8pt + 同色 glow 3.5
-    /// 四态图例：直接用面板里的真身 `StatusLight`（同一枚点 + 同色光晕 + 等待确认会闪），
-    /// 不再自己画 `Circle` —— 之前图例用的是设置页 token 色（`#9CA0AA/#FFC928/#FF6259/#31D158`），
-    /// 与面板实际渲染的 `TaskLight`（`#8E8E93/#FFB800/#FF3B30/#34C759`）压根不是一个色，
-    /// 用户反馈「按真实状态重画」。共用同一枚视图后，图例与面板不可能再跑偏。
+    /// 四态图例卡：radius.14 + surface.card
+    /// 图例项用面板真身徽标 `LogoMotionBadge`（C 形弧 + 弧内指示），而不是纯色圆点：
+    /// 四态在面板里各自带形态与动效（空闲呼吸点+外扩涟漪 / 已完成对勾+迸发星点 /
+    /// 工作中三段光轨追逐 / 等待确认感叹号+双圈脉冲），只画一枚同色圆点等于把
+    /// 「一眼分辨四态」这个徽标最核心的信息丢掉了。共用同一枚视图后，图例与面板
+    /// 不可能再跑偏（含尺寸 28pt、弧结构、动效曲线）。
     private var statusLegend: some View {
         HStack(spacing: 0) {
             legendItem(.gray, "空闲")
             legendItem(.green, "已完成")
             legendItem(.yellow, "工作中")
-            legendItem(.red, "等待确认", blinking: true)
+            legendItem(.red, "等待确认")
         }
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
@@ -1361,10 +1364,11 @@ private struct AboutSettingsPage: View {
         )
     }
 
-    /// 图例项。`blinking` 只有「等待确认」为真 —— 与列表行里 `redKind == .waitingConfirmation` 的闪烁一致
-    private func legendItem(_ light: TaskLight, _ label: String, blinking: Bool = false) -> some View {
+    /// 图例项。四态都直接复用面板徽标 —— 红灯的 `redBlinking` 默认 true，
+    /// 因此「等待确认」自动走 `.waiting`（双圈错相脉冲），与面板一致。
+    private func legendItem(_ light: TaskLight, _ label: String) -> some View {
         HStack(spacing: 6) {
-            StatusLight(color: light.color, size: SettingsDesign.legendDot, blinking: blinking)
+            LogoMotionBadge(light: light, size: SettingsDesign.legendBadge)
             Text(label)
                 .font(.system(size: 11))
                 .foregroundStyle(HUDDesign.textSecondary)
