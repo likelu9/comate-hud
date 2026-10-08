@@ -120,55 +120,74 @@
     .mb-ico.fill { fill: #fff; stroke: none; }
     .mb-clock { font-variant-numeric: tabular-nums; white-space: nowrap; }
     /* 面板 hover 热区：比面板本身大一圈，展开后仍在热区内，鼠标不会因为移到列表底部而误收起 */
-    .hud-zone { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: calc(280px * var(--s) + 120px); height: calc(215px * var(--s) + 44px); display: flex; justify-content: center; align-items: flex-start; z-index: 2; }
-    /* 面板本体：notchHeight=34 / expandedWidth=280 / 底部圆角 14 */
-    .hud { position: relative; width: calc(280px * var(--s)); height: calc(34px * var(--s)); background: #000; border-radius: 0 0 calc(14px * var(--s)) calc(14px * var(--s)); overflow: hidden; box-shadow: 0 12px 34px rgba(0,0,0,0.45); transition: height 0.25s cubic-bezier(0.22,1,0.36,1); }
-    .hud[data-state="expanded"] { height: calc(215px * var(--s)); }
-    /* 刘海行：左翼 logo+状态灯，右翼 + 按钮（wingWidth=36 → 左 18 / 右 16） */
+    .hud-zone { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: calc(280px * var(--s) + 120px); height: calc(284px * var(--s) + 44px); display: flex; justify-content: center; align-items: flex-start; z-index: 2; }
+    /* 面板本体：notchHeight=34 / expandedWidth=280 / 底部圆角 14。
+       展开高 284 = topInset 44 + 4 行×42 + 3×2 行距 + block 8 + 页脚 44 + 底部 14（对齐 NotchLayout） */
+    .hud { position: relative; width: calc(280px * var(--s)); height: calc(34px * var(--s)); background: #000; border-radius: 0 0 calc(14px * var(--s)) calc(14px * var(--s)); overflow: hidden; box-shadow: 0 12px 34px rgba(0,0,0,0.45); transition: height 0.25s cubic-bezier(0.22,1,0.36,1); font-family: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif; }
+    .hud[data-state="expanded"] { height: calc(284px * var(--s)); }
+    /* 刘海行：左翼徽标（28pt，中心 x = wingWidth/2 = 18），右翼 + 按钮（wingWidth=36 → 右 16） */
     .hud-notch { position: relative; height: calc(34px * var(--s)); }
-    .hud-badge { position: absolute; left: calc(9px * var(--s)); top: 50%; transform: translateY(-50%); width: calc(18px * var(--s)); height: calc(18px * var(--s)); }
-    .hud-logo { width: 100%; height: 100%; display: block; }
-    .hud-light { position: absolute; left: calc(13.5px * var(--s)); top: calc(13.5px * var(--s)); width: calc(6px * var(--s)); height: calc(6px * var(--s)); border-radius: 50%; background: #8E8E93; box-shadow: 0 0 calc(6px * var(--s)) rgba(142,142,147,0.7); }
-    .hud[data-light="yellow"] .hud-light { background: #FFB800; box-shadow: 0 0 calc(5px * var(--s)) rgba(255,184,0,0.75), 0 0 calc(11px * var(--s)) rgba(255,184,0,0.45); animation: hud-breathe 1.2s ease-in-out infinite; }
-    .hud[data-light="red"] .hud-light { background: #FF3B30; box-shadow: 0 0 calc(5px * var(--s)) rgba(255,59,48,0.85), 0 0 calc(11px * var(--s)) rgba(255,59,48,0.55); animation: hud-blink 0.55s ease-in-out infinite; }
-    .hud[data-light="green"] .hud-light { background: #34C759; box-shadow: 0 0 calc(5px * var(--s)) rgba(52,199,89,0.75), 0 0 calc(11px * var(--s)) rgba(52,199,89,0.45); }
+    .hud-badge { position: absolute; left: calc(4px * var(--s)); top: 50%; transform: translateY(-50%); width: calc(28px * var(--s)); height: calc(28px * var(--s)); }
+    /* 四枚徽标叠放，按 data-light 只显示当前那枚（形态与动效 1:1 对齐客户端 LogoMotionBadge） */
+    .hud-badge svg { position: absolute; inset: 0; width: 100%; height: 100%; display: none; overflow: visible; }
+    .hud[data-light="gray"] .hud-badge .badge-idle,
+    .hud[data-light="green"] .hud-badge .badge-done,
+    .hud[data-light="yellow"] .hud-badge .badge-working,
+    .hud[data-light="red"] .hud-badge .badge-waiting { display: block; }
     @keyframes hud-breathe { 0%,100% { opacity: 1 } 50% { opacity: 0.25 } }
     @keyframes hud-blink { 0%,100% { opacity: 1 } 50% { opacity: 0.35 } }
     .hud-plus { position: absolute; right: calc(16px * var(--s)); top: 50%; transform: translateY(-50%); width: calc(20px * var(--s)); height: calc(20px * var(--s)); display: flex; align-items: center; justify-content: center; background: none; border: 0; padding: 0; cursor: pointer; }
     .hud-plus svg { width: calc(16px * var(--s)); height: calc(16px * var(--s)); fill: none; stroke: rgba(255,255,255,0.55); stroke-width: 1.3; stroke-linecap: round; transition: stroke 0.12s, transform 0.12s; }
     .hud-plus:hover svg { stroke: rgba(255,255,255,0.85); transform: scale(1.15); }
-    /* 内容区：topInset = notchHeight/2 + 24 = 41 → 刘海行 34 + 7 */
-    .hud-body { padding: calc(7px * var(--s)) calc(12px * var(--s)) calc(6px * var(--s)); opacity: 0; transition: opacity 0.18s ease; }
+    /* 内容区：topInset = notchHeight + 10（净留白，NotchLayout.notchClearance）→ padding-top 10；左右 14 */
+    .hud-body { padding: calc(10px * var(--s)) calc(14px * var(--s)) calc(14px * var(--s)); opacity: 0; transition: opacity 0.18s ease; }
     .hud[data-state="expanded"] .hud-body { opacity: 1; transition-delay: 0.1s; }
-    .hud-rows { display: flex; flex-direction: column; gap: calc(3px * var(--s)); }
-    .hud-row { display: flex; align-items: center; gap: calc(8px * var(--s)); height: calc(33px * var(--s)); padding: 0 calc(6px * var(--s)); border-radius: calc(8px * var(--s)); background: rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s; }
+    /* 行距 2pt（NotchLayout.listSpacing） */
+    .hud-rows { display: flex; flex-direction: column; gap: calc(2px * var(--s)); }
+    /* 行高 42 = 标题 18 + 行内间距 2 + 次行 14 + 上下内边距各 4（HUDTaskRows.rowPadV）；左右 10 */
+    .hud-row { display: flex; align-items: center; gap: calc(8px * var(--s)); height: calc(42px * var(--s)); padding: 0 calc(10px * var(--s)); border-radius: calc(8px * var(--s)); background: rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s; }
     .hud-row:hover { background: rgba(255,255,255,0.1); }
-    .hud-dot { width: calc(7px * var(--s)); height: calc(7px * var(--s)); border-radius: 50%; flex: none; background: #8E8E93; }
+    /* 状态灯 8pt（ComateTaskRow） */
+    .hud-dot { width: calc(8px * var(--s)); height: calc(8px * var(--s)); border-radius: 50%; flex: none; background: #8E8E93; }
     .hud-dot.yellow { background: #FFB800; box-shadow: 0 0 calc(4px * var(--s)) rgba(255,184,0,0.6); animation: hud-breathe 1.2s ease-in-out infinite; }
     .hud-dot.red { background: #FF3B30; box-shadow: 0 0 calc(4px * var(--s)) rgba(255,59,48,0.7); animation: hud-blink 0.55s ease-in-out infinite; }
     .hud-dot.green { background: #34C759; box-shadow: 0 0 calc(4px * var(--s)) rgba(52,199,89,0.6); }
     .hud-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(2px * var(--s)); }
-    .hud-title { display: flex; align-items: center; gap: calc(4px * var(--s)); font-size: calc(11px * var(--s)); font-weight: 500; line-height: 1.2; color: rgba(255,255,255,0.92); }
+    .hud-title { display: flex; align-items: center; gap: calc(4px * var(--s)); font-size: calc(12.5px * var(--s)); font-weight: 500; line-height: 1.2; color: rgba(255,255,255,0.92); }
     .hud-row:hover .hud-title { color: #fff; }
     .hud-title span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .hud-src { width: calc(8px * var(--s)); height: calc(8px * var(--s)); fill: rgba(255,255,255,0.4); flex: none; }
-    .hud-meta { display: flex; gap: calc(6px * var(--s)); font-size: calc(9px * var(--s)); line-height: 1.2; }
+    .hud-meta { display: flex; gap: calc(6px * var(--s)); font-size: calc(10px * var(--s)); line-height: 1.2; }
     .hud-status { font-weight: 600; }
     .hud-sub { color: rgba(255,255,255,0.4); }
     .hud-arrow { margin-left: auto; width: calc(9px * var(--s)); height: calc(9px * var(--s)); fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; transition: stroke 0.15s; }
     .hud-row:hover .hud-arrow { stroke: rgba(255,255,255,0.5); }
-    /* 页脚：额度周期 + 铃铛（字号 8/9pt） */
-    .hud-foot { display: flex; align-items: center; margin-top: calc(6px * var(--s)); }
-    .hud-usage { display: flex; align-items: center; gap: calc(6px * var(--s)); height: calc(21px * var(--s)); padding: 0 calc(6px * var(--s)); border: 0; border-radius: calc(5px * var(--s)); background: transparent; font: inherit; cursor: pointer; transition: background 0.12s; }
+    /* 页脚（FooterMetrics）：总高 44 = 上下各 6 + 两行 14 + 行距 4；
+       左额度区两行（第 1 行两端对齐的周期胶囊+读数、第 2 行进度条+百分比），右图标簇（竖线 + 铃铛 + 齿轮） */
+    .hud-foot { display: flex; align-items: center; gap: calc(6px * var(--s)); margin-top: calc(8px * var(--s)); height: calc(44px * var(--s)); }
+    .hud-quota { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(4px * var(--s)); }
+    .hud-usage { display: flex; align-items: center; justify-content: space-between; gap: calc(6px * var(--s)); height: calc(14px * var(--s)); padding: 0; border: 0; border-radius: calc(4px * var(--s)); background: transparent; font: inherit; cursor: pointer; transition: background 0.12s; }
     .hud-usage:hover { background: rgba(255,255,255,0.1); }
-    .hud-seg { display: flex; padding: 1px; border-radius: calc(4.5px * var(--s)); background: rgba(255,255,255,0.1); }
-    .hud-seg i { width: calc(13px * var(--s)); height: calc(11px * var(--s)); line-height: calc(11px * var(--s)); text-align: center; border-radius: calc(3.5px * var(--s)); font-style: normal; font-size: calc(8px * var(--s)); font-weight: 600; color: rgba(255,255,255,0.45); }
+    .hud-seg { display: flex; padding: 1px; border-radius: calc(4px * var(--s)); background: rgba(255,255,255,0.1); }
+    .hud-seg i { width: calc(17px * var(--s)); height: calc(12px * var(--s)); line-height: calc(12px * var(--s)); text-align: center; border-radius: calc(3.5px * var(--s)); font-style: normal; font-size: calc(9.5px * var(--s)); font-weight: 600; color: rgba(255,255,255,0.45); }
     .hud-seg i.on { color: #fff; background: rgba(0,212,170,0.85); }
-    .hud-usage-text { font-size: calc(8px * var(--s)); font-weight: 500; color: rgba(0,212,170,0.85); transition: color 0.12s; }
-    .hud-usage:hover .hud-usage-text { color: #00d4aa; }
-    .hud-bell { margin-left: auto; display: flex; align-items: center; gap: calc(3px * var(--s)); padding: calc(2px * var(--s)) calc(4px * var(--s)); border-radius: calc(5px * var(--s)); font-size: calc(9px * var(--s)); font-weight: 600; color: rgba(255,255,255,0.55); cursor: pointer; transition: background 0.12s, color 0.12s; }
-    .hud-bell:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); }
-    .hud-bell svg { width: calc(9px * var(--s)); height: calc(9px * var(--s)); fill: currentColor; flex: none; }
+    .hud-quota-text { font-size: calc(10px * var(--s)); font-weight: 500; color: rgba(255,255,255,0.55); white-space: nowrap; }
+    .hud-quota-text b { color: rgba(255,255,255,0.95); font-weight: 600; }
+    .hud-quota-bar { display: flex; align-items: center; gap: calc(6px * var(--s)); height: calc(14px * var(--s)); }
+    .hud-bar { flex: 1; min-width: 0; height: calc(4px * var(--s)); border-radius: 999px; background: rgba(0,212,170,0.22); overflow: hidden; }
+    .hud-bar i { display: block; height: 100%; width: 97%; border-radius: 999px; background: #00d4aa; transition: width 0.25s; }
+    .hud-percent { flex: none; width: calc(36px * var(--s)); text-align: right; font-size: calc(10px * var(--s)); font-weight: 500; color: rgba(255,255,255,0.55); }
+    .hud-cluster { position: relative; flex: none; display: flex; align-items: center; gap: calc(2px * var(--s)); padding-left: calc(6px * var(--s)); }
+    .hud-cluster::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 1px; height: calc(16px * var(--s)); background: rgba(255,255,255,0.12); }
+    .hud-icon { display: flex; align-items: center; justify-content: center; width: calc(22px * var(--s)); height: calc(22px * var(--s)); border-radius: calc(4px * var(--s)); color: rgba(255,255,255,0.55); cursor: pointer; transition: background 0.12s, color 0.12s; }
+    .hud-icon.gear { width: calc(32px * var(--s)); }
+    .hud-icon:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); }
+    .hud-icon svg { width: calc(10.5px * var(--s)); height: calc(10.5px * var(--s)); fill: currentColor; flex: none; }
+    .hud-icon b { margin-left: calc(3px * var(--s)); font-size: calc(10px * var(--s)); font-weight: 600; }
+    /* 拖拽手柄（真身：展开态底部 44×4 胶囊，白 22% / hover 50%） */
+    .hud-handle { position: absolute; left: 50%; bottom: calc(4px * var(--s)); transform: translateX(-50%); width: calc(44px * var(--s)); height: calc(4px * var(--s)); border-radius: 999px; background: rgba(255,255,255,0.22); opacity: 0; transition: opacity 0.18s, background 0.12s; }
+    .hud[data-state="expanded"] .hud-handle { opacity: 1; transition-delay: 0.15s; }
+    .hud-handle:hover { background: rgba(255,255,255,0.5); }
     .desktop-hint { margin: 28px auto 0; text-align: center; font-size: 14px; color: var(--text-dim); }
     /* 面板固定 280pt 居中，菜单栏两侧需要给它让位：
        桌面宽 < 982px（视口 < 1030px）时完整菜单会顶到面板，逐级隐藏 */
@@ -179,8 +198,8 @@
       .mac-desktop { --s: 0.9; }
       .mb-side { gap: calc(14px * var(--s)); }
       .hud-row:nth-child(4) { display: none; }
-      .hud-zone { height: calc(179px * var(--s) + 44px); }
-      .hud[data-state="expanded"] { height: calc(179px * var(--s)); }
+      .hud-zone { height: calc(240px * var(--s) + 44px); }
+      .hud[data-state="expanded"] { height: calc(240px * var(--s)); }
     }
     @media (max-width: 600px) {
       .mac-desktop { --s: 0.82; }
@@ -191,7 +210,7 @@
       .mb-clock { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .hud, .hud-body, .hud-dot, .hud-light { transition: none !important; animation: none !important; }
+      .hud, .hud-body, .hud-handle, .hud-dot, .hud-badge svg, .hud-badge svg * { transition: none !important; animation: none !important; }
     }
     .features { padding: 112px 0; }
     .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; margin-top: 64px; }
@@ -561,7 +580,7 @@
       <div class="hud-zone" id="hud-zone">
         <div class="hud" id="hud" data-state="collapsed" data-light="yellow">
           <div class="hud-notch">
-            <span class="hud-badge"><img class="hud-logo" src="./assets/comate-logo.svg" alt="Comate" /><i class="hud-light"></i></span>
+            <span class="hud-badge"><svg class="lb badge-idle" viewBox="0 0 600 600" role="img" aria-label="空闲"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#8E8E93" stroke-width="132"/><circle class="lb-ring" cx="300" cy="300" r="42" fill="none" stroke="#8E8E93" stroke-width="18"/><circle class="lb-dot" cx="300" cy="300" r="26" fill="#8E8E93"/></svg><svg class="lb badge-done" viewBox="0 0 600 600" role="img" aria-label="已完成"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#34C759" stroke-width="132"/><path class="lb-check" d="M 245 304 L 284 343 L 365 255" fill="none" stroke="#34C759" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/><circle class="lb-spark s1" cx="389" cy="230" r="8" fill="#34C759"/><circle class="lb-spark s2" cx="218" cy="256" r="6" fill="#34C759"/><circle class="lb-spark s3" cx="370" cy="374" r="5" fill="#34C759"/></svg><svg class="lb badge-working" viewBox="0 0 600 600" role="img" aria-label="工作中"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#FFB800" stroke-width="132"/><circle class="lb-orbit" cx="300" cy="300" r="268" fill="none" stroke="#FFB800" stroke-opacity="0.34" stroke-width="16" stroke-linecap="round" stroke-dasharray="30 1654" stroke-dashoffset="-165.1"/><circle class="lb-orbit" cx="300" cy="300" r="268" fill="none" stroke="#FFB800" stroke-opacity="0.70" stroke-width="26" stroke-linecap="round" stroke-dasharray="62.2 1621.8" stroke-dashoffset="-92.2"/><circle class="lb-orbit" cx="300" cy="300" r="268" fill="none" stroke="#FFB800" stroke-width="38" stroke-linecap="round" stroke-dasharray="111.5 1572.5" stroke-dashoffset="0"/></svg><svg class="lb badge-waiting" viewBox="0 0 600 600" role="img" aria-label="等待确认"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#FF3B30" stroke-width="132"/><circle class="lb-wave w1" cx="300" cy="300" r="100" fill="none" stroke="#FF3B30" stroke-width="30"/><circle class="lb-wave w2" cx="300" cy="300" r="100" fill="none" stroke="#FF3B30" stroke-width="30"/><rect class="lb-bar" x="285" y="248" width="30" height="72" rx="15" fill="#FF3B30"/><circle class="lb-dot" cx="300" cy="362" r="16" fill="#FF3B30"/></svg></span>
             <button class="hud-plus" type="button" tabindex="-1" aria-label="新建任务"><svg viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></svg></button>
           </div>
           <div class="hud-body">
@@ -600,13 +619,23 @@
               </div>
             </div>
             <div class="hud-foot">
-              <button class="hud-usage" type="button" aria-label="切换额度统计周期">
-                <span class="hud-seg"><i class="on">日</i><i>月</i></span>
-                <span class="hud-usage-text">额度已用 97%</span>
-              </button>
-              <span class="hud-bell"><svg viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-5v-5a7 7 0 1 0-14 0v5l-2 2v1h18v-1z"/></svg><b>24</b></span>
+              <div class="hud-quota">
+                <button class="hud-usage" type="button" aria-label="切换额度统计周期">
+                  <span class="hud-seg"><i class="on">日</i><i>月</i></span>
+                  <span class="hud-quota-text">已用 <b>97</b> / 100 点</span>
+                </button>
+                <div class="hud-quota-bar">
+                  <span class="hud-bar"><i></i></span>
+                  <span class="hud-percent">97%</span>
+                </div>
+              </div>
+              <div class="hud-cluster">
+                <span class="hud-icon" role="img" aria-label="消息中心"><svg viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-5v-5a7 7 0 1 0-14 0v5l-2 2v1h18v-1z"/></svg><b>24</b></span>
+                <span class="hud-icon gear" role="img" aria-label="设置"><svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.56-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.65 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88L2.77 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.3.6.22l2.39-.96c.5.38 1.04.7 1.63.94l.36 2.54c.04.24.25.42.5.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.63-.94l2.39.96c.22.08.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg></span>
+              </div>
             </div>
           </div>
+          <span class="hud-handle" aria-hidden="true"></span>
         </div>
       </div>
     </div>
@@ -895,15 +924,20 @@ window.addEventListener('load',function(){setTimeout(function(){document.getElem
     if(onScreen) run();
   });
 
-  // 日/月周期切换（真机上点这里是切周期）
+  // 日/月周期切换（真机上点这里是切周期，两行读数一起变）
   var usage = hud.querySelector('.hud-usage');
   var segs = usage.querySelectorAll('.hud-seg i');
-  var usageText = hud.querySelector('.hud-usage-text');
+  var quotaText = hud.querySelector('.hud-quota-text');
+  var percent = hud.querySelector('.hud-percent');
+  var bar = hud.querySelector('.hud-bar i');
   usage.addEventListener('click', function(){
     var toDay = !segs[0].classList.contains('on');
     segs[0].classList.toggle('on', toDay);
     segs[1].classList.toggle('on', !toDay);
-    usageText.textContent = toDay ? '额度已用 97%' : '额度已用 78%';
+    var p = toDay ? 97 : 78;
+    quotaText.innerHTML = '已用 <b>' + p + '</b> / 100 点';
+    percent.textContent = p + '%';
+    bar.style.width = p + '%';
   });
 
   // 无动效偏好：直接展示展开态，不播循环
