@@ -45,11 +45,7 @@
     .hero .subtitle { font-size: clamp(17px,2.4vw,21px); color: var(--text-secondary); max-width: 640px; margin: 0 auto 56px; line-height: 1.8; }
     .hero-lights { display: flex; justify-content: center; gap: 48px; margin-bottom: 64px; }
     .hero-light { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 60px; }
-    .hero-light .dot { width: 14px; height: 14px; border-radius: 50%; }
-    .hero-light .dot.green { background: var(--green); box-shadow: 0 0 16px var(--green); }
-    .hero-light .dot.yellow { background: var(--yellow); box-shadow: 0 0 16px var(--yellow); animation: breathe 2s ease-in-out infinite; }
-    .hero-light .dot.red { background: var(--red); box-shadow: 0 0 16px var(--red); animation: blink 0.55s ease-in-out infinite; }
-    .hero-light .dot.gray { background: var(--gray); box-shadow: 0 0 16px var(--gray); }
+    /* 状态用徽标（与客户端同一形态/动效），不再画纯色圆点见 .lb-hero */
     .hero-light span { font-size: 12px; color: var(--text-dim); }
     @keyframes breathe { 0%,100%{opacity:1} 50%{opacity:.08} }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
@@ -215,12 +211,38 @@
     .lights-section { padding: 112px 0; }
     .lights-showcase { display: flex; justify-content: center; gap: 72px; margin-top: 64px; flex-wrap: wrap; }
     .light-item { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-    .light-orb { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-    .light-orb.green { background: var(--green); box-shadow: 0 0 40px rgba(48,209,88,0.4); }
-    .light-orb.yellow { background: var(--yellow); box-shadow: 0 0 40px rgba(255,214,10,0.4); animation: breathe 2s ease-in-out infinite; }
-    .light-orb.red { background: var(--red); box-shadow: 0 0 40px rgba(255,69,58,0.4); animation: blink 0.55s ease-in-out infinite; }
-    .light-orb.gray { background: var(--gray); box-shadow: 0 0 40px rgba(142,142,147,0.35); }
-    .light-orb svg { width: 28px; height: 28px; fill: white; opacity: 0.9; }
+    /* 状态徽标：形态与动效参数 1:1 对齐客户端 LogoMotionBadge（C 弧 + 弧内元素），
+       颜色用 TaskLight 真身值（#8E8E93 / #34C759 / #FFB800 / #FF3B30），不走官网的 --green 等主题变量 */
+    .light-badge { width: 72px; height: 72px; }
+    .lb-hero { width: 28px; height: 28px; }
+    .light-badge svg, .lb-hero svg { width: 100%; height: 100%; display: block; overflow: visible; }
+    .lb .lb-ring, .lb .lb-dot, .lb .lb-wave, .lb .lb-bar, .lb .lb-orbit, .lb .lb-spark { transform-box: fill-box; transform-origin: center; }
+    .lb .lb-arc { opacity: 0.55; }
+    /* 空闲：底弧极缓呼吸 .42↔.62 / 3.2s；涟漪外扩；中心点呼吸 */
+    .badge-idle .lb-arc { animation: lb-arc-idle 3.2s cubic-bezier(0.42,0,0.58,1) infinite; }
+    .badge-idle .lb-ring { animation: lb-ring 3.2s cubic-bezier(0,0,0.58,1) infinite; }
+    .badge-idle .lb-dot { animation: lb-dot 1.6s cubic-bezier(0.42,0,0.58,1) infinite; }
+    /* 已完成：对勾自左向右描出 + 星点迸发（一次性节奏，4s 一轮，便于停留时看到） */
+    .badge-done .lb-check { stroke-dasharray: 180; animation: lb-draw 4s ease-out infinite; }
+    .badge-done .lb-spark { animation: lb-spark 4s ease-out infinite; }
+    .badge-done .lb-spark.s2 { animation-delay: 0.1s; }
+    .badge-done .lb-spark.s3 { animation-delay: 0.16s; }
+    /* 工作中：三段光轨沿 r268 追逐，1.15s/圈 */
+    .badge-working .lb-orbit { animation: lb-spin 1.15s linear infinite; }
+    /* 等待确认：底弧明暗心跳 .55↔1.0 / 0.8s + 双圈错相脉冲 1.6s + 感叹号轻浮 */
+    .badge-waiting .lb-arc { animation: lb-arc-wait 0.8s cubic-bezier(0.42,0,0.58,1) infinite; }
+    .badge-waiting .lb-wave { animation: lb-wave 1.6s cubic-bezier(0,0,0.58,1) infinite; }
+    .badge-waiting .lb-wave.w2 { animation-delay: -0.72s; }
+    .badge-waiting .lb-bar { animation: lb-bob 1.6s cubic-bezier(0.42,0,0.58,1) infinite; }
+    @keyframes lb-arc-idle { 0%,100% { opacity: 0.42; } 50% { opacity: 0.62; } }
+    @keyframes lb-arc-wait { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+    @keyframes lb-ring { from { transform: scale(0.62); opacity: 0.52; } to { transform: scale(1.46); opacity: 0; } }
+    @keyframes lb-dot { 0%,100% { transform: scale(0.62); opacity: 0.42; } 50% { transform: scale(1.32); opacity: 1; } }
+    @keyframes lb-draw { 0% { stroke-dashoffset: 180; } 16% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; } }
+    @keyframes lb-spark { 0% { transform: scale(0.2); opacity: 0; } 6% { transform: scale(1); opacity: 0.85; } 22% { transform: scale(1); opacity: 0.85; } 32%,100% { transform: scale(1); opacity: 0; } }
+    @keyframes lb-spin { to { transform: rotate(360deg); } }
+    @keyframes lb-wave { from { transform: scale(0.42); opacity: 0.7; } to { transform: scale(1.05); opacity: 0; } }
+    @keyframes lb-bob { 0%,100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(-28px); opacity: 1; } }
     .light-item h4 { font-size: 17px; font-weight: 600; }
     .light-item p { font-size: 14px; color: var(--text-secondary); line-height: 1.75; text-align: center; max-width: 200px; }
     .tech-section { padding: 112px 0; }
@@ -409,8 +431,7 @@
       .powered-card { margin-top: 40px; padding: 32px 24px; }
       .wish-form { margin-top: 44px; }
       .wish-barrage { margin-top: 36px; }
-      .light-orb { width: 56px; height: 56px; }
-      .light-orb svg { width: 22px; height: 22px; }
+      .light-badge { width: 56px; height: 56px; }
       nav .nav-links { display: none; }
       .compat-table th, .compat-table td { padding: 12px 14px; }
       .appstats-card { padding: 20px 16px; }
@@ -451,10 +472,10 @@
     <h1 style="margin-top:28px;"><span class="gradient">Comate HUD</span><br/>让 AI 干活，你只管看灯</h1>
     <p class="subtitle">常驻 macOS 刘海区的状态指示器，为 WPS Comate 而生。<br/>不用打开主窗口，状态抬眼即知。</p>
     <div class="hero-lights">
-      <div class="hero-light"><div class="dot gray"></div><span>空闲</span></div>
-      <div class="hero-light"><div class="dot green"></div><span>已完成</span></div>
-      <div class="hero-light"><div class="dot yellow"></div><span>工作中</span></div>
-      <div class="hero-light"><div class="dot red"></div><span>等待确认</span></div>
+      <div class="hero-light"><div class="lb-hero"><svg class="lb badge-idle" viewBox="0 0 600 600" role="img" aria-label="空闲"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#8E8E93" stroke-width="132"/><circle class="lb-ring" cx="300" cy="300" r="42" fill="none" stroke="#8E8E93" stroke-width="18"/><circle class="lb-dot" cx="300" cy="300" r="26" fill="#8E8E93"/></svg></div><span>空闲</span></div>
+      <div class="hero-light"><div class="lb-hero"><svg class="lb badge-done" viewBox="0 0 600 600" role="img" aria-label="已完成"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#34C759" stroke-width="132"/><path class="lb-check" d="M 245 304 L 284 343 L 365 255" fill="none" stroke="#34C759" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/><circle class="lb-spark s1" cx="389" cy="230" r="8" fill="#34C759"/><circle class="lb-spark s2" cx="218" cy="256" r="6" fill="#34C759"/><circle class="lb-spark s3" cx="370" cy="374" r="5" fill="#34C759"/></svg></div><span>已完成</span></div>
+      <div class="hero-light"><div class="lb-hero"><svg class="lb badge-working" viewBox="0 0 600 600" role="img" aria-label="工作中"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#FFB800" stroke-width="132"/><circle class="lb-orbit" cx="300" cy="300" r="268" fill="none" stroke="#FFB800" stroke-opacity="0.34" stroke-width="16" stroke-linecap="round" stroke-dasharray="30 1654" stroke-dashoffset="-165.1"/><circle class="lb-orbit" cx="300" cy="300" r="268" fill="none" stroke="#FFB800" stroke-opacity="0.70" stroke-width="26" stroke-linecap="round" stroke-dasharray="62.2 1621.8" stroke-dashoffset="-92.2"/><circle class="lb-orbit" cx="300" cy="300" r="268" fill="none" stroke="#FFB800" stroke-width="38" stroke-linecap="round" stroke-dasharray="111.5 1572.5" stroke-dashoffset="0"/></svg></div><span>工作中</span></div>
+      <div class="hero-light"><div class="lb-hero"><svg class="lb badge-waiting" viewBox="0 0 600 600" role="img" aria-label="等待确认"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#FF3B30" stroke-width="132"/><circle class="lb-wave w1" cx="300" cy="300" r="100" fill="none" stroke="#FF3B30" stroke-width="30"/><circle class="lb-wave w2" cx="300" cy="300" r="100" fill="none" stroke="#FF3B30" stroke-width="30"/><rect class="lb-bar" x="285" y="248" width="30" height="72" rx="15" fill="#FF3B30"/><circle class="lb-dot" cx="300" cy="362" r="16" fill="#FF3B30"/></svg></div><span>等待确认</span></div>
     </div>
     <div class="dl-block" id="download">
       <div class="hero-actions dl-actions">
@@ -609,10 +630,10 @@
   <div class="container">
     <div class="reveal" style="text-align:center;"><div class="section-label">状态含义</div><h2 style="font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-0.03em;">四种状态，一眼看懂</h2><p style="color:var(--text-secondary);max-width:520px;margin:16px auto 0;font-size:15px;">每种状态有独特的灯色与节奏，余光就能感知 AI 在干什么。</p></div>
     <div class="lights-showcase reveal">
-      <div class="light-item"><div class="light-orb gray"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/></svg></div><h4>空闲</h4><p>没有进行中的任务。灯常亮。</p></div>
-      <div class="light-item"><div class="light-orb green"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div><h4>已完成</h4><p>任务刚跑完。绿灯保持 15 分钟，期间有新对话则顺延。</p></div>
-      <div class="light-item"><div class="light-orb yellow"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><h4>工作中</h4><p>AI 正在执行任务。呼吸式慢闪。</p></div>
-      <div class="light-item"><div class="light-orb red"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><h4>等待确认</h4><p>AI 需要你的决策。快闪提醒。</p></div>
+      <div class="light-item"><div class="light-badge"><svg class="lb badge-idle" viewBox="0 0 600 600" role="img" aria-label="空闲"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#8E8E93" stroke-width="132"/><circle class="lb-ring" cx="300" cy="300" r="42" fill="none" stroke="#8E8E93" stroke-width="18"/><circle class="lb-dot" cx="300" cy="300" r="26" fill="#8E8E93"/></svg></div><h4>空闲</h4><p>没有进行中的任务。中心点缓缓呼吸，一圈涟漪轻轻外扩。</p></div>
+      <div class="light-item"><div class="light-badge"><svg class="lb badge-done" viewBox="0 0 600 600" role="img" aria-label="已完成"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#34C759" stroke-width="132"/><path class="lb-check" d="M 245 304 L 284 343 L 365 255" fill="none" stroke="#34C759" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/><circle class="lb-spark s1" cx="389" cy="230" r="8" fill="#34C759"/><circle class="lb-spark s2" cx="218" cy="256" r="6" fill="#34C759"/><circle class="lb-spark s3" cx="370" cy="374" r="5" fill="#34C759"/></svg></div><h4>已完成</h4><p>任务刚跑完。对勾描出、星点迸发；绿灯保持 15 分钟，期间有新对话则顺延。</p></div>
+      <div class="light-item"><div class="light-badge"><svg class="lb badge-working" viewBox="0 0 600 600" role="img" aria-label="工作中"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#FFB800" stroke-width="132"/><circle class="lb-orbit" cx="300" cy="300" r="268" fill="none" stroke="#FFB800" stroke-opacity="0.34" stroke-width="16" stroke-linecap="round" stroke-dasharray="30 1654" stroke-dashoffset="-165.1"/><circle class="lb-orbit" cx="300" cy="300" r="268" fill="none" stroke="#FFB800" stroke-opacity="0.70" stroke-width="26" stroke-linecap="round" stroke-dasharray="62.2 1621.8" stroke-dashoffset="-92.2"/><circle class="lb-orbit" cx="300" cy="300" r="268" fill="none" stroke="#FFB800" stroke-width="38" stroke-linecap="round" stroke-dasharray="111.5 1572.5" stroke-dashoffset="0"/></svg></div><h4>工作中</h4><p>AI 正在执行任务。三段光轨沿外圈追逐。</p></div>
+      <div class="light-item"><div class="light-badge"><svg class="lb badge-waiting" viewBox="0 0 600 600" role="img" aria-label="等待确认"><path class="lb-arc" d="M 181 442 A 185 185 0 1 1 419 442" fill="none" stroke="#FF3B30" stroke-width="132"/><circle class="lb-wave w1" cx="300" cy="300" r="100" fill="none" stroke="#FF3B30" stroke-width="30"/><circle class="lb-wave w2" cx="300" cy="300" r="100" fill="none" stroke="#FF3B30" stroke-width="30"/><rect class="lb-bar" x="285" y="248" width="30" height="72" rx="15" fill="#FF3B30"/><circle class="lb-dot" cx="300" cy="362" r="16" fill="#FF3B30"/></svg></div><h4>等待确认</h4><p>AI 需要你的决策。感叹号轻浮、双圈脉冲提醒。</p></div>
     </div>
   </div>
 </section>

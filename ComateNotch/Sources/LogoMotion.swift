@@ -115,6 +115,10 @@ enum LogoMotionMetrics {
     // 弧内状态指示
     static let idleDotRadius: CGFloat = 26
     static let idleRingRadius: CGFloat = 42
+    /// 空闲涟漪线宽（独立常量）。v3.5：8 → 18。
+    /// 8 在 28pt 下只有 0.37pt，落在亚像素 —— 栅格化后淡到不可辨，
+    /// 这是「空闲振幅偏轻」的主因之一（v3.4 只加大了半径行程，没动线宽）。
+    static let idleRingStroke: CGFloat = 18
     static let waitingBarWidth: CGFloat = 30
     static let waitingBarLength: CGFloat = 72
     static let waitingDotRadius: CGFloat = 16
@@ -123,47 +127,68 @@ enum LogoMotionMetrics {
     /// 100 + 线宽半径 10 = 110，仍完全落在底弧内缘 119 之内，不会压到底弧。
     static let waitingWaveRadius: CGFloat = 100
     /// 脉冲圈线宽（独立常量，不再沿用弧内元素的通用 8）。
-    /// 这是「等待确认看不见在闪」的真正主因：8 × (28/600) = 0.37pt，栅格化后淡到不可辨。
-    /// 20 → 28pt（刘海徽标 / 关于页图例）下 0.93pt、30pt（悬浮面板徽标）下 1.00pt。
-    static let alertWaveStroke: CGFloat = 20
+    /// v3.4：8 → 20（28pt 下 0.93pt）—— 「等待确认看不见在闪」的第一主因是它落到了亚像素。
+    /// v3.5（方案 B）：20 → 30，28pt 下 1.40pt、30pt 下 1.50pt，扩张段更「实」。
+    static let alertWaveStroke: CGFloat = 30
     static let doneCheckStroke: CGFloat = 30
     static let sparkRadius: CGFloat = 8
 
     // 时长（秒），与 demo 一一对应
-    static let idleBreathDuration: Double = 1.9
-    static let idleRingDuration: Double = 4.2
+    static let idleBreathDuration: Double = 1.6
+    static let idleRingDuration: Double = 3.2
     static let doneCheckDuration: Double = 0.62
     static let doneCheckDelay: Double = 0.15
     static let sparkDuration: Double = 0.5
     static let orbitDuration: Double = 1.15
-    static let waitingBobDuration: Double = 1.15
+    /// v3.5：1.15 → 1.6，与 1.6s 的脉冲同拍 —— 整个「等你确认」凑成一次完整的心跳。
+    static let waitingBobDuration: Double = 1.6
     static let waitingWaveDuration: Double = 1.6
     static let waitingWaveDelay: Double = 0.72
     static let enterDuration: Double = 0.52
     static let colorDuration: Double = 0.5
 
-    // 空闲振幅（DESIGN.md §8 方案 A：28pt 下描边会落到亚像素，必须加大）
-    static let idleDotMinScale: Double = 0.55
-    static let idleDotMaxScale: Double = 1.18
-    static let idleDotMinOpacity: Double = 0.32
+    // 空闲振幅（DESIGN.md §8：28pt 下描边会落到亚像素，必须加大）
+    /// v3.5（方案 B）：中心点 `.55↔1.18` → `.62↔1.32`、透明度下限 `.32` → `.42`。
+    /// 28pt 下中心点直径只有 1.3~3.1pt，原下限让它几乎「消失」，下限抬高才有呼吸感。
+    static let idleDotMinScale: Double = 0.62
+    static let idleDotMaxScale: Double = 1.32
+    static let idleDotMinOpacity: Double = 0.42
     static let idleRingStartScale: Double = 0.62
     static let idleRingEndScale: Double = 1.46
-    static let idleRingStartOpacity: Double = 0.46
+    /// v3.5：.46 → .52（配合 18 的线宽，细线才有「实体」感）
+    static let idleRingStartOpacity: Double = 0.52
+
+    /// 底弧明暗脉动（v3.5 方案 B 新增）。
+    /// 小尺寸下「整枚在闪」比内部细线的位移可靠得多 —— 底弧占徽标面积 >70%，
+    /// 让它的明暗跟着跳，才是「整体闪动太弱」这个反馈的正解。
+    /// 等待确认 `.55↔1.0 / 0.8s`：1.6s 内两次，与双圈脉冲叠成一次心跳。
+    static let alertArcPulseMin: Double = 0.55
+    static let alertArcPulseMax: Double = 1.00
+    static let alertArcPulseDuration: Double = 0.8
+    /// 空闲底弧呼吸 `.42↔.62 / 3.2s`：幅度仅等待确认的 1/5、速度慢 4 倍，
+    /// 保住「五态里最安静」的分档。其余三态底弧恒定 `arcOpacity`。
+    static let idleArcPulseMin: Double = 0.42
+    static let idleArcPulseMax: Double = 0.62
+    static let idleArcPulseDuration: Double = 3.2
 
     // 弧内脉冲：两种红共用尺寸，只有圈数与频率不同
-    static let alertWaveStartScale: Double = 0.73
-    static let alertWaveEndScale: Double = 1.24
-    /// v3.4：峰值透明度 .38 → .50。.38 且在 ease-out 里立刻衰减到 0，
-    /// 叠上 0.37pt 线宽后整圈几乎不可见；「等你确认」本就该是五态里最刺眼的一档，
-    /// 抬到 .50（高于空闲涟漪的 .46）符合它的打断语义。
-    static let alertWaveStartOpacity: Double = 0.50
+    /// v3.5（方案 B）：起始 `.73` → `.42`、终点 `1.24` → `1.05`。
+    /// 行程在 28pt 下 Δ4.76 → Δ5.88pt；终点 `105 + 半线宽 15 = 120` 与底弧内缘 119 齐平，
+    /// 扩张尾巴不再钻进底弧带里（同色叠加会看不出边界）。
+    static let alertWaveStartScale: Double = 0.42
+    static let alertWaveEndScale: Double = 1.05
+    /// v3.4：峰值透明度 .38 → .50；v3.5：`.50` → `.70`。
+    /// 扩张的同时透明度是线性衰减的，.50 时尾巴几乎没有实体感，小尺寸下只看到一团模糊；
+    ///「等你确认」本就是五态里最刺眼的一档，抬到 .70 符合它的打断语义。
+    static let alertWaveStartOpacity: Double = 0.70
     /// 异常：单圈慢脉冲，透明度峰值比「等你确认」低一档（提示但不催）
     static let errorWaveDuration: Double = 2.4
     static let errorWavePeakOpacity: Double = 0.28
-    /// 竖条：等你确认上下轻浮（v3.4：5 → 18 设计单位；5 在 28pt 下只有 0.23pt，
-    /// 与脉冲一同构成「完全静止」的观感）；异常不浮动，改为极缓透明度呼吸
-    static let alertBarLift: CGFloat = 18
-    static let alertBarDim: Double = 0.72
+    /// 竖条：等你确认上下轻浮（v3.4：5 → 18 设计单位；v3.5：18 → 28，
+    /// 28pt 下 1.31pt 才真的看得见）；异常不浮动，改为极缓透明度呼吸
+    static let alertBarLift: CGFloat = 28
+    /// v3.5：.72 → .60，明暗对比拉开，浮动更「跳」
+    static let alertBarDim: Double = 0.60
     static let alertBarBright: Double = 1.0
     static let errorBreathDuration: Double = 1.6
     static let errorBarBright: Double = 0.90
@@ -239,10 +264,8 @@ struct LogoMotionBadge: View {
 
     var body: some View {
         ZStack {
-            LogoArcShape()
-                .stroke(color.opacity(LogoMotionMetrics.arcOpacity),
-                        style: StrokeStyle(lineWidth: LogoMotionMetrics.arcStroke * scale,
-                                           lineCap: .butt, lineJoin: .round))
+            LogoArcIndicator(scale: scale, color: color, state: state, animated: animated)
+                .id(Self.motionKey(state: state, animated: animated))
             indicator
                 .id(Self.motionKey(state: state, animated: animated))
                 .transition(.asymmetric(
@@ -268,6 +291,53 @@ struct LogoMotionBadge: View {
 
 // MARK: - 各状态弧内指示
 
+/// 底弧。
+///
+/// v3.5 起底弧不再只是「背景」：小尺寸下内部细线的位移难以被读到，而底弧占徽标
+/// 面积 >70%，它的明暗变化是「整枚徽标在闪」的直接载体 —— 空闲 `.42↔.62 / 3.2s`
+/// 极缓呼吸，等你确认 `.55↔1.0 / 0.8s` 心跳，其余三态恒定 `arcOpacity`。
+///
+/// `state` 变时本视图会被 `.id` 重建（与 indicator 同一个 key），`onAppear` 重跑起播。
+private struct LogoArcIndicator: View {
+    let scale: CGFloat
+    let color: Color
+    let state: LogoMotionState
+    let animated: Bool
+
+    @State private var pulse = false
+
+    private var range: (lo: Double, hi: Double, duration: Double)? {
+        switch state {
+        case .idle:
+            return (LogoMotionMetrics.idleArcPulseMin,
+                    LogoMotionMetrics.idleArcPulseMax,
+                    LogoMotionMetrics.idleArcPulseDuration)
+        case .waiting:
+            return (LogoMotionMetrics.alertArcPulseMin,
+                    LogoMotionMetrics.alertArcPulseMax,
+                    LogoMotionMetrics.alertArcPulseDuration)
+        case .done, .working, .error:
+            return nil
+        }
+    }
+
+    private var opacity: Double {
+        guard let r = range else { return LogoMotionMetrics.arcOpacity }
+        return pulse ? r.hi : r.lo
+    }
+
+    var body: some View {
+        LogoArcShape()
+            .stroke(color.opacity(opacity),
+                    style: StrokeStyle(lineWidth: LogoMotionMetrics.arcStroke * scale,
+                                       lineCap: .butt, lineJoin: .round))
+            .animation(range.map {
+                .easeInOut(duration: $0.duration).repeatForever(autoreverses: true)
+            }, value: pulse)
+            .onAppear { if animated && range != nil { pulse = true } }
+    }
+}
+
 /// 空闲：中心柔光点呼吸 + 一圈外扩涟漪。
 /// 振幅按 DESIGN.md §8 方案 A 加大（28pt 下描边会落到亚像素，原参数几乎看不出动），
 /// 加大后仍为五态中最安静的一档。
@@ -283,7 +353,7 @@ private struct IdleIndicator: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(color, lineWidth: 8 * scale)
+                .stroke(color, lineWidth: LogoMotionMetrics.idleRingStroke * scale)
                 .frame(width: LogoMotionMetrics.idleRingRadius * 2 * scale,
                        height: LogoMotionMetrics.idleRingRadius * 2 * scale)
                 .scaleEffect(ping ? LogoMotionMetrics.idleRingEndScale

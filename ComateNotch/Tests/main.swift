@@ -427,6 +427,30 @@ let arcInnerEdge = LogoMotionMetrics.arcRadius - LogoMotionMetrics.arcStroke / 2
 check(LogoMotionMetrics.waitingWaveRadius + LogoMotionMetrics.alertWaveStroke / 2 < arcInnerEdge,
       "脉冲圈（r\(Int(LogoMotionMetrics.waitingWaveRadius)) + 半线宽 \(Int(LogoMotionMetrics.alertWaveStroke / 2))）仍完全落在底弧内缘 r\(Int(arcInnerEdge)) 之内，不压到底弧")
 
+// v3.5 方案 B：底弧明暗脉动。「小图标下整体闪动太弱」的正解不是再把细线加粗，
+// 而是让占徽标面积 >70% 的底弧跟着跳 —— 这一档必须明显压过空闲的极缓呼吸，
+// 否则两态强度分不开（「等你确认」是五态里唯一要求「打断你」的一档）。
+let alertArcSwing = LogoMotionMetrics.alertArcPulseMax - LogoMotionMetrics.alertArcPulseMin
+let idleArcSwing = LogoMotionMetrics.idleArcPulseMax - LogoMotionMetrics.idleArcPulseMin
+check(alertArcSwing >= idleArcSwing * 2,
+      "等待确认底弧脉动幅度 \(String(format: "%.2f", alertArcSwing)) 至少是空闲 \(String(format: "%.2f", idleArcSwing)) 的 2 倍")
+check(LogoMotionMetrics.alertArcPulseDuration < LogoMotionMetrics.idleArcPulseDuration,
+      "等待确认底弧脉动更快（\(LogoMotionMetrics.alertArcPulseDuration)s < \(LogoMotionMetrics.idleArcPulseDuration)s）")
+check(LogoMotionMetrics.alertArcPulseMax >= 1.0,
+      "等待确认底弧要能到全亮 \(String(format: "%.2f", LogoMotionMetrics.alertArcPulseMax))，小尺寸下才「跳」得出来")
+check(LogoMotionMetrics.idleArcPulseMax <= LogoMotionMetrics.arcOpacity + 0.1,
+      "空闲底弧呼吸上限 \(String(format: "%.2f", LogoMotionMetrics.idleArcPulseMax)) 不明显超过其余三态的恒定档 \(String(format: "%.2f", LogoMotionMetrics.arcOpacity))，保住「五态里最安静」")
+// 空闲：v3.5 把落到亚像素的涟漪线宽救回来，并抬高中心点透明度下限（原下限让中心「消失」）
+check(LogoMotionMetrics.idleRingStroke * badgeScale28 >= 0.8,
+      "28pt 下空闲涟漪线宽 \(String(format: "%.2f", LogoMotionMetrics.idleRingStroke * badgeScale28))pt ≥ 0.8pt，不落亚像素")
+check(LogoMotionMetrics.idleDotMinOpacity >= 0.40,
+      "空闲中心点透明度下限 \(String(format: "%.2f", LogoMotionMetrics.idleDotMinOpacity)) ≥ .40 —— 28pt 下中心直径只有 1~3pt")
+// 改小起始 scale（行程变大）后，脉冲扩张的终点不能钻进底弧带 —— 同色叠在一起会看不出边界
+let alertWaveOuter = LogoMotionMetrics.waitingWaveRadius * LogoMotionMetrics.alertWaveEndScale
+    + LogoMotionMetrics.alertWaveStroke / 2
+check(alertWaveOuter <= arcInnerEdge + 1,
+      "脉冲扩张终点 \(String(format: "%.0f", alertWaveOuter))（含半线宽）与底弧内缘 \(String(format: "%.0f", arcInnerEdge)) 齐平，不钻进去")
+
 // MARK: - 页脚额度读数（已用 / 总量）
 
 // 页脚只有一行，读数必须先压长度，否则会把右侧的铃铛 / 齿轮挤跑（用户反馈 ③）
