@@ -364,6 +364,11 @@ check(LogoMotionMetrics.leadTrim.to > LogoMotionMetrics.midTrim.to - LogoMotionM
 let palette = [LogoMotionState.idle, .done, .working, .waiting, .error].map { $0.color }
 eq(Set(palette).count, 4, "五态共用四支颜色（两种红同一支）")
 check(palette.allSatisfy { $0.hasPrefix("#") && $0.count == 7 }, "五态颜色都是 #RRGGBB")
+// T5 收敛（v3.4）：徽标四态色必须与任务行圆点 StatusLight 用同一支 TaskLight，
+// 否则同一个面板里并存两组近义色（「徽标走 demo 调色板」是 v3.3 记录的真问题）。
+eq(palette, [TaskLight.gray.color, TaskLight.green.color, TaskLight.yellow.color,
+             TaskLight.red.color, TaskLight.red.color],
+   "徽标四态色 = TaskLight（与任务行圆点同源，T5 已收敛）")
 check(LogoMotionMetrics.enterDuration > 0 && LogoMotionMetrics.colorDuration > 0,
       "进出场与换色时长都是正数")
 
@@ -404,6 +409,23 @@ let idleRingTravelRadius = (LogoMotionMetrics.idleRingEndScale - LogoMotionMetri
     * LogoMotionMetrics.idleRingRadius * 28 / LogoMotionMetrics.design
 check(idleRingTravelRadius * 2 >= 3,
       "28pt 下空闲涟漪直径变化 \(String(format: "%.2f", idleRingTravelRadius * 2))pt ≥ 3pt，肉体可辨")
+
+// 等待确认脉冲的可见性（v3.4，用户反馈「关于界面里等待确认的图标没有闪动」）。
+// 动画一直在跑 —— 是量级不够：原线宽 8×(28/600)=0.37pt 落在亚像素，
+// 竖条浮动 5×(28/600)=0.23pt，叠起来整枚徽标看上去是静止的。
+// 门槛与空闲涟漪同一条：28pt 下直径变化 ≥ 3pt、线宽 ≥ 0.8pt（不落亚像素）。
+let badgeScale28 = 28 / LogoMotionMetrics.design
+let alertWaveTravelRadius = (LogoMotionMetrics.alertWaveEndScale - LogoMotionMetrics.alertWaveStartScale)
+    * LogoMotionMetrics.waitingWaveRadius * badgeScale28
+check(alertWaveTravelRadius * 2 >= 3,
+      "28pt 下等待确认脉冲直径变化 \(String(format: "%.2f", alertWaveTravelRadius * 2))pt ≥ 3pt")
+check(LogoMotionMetrics.alertWaveStroke * badgeScale28 >= 0.8,
+      "28pt 下脉冲圈线宽 \(String(format: "%.2f", LogoMotionMetrics.alertWaveStroke * badgeScale28))pt ≥ 0.8pt，不落亚像素")
+check(LogoMotionMetrics.alertBarLift * badgeScale28 >= 0.8,
+      "28pt 下感叹号浮动 \(String(format: "%.2f", LogoMotionMetrics.alertBarLift * badgeScale28))pt ≥ 0.8pt")
+let arcInnerEdge = LogoMotionMetrics.arcRadius - LogoMotionMetrics.arcStroke / 2
+check(LogoMotionMetrics.waitingWaveRadius + LogoMotionMetrics.alertWaveStroke / 2 < arcInnerEdge,
+      "脉冲圈（r\(Int(LogoMotionMetrics.waitingWaveRadius)) + 半线宽 \(Int(LogoMotionMetrics.alertWaveStroke / 2))）仍完全落在底弧内缘 r\(Int(arcInnerEdge)) 之内，不压到底弧")
 
 // MARK: - 页脚额度读数（已用 / 总量）
 
@@ -470,12 +492,12 @@ check(footerM.quotaWidth(contentWidth: 40) == 0, "窄面板下额度区宽夹到
 // 面板 / 刘海刻度（§7.1 v2 表）
 eq(NotchLayout.horizontalPadding, 14, "面板内边距左右 14")
 eq(NotchLayout.listSpacing, 2, "行距 2")
-// 任务行内边距（v3.1 由 12 → 8，v3.2 再收一档到 6/10：卡与卡之间的视觉间隙 14pt）
-eq(HUDTaskRows.rowPadV, 6, "任务行上下内边距 6")
+// 任务行内边距（v3.1 由 12 → 8，v3.2 收到 6/10，v3.4 再收一档到 4/10：卡间视觉间隙 10pt）
+eq(HUDTaskRows.rowPadV, 4, "任务行上下内边距 4")
 eq(HUDTaskRows.rowPadH, 10, "任务行左右内边距 10")
 eq(FloatingMetrics.listSpacing, 2, "悬浮模式行距 2（与刘海模式同值，两模式版式统一）")
-check(HUDTaskRows.rowPadV * 2 + 18 + 2 + 14 == 46, "行高 46 = 上下 6 + 标题行 18 + 行内间距 2 + 第二行 14")
-check(HUDTaskRows.rowPadV * 2 + NotchLayout.listSpacing == 14, "卡与卡之间的视觉间隙 14pt")
+check(HUDTaskRows.rowPadV * 2 + 18 + 2 + 14 == 42, "行高 42 = 上下 4 + 标题行 18 + 行内间距 2 + 第二行 14")
+check(HUDTaskRows.rowPadV * 2 + NotchLayout.listSpacing == 10, "卡与卡之间的视觉间隙 10pt")
 eq(NotchLayout.blockSpacing, 8, "区块间距 8")
 eq(NotchLayout.bottomPadding, 14, "底部留白 14（> 手柄命中区，不盖页脚热区）")
 eq(FloatingMetrics.panelHPadding, 14, "悬浮面板内边距左右 14")

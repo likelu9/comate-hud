@@ -124,7 +124,7 @@ enum LogoMotionMetrics {
     static let waitingWaveRadius: CGFloat = 100
     /// 脉冲圈线宽（独立常量，不再沿用弧内元素的通用 8）。
     /// 这是「等待确认看不见在闪」的真正主因：8 × (28/600) = 0.37pt，栅格化后淡到不可辨。
-    /// 20 → 28pt 下 0.93pt、18pt（面板徽标）下 0.60pt。
+    /// 20 → 28pt（刘海徽标 / 关于页图例）下 0.93pt、30pt（悬浮面板徽标）下 1.00pt。
     static let alertWaveStroke: CGFloat = 20
     static let doneCheckStroke: CGFloat = 30
     static let sparkRadius: CGFloat = 8
